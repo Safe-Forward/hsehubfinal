@@ -139,7 +139,7 @@ const Index = () => {
     {
       name: "Package S",
       subtitle: "HSE Basic - The digital entry point",
-      price: "149€",
+      price: "29.99€",
       period: "month",
       description:
         "For small businesses that want to digitise HSE for the first time.",
@@ -161,7 +161,7 @@ const Index = () => {
     {
       name: "Package M",
       subtitle: "HSE Pro - Structured teamwork",
-      price: "249€",
+      price: "79.99€",
       period: "month",
       description: "For SMEs that need processes, roles and traceability.",
       users: "10 users",
@@ -179,9 +179,9 @@ const Index = () => {
       popular: true,
     },
     {
-      name: "Package M",
+      name: "Package L",
       subtitle: "HSE Enterprise - For large SMEs & groups",
-      price: "349€",
+      price: "149€",
       period: "month",
       description: "All professional HSE functions at organisational level.",
       users: "unlimited",
