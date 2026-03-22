@@ -73,9 +73,9 @@ const Index = () => {
     },
     {
       icon: Shield,
-      title: "Sicherheit in mandantenfähigen Umgebungen",
+      title: "Multi-Tenant Security",
       description:
-        "Sicherheit auf Unternehmensniveau mit vollständiger Datenisolierung zwischen Unternehmen",
+        "Enterprise-grade security with complete data isolation between companies using RLS.",
       color: "from-green-500 to-green-600",
       hoverColor: "hover:border-green-500",
     },
@@ -84,49 +84,52 @@ const Index = () => {
   const benefits = [
     {
       icon: Zap,
-      title: "Sofortige Einrichtung",
-      desc: "In wenigen Minuten loslegen, statt in Wochen",
+      title: "Instant Setup",
+      desc: "Get started in minutes, not weeks",
     },
     {
       icon: Lock,
-      title: "Sicherheit",
-      desc: "Datenschutz an erster Stelle",
+      title: "Bank-Level Security",
+      desc: "AES-256 encryption & SOC 2 compliant",
     },
     {
       icon: Globe,
-      title: "Cloud-basierter Zugriff",
-      desc: "Zugriff überall, jederzeit und von jedem Gerät aus",
+      title: "Cloud-Based Access",
+      desc: "Access anywhere, anytime, any device",
     },
     {
       icon: Headphones,
       title: "24/7 Support",
-      desc: "Kompetente Unterstützung, wann immer Sie sie brauchen",
+      desc: "Expert support when you need it",
     },
   ];
 
   const stats = [
-    { number: "10+", label: "Unternehmen", icon: Users },
-    { number: "800+", label: "Geschützte Arbeitnehmer", icon: Users },
-    { number: "99.9%", label: "Betriebszeit", icon: TrendingUp },
-    { number: "100.000+", label: "Verwaltete Datensätze", icon: Database },
+    { number: "500+", label: "Organizations", icon: Users },
+    { number: "50K+", label: "Employees Protected", icon: Users },
+    { number: "99.9%", label: "Uptime", icon: TrendingUp },
+    { number: "10M+", label: "Records Managed", icon: Database },
   ];
 
   const testimonials = [
     {
       quote:
-        "Safe-Forward hat unsere Arbeitsschutzabläufe grundlegend verändert. Wir haben die Reaktionszeit bei Zwischenfällen um 60 % verkürzt und die Nachverfolgung der Compliance erheblich verbessert.",
+        "SafetyHub transformed our HSE operations. We've reduced incident response time by 60% and improved compliance tracking significantly.",
+      author: "Sarah Johnson",
       role: "HSE Manager",
       company: "Industrial Corp",
     },
     {
       quote:
-        "Die intuitive Benutzeroberfläche und die leistungsstarken Automatisierungsfunktionen haben unserem Team unzählige Stunden Arbeit erspart. Die beste Investition, die wir je in die Arbeitssicherheit getätigt haben.",
+        "The intuitive interface and powerful automation features saved our team countless hours. Best investment we've made in workplace safety.",
+      author: "Michael Chen",
       role: "Safety Director",
       company: "Manufacturing Inc",
     },
     {
       quote:
-        "Dank Echtzeit-Dashboards und umfassender Berichterstellung sind Audits ein Kinderspiel. Unsere Compliance-Quote hat sich innerhalb von sechs Monaten von 85 % auf 98 % verbessert.",
+        "Real-time dashboards and comprehensive reporting make audits effortless. Our compliance rate improved from 85% to 98% in 6 months.",
+      author: "Emma Williams",
       role: "Operations Manager",
       company: "Energy Solutions",
     },
