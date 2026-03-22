@@ -33,7 +33,7 @@ const Index = () => {
   const features = [
     {
       icon: Users,
-      title: "Employee Management",
+      title: "Personalmanagement",
       description:
         "Mitarbeiterdaten, Abteilungen, Stellenprofile und Risikogruppen auf einer einzigen sicheren Plattform zentralisieren.",
       color: "from-blue-500 to-blue-600",
@@ -41,33 +41,33 @@ const Index = () => {
     },
     {
       icon: AlertTriangle,
-      title: "Risk Assessments (GBU)",
+      title: "Risikobewertungen",
       description:
-        "Conduct comprehensive risk assessments with automated risk scoring and mitigation tracking.",
+        "Durchführung von umfassenden Risikobewertungen und Nachverfolgung von Risikominderungsmaßnahmen.",
       color: "from-amber-500 to-amber-600",
       hoverColor: "hover:border-amber-500",
     },
     {
       icon: FileCheck,
-      title: "Safety Audits",
+      title: "Sicherheitsaudits",
       description:
-        "Schedule, conduct, and track safety audits with automated task creation for deficiencies.",
+        "Sicherheitsaudits planen, durchführen und nachverfolgen.",
       color: "from-blue-500 to-blue-600",
       hoverColor: "hover:border-blue-500",
     },
     {
       icon: CheckCircle,
-      title: "Training Management",
+      title: "Schulungsmanagement",
       description:
-        "Assign, track, and manage safety training with automated reminders and compliance tracking.",
+        "Weisen Sie Sicherheitsschulungen zu, verfolgen Sie deren Status und verwalten Sie sie mithilfe automatischer Erinnerungen und der Nachverfolgung der Einhaltung von Vorschriften.",
       color: "from-green-500 to-green-600",
       hoverColor: "hover:border-green-500",
     },
     {
       icon: TrendingUp,
-      title: "Analytics & Reporting",
+      title: "Analytik und Berichterstattung",
       description:
-        "Comprehensive dashboards and reports for compliance tracking and data-driven decisions.",
+        "Umfassende Dashboards und Berichte zur Überwachung der Compliance und für datengestützte Entscheidungen.",
       color: "from-blue-500 to-blue-600",
       hoverColor: "hover:border-blue-500",
     },
