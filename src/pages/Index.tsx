@@ -35,7 +35,7 @@ const Index = () => {
       icon: Users,
       title: "Employee Management",
       description:
-        "Centralize employee records, departments, job roles, and exposure groups in one secure platform.",
+        "TestCentralize employee records, departments, job roles, and exposure groups in one secure platform.",
       color: "from-blue-500 to-blue-600",
       hoverColor: "hover:border-blue-500",
     },
