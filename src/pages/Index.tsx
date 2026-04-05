@@ -59,7 +59,7 @@ const Index = () => {
       icon: CheckCircle,
       title: "Schulungsmanagement",
       description:
-        "Weisen Sie Sicherheitsschulungen zu, verfolgen Sie deren Status und verwalten Sie sie mithilfe automatischer Erinnerungen und der Nachverfolgung der Einhaltung von Vorschriften.",
+        "Weisen Sie Sicherheitsschulungen zu und organisieren Sie sie einfach und effizient – alles zentral an einem Ort.",
       color: "from-green-500 to-green-600",
       hoverColor: "hover:border-green-500",
     },
