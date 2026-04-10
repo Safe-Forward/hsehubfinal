@@ -321,13 +321,13 @@ const Index = () => {
 
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <Check className="h-5 w-5 text-green-600" />
-              <span>No credit card required</span>
+              <span>Keine Kreditkarte erforderlich</span>
               <span className="text-gray-300">•</span>
               <Check className="h-5 w-5 text-green-600" />
-              <span>14-day free trial</span>
+              <span>14-Tage teste</span>
               <span className="text-gray-300">•</span>
               <Check className="h-5 w-5 text-green-600" />
-              <span>Cancel anytime</span>
+              <span>Jederzeit kündbar</span>
             </div>
           </div>
 
