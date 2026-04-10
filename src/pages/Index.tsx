@@ -234,28 +234,28 @@ const Index = () => {
             </div>
             <div className="hidden md:flex items-center gap-8 text-sm font-medium">
               <a
-                href="#features"
+                href="#Funktionen"
                 className="text-gray-700 hover:text-blue-600 transition-colors"
               >
-                Features
+                Funktionen
               </a>
               <a
-                href="#benefits"
+                href="#Vorteile"
                 className="text-gray-700 hover:text-blue-600 transition-colors"
               >
-                Benefits
+                Vorteile
               </a>
               <a
                 href="#testimonials"
                 className="text-gray-700 hover:text-blue-600 transition-colors"
               >
-                Testimonials
+                Bewertungen
               </a>
               <a
-                href="#pricing"
+                href="#Bewertungen"
                 className="text-gray-700 hover:text-blue-600 transition-colors"
               >
-                Pricing
+                Preise
               </a>
             </div>
             <div className="flex items-center gap-3">
@@ -264,13 +264,13 @@ const Index = () => {
                 onClick={() => navigate("/auth")}
                 className="hidden sm:flex"
               >
-                Sign In
+                Login
               </Button>
               <Button
                 onClick={() => navigate("/auth")}
                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all"
               >
-                Get Started <ArrowRight className="ml-2 h-4 w-4" />
+                Jetzt Starten <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
