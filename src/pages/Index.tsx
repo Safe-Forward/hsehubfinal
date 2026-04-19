@@ -528,7 +528,7 @@ const Index = () => {
                     {plan.subtitle}
                   </p>
                   <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-5xl font-bold bg-gradient-to-r ${plan.color} bg-clip-text text-transparent">
+                    <span className={`text-5xl font-bold bg-gradient-to-r ${plan.color} bg-clip-text text-transparent`}>
                       {plan.price}
                     </span>
                     <span className="text-gray-600">/ {plan.period}</span>
@@ -790,7 +790,7 @@ const Index = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5" />
-                  <span>Keine Kreditkarte erforderlich/span>
+                  <span>Keine Kreditkarte erforderlich</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-5 w-5" />
