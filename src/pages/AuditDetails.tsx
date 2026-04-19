@@ -18,6 +18,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function AuditDetails() {
   const { id } = useParams();
@@ -360,12 +362,14 @@ export default function AuditDetails() {
   const syncProgressToDb = async (updatedItems: any[]) => {
     if (!id) return;
     const total = updatedItems.length;
-    if (total === 0) return;
     const completed = updatedItems.filter((i) => i.implemented && i.satisfied).length;
-    const percentage = Math.round((completed / total) * 100);
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    const status = percentage >= 100 ? "completed" : percentage > 0 ? "in_progress" : "planned";
+
     await supabase
       .from("audits")
       .update({
+        status,
         progress_percentage: percentage,
         completed_items: completed,
         total_items: total,
@@ -502,6 +506,77 @@ export default function AuditDetails() {
         variant: "destructive",
       });
     });
+  };
+
+  const handleExportPdf = () => {
+    if (!audit || checklistItems.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "There are no checklist items available for this audit.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      const today = new Date().toISOString().split("T")[0];
+
+      doc.setFontSize(16);
+      doc.text(audit.title || "Audit", 14, 18);
+      doc.setFontSize(10);
+      doc.text(`ISO: ${audit.iso_code || "-"}`, 14, 25);
+      doc.text(`Scheduled: ${audit.scheduled_date || "-"}`, 70, 25);
+      doc.text(`Progress: ${audit.progress_percentage || 0}%`, 145, 25);
+
+      const rows = checklistItems.map((item) => {
+        const sectionNumber = item.iso_criteria_sections?.section_number || "";
+        const subsectionNumber = item.iso_criteria_subsections?.subsection_number || "";
+        const questionText =
+          language === "en"
+            ? item.iso_criteria_questions?.question_text_en ||
+              item.iso_criteria_questions?.question_text ||
+              "-"
+            : item.iso_criteria_questions?.question_text ||
+              item.iso_criteria_questions?.question_text_en ||
+              "-";
+
+        const criteriaLabel = `${sectionNumber}${subsectionNumber ? `.${subsectionNumber}` : ""} ${questionText}`.trim();
+
+        return [
+          criteriaLabel,
+          item.implemented ? "Yes" : "No",
+          item.satisfied ? "Yes" : "No",
+          item.notes || "-",
+        ];
+      });
+
+      autoTable(doc, {
+        startY: 32,
+        head: [["Criteria", "Implemented", "Satisfied", "Notes"]],
+        body: rows,
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [37, 99, 235] },
+        columnStyles: {
+          0: { cellWidth: 100 },
+          1: { cellWidth: 16, halign: "center" },
+          2: { cellWidth: 16, halign: "center" },
+          3: { cellWidth: 50 },
+        },
+      });
+
+      doc.save(`audit_${audit.iso_code || "report"}_${today}.pdf`);
+      toast({
+        title: "Success",
+        description: t("common.pdfExported"),
+      });
+    } catch (error: any) {
+      toast({
+        title: "Export failed",
+        description: error?.message || "Failed to export PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -757,7 +832,7 @@ export default function AuditDetails() {
             >
               Select All
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExportPdf}>
               <FileDown className="w-4 h-4 mr-2" />
               {t("audits.pdfExport")}
             </Button>

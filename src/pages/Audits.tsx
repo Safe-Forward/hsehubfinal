@@ -395,9 +395,24 @@ export default function Audits() {
     }
   };
 
+  const getStatusFromProgress = (audit: any): "planned" | "in_progress" | "completed" => {
+    const progress = Number(audit?.progress_percentage || 0);
+
+    if (progress >= 100) return "completed";
+    if (progress > 0) return "in_progress";
+    return "planned";
+  };
+
+  const getStatusLabel = (status: "planned" | "in_progress" | "completed") => {
+    if (status === "planned") return t("audits.planned");
+    if (status === "in_progress") return t("audits.inProgress");
+    return t("audits.completed");
+  };
+
   // Filter audits
   const filteredAudits = audits.filter((audit) => {
-    if (statusFilter !== "all" && audit.status !== statusFilter) return false;
+    const derivedStatus = getStatusFromProgress(audit);
+    if (statusFilter !== "all" && derivedStatus !== statusFilter) return false;
     if (templateFilter !== "all" && audit.iso_code !== templateFilter)
       return false;
     return true;
@@ -494,13 +509,16 @@ export default function Audits() {
                     key={audit.id}
                     className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                   >
+                    {(() => {
+                      const derivedStatus = getStatusFromProgress(audit);
+                      return (
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="font-semibold text-lg">
                             {audit.title}
                           </h3>
-                          <Badge variant="outline">{audit.status}</Badge>
+                          <Badge variant="outline">{getStatusLabel(derivedStatus)}</Badge>
                         </div>
 
                         <div className="flex gap-4 text-sm text-muted-foreground mb-2">
@@ -546,6 +564,8 @@ export default function Audits() {
                         )}
                       </div>
                     </div>
+                      );
+                    })()}
                   </div>
                 ))
               )}
