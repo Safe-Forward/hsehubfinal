@@ -180,6 +180,50 @@ export default function Dashboard() {
   }, [companyId, userRole, taskStatusFilter]);
 
   useEffect(() => {
+    if (!companyId || userRole === "super_admin") return;
+
+    // Keep top stat cards in sync with inserts/updates/deletes.
+    const statTables = [
+      "employees",
+      "training_records",
+      "measures",
+      "health_checkups",
+      "incidents",
+      "risk_assessments",
+    ];
+
+    const channels = statTables.map((table) =>
+      supabase
+        .channel(`dashboard_stats_${companyId}_${table}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table,
+            filter: `company_id=eq.${companyId}`,
+          },
+          () => {
+            fetchStats();
+          }
+        )
+        .subscribe()
+    );
+
+    // Fallback refresh in case realtime is unavailable in some environments.
+    const refreshInterval = window.setInterval(() => {
+      fetchStats();
+    }, 60000);
+
+    return () => {
+      channels.forEach((channel) => {
+        supabase.removeChannel(channel);
+      });
+      window.clearInterval(refreshInterval);
+    };
+  }, [companyId, userRole]);
+
+  useEffect(() => {
     // Re-fetch tasks whenever employee identity resolves (currentEmployeeName becomes
     // a string — even "" means "lookup finished, no profile found, show broadcast only")
     if (companyId && userRole !== "super_admin" && currentEmployeeName !== null) {
@@ -253,10 +297,16 @@ export default function Dashboard() {
     if (!companyId) return 0;
 
     try {
-      const today = new Date().toISOString();
+      const today = new Date().toISOString().split("T")[0];
 
-      // Count expired trainings, certificates, and overdue measures
-      const [expiredTrainings, overdueMeasures] = await Promise.all([
+      // Count expired trainings, overdue measures, and overdue health checkups.
+      const [
+        expiredTrainings,
+        overdueMeasures,
+        overdueCheckupsByDueDate,
+        overdueCheckupsByAppointmentDate,
+        overdueInvestigations,
+      ] = await Promise.all([
         supabase
           .from("training_records")
           .select("id", { count: "exact", head: true })
@@ -268,9 +318,34 @@ export default function Dashboard() {
           .eq("company_id", companyId)
           .lt("due_date", today)
           .neq("status", "completed"),
+        supabase
+          .from("health_checkups")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .in("status", ["open", "planned"])
+          .lt("due_date", today),
+        supabase
+          .from("health_checkups")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .in("status", ["open", "planned"])
+          .is("due_date", null)
+          .lt("appointment_date", today),
+        supabase
+          .from("investigations")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .in("status", ["due", "planned", "open", "in_progress"])
+          .lt("due_date", today),
       ]);
 
-      return (expiredTrainings.count || 0) + (overdueMeasures.count || 0);
+      return (
+        (expiredTrainings.count || 0) +
+        (overdueMeasures.count || 0) +
+        (overdueCheckupsByDueDate.count || 0) +
+        (overdueCheckupsByAppointmentDate.count || 0) +
+        (overdueInvestigations.count || 0)
+      );
     } catch (error) {
       console.error("Error fetching overdue obligations:", error);
       return 0;

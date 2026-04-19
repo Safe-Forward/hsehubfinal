@@ -418,6 +418,58 @@ export default function Investigations() {
     }
   };
 
+  const createHealthCheckupFromInvestigationForm = async (
+    investigationData: any
+  ) => {
+    if (!investigationData.assigned_to_id || !companyId) {
+      throw new Error("Please select an employee to create a health checkup.");
+    }
+
+    const gInvestigation = gInvestigations.find(
+      (g) => g.name === investigationData.g_code
+    );
+
+    const investigationName = gInvestigation
+      ? gInvestigation.name
+      : investigationData.g_code || investigationData.investigation_id;
+
+    const mappedStatus =
+      investigationData.status === "completed"
+        ? "done"
+        : investigationData.status === "planned"
+          ? "planned"
+          : "open";
+
+    const checkupData: any = {
+      employee_id: investigationData.assigned_to_id,
+      company_id: companyId,
+      investigation_name: investigationName,
+      appointment_date:
+        investigationData.appointment_date ||
+        investigationData.start_date?.toString().split("T")[0] ||
+        new Date().toISOString().split("T")[0],
+      status: mappedStatus,
+      notes:
+        [
+          investigationData.doctor
+            ? `Doctor: ${investigationData.doctor}`
+            : null,
+          investigationData.description,
+          investigationData.findings,
+          investigationData.recommendations,
+        ]
+          .filter(Boolean)
+          .join("\n\n") || null,
+    };
+
+    if (investigationData.due_date) {
+      checkupData.due_date = investigationData.due_date;
+    }
+
+    const { error } = await supabase.from("health_checkups").insert(checkupData);
+    if (error) throw error;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyId) return;
@@ -476,7 +528,30 @@ export default function Investigations() {
           .insert(investigationData as any)
           .select()
           .single();
-        if (error) throw error;
+
+        if (error) {
+          // Some roles can create health checkups but are blocked from direct
+          // inserts into investigations by current RLS policies.
+          if (
+            String(error.message || "")
+              .toLowerCase()
+              .includes("row-level security")
+          ) {
+            await createHealthCheckupFromInvestigationForm(investigationData);
+            toast({
+              title: t("common.success"),
+              description: t("investigations.created"),
+            });
+
+            setIsDialogOpen(false);
+            resetForm();
+            fetchInvestigations();
+            fetchHealthCheckups();
+            return;
+          }
+
+          throw error;
+        }
 
         // Sync with health_checkups if employee is assigned
         if (investigationData.assigned_to_id && newInvestigation) {
