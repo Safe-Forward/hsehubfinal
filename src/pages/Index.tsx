@@ -22,8 +22,6 @@ import {
   FileText,
   Bell,
   Database,
-  ChevronRight,
-  Play,
   Check,
 } from "lucide-react";
 
@@ -305,14 +303,6 @@ const Index = () => {
                 Testversion starten
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-lg h-16 px-10 border-2 hover:border-blue-600 hover:bg-blue-50 transition-all group"
-              >
-                <Play className="mr-2 h-5 w-5" />
-                Watch Demo
-              </Button>
             </div>
 
             <div className="flex items-center gap-3 text-sm text-gray-600">
@@ -419,13 +409,6 @@ const Index = () => {
                 <p className="text-gray-600 leading-relaxed mb-4">
                   {feature.description}
                 </p>
-                <Button
-                  variant="ghost"
-                  className="p-0 h-auto text-blue-600 hover:text-blue-700 group/btn"
-                >
-                  Learn more
-                  <ChevronRight className="ml-1 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
-                </Button>
               </CardContent>
             </Card>
           ))}
@@ -466,19 +449,6 @@ const Index = () => {
                 <p className="text-gray-700 italic mb-6 leading-relaxed">
                   "{testimonial.quote}"
                 </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center text-white font-bold text-lg">
-                    {testimonial.author.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900">
-                      {testimonial.author}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {testimonial.role} at {testimonial.company}
-                    </div>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -805,8 +775,8 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t bg-gray-50 py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-2">
+          <div className="mb-12">
+            <div>
               <div className="flex items-center gap-3 mb-4">
                 <img
                   src="/logo.png"
@@ -841,64 +811,6 @@ const Index = () => {
                 </Badge>
               </div>
             </div>
-
-            <div>
-              <h4 className="font-bold text-gray-900 mb-4">Product</h4>
-              <ul className="space-y-3 text-gray-600">
-                <li>
-                  <a
-                    href="#features"
-                    className="hover:text-blue-600 transition-colors"
-                  >
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#pricing"
-                    className="hover:text-blue-600 transition-colors"
-                  >
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-600 transition-colors">
-                    Security
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-600 transition-colors">
-                    Integrations
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-gray-900 mb-4">Company</h4>
-              <ul className="space-y-3 text-gray-600">
-                <li>
-                  <a href="#" className="hover:text-blue-600 transition-colors">
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-600 transition-colors">
-                    Contact
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-600 transition-colors">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-blue-600 transition-colors">
-                    Terms of Service
-                  </a>
-                </li>
-              </ul>
-            </div>
           </div>
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t">
@@ -906,14 +818,17 @@ const Index = () => {
               © 2025 SafetyHub. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm text-gray-600">
-              <a href="#" className="hover:text-blue-600 transition-colors">
-                Status
+              <a
+                href="/impressum"
+                className="hover:text-blue-600 transition-colors"
+              >
+                Impressum
               </a>
-              <a href="#" className="hover:text-blue-600 transition-colors">
-                Documentation
-              </a>
-              <a href="#" className="hover:text-blue-600 transition-colors">
-                API
+              <a
+                href="/datenschutz"
+                className="hover:text-blue-600 transition-colors"
+              >
+                Datenschutzerklärung
               </a>
             </div>
           </div>

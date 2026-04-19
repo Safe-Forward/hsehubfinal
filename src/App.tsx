@@ -48,6 +48,8 @@ import NotFound from "./pages/NotFound";
 import PublicNotes from "./pages/PublicNotes";
 import Notifications from "./pages/Notifications";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import Impressum from "./pages/Impressum";
+import Datenschutz from "./pages/Datenschutz";
 import MainLayout from "./components/MainLayout";
 import SuperAdminRoute from "./components/SuperAdminRoute";
 
@@ -65,6 +67,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/register" element={<CompanyRegistration />} />
+              <Route path="/impressum" element={<Impressum />} />
+              <Route path="/datenschutz" element={<Datenschutz />} />
               <Route path="/auth-debug" element={<AuthDebug />} />
 
               {/* Super Admin PIN Verification */}
