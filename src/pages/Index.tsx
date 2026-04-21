@@ -622,7 +622,7 @@ const Index = () => {
             <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-center mb-6">
-                  Available Add-ons
+                 Verfügbare Add-ons
                 </h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
@@ -639,18 +639,18 @@ const Index = () => {
                   <div className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-semibold text-gray-900">
-                        QuickStart
+                        Gezielte Einführung
                       </h4>
-                      <Badge variant="secondary">€149 one-time</Badge>
+                      <Badge variant="secondary">149€ einmalig</Badge>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Fast-track onboarding and setup assistance
+                      Schnelle Einarbeitung und Unterstützung bei der Einrichtung
                     </p>
                   </div>
                   <div className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-semibold text-gray-900">
-                        Priority Support
+                        Prioritäts-Support
                       </h4>
                       <Badge variant="secondary">€49/month</Badge>
                     </div>
@@ -793,8 +793,8 @@ const Index = () => {
                 </div>
               </div>
               <p className="text-gray-600 mb-4 leading-relaxed">
-                Empowering organizations to create safer workplaces through
-                innovative HSE management solutions.
+                Wir unterstützen Unternehmen dabei, durch innovative Lösungen für das 
+                Arbeitsschutzmanagement sicherere Arbeitsplätze zu schaffen.
               </p>
               <div className="flex gap-3">
                 <Badge
