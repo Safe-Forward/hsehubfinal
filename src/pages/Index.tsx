@@ -628,12 +628,12 @@ const Index = () => {
                   <div className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-semibold text-gray-900">
-                        Basic Safety Course Bundle
+                        Einführung in das System
                       </h4>
-                      <Badge variant="secondary">€149/year</Badge>
+                      <Badge variant="secondary">149€ einmalig</Badge>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Essential safety training courses for your team
+                      Unverzichtbare Sicherheitsschulungen für Ihr Team
                     </p>
                   </div>
                   <div className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
@@ -652,10 +652,10 @@ const Index = () => {
                       <h4 className="font-semibold text-gray-900">
                         Prioritäts-Support
                       </h4>
-                      <Badge variant="secondary">€49/month</Badge>
+                      <Badge variant="secondary">49€/monat</Badge>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Dedicated support with faster response times
+                     Engagierter Support mit kürzeren Reaktionszeiten
                     </p>
                   </div>
                   <div className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
@@ -663,40 +663,40 @@ const Index = () => {
                       <h4 className="font-semibold text-gray-900">
                         Multi-site Basic
                       </h4>
-                      <Badge variant="secondary">€99/month</Badge>
+                      <Badge variant="secondary">99€/monat</Badge>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Up to 3 locations (€29/additional site)
+                      Bis zu 3 Standorte (29€ pro zusätzlichem Standort)
                     </p>
                   </div>
                   <div className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-semibold text-gray-900">
-                        Custom Course Upload
+                        Eigenen Kurs hochladen
                       </h4>
-                      <Badge variant="secondary">€49/month</Badge>
+                      <Badge variant="secondary">49€/monat</Badge>
                     </div>
                     <p className="text-sm text-gray-600">
-                      Upload and manage your own training content
+                      Laden Sie Ihre eigenen Schulungsinhalte hoch und verwalten Sie sie
                     </p>
                   </div>
                   <div className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="mb-3">
                       <h4 className="font-semibold text-gray-900 mb-2">
-                        Storage+
+                        Speicher+
                       </h4>
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-600">50GB</span>
-                          <Badge variant="outline">€19/month</Badge>
+                          <Badge variant="outline">19€/monat</Badge>
                         </div>
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-gray-600">200GB</span>
-                          <Badge variant="outline">€59/month</Badge>
+                          <Badge variant="outline">59€/monat</Badge>
                         </div>
                         <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">Unlimited</span>
-                          <Badge variant="outline">€149/month</Badge>
+                          <span className="text-gray-600">unbegrenzt</span>
+                          <Badge variant="outline">149€/monat</Badge>
                         </div>
                       </div>
                     </div>
