@@ -883,7 +883,7 @@ export default function RiskAssessments() {
                                     {formData.assessment_date ? (
                                       format(new Date(formData.assessment_date), "PPP")
                                     ) : (
-                                      <span>Pick a date</span>
+                                      <span>{t("common.pickDate")}</span>
                                     )}
                                   </Button>
                                 </PopoverTrigger>

@@ -966,13 +966,23 @@ export default function Investigations() {
 
     const matchesDateFrom =
       !filterDateFrom ||
+<<<<<<< HEAD
       (investigation.due_date && investigation.due_date >= filterDateFrom) ||
       (investigation.appointment_date && investigation.appointment_date >= filterDateFrom);
 
+    const matchesDateFrom =
+      !filterDateFrom ||
+      ((investigation.due_date && investigation.due_date >= filterDateFrom) ||
+        (investigation.appointment_date && investigation.appointment_date >= filterDateFrom));
+
     const matchesDateTo =
       !filterDateTo ||
-      (investigation.due_date && investigation.due_date <= filterDateTo) ||
-      (investigation.appointment_date && investigation.appointment_date <= filterDateTo);
+      ((investigation.due_date && investigation.due_date <= filterDateTo) ||
+        (investigation.appointment_date && investigation.appointment_date <= filterDateTo));
+      !filterDateTo ||
+      ((investigation.due_date && investigation.due_date <= filterDateTo) ||
+        (investigation.appointment_date && investigation.appointment_date <= filterDateTo));
+>>>>>>> c458156 (feat: add translations for date picker and update UI components to use localized strings)
 
     return (
       matchesSearch &&
@@ -1015,13 +1025,13 @@ export default function Investigations() {
 
         const matchesDateFrom =
           !filterDateFrom ||
-          (checkup.due_date && checkup.due_date >= filterDateFrom) ||
-          (checkup.appointment_date && checkup.appointment_date >= filterDateFrom);
+          ((checkup.due_date && checkup.due_date >= filterDateFrom) ||
+            (checkup.appointment_date && checkup.appointment_date >= filterDateFrom));
 
         const matchesDateTo =
           !filterDateTo ||
-          (checkup.due_date && checkup.due_date <= filterDateTo) ||
-          (checkup.appointment_date && checkup.appointment_date <= filterDateTo);
+          ((checkup.due_date && checkup.due_date <= filterDateTo) ||
+            (checkup.appointment_date && checkup.appointment_date <= filterDateTo));
           
         if (!matchesDateFrom || !matchesDateTo) return false;
 
@@ -1133,15 +1143,34 @@ export default function Investigations() {
 
     const matchesDateFrom =
       !filterDateFrom ||
+<<<<<<< HEAD
       (checkup.due_date && checkup.due_date >= filterDateFrom) ||
       (checkup.appointment_date && checkup.appointment_date >= filterDateFrom);
 
+    const matchesDateFrom =
+      !filterDateFrom ||
+      ((checkup.due_date && checkup.due_date >= filterDateFrom) ||
+        (checkup.appointment_date && checkup.appointment_date >= filterDateFrom));
+
     const matchesDateTo =
       !filterDateTo ||
-      (checkup.due_date && checkup.due_date <= filterDateTo) ||
-      (checkup.appointment_date && checkup.appointment_date <= filterDateTo);
+      ((checkup.due_date && checkup.due_date <= filterDateTo) ||
+        (checkup.appointment_date && checkup.appointment_date <= filterDateTo));
 
-    return matchesSearch && matchesDepartment && matchesGroup && matchesStatus && matchesDateFrom && matchesDateTo;
+    const matchesDateTo =
+      !filterDateTo ||
+      ((checkup.due_date && checkup.due_date <= filterDateTo) ||
+        (checkup.appointment_date && checkup.appointment_date <= filterDateTo));
+
+    return (
+      matchesSearch &&
+      matchesDepartment &&
+      matchesGroup &&
+      matchesStatus &&
+      matchesDateFrom &&
+      matchesDateTo
+    );
+>>>>>>> c458156 (feat: add translations for date picker and update UI components to use localized strings)
   });
 
   const sortedDateRows = [...filteredDateCheckups].sort((a: any, b: any) => {
@@ -1195,6 +1224,7 @@ export default function Investigations() {
 
     const matchesDateFrom =
       !filterDateFrom ||
+<<<<<<< HEAD
       (checkup.due_date && checkup.due_date >= filterDateFrom) ||
       (checkup.appointment_date && checkup.appointment_date >= filterDateFrom);
 
@@ -1204,6 +1234,24 @@ export default function Investigations() {
       (checkup.appointment_date && checkup.appointment_date <= filterDateTo);
 
     return matchesSearch && matchesDepartment && matchesGroup && matchesStatus && matchesDateFrom && matchesDateTo;
+=======
+      ((checkup.due_date && checkup.due_date >= filterDateFrom) ||
+        (checkup.appointment_date && checkup.appointment_date >= filterDateFrom));
+
+    const matchesDateTo =
+      !filterDateTo ||
+      ((checkup.due_date && checkup.due_date <= filterDateTo) ||
+        (checkup.appointment_date && checkup.appointment_date <= filterDateTo));
+
+    return (
+      matchesSearch &&
+      matchesDepartment &&
+      matchesGroup &&
+      matchesStatus &&
+      matchesDateFrom &&
+      matchesDateTo
+    );
+>>>>>>> c458156 (feat: add translations for date picker and update UI components to use localized strings)
   });
 
   const sortedCheckupRows = [...filteredCheckupRows].sort((a: any, b: any) => {
@@ -1500,7 +1548,7 @@ export default function Investigations() {
                               {formData.start_date ? (
                                 format(new Date(formData.start_date), "PPP")
                               ) : (
-                                <span>Pick a date</span>
+                                <span>{t("common.pickDate")}</span>
                               )}
                             </Button>
                           </PopoverTrigger>
@@ -1533,7 +1581,7 @@ export default function Investigations() {
                               {formData.due_date ? (
                                 format(new Date(formData.due_date), "PPP")
                               ) : (
-                                <span>Pick a date</span>
+                                <span>{t("common.pickDate")}</span>
                               )}
                             </Button>
                           </PopoverTrigger>
@@ -1566,7 +1614,7 @@ export default function Investigations() {
                               {formData.appointment_date ? (
                                 format(new Date(formData.appointment_date), "PPP")
                               ) : (
-                                <span>Pick a date</span>
+                                <span>{t("common.pickDate")}</span>
                               )}
                             </Button>
                           </PopoverTrigger>
@@ -1675,7 +1723,7 @@ export default function Investigations() {
             <Button
               variant={viewMode === "employee" ? "default" : "outline"}
               onClick={() => setViewMode("employee")}
-              className="flex-1"
+              className="flex-1 basis-0"
             >
               <Users className="w-4 h-4 mr-2" />
               {t("investigations.employeeView")}
@@ -1683,7 +1731,7 @@ export default function Investigations() {
             <Button
               variant={viewMode === "date" ? "default" : "outline"}
               onClick={() => setViewMode("date")}
-              className="flex-1"
+              className="flex-1 basis-0"
             >
               <CalendarIcon className="w-4 h-4 mr-2" />
               {t("investigations.dateView")}
@@ -1691,10 +1739,10 @@ export default function Investigations() {
             <Button
               variant={viewMode === "checkup" ? "default" : "outline"}
               onClick={() => setViewMode("checkup")}
-              className="flex-1"
+              className="flex-1 basis-0"
             >
               <FileDown className="w-4 h-4 mr-2" />
-              Checkup View
+              {t("investigations.checkupView")}
             </Button>
           </div>
 

@@ -626,7 +626,7 @@ export default function Audits() {
                       {formData.scheduled_date ? (
                         format(new Date(formData.scheduled_date), "PPP")
                       ) : (
-                        <span>Pick a date</span>
+                        <span>{t("common.pickDate")}</span>
                       )}
                     </Button>
                   </PopoverTrigger>

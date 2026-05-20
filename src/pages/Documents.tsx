@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +61,7 @@ import {
 import { formatDistanceToNow, format } from "date-fns";
 
 export default function Documents() {
+  const { t } = useLanguage();
   const { companyId, user } = useAuth();
   const { hasDetailedPermission } = usePermissions();
   const { toast } = useToast();
@@ -652,7 +654,7 @@ export default function Documents() {
                     {uploadExpiryDate ? (
                       format(new Date(uploadExpiryDate), "PPP")
                     ) : (
-                      <span>Pick a date</span>
+                      <span>{t("common.pickDate")}</span>
                     )}
                   </Button>
                 </PopoverTrigger>

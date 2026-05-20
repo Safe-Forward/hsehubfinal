@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, Search, Calendar as CalendarIcon } from "lucide-react";
@@ -70,6 +71,7 @@ const taskSchema = z.object({
 type TaskFormData = z.infer<typeof taskSchema>;
 
 export default function Tasks() {
+  const { t } = useLanguage();
   const { user, loading, companyId, userRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -559,7 +561,7 @@ export default function Tasks() {
                                       {field.value ? (
                                         format(new Date(field.value), "PPP")
                                       ) : (
-                                        <span>Pick a date</span>
+                                        <span>{t("common.pickDate")}</span>
                                       )}
                                     </Button>
                                   </PopoverTrigger>

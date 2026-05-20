@@ -1470,7 +1470,7 @@ export default function Employees() {
                               {formData.hire_date ? (
                                 format(new Date(formData.hire_date), "PPP")
                               ) : (
-                                <span>Pick a date</span>
+                                <span>{t("common.pickDate")}</span>
                               )}
                             </Button>
                           </PopoverTrigger>

@@ -800,11 +800,11 @@ export default function Incidents() {
                             className={`w-full justify-start text-left font-normal ${!formData.incident_date && "text-muted-foreground"}`}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.incident_date ? (
-                              format(new Date(formData.incident_date), "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
+                              {formData.incident_date ? (
+                                format(new Date(formData.incident_date), "PPP")
+                              ) : (
+                                <span>{t("common.pickDate")}</span>
+                              )}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">

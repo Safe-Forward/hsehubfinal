@@ -519,7 +519,7 @@ export default function Measures() {
                               {formData.due_date ? (
                                 format(new Date(formData.due_date), "PPP")
                               ) : (
-                                <span>Pick a date</span>
+                                <span>{t("common.pickDate")}</span>
                               )}
                             </Button>
                           </PopoverTrigger>
@@ -551,7 +551,7 @@ export default function Measures() {
                               {formData.completion_date ? (
                                 format(new Date(formData.completion_date), "PPP")
                               ) : (
-                                <span>Pick a date</span>
+                                <span>{t("common.pickDate")}</span>
                               )}
                             </Button>
                           </PopoverTrigger>
