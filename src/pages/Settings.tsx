@@ -4035,7 +4035,10 @@ export default function Settings() {
                                           size="icon"
                                           onClick={() => {
                                             setCurrentTableName("departments");
-                                            setDeleteItem(dept);
+                                            setDeleteItem({
+                                              ...dept,
+                                              tableName: "departments",
+                                            });
                                           }}
                                         >
                                           <Trash2 className="w-4 h-4 text-destructive" />
@@ -4350,7 +4353,10 @@ export default function Settings() {
                                             setCurrentTableName(
                                               "exposure_groups"
                                             );
-                                            setDeleteItem(group);
+                                            setDeleteItem({
+                                              ...group,
+                                              tableName: "exposure_groups",
+                                            });
                                           }}
                                         >
                                           <Trash2 className="w-4 h-4 text-destructive" />
