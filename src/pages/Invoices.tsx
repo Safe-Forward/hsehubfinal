@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,12 +63,14 @@ import {
   ExternalLink,
   Mail,
   Send,
+  Save,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format, addDays, isBefore } from "date-fns";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1077,7 +1079,9 @@ function PaymentMethodsTab({
 export default function Invoices() {
   const { companyId, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
   const [searchParams, setSearchParams] = useSearchParams();
+  const draftInvoiceAttemptedRef = useRef(false);
 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [company, setCompany] = useState<CompanyBillingInfo | null>(null);
@@ -1092,6 +1096,10 @@ export default function Invoices() {
   const [sendTarget, setSendTarget] = useState<Invoice | null>(null);
   const [sendEmail, setSendEmail] = useState("");
   const [sendLoading, setSendLoading] = useState(false);
+  const [stripeUnavailable, setStripeUnavailable] = useState(false);
+  const [billingEmailDialogOpen, setBillingEmailDialogOpen] = useState(false);
+  const [billingEmailInput, setBillingEmailInput] = useState("");
+  const [savingBillingEmail, setSavingBillingEmail] = useState(false);
 
   const fetchData = useCallback(
     async (silent = false) => {
@@ -1150,8 +1158,11 @@ export default function Invoices() {
         if (invoicesRes.error) throw invoicesRes.error;
         if (companyRes.error) throw companyRes.error;
 
-        setInvoices((invoicesRes.data ?? []) as Invoice[]);
-        setCompany(companyRes.data as CompanyBillingInfo);
+        const invoiceData = (invoicesRes.data ?? []) as Invoice[];
+        const companyData = companyRes.data as CompanyBillingInfo;
+        setInvoices(invoiceData);
+        setCompany(companyData);
+
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Failed to load billing data.";
         setError(msg);
@@ -1166,6 +1177,87 @@ export default function Invoices() {
     [companyId, toast]
   );
 
+  const autoCreateDraftInvoice = useCallback(
+    async (comp: CompanyBillingInfo) => {
+      if (!companyId) return;
+      if (draftInvoiceAttemptedRef.current) return;
+      if (comp.subscription_status !== "active" && comp.subscription_status !== "trial") return;
+
+      draftInvoiceAttemptedRef.current = true;
+
+      try {
+        const tier = comp.subscription_tier ?? "basic";
+        const price = PLAN_PRICES[tier] ?? PLAN_PRICES.basic;
+        const now = new Date();
+        const periodStart = comp.subscription_start_date
+          ? new Date(comp.subscription_start_date)
+          : new Date(now.getFullYear(), now.getMonth(), 1);
+        const periodEnd = new Date(periodStart);
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+        const dueDate = new Date(periodEnd);
+        dueDate.setDate(dueDate.getDate() + 14);
+
+        const { data: generatedInvoiceNumber, error: numberError } = await supabase.rpc("generate_invoice_number", {
+          p_company_id: companyId,
+        });
+
+        const invoiceNum =
+          typeof generatedInvoiceNumber === "string" && generatedInvoiceNumber
+            ? generatedInvoiceNumber
+            : `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}-001`;
+
+        if (numberError) {
+          console.warn("Falling back to local invoice number generation:", numberError.message);
+        }
+
+        const { data: insertedInvoice, error } = await supabase.from("invoices").insert({
+          company_id: companyId,
+          invoice_number: invoiceNum,
+          status: comp.subscription_status === "active" ? "pending" : "draft",
+          subtotal: price,
+          tax_amount: 0,
+          total: price,
+          currency: "EUR",
+          billing_period_start: periodStart.toISOString(),
+          billing_period_end: periodEnd.toISOString(),
+          due_date: dueDate.toISOString(),
+          line_items: [
+            {
+              description: `${PLAN_LABELS[tier]} Plan - HSE Safety Hub Subscription`,
+              quantity: 1,
+              unit_price: price,
+              total: price,
+            },
+          ],
+          notes: "Auto-generated invoice for the current subscription period.",
+          metadata: { auto_generated: true, plan: tier, source: "ui_fallback" },
+        }).select("id, invoice_number").single();
+
+        if (error) throw error;
+
+        await logAction({
+          action: "create_draft_invoice",
+          targetType: "invoice",
+          targetId: insertedInvoice?.id ?? companyId,
+          targetName: insertedInvoice?.invoice_number ?? invoiceNum,
+          companyIdOverride: companyId,
+          details: {
+            plan: tier,
+            status: comp.subscription_status === "active" ? "pending" : "draft",
+            total: price,
+            currency: "EUR",
+            source: "ui_fallback",
+          },
+        });
+
+        await fetchData(true);
+      } catch (err) {
+        console.error("Failed to auto-create draft invoice:", err);
+      }
+    },
+    [companyId, fetchData, logAction]
+  );
+
   useEffect(() => {
     if (!authLoading && companyId) {
       fetchData();
@@ -1173,6 +1265,12 @@ export default function Invoices() {
       setLoading(false);
     }
   }, [authLoading, companyId, fetchData]);
+
+  useEffect(() => {
+    if (!loading && company && invoices.length === 0) {
+      autoCreateDraftInvoice(company);
+    }
+  }, [loading, company, invoices.length, autoCreateDraftInvoice]);
 
   // Handle Stripe checkout return
   useEffect(() => {
@@ -1232,20 +1330,133 @@ export default function Invoices() {
   const openBillingPortal = useCallback(async () => {
     setBillingLoading(true);
     try {
+      await logAction({
+        action: "view",
+        targetType: "billing_portal",
+        targetId: companyId ?? "billing-portal",
+        targetName: company?.name ?? "Billing Portal",
+        companyIdOverride: companyId ?? undefined,
+        details: {
+          action: "open_billing_portal",
+          current_status: company?.subscription_status ?? "unknown",
+        },
+      });
+
       const { data, error } = await supabase.functions.invoke("stripe-billing-portal", {
         body: { return_url: window.location.href },
       });
+
+      // Handle Stripe not configured (503) gracefully
+      if (data?.error === "stripe_not_configured") {
+        setStripeUnavailable(true);
+        setBillingLoading(false);
+        return;
+      }
+
       if (error || !data?.url) throw new Error(error?.message ?? "Failed to open billing portal");
       window.location.href = data.url;
     } catch (err: unknown) {
-      toast({
-        title: "Billing portal unavailable",
-        description: err instanceof Error ? err.message : "Please try again later.",
-        variant: "destructive",
-      });
+      // Check if this is a non-2xx response that contains our friendly error
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("stripe_not_configured") || msg.includes("503") || msg.includes("non-2xx")) {
+        setStripeUnavailable(true);
+      } else {
+        toast({
+          title: "Billing portal unavailable",
+          description: msg || "Please try again later.",
+          variant: "destructive",
+        });
+      }
       setBillingLoading(false);
     }
-  }, [toast]);
+  }, [company?.name, company?.subscription_status, companyId, logAction, toast]);
+
+  // ── Billing email helpers ────────────────────────────────────────────────────
+  const openBillingEmailDialog = useCallback(() => {
+    setBillingEmailInput(company?.billing_email ?? company?.email ?? "");
+    setBillingEmailDialogOpen(true);
+  }, [company]);
+
+  const saveBillingEmail = useCallback(async () => {
+    if (!billingEmailInput || !billingEmailInput.includes("@") || !companyId) return;
+    setSavingBillingEmail(true);
+    try {
+      const { error } = await supabase
+        .from("companies")
+        .update({ billing_email: billingEmailInput })
+        .eq("id", companyId);
+      if (error) throw error;
+      setCompany((prev) => prev ? { ...prev, billing_email: billingEmailInput } : prev);
+      await logAction({
+        action: "update_billing_email",
+        targetType: "company",
+        targetId: companyId,
+        targetName: company?.name ?? "Company",
+        companyIdOverride: companyId,
+        details: { new_email: billingEmailInput },
+      });
+      toast({ title: "Billing email saved", description: `Invoices will be sent to ${billingEmailInput}` });
+      setBillingEmailDialogOpen(false);
+    } catch (err: unknown) {
+      toast({
+        title: "Failed to save billing email",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingBillingEmail(false);
+    }
+  }, [billingEmailInput, company, companyId, logAction, toast]);
+
+  // ── Auto-create draft invoice for active subscriptions with no invoices ──────
+  const legacyAutoCreateDraftInvoice = useCallback(async (comp: CompanyBillingInfo) => {
+    if (!companyId) return;
+    if (comp.subscription_status !== "active" && comp.subscription_status !== "trial") return;
+
+    const tier = comp.subscription_tier ?? "basic";
+    const price = PLAN_PRICES[tier] ?? 149;
+    const now = new Date();
+    const periodStart = comp.subscription_start_date ? new Date(comp.subscription_start_date) : new Date(now.getFullYear(), now.getMonth(), 1);
+    const periodEnd = new Date(periodStart);
+    periodEnd.setMonth(periodEnd.getMonth() + 1);
+    const dueDate = new Date(periodEnd);
+    dueDate.setDate(dueDate.getDate() + 14);
+
+    const invoiceNum = `INV-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}-001`;
+
+    const { error } = await supabase.from("invoices").insert({
+      company_id: companyId,
+      invoice_number: invoiceNum,
+      status: comp.subscription_status === "active" ? "pending" : "draft",
+      subtotal: price,
+      tax_amount: 0,
+      total: price,
+      currency: "EUR",
+      billing_period_start: periodStart.toISOString(),
+      billing_period_end: periodEnd.toISOString(),
+      due_date: dueDate.toISOString(),
+      line_items: [
+        {
+          description: `${PLAN_LABELS[tier]} Plan – HSE Safety Hub Subscription`,
+          quantity: 1,
+          unit_price: price,
+          total: price,
+        },
+      ],
+      notes: "Auto-generated invoice for subscription period.",
+      metadata: { auto_generated: true, plan: tier },
+    });
+
+    if (!error) {
+      // Refresh invoices list
+      const { data } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false });
+      if (data) setInvoices(data as Invoice[]);
+    }
+  }, [companyId]);
 
   const openCheckout = useCallback((tier: PlanTier, interval: BillingInterval = "monthly") => {
     setBillingLoading(true);
@@ -1275,6 +1486,20 @@ export default function Invoices() {
         previousEndDate: company?.subscription_end_date ?? null,
       });
 
+      void logAction({
+        action: "start_checkout",
+        targetType: "subscription",
+        targetId: `${tier}:${interval}`,
+        targetName: `${PLAN_LABELS[tier]} ${interval === "yearly" ? "Yearly" : "Monthly"}`,
+        companyIdOverride: companyId,
+        details: {
+          tier,
+          interval,
+          amount: PLAN_PRICES[tier] ?? null,
+          payment_link: paymentLink,
+        },
+      });
+
       window.location.href = urlWithRef.toString();
     } catch (err: unknown) {
       toast({
@@ -1284,7 +1509,7 @@ export default function Invoices() {
       });
       setBillingLoading(false);
     }
-  }, [company, companyId, toast]);
+  }, [company, companyId, logAction, toast]);
 
   const stats = useMemo(() => {
     const paid = invoices.filter((i) => i.status === "paid");
@@ -1309,11 +1534,34 @@ export default function Invoices() {
   const currency = invoices[0]?.currency ?? "EUR";
 
   const handleView = (invoice: Invoice) => {
+    void logAction({
+      action: "view",
+      targetType: "invoice",
+      targetId: invoice.id,
+      targetName: invoice.invoice_number,
+      companyIdOverride: companyId ?? undefined,
+      details: {
+        status: invoice.status,
+        total: invoice.total,
+        currency: invoice.currency,
+      },
+    });
     setSelectedInvoice(invoice);
     setDetailOpen(true);
   };
 
   const handleDownload = (invoice: Invoice) => {
+    void logAction({
+      action: "download_invoice",
+      targetType: "invoice",
+      targetId: invoice.id,
+      targetName: invoice.invoice_number,
+      companyIdOverride: companyId ?? undefined,
+      details: {
+        total: invoice.total,
+        currency: invoice.currency,
+      },
+    });
     generateInvoicePDF(invoice, company?.name ?? "Company");
     toast({ title: "PDF generated", description: `${invoice.invoice_number}.pdf downloaded.` });
   };
@@ -1336,6 +1584,18 @@ export default function Invoices() {
         },
       });
       if (error || !data?.success) throw new Error(error?.message ?? data?.error ?? "Failed to send");
+      await logAction({
+        action: "send_invoice",
+        targetType: "invoice",
+        targetId: sendTarget.id,
+        targetName: sendTarget.invoice_number,
+        companyIdOverride: companyId ?? undefined,
+        details: {
+          recipient_email: sendEmail,
+          sent_via: "supabase_function",
+          status: sendTarget.status,
+        },
+      });
       toast({
         title: "Invoice sent!",
         description: `${sendTarget.invoice_number} emailed to ${sendEmail}.`,
@@ -1432,6 +1692,39 @@ export default function Invoices() {
           Refresh
         </Button>
       </div>
+
+      {/* Stripe not configured banner */}
+      {stripeUnavailable && (
+        <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Billing Portal Not Yet Configured</p>
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+              Stripe payment processing is not yet set up. To use the billing portal, an administrator must configure the <strong>STRIPE_SECRET_KEY</strong> in the Supabase Edge Function secrets. Until then, invoices can still be generated and sent manually below.
+            </p>
+          </div>
+          <Button size="sm" variant="outline" className="shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:border-amber-700" onClick={() => setStripeUnavailable(false)}>
+            Dismiss
+          </Button>
+        </div>
+      )}
+
+      {/* Missing billing email banner */}
+      {!company?.billing_email && company && (
+        <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+          <div className="flex-1">
+            <p className="font-semibold text-blue-800 dark:text-blue-200 text-sm">Set a Billing Email</p>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+              No billing email is set for your account. Invoices and payment receipts will be sent to this address.
+            </p>
+          </div>
+          <Button size="sm" className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white" onClick={openBillingEmailDialog}>
+            <Mail className="w-3.5 h-3.5 mr-1.5" />
+            Set Email
+          </Button>
+        </div>
+      )}
 
       {/* Stats + Subscription card */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1650,6 +1943,42 @@ export default function Invoices() {
             <Button onClick={handleSendConfirm} disabled={sendLoading || !sendEmail}>
               {sendLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
               Send Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Billing Email Setup Dialog */}
+      <Dialog open={billingEmailDialogOpen} onOpenChange={setBillingEmailDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              Set Billing Email
+            </DialogTitle>
+            <DialogDescription>
+              Invoices, payment receipts, and billing notifications will be sent to this address.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <div className="grid gap-1.5">
+              <Label htmlFor="billing-email-input">Billing Email Address</Label>
+              <Input
+                id="billing-email-input"
+                type="email"
+                value={billingEmailInput}
+                onChange={(e) => setBillingEmailInput(e.target.value)}
+                placeholder="billing@yourcompany.com"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBillingEmailDialogOpen(false)} disabled={savingBillingEmail}>
+              Cancel
+            </Button>
+            <Button onClick={saveBillingEmail} disabled={savingBillingEmail || !billingEmailInput}>
+              {savingBillingEmail ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Save Email
             </Button>
           </DialogFooter>
         </DialogContent>

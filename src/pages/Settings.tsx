@@ -397,6 +397,175 @@ export default function Settings() {
     }
   };
 
+  // ── API Token ──────────────────────────────────────────────────────────────
+  const fetchApiToken = async () => {
+    if (!companyId) return;
+    try {
+      const { data, error } = await supabase
+        .from("company_api_tokens")
+        .select("token, created_at, last_used_at")
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        // Table might not exist yet — silently skip
+        console.warn("API token table may not exist:", error.message);
+        return;
+      }
+      if (data?.token) {
+        setApiToken(data.token);
+      }
+    } catch (err) {
+      console.warn("Could not load API token:", err);
+    }
+  };
+
+  const generateApiToken = async () => {
+    if (!companyId) return;
+    setIsGeneratingToken(true);
+    try {
+      // Generate a secure random token
+      const array = new Uint8Array(32);
+      crypto.getRandomValues(array);
+      const token = Array.from(array).map(b => b.toString(16).padStart(2, "0")).join("");
+      const newToken = `hse_${token}`;
+
+      // Upsert token
+      const { error } = await supabase
+        .from("company_api_tokens")
+        .upsert(
+          {
+            company_id: companyId,
+            token: newToken,
+            created_at: new Date().toISOString(),
+            last_used_at: null,
+          },
+          { onConflict: "company_id" }
+        );
+
+      if (error) throw error;
+
+      setApiToken(newToken);
+      setShowApiToken(true);
+      toast({ title: "API token generated", description: "Copy and save your new token — it won't be shown again." });
+
+      // Log action
+      await supabase.rpc("create_audit_log", {
+        p_action_type: "generate_api_token",
+        p_target_type: "company",
+        p_target_id: companyId,
+        p_target_name: "API Token",
+        p_details: { generated_at: new Date().toISOString() },
+        p_company_id: companyId,
+      });
+    } catch (err: any) {
+      toast({ title: "Error generating token", description: err.message, variant: "destructive" });
+    } finally {
+      setIsGeneratingToken(false);
+    }
+  };
+
+  // ── External Systems ────────────────────────────────────────────────────────
+  const fetchExternalSystems = async () => {
+    if (!companyId) return;
+    try {
+      const { data, error } = await supabase
+        .from("external_systems")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.warn("External systems table may not exist:", error.message);
+        return;
+      }
+      setExternalSystems(data || []);
+    } catch (err) {
+      console.warn("Could not load external systems:", err);
+    }
+  };
+
+  const addExternalSystem = async () => {
+    if (!companyId || !newSystemForm.name || !newSystemForm.endpoint) return;
+    setIsAddingSystem(true);
+    try {
+      const { error } = await supabase.from("external_systems").insert({
+        company_id: companyId,
+        name: newSystemForm.name,
+        system_type: newSystemForm.type,
+        endpoint_url: newSystemForm.endpoint,
+        status: "active",
+        last_sync_at: null,
+        created_at: new Date().toISOString(),
+      });
+
+      if (error) throw error;
+
+      toast({ title: "System connected", description: `${newSystemForm.name} has been added.` });
+      setNewSystemForm({ name: "", type: "webhook", endpoint: "" });
+      setIsAddSystemDialogOpen(false);
+      fetchExternalSystems();
+
+      // Log action
+      await supabase.rpc("create_audit_log", {
+        p_action_type: "connect_external_system",
+        p_target_type: "system",
+        p_target_id: companyId,
+        p_target_name: newSystemForm.name,
+        p_details: { system_type: newSystemForm.type, endpoint: newSystemForm.endpoint },
+        p_company_id: companyId,
+      });
+    } catch (err: any) {
+      toast({ title: "Error adding system", description: err.message, variant: "destructive" });
+    } finally {
+      setIsAddingSystem(false);
+    }
+  };
+
+  const deleteExternalSystem = async (systemId: string, systemName: string) => {
+    if (!companyId) return;
+    try {
+      const { error } = await supabase
+        .from("external_systems")
+        .delete()
+        .eq("id", systemId)
+        .eq("company_id", companyId);
+
+      if (error) throw error;
+
+      toast({ title: "System removed", description: `${systemName} has been disconnected.` });
+      fetchExternalSystems();
+    } catch (err: any) {
+      toast({ title: "Error removing system", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const testExternalSystem = async (system: any) => {
+    try {
+      const response = await fetch(system.endpoint, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${apiToken}`,
+          "Content-Type": "application/json",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (response.ok) {
+        toast({ title: "Connection successful", description: `${system.name} responded with status ${response.status}` });
+        // Update last sync time
+        await supabase.from("external_systems").update({ last_sync_at: new Date().toISOString() }).eq("id", system.id);
+        fetchExternalSystems();
+      } else {
+        toast({ title: "Connection failed", description: `${system.name} returned status ${response.status}`, variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Connection test failed", description: err.message || "Could not reach the endpoint", variant: "destructive" });
+    }
+  };
+
   const loadPredefinedHazardCategories = async () => {
     if (!companyId) return;
 
@@ -927,180 +1096,6 @@ export default function Settings() {
       setMyTickets(data || []);
     } catch (err: any) {
       console.error("Error fetching tickets:", err);
-    }
-  };
-
-  // API Integration Functions
-  const generateApiToken = async () => {
-    if (!companyId) return;
-
-    setIsGeneratingToken(true);
-    try {
-      // Generate a secure random token
-      const newToken = `hse_${crypto.randomUUID().replace(/-/g, '')}`;
-
-      // Store token in company settings (you may want to hash it in production)
-      const { error } = await supabase
-        .from('companies')
-        .update({ api_token: newToken })
-        .eq('id', companyId);
-
-      if (error) throw error;
-
-      setApiToken(newToken);
-      setShowApiToken(true);
-
-      toast({
-        title: t("settings.tokenGenerated") || "Token Generated",
-        description: t("settings.tokenCopied") || "Your new API token has been generated. Copy it now - it won't be shown again!",
-      });
-
-      // Create audit log
-      logAction({
-        action: "generate_api_token",
-        targetType: "api_token",
-        targetId: companyId,
-        targetName: "API Token",
-        details: { action: "regenerated" }
-      });
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Failed to generate token",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingToken(false);
-    }
-  };
-
-  const fetchApiToken = async () => {
-    if (!companyId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('api_token')
-        .eq('id', companyId)
-        .single();
-
-      if (error) throw error;
-      if (data?.api_token) {
-        setApiToken(data.api_token);
-      }
-    } catch (err: any) {
-      console.error("Error fetching API token:", err);
-    }
-  };
-
-  const fetchExternalSystems = async () => {
-    if (!companyId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('external_systems')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        // Table might not exist yet
-        console.log("External systems not found or table doesn't exist");
-        return;
-      }
-      setExternalSystems(data || []);
-    } catch (err: any) {
-      console.error("Error fetching external systems:", err);
-    }
-  };
-
-  const addExternalSystem = async () => {
-    if (!companyId || !newSystemForm.name || !newSystemForm.endpoint) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsAddingSystem(true);
-    try {
-      const { data, error } = await supabase
-        .from('external_systems')
-        .insert([{
-          company_id: companyId,
-          system_name: newSystemForm.name,
-          system_type: newSystemForm.type,
-          endpoint_url: newSystemForm.endpoint,
-          is_active: true,
-        }])
-        .select();
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "External system added successfully",
-      });
-
-      // Reset form and close dialog
-      setNewSystemForm({ name: "", type: "webhook", endpoint: "" });
-      setIsAddSystemDialogOpen(false);
-      fetchExternalSystems();
-
-      // Create audit log
-      logAction({
-        action: "add_external_system",
-        targetType: "external_system",
-        targetId: (data as any)?.[0]?.id || "unknown",
-        targetName: newSystemForm.name,
-        details: { type: newSystemForm.type }
-      });
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Failed to add external system",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAddingSystem(false);
-    }
-  };
-
-  const deleteExternalSystem = async (systemId: string, systemName: string) => {
-    if (!companyId) return;
-
-    try {
-      const { error } = await supabase
-        .from('external_systems')
-        .delete()
-        .eq('id', systemId)
-        .eq('company_id', companyId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "External system deleted",
-      });
-
-      fetchExternalSystems();
-
-      // Create audit log
-      logAction({
-        action: "delete_external_system",
-        targetType: "external_system",
-        targetId: systemId,
-        targetName: systemName,
-        details: {}
-      });
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err.message || "Failed to delete system",
-        variant: "destructive",
-      });
     }
   };
 
@@ -5778,7 +5773,7 @@ export default function Settings() {
                             <p className="text-sm mb-2">
                               {t("settings.baseUrl")}{" "}
                               <code className="bg-muted px-2 py-1 rounded">
-                                https://api.hsehub.com/v1
+                                https://api.safe-forward.de/v1
                               </code>
                             </p>
                             <p className="text-sm text-muted-foreground">
@@ -5787,7 +5782,7 @@ export default function Settings() {
                             <Button
                               variant="link"
                               className="px-0 mt-2"
-                              onClick={() => window.open('https://docs.hsehub.com/api', '_blank')}
+                              onClick={() => window.open('https://docs.safe-forward.de/api', '_blank')}
                             >
                               {t("settings.viewApiDocs")} →
                             </Button>
@@ -5826,14 +5821,14 @@ export default function Settings() {
                                   externalSystems.map((system) => (
                                     <TableRow key={system.id}>
                                       <TableCell className="font-medium">
-                                        {system.system_name}
+                                        {system.name}
                                         <span className="text-xs text-muted-foreground ml-2">
                                           ({system.system_type})
                                         </span>
                                       </TableCell>
                                       <TableCell>
-                                        <Badge variant={system.is_active ? "default" : "secondary"}>
-                                          {system.is_active ? "Active" : "Inactive"}
+                                        <Badge variant={system.status === 'active' ? "default" : "secondary"}>
+                                          {system.status === 'active' ? "Active" : system.status === 'error' ? 'Error' : "Inactive"}
                                         </Badge>
                                       </TableCell>
                                       <TableCell>
@@ -5847,7 +5842,7 @@ export default function Settings() {
                                           variant="ghost"
                                           size="sm"
                                           className="text-destructive"
-                                          onClick={() => deleteExternalSystem(system.id, system.system_name)}
+                                          onClick={() => deleteExternalSystem(system.id, system.name)}
                                         >
                                           <Trash2 className="w-4 h-4" />
                                         </Button>
@@ -5897,6 +5892,10 @@ export default function Settings() {
                                     <SelectContent>
                                       <SelectItem value="webhook">Webhook</SelectItem>
                                       <SelectItem value="rest_api">REST API</SelectItem>
+                                      <SelectItem value="erp">ERP System</SelectItem>
+                                      <SelectItem value="sap">SAP</SelectItem>
+                                      <SelectItem value="oracle">Oracle ERP</SelectItem>
+                                      <SelectItem value="quickbooks">QuickBooks</SelectItem>
                                       <SelectItem value="sftp">SFTP</SelectItem>
                                       <SelectItem value="database">Database</SelectItem>
                                     </SelectContent>

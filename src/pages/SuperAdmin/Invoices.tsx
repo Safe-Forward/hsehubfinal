@@ -71,6 +71,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import type { Invoice, InvoiceStatus, LineItem } from "@/pages/Invoices";
+import { useAuditLog } from "@/hooks/useAuditLog";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -225,6 +226,7 @@ export default function SuperAdminInvoices() {
   const { userRole, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { logAction } = useAuditLog();
 
   const [invoices, setInvoices] = useState<InvoiceWithCompany[]>([]);
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
@@ -357,6 +359,17 @@ export default function SuperAdminInvoices() {
         body: { invoice_id: sendTarget.id, recipient_email: sendEmail, recipient_name: sendTarget.company?.name ?? "Client" },
       });
       if (error || !data?.success) throw new Error(error?.message ?? data?.error ?? "Send failed");
+      await logAction({
+        action: "send_invoice",
+        targetType: "invoice",
+        targetId: sendTarget.id,
+        targetName: sendTarget.invoice_number,
+        companyIdOverride: sendTarget.company_id,
+        details: {
+          recipient_email: sendEmail,
+          source: "super_admin",
+        },
+      });
       toast({ title: "Invoice sent!", description: `${sendTarget.invoice_number} emailed to ${sendEmail}.` });
       setSendDialogOpen(false);
       setDetailOpen(false);
@@ -558,9 +571,25 @@ export default function SuperAdminInvoices() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedInvoice(invoice); setDetailOpen(true); }}>
-                                  <Eye className="w-4 h-4" />
-                                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    void logAction({
+                      action: "view",
+                      targetType: "invoice",
+                      targetId: invoice.id,
+                      targetName: invoice.invoice_number,
+                      companyIdOverride: invoice.company_id,
+                      details: { source: "super_admin" },
+                    });
+                    setSelectedInvoice(invoice);
+                    setDetailOpen(true);
+                  }}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
                               </TooltipTrigger>
                               <TooltipContent>View</TooltipContent>
                             </Tooltip>
@@ -578,9 +607,24 @@ export default function SuperAdminInvoices() {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => generateInvoicePDF(invoice)}>
-                                  <Download className="w-4 h-4" />
-                                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    void logAction({
+                      action: "download_invoice",
+                      targetType: "invoice",
+                      targetId: invoice.id,
+                      targetName: invoice.invoice_number,
+                      companyIdOverride: invoice.company_id,
+                      details: { source: "super_admin" },
+                    });
+                    generateInvoicePDF(invoice);
+                  }}
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
                               </TooltipTrigger>
                               <TooltipContent>Download PDF</TooltipContent>
                             </Tooltip>
@@ -704,7 +748,22 @@ export default function SuperAdminInvoices() {
                   <ExternalLink className="w-4 h-4 mr-2" />Stripe Invoice
                 </Button>
               )}
-              <Button variant="outline" onClick={() => generateInvoicePDF(selectedInvoice)}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (selectedInvoice) {
+              void logAction({
+                action: "download_invoice",
+                targetType: "invoice",
+                targetId: selectedInvoice.id,
+                targetName: selectedInvoice.invoice_number,
+                companyIdOverride: selectedInvoice.company_id,
+                details: { source: "super_admin_detail" },
+              });
+              generateInvoicePDF(selectedInvoice);
+            }
+          }}
+        >
                 <Download className="w-4 h-4 mr-2" />Download PDF
               </Button>
               <Button onClick={() => handleSendClick(selectedInvoice)} disabled={sendLoading}>

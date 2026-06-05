@@ -293,7 +293,7 @@ export default function SuperAdminDashboard() {
         <Card className="border-0 shadow-sm bg-white dark:bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Monthly Revenue
+              Estimated Monthly Revenue
             </CardTitle>
             <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
               <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />

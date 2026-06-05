@@ -299,6 +299,20 @@ serve(async (req) => {
       },
     }).eq("id", invoice_id);
 
+    await supabase.rpc("create_audit_log", {
+      p_action_type: "send_invoice",
+      p_target_type: "invoice",
+      p_target_id: invoice.id,
+      p_target_name: invoice.invoice_number,
+      p_details: {
+        recipient_email: toEmail,
+        recipient_name: toName,
+        sent_via: "brevo",
+        status: invoice.status,
+      },
+      p_company_id: invoice.company_id,
+    });
+
     return new Response(JSON.stringify({ success: true, sent_to: toEmail }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

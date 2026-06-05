@@ -297,6 +297,31 @@ function mapSubscriptionStatus(status: string, cancelAtPeriodEnd = false) {
   return SUBSCRIPTION_STATUS_MAP[status] ?? "inactive";
 }
 
+async function logBillingEvent(
+  supabase: any,
+  payload: {
+    action: string;
+    targetType: string;
+    targetId: string | null;
+    targetName: string;
+    companyId: string | null;
+    details: Record<string, unknown>;
+  }
+) {
+  try {
+    await supabase.rpc("create_audit_log", {
+      p_action_type: payload.action,
+      p_target_type: payload.targetType,
+      p_target_id: payload.targetId,
+      p_target_name: payload.targetName,
+      p_details: payload.details,
+      p_company_id: payload.companyId,
+    });
+  } catch (error) {
+    console.error("Failed to write billing audit log:", error);
+  }
+}
+
 serve(async (req: Request) => {
   const signature = req.headers.get("stripe-signature") ?? "";
   const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") ?? "";
@@ -366,6 +391,21 @@ serve(async (req: Request) => {
         }
 
         await updateCompanySubscription(supabase, companyId, updates);
+        await logBillingEvent(supabase, {
+          action: "update_subscription",
+          targetType: "subscription",
+          targetId: companyId,
+          targetName: `${resolved.tier ?? "unknown"} subscription`,
+          companyId,
+          details: {
+            source: "stripe_webhook",
+            status,
+            subscription_id: sub.id,
+            customer_id: customerId,
+            plan: resolved.tier,
+            interval: resolved.interval,
+          },
+        });
         break;
       }
 
@@ -385,7 +425,19 @@ serve(async (req: Request) => {
               ? new Date(sub.ended_at * 1000).toISOString()
               : sub.current_period_end
                 ? new Date(sub.current_period_end * 1000).toISOString()
-            : null,
+              : null,
+        });
+        await logBillingEvent(supabase, {
+          action: "cancel_subscription",
+          targetType: "subscription",
+          targetId: companyId,
+          targetName: `${sub.id} cancelled`,
+          companyId,
+          details: {
+            source: "stripe_webhook",
+            subscription_id: sub.id,
+            customer_id: customerId,
+          },
         });
         break;
       }
@@ -470,6 +522,21 @@ serve(async (req: Request) => {
         }
 
         await updateCompanySubscription(supabase, companyId, updates);
+        await logBillingEvent(supabase, {
+          action: "invoice_paid",
+          targetType: "invoice",
+          targetId: companyId,
+          targetName: invoiceNumber,
+          companyId,
+          details: {
+            source: "stripe_webhook",
+            invoice_id: inv.id,
+            invoice_number: invoiceNumber,
+            amount_paid: (inv.amount_paid ?? inv.total ?? 0) / 100,
+            currency: (inv.currency ?? "usd").toUpperCase(),
+            subscription_id: toStringOrNull(inv.subscription),
+          },
+        });
         break;
       }
 
@@ -501,6 +568,20 @@ serve(async (req: Request) => {
           if (inv.subscription) updates.stripe_subscription_id = toStringOrNull(inv.subscription);
           await updateCompanySubscription(supabase, companyId, updates);
         }
+        await logBillingEvent(supabase, {
+          action: "invoice_payment_failed",
+          targetType: "invoice",
+          targetId: companyId,
+          targetName: inv.number ?? `STRIPE-${inv.id}`,
+          companyId,
+          details: {
+            source: "stripe_webhook",
+            invoice_id: inv.id,
+            invoice_number: inv.number ?? null,
+            customer_id: customerId,
+            subscription_id: toStringOrNull(inv.subscription),
+          },
+        });
         break;
       }
 
@@ -552,6 +633,21 @@ serve(async (req: Request) => {
         }
 
         await updateCompanySubscription(supabase, companyId, updates);
+        await logBillingEvent(supabase, {
+          action: "checkout_session_completed",
+          targetType: "subscription",
+          targetId: companyId,
+          targetName: `${tier ?? "unknown"} checkout`,
+          companyId,
+          details: {
+            source: "stripe_webhook",
+            session_id: session.id,
+            subscription_id: subscriptionId,
+            customer_id: customerId,
+            plan: tier,
+            interval,
+          },
+        });
         break;
       }
 

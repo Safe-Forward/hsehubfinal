@@ -300,6 +300,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    // Log logout action before clearing session
+    try {
+      if (user?.id && companyId) {
+        await supabase.rpc("create_audit_log", {
+          p_action_type: "logout",
+          p_target_type: "user",
+          p_target_id: user.id,
+          p_target_name: user.email || "Unknown User",
+          p_details: { timestamp: new Date().toISOString() },
+          p_company_id: companyId,
+        });
+      }
+    } catch (e) {
+      // Non-critical - ignore
+    }
+
     // Clear super admin PIN verification
     sessionStorage.removeItem("superAdminPinVerified");
 

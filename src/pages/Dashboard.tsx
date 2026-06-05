@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuditLog } from "@/hooks/useAuditLog";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ import {
 export default function Dashboard() {
   const { user, userRole, companyId, companyName, loading, signOut } =
     useAuth();
+  const { logError } = useAuditLog();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -600,15 +602,26 @@ export default function Dashboard() {
         </div>
 
         {/* Show setup button when user is logged in but has no company */}
-        {
-          user && !companyId && (
-            <div className="ml-4">
-              <Button onClick={() => navigate("/setup-company")}>
-                {t("dashboard.setupCompany")}
-              </Button>
-            </div>
-          )
-        }
+        <div className="ml-4 flex gap-2">
+          {user && !companyId && (
+            <Button onClick={() => navigate("/setup-company")}>
+              {t("dashboard.setupCompany")}
+            </Button>
+          )}
+          <Button 
+            variant="destructive"
+            onClick={async () => {
+              try {
+                throw new Error("This is a manual test crash triggered by user.");
+              } catch (e) {
+                await logError(e, "Manual Crash Test Button");
+                alert("Crash report sent! Check the Super Admin Company Logs.");
+              }
+            }}
+          >
+            Test Crash Report
+          </Button>
+        </div>
       </div >
 
       {userRole === "super_admin" ? (
