@@ -314,7 +314,7 @@ export default function Reports() {
       const saved = localStorage.getItem('hse_custom_reports');
       if (saved) {
         const loadedReports: ReportConfig[] = JSON.parse(saved);
-        
+
         // Refresh data for all custom reports from the database
         const refreshedReports = await Promise.all(
           loadedReports.map(async (report) => {
@@ -327,11 +327,11 @@ export default function Reports() {
             }
           })
         );
-        
+
         setCustomReports(refreshedReports);
         // Save refreshed data back to localStorage
         localStorage.setItem('hse_custom_reports', JSON.stringify(refreshedReports));
-        
+
         // After loading reports, ensure layouts are synced
         const savedLayouts = localStorage.getItem(CUSTOM_REPORTS_LAYOUT_KEY);
         if (!savedLayouts || !JSON.parse(savedLayouts).lg || JSON.parse(savedLayouts).lg.length !== refreshedReports.length) {
@@ -1148,7 +1148,7 @@ export default function Reports() {
         if (groupBy === "department") {
           // Query BOTH measures tables and combine by department
           const promises = [];
-          
+
           // Main measures table
           promises.push(
             supabase
@@ -1163,7 +1163,7 @@ export default function Reports() {
               .gte("created_at", startDate)
               .lte("created_at", endDate)
           );
-          
+
           // Risk assessment measures table
           promises.push(
             supabase
@@ -1190,13 +1190,13 @@ export default function Reports() {
 
           // Combine and group by department
           const grouped: Record<string, number> = {};
-          
+
           // Add data from main measures table
           (measuresRes.data || []).forEach((item: any) => {
             const dept = item.responsible_person?.departments?.name || "Unassigned";
             grouped[dept] = (grouped[dept] || 0) + 1;
           });
-          
+
           // Add data from risk_assessment_measures table
           (riskMeasuresRes.data || []).forEach((item: any) => {
             const dept = item.responsible_employee?.departments?.name || "Unassigned";
@@ -1242,7 +1242,7 @@ export default function Reports() {
           } else {
             incidentGroupCol = groupBy || "investigation_status";
           }
-          
+
           const { data, error } = await supabase
             .from("incidents")
             .select(incidentGroupCol)
@@ -1293,7 +1293,7 @@ export default function Reports() {
 
               // Group by employee and calculate completion percentage
               const employeeStats: Record<string, { total: number; completed: number }> = {};
-              
+
               (data || []).forEach((item: any) => {
                 const empName = item.employees?.full_name || "Unassigned";
                 if (!employeeStats[empName]) {
@@ -1363,7 +1363,7 @@ export default function Reports() {
           {
             // Query BOTH measures tables and combine the data
             const promises = [];
-            
+
             // Main measures table
             promises.push(
               supabase
@@ -1373,7 +1373,7 @@ export default function Reports() {
                 .gte("created_at", startDate)
                 .lte("created_at", endDate)
             );
-            
+
             // Risk assessment measures table
             promises.push(
               supabase
@@ -1395,13 +1395,13 @@ export default function Reports() {
 
             // Combine and group data
             const combined: Record<string, number> = {};
-            
+
             // Add data from main measures table
             (measuresRes.data || []).forEach((item: any) => {
               const key = item.status || "Unknown";
               combined[key] = (combined[key] || 0) + 1;
             });
-            
+
             // Add data from risk_assessment_measures table (map progress_status to status)
             (riskMeasuresRes.data || []).forEach((item: any) => {
               // Map progress_status names to match status names
@@ -1799,6 +1799,11 @@ export default function Reports() {
     return customReports.filter((report) => report.metric === metric);
   }, [activeSection, customReports, getMetricForSection]);
 
+  const overviewCustomReports = useMemo(() => {
+    const sectionMetrics = ["risks", "audits", "incidents", "trainings", "measures", "tasks", "checkups"];
+    return customReports.filter((report) => !sectionMetrics.includes(report.metric));
+  }, [customReports]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -1893,7 +1898,7 @@ export default function Reports() {
             <OverviewSection
               stats={stats}
               chartData={chartData}
-              customReports={customReports}
+              customReports={overviewCustomReports}
               customReportsLayouts={customReportsLayouts}
               onCustomReportsLayoutChange={handleCustomReportsLayoutChange}
               onResetCustomLayouts={resetCustomLayouts}
@@ -2310,28 +2315,28 @@ function OverviewSection({
 
   // Save layouts to localStorage when they change (deferred during drag)
   const lastSavedLayoutRef = useRef<string>('');
-  
+
   const handleLayoutChange = useCallback((currentLayout: any[], allLayouts: { [key: string]: any[] }) => {
     // Skip processing during initial mount to avoid infinite loop
     if (isInitialMountRef.current) return;
-    
+
     if (isDraggingRef.current) {
       // During drag, just store the pending layout but don't save yet
       pendingLayoutRef.current = allLayouts;
       return;
     }
-    
+
     // NOTE: Do NOT call setLayouts here — doing so triggers a re-render which causes
     // ResponsiveGridLayout to fire onLayoutChange again, creating an infinite loop.
     // Layout state is only updated on drag stop / resize stop.
     // Just persist to localStorage if something changed.
-    
+
     // IMPORTANT: Merge with existing layouts to preserve hidden cards' positions
     // allLayouts only contains visible cards, so we need to add back hidden ones
     const mergedLayouts: { [key: string]: any[] } = {};
     const currentLayouts = layoutsRef.current;
     const currentHiddenCards = hiddenCardsRef.current;
-    
+
     Object.keys(currentLayouts).forEach(bp => {
       // Get current visible layout from allLayouts
       const visibleLayout = allLayouts[bp] || [];
@@ -2340,7 +2345,7 @@ function OverviewSection({
       // Merge both
       mergedLayouts[bp] = [...visibleLayout, ...hiddenLayout];
     });
-    
+
     const serialized = JSON.stringify(mergedLayouts);
     if (serialized === lastSavedLayoutRef.current) return;
     lastSavedLayoutRef.current = serialized;
@@ -2364,13 +2369,13 @@ function OverviewSection({
       const mergedLayouts: { [key: string]: any[] } = {};
       const currentLayouts = layoutsRef.current;
       const currentHiddenCards = hiddenCardsRef.current;
-      
+
       Object.keys(currentLayouts).forEach(bp => {
         const visibleLayout = pendingLayoutRef.current![bp] || [];
         const hiddenLayout = (currentLayouts[bp] || []).filter((item: any) => currentHiddenCards.has(item.i));
         mergedLayouts[bp] = [...visibleLayout, ...hiddenLayout];
       });
-      
+
       const serialized = JSON.stringify(mergedLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(mergedLayouts);
@@ -2386,14 +2391,14 @@ function OverviewSection({
   const handleResizeStop = useCallback((layout: any[], oldItem: any, newItem: any, placeholder: any, e: any, element: any) => {
     // On resize stop, update state using updater form (no stale closure on `layouts`)
     const currentHiddenCards = hiddenCardsRef.current;
-    
+
     setLayouts(prev => {
       const updated = { ...prev };
       // Match the breakpoint by layout length and merge with hidden cards
       Object.keys(updated).forEach(bp => {
         const visibleCount = layout.filter(item => !currentHiddenCards.has(item.i)).length;
         const prevVisibleCount = (updated[bp] || []).filter((item: any) => !currentHiddenCards.has(item.i)).length;
-        
+
         if (visibleCount === prevVisibleCount) {
           // This is the matching breakpoint
           const hiddenLayout = (updated[bp] || []).filter((item: any) => currentHiddenCards.has(item.i));
@@ -2767,12 +2772,12 @@ function DraggableGridSection({
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
-  
+
   useEffect(() => {
     const timer = setTimeout(() => { isInitialMountRef.current = false; }, 200);
     return () => clearTimeout(timer);
   }, []);
-  
+
   const [layouts, setLayouts] = useState<{ [key: string]: any[] }>(() => {
     try {
       const saved = localStorage.getItem(SECTION_LAYOUT_KEYS[sectionId as keyof typeof SECTION_LAYOUT_KEYS]);
@@ -3083,7 +3088,7 @@ function RiskAssessmentsSection({ stats, chartData }: { stats: ReportStats; char
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_risk_assessments', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_risk_assessments', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3093,7 +3098,7 @@ function RiskAssessmentsSection({ stats, chartData }: { stats: ReportStats; char
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_risk_assessments', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_risk_assessments', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3210,7 +3215,7 @@ function AuditsSection({ stats, chartData }: { stats: ReportStats; chartData: an
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_audits', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_audits', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3220,7 +3225,7 @@ function AuditsSection({ stats, chartData }: { stats: ReportStats; chartData: an
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_audits', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_audits', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3349,7 +3354,7 @@ function IncidentsSection({ stats, chartData }: { stats: ReportStats; chartData:
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_incidents', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_incidents', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3359,7 +3364,7 @@ function IncidentsSection({ stats, chartData }: { stats: ReportStats; chartData:
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_incidents', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_incidents', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3502,7 +3507,7 @@ function TrainingsSection({
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_trainings', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_trainings', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3512,14 +3517,14 @@ function TrainingsSection({
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_trainings', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_trainings', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
 
 
   const resetLayout = useCallback(() => {
-    const defaultLayouts = { lg: defaultLayout, md: defaultLayout, sm: defaultLayout };
+    const defaultLayouts = { lg: defaultLayout, md: defaultLayout, sm: defaultLayout } as any;
     setLayouts(defaultLayouts);
     try {
       localStorage.removeItem('hse_layout_trainings');
@@ -3712,7 +3717,7 @@ function MeasuresSection({ stats, chartData }: { stats: ReportStats; chartData: 
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_measures_v2', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_measures_v2', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3722,7 +3727,7 @@ function MeasuresSection({ stats, chartData }: { stats: ReportStats; chartData: 
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_measures_v2', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_measures_v2', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3857,7 +3862,7 @@ function TasksSection({ stats, chartData }: { stats: ReportStats; chartData: any
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_tasks', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_tasks', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3867,7 +3872,7 @@ function TasksSection({ stats, chartData }: { stats: ReportStats; chartData: any
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_tasks', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_tasks', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3984,7 +3989,7 @@ function CheckupsSection({ stats }: { stats: ReportStats }) {
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_checkups', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_checkups', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);
@@ -3994,7 +3999,7 @@ function CheckupsSection({ stats }: { stats: ReportStats }) {
       const serialized = JSON.stringify(allLayouts);
       lastSavedLayoutRef.current = serialized;
       setLayouts(allLayouts);
-      try { localStorage.setItem('hse_layout_checkups', serialized); } catch (e) {}
+      try { localStorage.setItem('hse_layout_checkups', serialized); } catch (e) { }
       pendingLayoutRef.current = null;
     }
   }, []);

@@ -576,6 +576,17 @@ export default function Dashboard() {
     );
   }
 
+  if (userRole === "super_admin") {
+    if (typeof window !== "undefined" && window.location.pathname === "/dashboard") {
+      navigate("/super-admin/dashboard", { replace: true });
+    }
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "super_admin":
@@ -624,19 +635,7 @@ export default function Dashboard() {
         </div>
       </div >
 
-      {userRole === "super_admin" ? (
-        <>
-          {/* Redirect super admin to their dashboard and don't show any UI */}
-          {typeof window !== "undefined" &&
-            window.location.pathname === "/dashboard" &&
-            navigate("/super-admin/dashboard", { replace: true })}
-          {/* Don't render anything for super admin on /dashboard route */}
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <p className="text-muted-foreground">Redirecting to Super Admin Dashboard...</p>
-          </div>
-        </>
-      ) : (
-        <>
+      <>
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12">
             <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate">
@@ -952,8 +951,6 @@ export default function Dashboard() {
             </Card>
           </div>
         </>
-      )
-      }
     </div >
   );
 }

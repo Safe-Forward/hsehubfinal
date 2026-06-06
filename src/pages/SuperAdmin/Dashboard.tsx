@@ -13,6 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Building2,
   Users,
   TrendingUp,
@@ -24,6 +31,7 @@ import {
   BarChart3,
   ArrowUpRight,
   Clock,
+  Calendar,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -81,6 +89,45 @@ export default function SuperAdminDashboard() {
   const [tierDistribution, setTierDistribution] = useState<TierDistribution[]>([]);
   const [expiringTrials, setExpiringTrials] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [dateRange, setDateRange] = useState("all-time");
+
+  const getDateRangeBounds = (range: string) => {
+    if (range === "all-time") return { startDate: null, endDate: null };
+    const endDate = new Date();
+    const startDate = new Date(endDate);
+
+    switch (range) {
+      case "last-7-days":
+        startDate.setDate(endDate.getDate() - 6);
+        break;
+      case "last-30-days":
+        startDate.setDate(endDate.getDate() - 29);
+        break;
+      case "last-90-days":
+        startDate.setDate(endDate.getDate() - 89);
+        break;
+      case "this-month":
+        startDate.setDate(1);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case "last-month": {
+        const lastMonth = new Date(endDate.getFullYear(), endDate.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(endDate.getFullYear(), endDate.getMonth(), 0, 23, 59, 59, 999);
+        return {
+          startDate: lastMonth,
+          endDate: lastMonthEnd,
+        };
+      }
+      case "this-year":
+        startDate.setMonth(0, 1);
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      default:
+        return { startDate: null, endDate: null };
+    }
+
+    return { startDate, endDate };
+  };
 
   useEffect(() => {
     if (!loading && (!user || userRole !== "super_admin")) {
@@ -96,51 +143,119 @@ export default function SuperAdminDashboard() {
       fetchExpiringTrials();
       fetchRecentActivity();
     }
-  }, [user, userRole]);
+  }, [user, userRole, dateRange]);
 
   const fetchStats = async () => {
     try {
       setLoadingStats(true);
+      const { startDate, endDate } = getDateRangeBounds(dateRange);
 
       // Fetch total companies
-      const { count: totalCompanies } = await supabase
+      let totalCompaniesQuery = supabase
         .from("companies")
         .select("id", { count: "exact", head: true });
+      if (startDate && endDate) {
+        totalCompaniesQuery = totalCompaniesQuery
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+      const { count: totalCompanies } = await totalCompaniesQuery;
 
       // Fetch active companies
-      const { count: activeCompanies } = await supabase
+      let activeCompaniesQuery = supabase
         .from("companies")
         .select("id", { count: "exact", head: true })
         .eq("subscription_status", "active");
+      if (startDate && endDate) {
+        activeCompaniesQuery = activeCompaniesQuery
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+      const { count: activeCompanies } = await activeCompaniesQuery;
 
       // Fetch trial companies
-      const { count: trialCompanies } = await supabase
+      let trialCompaniesQuery = supabase
         .from("companies")
         .select("id", { count: "exact", head: true })
         .eq("subscription_status", "trial");
+      if (startDate && endDate) {
+        trialCompaniesQuery = trialCompaniesQuery
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+      const { count: trialCompanies } = await trialCompaniesQuery;
 
       // Fetch cancelled companies
-      const { count: cancelledCompanies } = await supabase
+      let cancelledCompaniesQuery = supabase
         .from("companies")
         .select("id", { count: "exact", head: true })
         .eq("subscription_status", "cancelled");
+      if (startDate && endDate) {
+        cancelledCompaniesQuery = cancelledCompaniesQuery
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+      const { count: cancelledCompanies } = await cancelledCompaniesQuery;
 
       // Fetch total users
-      const { count: totalUsers } = await supabase
+      // Fetch total users
+      let totalUsersQuery = supabase
         .from("user_roles")
         .select("id", { count: "exact", head: true });
+      if (startDate && endDate) {
+        totalUsersQuery = totalUsersQuery
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+      const { count: totalUsers } = await totalUsersQuery;
+
+      // Fetch companies with overdue invoices (defaulters)
+      const { data: overdueInvoices } = await supabase
+        .from("invoices")
+        .select("company_id")
+        .eq("status", "overdue");
+      const defaulterCompanyIds = new Set(overdueInvoices?.map(i => i.company_id) || []);
+
+      // Fetch companies that are not active or trial
+      const { data: inactiveCompanies } = await supabase
+        .from("companies")
+        .select("id")
+        .not("subscription_status", "in", '("active","trial")');
+      const inactiveCompanyIds = new Set(inactiveCompanies?.map(c => c.id) || []);
 
       // Fetch total addons sold
-      const { count: totalAddons } = await supabase
+      let totalAddonsQuery = supabase
         .from("company_addons")
-        .select("id", { count: "exact", head: true })
+        .select("id, company_id, price_paid")
         .eq("status", "active");
+      if (startDate && endDate) {
+        totalAddonsQuery = totalAddonsQuery
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+      const { data: addonsData } = await totalAddonsQuery;
 
-      // Calculate subscription revenue
-      const { data: activeSubscriptions } = await supabase
+      // Filter addons to exclude defaulters and inactive/cancelled companies
+      const activeAddonsList = addonsData?.filter(addon => 
+        !defaulterCompanyIds.has(addon.company_id) && !inactiveCompanyIds.has(addon.company_id)
+      ) || [];
+      const totalAddons = activeAddonsList.length;
+
+      // Calculate subscription revenue - also filter out companies with overdue invoices
+      let activeSubscriptionsQuery = supabase
         .from("companies")
-        .select("subscription_tier")
+        .select("id, subscription_tier")
         .eq("subscription_status", "active");
+      if (startDate && endDate) {
+        activeSubscriptionsQuery = activeSubscriptionsQuery
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+      const { data: activeSubscriptions } = await activeSubscriptionsQuery;
+
+      const validSubscriptions = activeSubscriptions?.filter(company => 
+        !defaulterCompanyIds.has(company.id)
+      ) || [];
 
       const tierPrices: Record<string, number> = {
         basic: 149,
@@ -149,17 +264,12 @@ export default function SuperAdminDashboard() {
       };
 
       const totalRevenue =
-        activeSubscriptions?.reduce((sum, company) => {
+        validSubscriptions.reduce((sum, company) => {
           return sum + (tierPrices[company.subscription_tier] || 0);
         }, 0) || 0;
 
-      // Calculate addon revenue
-      const { data: addonData } = await supabase
-        .from("company_addons")
-        .select("price_paid")
-        .eq("status", "active");
-
-      const addonRevenue = addonData?.reduce((sum, addon) => {
+      // Calculate addon revenue using the filtered activeAddonsList
+      const addonRevenue = activeAddonsList.reduce((sum, addon) => {
         return sum + (addon.price_paid || 0);
       }, 0) || 0;
 
@@ -182,10 +292,19 @@ export default function SuperAdminDashboard() {
 
   const fetchTierDistribution = async () => {
     try {
-      const { data: companies } = await supabase
+      const { startDate, endDate } = getDateRangeBounds(dateRange);
+      let query = supabase
         .from("companies")
         .select("subscription_tier")
         .in("subscription_status", ["active", "trial"]);
+      
+      if (startDate && endDate) {
+        query = query
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+      
+      const { data: companies } = await query;
 
       const distribution: Record<string, number> = { basic: 0, standard: 0, premium: 0 };
       companies?.forEach(c => {
@@ -204,13 +323,19 @@ export default function SuperAdminDashboard() {
 
   const fetchExpiringTrials = async () => {
     try {
-      const sevenDaysFromNow = new Date();
-      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-
-      const { data } = await supabase
+      const { startDate, endDate } = getDateRangeBounds(dateRange);
+      let query = supabase
         .from("companies")
         .select("id, name, email, trial_ends_at, created_at")
-        .eq("subscription_status", "trial")
+        .eq("subscription_status", "trial");
+
+      if (startDate && endDate) {
+        query = query
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+
+      const { data } = await query
         .order("created_at", { ascending: true })
         .limit(5);
 
@@ -222,12 +347,21 @@ export default function SuperAdminDashboard() {
 
   const fetchRecentActivity = async () => {
     try {
-      const { data } = await supabase
+      const { startDate, endDate } = getDateRangeBounds(dateRange);
+      let query = supabase
         .from("subscription_history")
         .select(`
           *,
           companies:company_id(name)
-        `)
+        `);
+
+      if (startDate && endDate) {
+        query = query
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+
+      const { data } = await query
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -239,9 +373,18 @@ export default function SuperAdminDashboard() {
 
   const fetchRecentCompanies = async () => {
     try {
-      const { data, error } = await supabase
+      const { startDate, endDate } = getDateRangeBounds(dateRange);
+      let query = supabase
         .from("companies")
-        .select("*")
+        .select("*");
+
+      if (startDate && endDate) {
+        query = query
+          .gte("created_at", startDate.toISOString())
+          .lte("created_at", endDate.toISOString());
+      }
+
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .limit(5);
 
@@ -262,11 +405,30 @@ export default function SuperAdminDashboard() {
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-2">Super Admin Dashboard</h2>
-        <p className="text-muted-foreground">
-          Manage companies, subscriptions, add-ons, and system-wide settings
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <h2 className="text-3xl font-bold mb-2">Super Admin Dashboard</h2>
+          <p className="text-muted-foreground">
+            Manage companies, subscriptions, add-ons, and system-wide settings
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-48 bg-white dark:bg-card">
+              <Calendar className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Select timeline" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all-time">All time</SelectItem>
+              <SelectItem value="last-7-days">Last 7 days</SelectItem>
+              <SelectItem value="last-30-days">Last 30 days</SelectItem>
+              <SelectItem value="last-90-days">Last 90 days</SelectItem>
+              <SelectItem value="this-month">This month</SelectItem>
+              <SelectItem value="last-month">Last month</SelectItem>
+              <SelectItem value="this-year">This year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Stats Grid */}

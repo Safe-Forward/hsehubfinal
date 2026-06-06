@@ -179,6 +179,20 @@ export default function Addons() {
 
   const fetchCompanyAddons = async () => {
     try {
+      // Fetch companies with overdue invoices (defaulters)
+      const { data: overdueInvoices } = await supabase
+        .from("invoices")
+        .select("company_id")
+        .eq("status", "overdue");
+      const defaulterCompanyIds = new Set(overdueInvoices?.map(i => i.company_id) || []);
+
+      // Fetch companies that are not active or trial
+      const { data: inactiveCompanies } = await supabase
+        .from("companies")
+        .select("id")
+        .not("subscription_status", "in", '("active","trial")');
+      const inactiveCompanyIds = new Set(inactiveCompanies?.map(c => c.id) || []);
+
       const { data, error } = await supabase
         .from("company_addons")
         .select(`
@@ -191,10 +205,20 @@ export default function Addons() {
       if (error) throw error;
       setCompanyAddons(data || []);
 
-      // Calculate stats
-      const activeCount = data?.filter(a => a.status === "active").length || 0;
+      // Calculate stats (excluding defaulters and inactive companies)
+      const activeCount = data?.filter(a => 
+        a.status === "active" && 
+        !defaulterCompanyIds.has(a.company_id) && 
+        !inactiveCompanyIds.has(a.company_id)
+      ).length || 0;
+
       const revenue = data?.reduce((sum, a) => {
-        if (a.status === "active" && a.price_paid) {
+        if (
+          a.status === "active" && 
+          a.price_paid && 
+          !defaulterCompanyIds.has(a.company_id) && 
+          !inactiveCompanyIds.has(a.company_id)
+        ) {
           return sum + a.price_paid;
         }
         return sum;

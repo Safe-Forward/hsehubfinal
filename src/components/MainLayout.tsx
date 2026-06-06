@@ -94,7 +94,7 @@ export default function MainLayout({ children }: Props) {
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
       <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen sticky top-0">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <Link to="/dashboard" className="flex items-center gap-2">
+          <Link to={userRole === "super_admin" ? "/super-admin/dashboard" : "/dashboard"} className="flex items-center gap-2">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl blur opacity-25"></div>
               <img
@@ -109,7 +109,7 @@ export default function MainLayout({ children }: Props) {
           </Link>
         </div>
 
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
           {/* Show loading skeleton while permissions load */}
           {permissionsLoading ? (
             <div className="space-y-2 animate-pulse">
