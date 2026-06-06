@@ -619,19 +619,6 @@ export default function Dashboard() {
               {t("dashboard.setupCompany")}
             </Button>
           )}
-          <Button 
-            variant="destructive"
-            onClick={async () => {
-              try {
-                throw new Error("This is a manual test crash triggered by user.");
-              } catch (e) {
-                await logError(e, "Manual Crash Test Button");
-                alert("Crash report sent! Check the Super Admin Company Logs.");
-              }
-            }}
-          >
-            Test Crash Report
-          </Button>
         </div>
       </div >
 

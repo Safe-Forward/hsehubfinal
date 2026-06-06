@@ -45,6 +45,9 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import {
+  Plus,
+  Trash,
+  Save,
   Receipt,
   FileText,
   DollarSign,
@@ -69,7 +72,7 @@ import {
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import type { Invoice, InvoiceStatus, LineItem } from "@/pages/Invoices";
 import { useAuditLog } from "@/hooks/useAuditLog";
 
@@ -223,7 +226,7 @@ function generateInvoicePDF(invoice: InvoiceWithCompany) {
 // Main Component
 // ─────────────────────────────────────────────────────────────────────────────
 export default function SuperAdminInvoices() {
-  const { userRole, loading: authLoading } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { logAction } = useAuditLog();
@@ -251,6 +254,186 @@ export default function SuperAdminInvoices() {
   const [sendTarget, setSendTarget] = useState<InvoiceWithCompany | null>(null);
   const [sendEmail, setSendEmail] = useState("");
   const [sendLoading, setSendLoading] = useState(false);
+
+  // Create Manual Invoice dialog
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newInvoiceCompany, setNewInvoiceCompany] = useState("");
+  const [newInvoiceNumber, setNewInvoiceNumber] = useState("");
+  const [newInvoiceStatus, setNewInvoiceStatus] = useState<InvoiceStatus>("pending");
+  const [newInvoiceCurrency, setNewInvoiceCurrency] = useState("EUR");
+  const [newInvoiceDueDate, setNewInvoiceDueDate] = useState("");
+  const [newInvoicePeriodStart, setNewInvoicePeriodStart] = useState("");
+  const [newInvoicePeriodEnd, setNewInvoicePeriodEnd] = useState("");
+  const [newInvoiceNotes, setNewInvoiceNotes] = useState("");
+  const [newInvoiceLineItems, setNewInvoiceLineItems] = useState<LineItem[]>([
+    { description: "HSE Management Platform – Subscription", quantity: 1, unit_price: 149.00, total: 149.00 }
+  ]);
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
+
+  useEffect(() => {
+    if (!newInvoiceCompany) return;
+    
+    // 1. Prefill invoice number using RPC
+    const fetchInvoiceNumber = async () => {
+      try {
+        const { data, error } = await supabase.rpc("generate_invoice_number", {
+          p_company_id: newInvoiceCompany
+        });
+        if (error) throw error;
+        if (data) setNewInvoiceNumber(data);
+      } catch (err) {
+        console.error("Error generating invoice number:", err);
+        // Fallback
+        const tempNum = `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        setNewInvoiceNumber(tempNum);
+      }
+    };
+    
+    // 2. Prefill default pricing tier line items
+    const selected = companies.find(c => c.id === newInvoiceCompany);
+    if (selected) {
+      let price = 149.00;
+      let tierName = "Basic";
+      if (selected.subscription_tier === "standard") {
+        price = 249.00;
+        tierName = "Standard";
+      } else if (selected.subscription_tier === "premium") {
+        price = 349.00;
+        tierName = "Premium";
+      } else if (selected.subscription_tier === "enterprise") {
+        price = 499.00;
+        tierName = "Enterprise";
+      }
+      
+      setNewInvoiceLineItems([
+        {
+          description: `HSE Management Platform – ${tierName} Monthly Subscription`,
+          quantity: 1,
+          unit_price: price,
+          total: price
+        }
+      ]);
+    }
+
+    fetchInvoiceNumber();
+  }, [newInvoiceCompany, companies]);
+
+  const handleAddLineItem = () => {
+    setNewInvoiceLineItems([
+      ...newInvoiceLineItems,
+      { description: "", quantity: 1, unit_price: 0, total: 0 }
+    ]);
+  };
+
+  const handleRemoveLineItem = (index: number) => {
+    if (newInvoiceLineItems.length === 1) {
+      toast({
+        title: "Validation Error",
+        description: "An invoice must have at least one line item.",
+        variant: "destructive"
+      });
+      return;
+    }
+    const updated = [...newInvoiceLineItems];
+    updated.splice(index, 1);
+    setNewInvoiceLineItems(updated);
+  };
+
+  const handleLineItemChange = (index: number, field: keyof LineItem, value: string | number) => {
+    const updated = [...newInvoiceLineItems];
+    const item = { ...updated[index] };
+    
+    if (field === "description") {
+      item.description = value as string;
+    } else if (field === "quantity") {
+      const q = Math.max(1, parseInt(value as string) || 0);
+      item.quantity = q;
+      item.total = q * item.unit_price;
+    } else if (field === "unit_price") {
+      const p = Math.max(0, parseFloat(value as string) || 0);
+      item.unit_price = p;
+      item.total = item.quantity * p;
+    }
+    
+    updated[index] = item;
+    setNewInvoiceLineItems(updated);
+  };
+
+  const handleCreateInvoice = async () => {
+    if (!newInvoiceCompany) {
+      toast({ title: "Validation Error", description: "Please select a company.", variant: "destructive" });
+      return;
+    }
+    if (!newInvoiceNumber.trim()) {
+      toast({ title: "Validation Error", description: "Please enter an invoice number.", variant: "destructive" });
+      return;
+    }
+    if (!newInvoiceDueDate) {
+      toast({ title: "Validation Error", description: "Please select a due date.", variant: "destructive" });
+      return;
+    }
+    
+    // Check if line items are filled
+    const invalidItem = newInvoiceLineItems.find(item => !item.description.trim());
+    if (invalidItem) {
+      toast({ title: "Validation Error", description: "All line items must have a description.", variant: "destructive" });
+      return;
+    }
+
+    setIsCreatingInvoice(true);
+    try {
+      const subtotal = newInvoiceLineItems.reduce((acc, item) => acc + item.total, 0);
+      const taxAmount = 0;
+      const total = subtotal + taxAmount;
+
+      const { data, error } = await supabase
+        .from("invoices")
+        .insert({
+          company_id: newInvoiceCompany,
+          invoice_number: newInvoiceNumber,
+          status: newInvoiceStatus,
+          subtotal,
+          tax_amount: taxAmount,
+          total,
+          currency: newInvoiceCurrency,
+          billing_period_start: newInvoicePeriodStart || null,
+          billing_period_end: newInvoicePeriodEnd || null,
+          due_date: newInvoiceDueDate || null,
+          notes: newInvoiceNotes || null,
+          line_items: newInvoiceLineItems,
+          metadata: {
+            created_by: user?.id,
+            created_by_role: "super_admin",
+            source: "manual_creation"
+          }
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await logAction({
+        action: "create_invoice",
+        targetType: "invoice",
+        targetId: data.id,
+        targetName: newInvoiceNumber,
+        companyIdOverride: newInvoiceCompany,
+        details: {
+          total,
+          currency: newInvoiceCurrency,
+          source: "super_admin"
+        }
+      });
+
+      toast({ title: "Invoice created", description: `Invoice ${newInvoiceNumber} was successfully created.` });
+      setCreateDialogOpen(false);
+      fetchData(true);
+    } catch (err: any) {
+      toast({ title: "Failed to create invoice", description: err.message || "Unknown error", variant: "destructive" });
+    } finally {
+      setIsCreatingInvoice(false);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && userRole !== "super_admin") {
@@ -407,10 +590,27 @@ export default function SuperAdminInvoices() {
             View and manage invoices across all companies
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => fetchData(true)} disabled={refreshing}>
-          {refreshing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => fetchData(true)} disabled={refreshing}>
+            {refreshing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+            Refresh
+          </Button>
+          <Button size="sm" onClick={() => {
+            setNewInvoiceCompany("");
+            setNewInvoiceNumber("");
+            setNewInvoiceStatus("pending");
+            setNewInvoiceCurrency("EUR");
+            setNewInvoiceDueDate(format(addDays(new Date(), 14), "yyyy-MM-dd"));
+            setNewInvoicePeriodStart("");
+            setNewInvoicePeriodEnd("");
+            setNewInvoiceNotes("");
+            setNewInvoiceLineItems([{ description: "HSE Management Platform – Subscription", quantity: 1, unit_price: 149.00, total: 149.00 }]);
+            setCreateDialogOpen(true);
+          }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Invoice
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -813,6 +1013,213 @@ export default function SuperAdminInvoices() {
             <Button onClick={handleSendConfirm} disabled={sendLoading || !sendEmail}>
               {sendLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
               Send Invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Manual Invoice Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-primary" />
+              Create Manual Invoice
+            </DialogTitle>
+            <DialogDescription>
+              Create a custom or manual invoice. You can add multiple line items and set custom pricing.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Grid for General Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="sa-company-select">Company <span className="text-red-500">*</span></Label>
+                <Select value={newInvoiceCompany} onValueChange={setNewInvoiceCompany}>
+                  <SelectTrigger id="sa-company-select" className="w-full">
+                    <SelectValue placeholder="Select Company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.map(c => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name} ({c.subscription_tier})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sa-invoice-number">Invoice Number <span className="text-red-500">*</span></Label>
+                <Input
+                  id="sa-invoice-number"
+                  placeholder="e.g. INV-2026-001"
+                  value={newInvoiceNumber}
+                  onChange={e => setNewInvoiceNumber(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sa-status-select">Status</Label>
+                <Select value={newInvoiceStatus} onValueChange={(val) => setNewInvoiceStatus(val as InvoiceStatus)}>
+                  <SelectTrigger id="sa-status-select" className="w-full">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sa-currency-select">Currency</Label>
+                <Select value={newInvoiceCurrency} onValueChange={setNewInvoiceCurrency}>
+                  <SelectTrigger id="sa-currency-select" className="w-full">
+                    <SelectValue placeholder="Currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sa-due-date">Due Date <span className="text-red-500">*</span></Label>
+                <Input
+                  id="sa-due-date"
+                  type="date"
+                  value={newInvoiceDueDate}
+                  onChange={e => setNewInvoiceDueDate(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="sa-period-start">Period Start</Label>
+                  <Input
+                    id="sa-period-start"
+                    type="date"
+                    value={newInvoicePeriodStart}
+                    onChange={e => setNewInvoicePeriodStart(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sa-period-end">Period End</Label>
+                  <Input
+                    id="sa-period-end"
+                    type="date"
+                    value={newInvoicePeriodEnd}
+                    onChange={e => setNewInvoicePeriodEnd(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sa-notes">Notes</Label>
+              <textarea
+                id="sa-notes"
+                className="w-full min-h-[60px] max-h-[120px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                placeholder="Additional notes or payment instructions..."
+                value={newInvoiceNotes}
+                onChange={e => setNewInvoiceNotes(e.target.value)}
+              />
+            </div>
+
+            {/* Line Items Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b pb-1">
+                <h4 className="font-semibold text-sm">Line Items</h4>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddLineItem}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {newInvoiceLineItems.map((item, idx) => (
+                  <div key={idx} className="flex gap-2 items-end border p-2 rounded-lg bg-muted/20">
+                    <div className="flex-1 space-y-1">
+                      {idx === 0 && <Label className="text-xs">Description</Label>}
+                      <Input
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={e => handleLineItemChange(idx, "description", e.target.value)}
+                      />
+                    </div>
+                    <div className="w-20 space-y-1">
+                      {idx === 0 && <Label className="text-xs">Qty</Label>}
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={e => handleLineItemChange(idx, "quantity", e.target.value)}
+                      />
+                    </div>
+                    <div className="w-32 space-y-1">
+                      {idx === 0 && <Label className="text-xs">Unit Price</Label>}
+                      <div className="relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                          {CURRENCY_SYMBOLS[newInvoiceCurrency] ?? "€"}
+                        </span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="pl-7"
+                          value={item.unit_price}
+                          onChange={e => handleLineItemChange(idx, "unit_price", e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="w-32 text-right py-2 px-1 text-sm font-semibold whitespace-nowrap">
+                      {idx === 0 && <div className="text-xs font-normal text-muted-foreground mb-1">Total</div>}
+                      {fmt(item.total, newInvoiceCurrency)}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 text-destructive hover:bg-destructive/10 shrink-0"
+                      onClick={() => handleRemoveLineItem(idx)}
+                    >
+                      <Trash className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Calculations Summary */}
+            <div className="flex flex-col items-end gap-1.5 p-3 bg-muted/30 rounded-lg text-sm">
+              <div className="flex gap-8 text-muted-foreground">
+                <span>Subtotal:</span>
+                <span className="font-medium">
+                  {fmt(newInvoiceLineItems.reduce((acc, item) => acc + item.total, 0), newInvoiceCurrency)}
+                </span>
+              </div>
+              <div className="flex gap-8 font-bold text-base border-t pt-1.5 w-48 justify-between">
+                <span>Total:</span>
+                <span>
+                  {fmt(newInvoiceLineItems.reduce((acc, item) => acc + item.total, 0), newInvoiceCurrency)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={isCreatingInvoice}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateInvoice} disabled={isCreatingInvoice}>
+              {isCreatingInvoice ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Create Invoice
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -391,10 +391,12 @@ export default function Settings() {
   }, [location.search]);
 
   const fetchRecentInvoices = async () => {
+    if (!companyId) return;
     try {
       const { data, error } = await supabase
         .from("invoices")
         .select("invoice_number, created_at, total, status, currency")
+        .eq("company_id", companyId)
         .order("created_at", { ascending: false })
         .limit(4);
 

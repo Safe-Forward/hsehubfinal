@@ -560,7 +560,7 @@ function SubscriptionCard({
             </div>
           </div>
         )}
-        {!isTrialing && !isCancelled && !isInactive && (
+        {(company.stripe_customer_id || (!isTrialing && !isCancelled && !isInactive)) && (
           <Button
             size="sm"
             variant="outline"
