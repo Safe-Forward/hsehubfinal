@@ -2723,66 +2723,6 @@ export default function Settings() {
     }
   };
 
-  // Profile Templates Management Functions
-  const openTemplateDialog = (template?: any) => {
-    if (template) {
-      setEditingTemplate(template);
-      setTemplateFormName(template.name);
-    } else {
-      setEditingTemplate(null);
-      setTemplateFormName("");
-    }
-    setIsTemplateDialogOpen(true);
-  };
-
-  const closeTemplateDialog = () => {
-    setIsTemplateDialogOpen(false);
-    setEditingTemplate(null);
-    setTemplateFormName("");
-  };
-
-  const saveProfileTemplate = async () => {
-    if (!companyId || !templateFormName) return;
-    setIsSubmittingTemplate(true);
-    try {
-      if (editingTemplate) {
-        const { error } = await supabase
-          .from("profile_field_templates")
-          .update({ name: templateFormName })
-          .eq("id", editingTemplate.id);
-        if (error) throw error;
-        toast({ title: t("settings.success"), description: "Template updated successfully" });
-      } else {
-        const { error } = await supabase
-          .from("profile_field_templates")
-          .insert([{ company_id: companyId, name: templateFormName }]);
-        if (error) throw error;
-        toast({ title: t("settings.success"), description: "Template created successfully" });
-      }
-      fetchProfileTemplates();
-      closeTemplateDialog();
-    } catch (err: any) {
-      toast({ title: t("settings.error"), description: err.message, variant: "destructive" });
-    } finally {
-      setIsSubmittingTemplate(false);
-    }
-  };
-
-  const deleteProfileTemplate = async (id: string) => {
-    if (!companyId) return;
-    try {
-      const { error } = await supabase
-        .from("profile_field_templates")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-      toast({ title: t("settings.success"), description: "Template deleted successfully" });
-      if (selectedTemplateId === id) setSelectedTemplateId(null);
-      fetchProfileTemplates();
-    } catch (err: any) {
-      toast({ title: t("settings.error"), description: err.message, variant: "destructive" });
-    }
-  };
 
   // Profile Fields Management Functions
   const openTemplateDialog = (template?: any) => {
@@ -4545,9 +4485,9 @@ export default function Settings() {
                           </TableBody>
                         </Table>
                       </div>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Add/Edit Template Dialog */}
                 <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>

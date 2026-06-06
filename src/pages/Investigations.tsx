@@ -971,7 +971,10 @@ export default function Investigations() {
     const matchesDateTo =
       !filterDateTo ||
       ((investigation.due_date && investigation.due_date <= filterDateTo) ||
-    const matchesDateTo = !filterDateTo || (investigation.appointment_date && investigation.appointment_date <= filterDateTo);
+        (investigation.appointment_date && investigation.appointment_date <= filterDateTo));
+
+    return (
+      matchesSearch &&
       matchesStatus &&
       matchesDepartment &&
       matchesGroup &&
