@@ -128,12 +128,12 @@ const Datenschutz = () => {
                 <SectionHeading id="verantwortlicher" number="1" title="Verantwortlicher (Art. 13 Abs. 1 lit. a DSGVO)" />
                 <p className="mb-4">Verantwortlicher im Sinne der DSGVO und des BDSG ist:</p>
                 <div className="p-5 bg-gray-50 rounded-xl border border-gray-200 space-y-1">
-                  <InfoCard label="Unternehmen" value="[Firmenname]" />
-                  <InfoCard label="Anschrift" value="[Straße, PLZ, Ort]" />
-                  <InfoCard label="Vertreten durch" value="[Geschäftsführer]" />
-                  <InfoCard label="E-Mail" value="[datenschutz@ihredomain.de]" />
-                  <InfoCard label="Telefon" value="[+49 ...]" />
-                  <InfoCard label="Handelsregister" value="[HRB ... / Amtsgericht ...]" />
+                  <InfoCard label="Unternehmen" value="[Safe-Forward]" />
+                  <InfoCard label="Anschrift" value="[Angfurtener Str. 1B, 51674, Wiehl]" />
+                  <InfoCard label="Vertreten durch" value="[Pavel Rohn]" />
+                  <InfoCard label="E-Mail" value="[info@tech-forward.de]" />
+                  <InfoCard label="Telefon" value="[+49 163 760 5849]" />
+                  <InfoCard label="Handelsregister" value="" />
                 </div>
                 <p className="mt-4 text-sm text-gray-500">
                   Einen gesetzlich verpflichtenden Datenschutzbeauftragten (§ 38 BDSG) bestellen wir, sofern die gesetzlichen Schwellenwerte erreicht werden.
@@ -185,10 +185,10 @@ const Datenschutz = () => {
                 <ul className="list-disc pl-6 mt-3 space-y-1 text-sm">
                   <li>Berufsbezeichnung, Abteilung, Kostenstelle</li>
                   <li>Qualifikationen, Zertifikate und Schulungsnachweise</li>
-                  <li>Unfallberichte und Gefährdungsbeurteilungen</li>
+                  <li>Untersuchungen, Unfallberichte und Gefährdungsbeurteilungen</li>
                   <li>Auditprotokolle und Prüfergebnisse</li>
                   <li>Digitale Unterschriften bei genehmigungspflichtigen Vorgängen</li>
-                  <li>Profilfoto (optional)</li>
+                  <li>Risikobewertungen</li>
                 </ul>
                 <p className="text-sm text-gray-500 mt-2">Diese Daten werden als Auftragsverarbeiter gemäß Art. 28 DSGVO im Auftrag des Kunden verarbeitet.</p>
 
