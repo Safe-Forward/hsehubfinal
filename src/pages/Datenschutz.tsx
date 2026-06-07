@@ -398,7 +398,7 @@ const Datenschutz = () => {
               <section>
                 <SectionHeading id="rechte" number="13" title="Ihre Rechte als betroffene Person" />
                 <p className="mb-6">
-                  Zur Geltendmachung Ihrer Rechte wenden Sie sich an: <a href="mailto:datenschutz@ihredomain.de" className="text-blue-600 hover:underline">[datenschutz@ihredomain.de]</a>. Wir antworten innerhalb von 30 Tagen (Art. 12 Abs. 3 DSGVO).
+                  Zur Geltendmachung Ihrer Rechte wenden Sie sich an: <a href="mailto: info@tech-forward.de" className="text-blue-600 hover:underline">[datenschutz@ihredomain.de]</a>. Wir antworten innerhalb von 30 Tagen (Art. 12 Abs. 3 DSGVO).
                 </p>
                 <div className="space-y-4">
                   <RightItem article="Art. 15" title="Auskunftsrecht" description="Sie können Auskunft über alle verarbeiteten Daten verlangen, einschließlich Zweck, Empfänger und Speicherdauer." />
