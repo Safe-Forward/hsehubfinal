@@ -102,6 +102,28 @@ const InfoCard = ({
       <span className="text-sm text-gray-700">{value}</span>
     )}
   </div>
+); {
+  label: string;
+  value: string;
+  href?: string;
+}) => (
+  <div className="flex flex-col sm:flex-row sm:items-start gap-1 py-2 border-b border-gray-100 last:border-0">
+    <span className="text-sm font-semibold text-gray-500 sm:w-44 flex-shrink-0">
+      {label}
+    </span>
+    {href ? (
+      
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-blue-600 hover:underline"
+      >
+        {value}
+      </a>
+    ) : (
+      <span className="text-sm text-gray-700">{value}</span>
+    )}
+  </div>
 );
 
 const ProviderBox = ({
