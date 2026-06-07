@@ -20,7 +20,7 @@ import PublicLayout from "@/components/PublicLayout";
 // TODO: Ersetze alle [PLATZHALTER] mit deinen echten Unternehmensdaten
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LAST_UPDATED = "Juni 2025";
+const LAST_UPDATED = "Juni 2026";
 
 const TOC_SECTIONS = [
   { id: "verantwortlicher", number: "1", title: "Verantwortlicher" },
