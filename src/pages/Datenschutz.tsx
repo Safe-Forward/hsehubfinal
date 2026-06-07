@@ -35,7 +35,6 @@ const TOC_SECTIONS = [
   { id: "drittlaender", number: "11", title: "Drittlandübermittlungen" },
   { id: "rechte", number: "12", title: "Ihre Rechte" },
   { id: "sicherheit", number: "13", title: "Datensicherheit" },
-  { id: "aenderungen", number: "14", title: "Änderungen" },
 ];
 
 const SectionHeading = ({ id, number, title, color = "blue" }: { id: string; number: string; title: string; color?: "blue" | "green" }) => (
