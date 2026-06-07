@@ -22,15 +22,14 @@ const Impressum = () => {
                 </h2>
                 <div className="grid md:grid-cols-2 gap-8">
                   <div>
-                    <p className="font-bold text-gray-900">SafetyHub GmbH</p>
-                    <p>Gürtelstraße 30</p>
-                    <p>10247 Berlin</p>
+                    <p className="font-bold text-gray-900">Safe-Forward</p>
+                    <p>Angfurtener Str. 1B</p>
+                    <p>51674 Wiehl</p>
                     <p>Deutschland</p>
                   </div>
                   <div>
-                    <p><span className="font-semibold">Telefon:</span> +49 30 921 0000 0</p>
-                    <p><span className="font-semibold">Fax:</span> +49 30 921 0000 99</p>
-                    <p><span className="font-semibold">E-Mail:</span> contact@safetyhub.com</p>
+                    <p><span className="font-semibold">Telefon:</span> +49 163 770 5849</p>
+                    <p><span className="font-semibold">E-Mail:</span> info@tech-forward.de</p>
                   </div>
                 </div>
               </section>
@@ -41,7 +40,7 @@ const Impressum = () => {
                   <span className="h-6 w-1 bg-green-600 rounded-full"></span>
                   Vertreten durch
                 </h2>
-                <p>James Martin (Geschäftsführer)</p>
+                <p>Pavel Rohn</p>
               </section>
 
               {/* Registry */}
