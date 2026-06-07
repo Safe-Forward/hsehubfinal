@@ -50,8 +50,8 @@ const Impressum = () => {
                   Registereintrag
                 </h2>
                 <p>Eintragung im Handelsregister.</p>
-                <p>Registergericht: Amtsgericht Berlin Charlottenburg</p>
-                <p>Registernummer: HRB 109492</p>
+                <p>Registergericht: </p>
+                <p>Registernummer: </p>
               </section>
 
               {/* VAT */}
@@ -61,7 +61,7 @@ const Impressum = () => {
                   Umsatzsteuer-ID
                 </h2>
                 <p>Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:</p>
-                <p className="font-mono font-semibold">DE256126912</p>
+                <p className="font-mono font-semibold"> </p>
               </section>
 
               {/* Disclaimer */}
