@@ -205,11 +205,230 @@ const Datenschutz = () => {
                   safeguard="EU-Standardvertragsklauseln (Art. 46 Abs. 2 lit. c DSGVO)"
                   note="Vercel verarbeitet Daten in EU-Rechenzentren (Frankfurt) und den USA. Es besteht ein AVV mit Vercel."
                 />
-                <SubHeading>4.2 Hostinger (Domain & DNS)</SubHeading>
+               <SubHeading>4.2 Hostinger (Domain & DNS)</SubHeading>
                 <p>Die Domain ist bei Hostinger registriert. Hostinger verarbeitet Inhaberdaten des Domainregistranten.</p>
                 <ProviderBox
                   name="Hostinger International Ltd."
                   address="61 Lordou Vironos Street, Larnaca 6023, Zypern"
                   country="Zypern (EU)"
                   privacyUrl="https://www.hostinger.com/privacy-policy"
-                  safeguard="Art. 6 Abs. 1 lit. b DSGVO;
+                  safeguard="Art. 6 Abs. 1 lit. b DSGVO; Serverstandorte innerhalb der EU"
+                />
+              </section>
+
+              <section>
+                <SectionHeading id="datenbank" number="5" title="Datenbank & Speicherung (Supabase)" />
+                <p>Für die Speicherung aller Anwendungsdaten setzen wir Supabase ein (PostgreSQL-basiert).</p>
+                <ProviderBox
+                  name="Supabase, Inc."
+                  address="970 Toa Payoh North #07-04, Singapore 318992"
+                  country="USA / EU-Rechenzentren wählbar"
+                  privacyUrl="https://supabase.com/privacy"
+                  safeguard="EU-Standardvertragsklauseln; Datenbankregion EU (Frankfurt) konfiguriert"
+                  note="Alle Produktionsdaten werden in der EU-Region gespeichert. Es besteht ein AVV mit Supabase."
+                />
+                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
+                  <strong>Hinweis für Kunden:</strong> Alle kundenbezogenen Daten werden verschlüsselt (AES-256 at rest, TLS in transit) in der EU gespeichert.
+                </div>
+              </section>
+
+              <section>
+                <SectionHeading id="zahlungen" number="6" title="Zahlungsabwicklung (Stripe)" color="green" />
+                <p>Für Zahlungen verwenden wir Stripe. Zahlungsdaten werden direkt an Stripe übermittelt. Wir speichern keine vollständigen Zahlungsmitteldaten.</p>
+                <ProviderBox
+                  name="Stripe Payments Europe, Ltd."
+                  address="1 Grand Canal Street Lower, Grand Canal Dock, Dublin, D02 H210, Irland"
+                  country="Irland (EU)"
+                  privacyUrl="https://stripe.com/de/privacy"
+                  safeguard="Art. 6 Abs. 1 lit. b DSGVO; PCI-DSS Level 1 zertifiziert"
+                  note="Kreditkartendaten verlassen Ihren Browser nur verschlüsselt direkt zu Stripe."
+                />
+              </section>
+
+              <section>
+                <SectionHeading id="code" number="7" title="Quellcodeverwaltung (GitHub)" color="green" />
+                <p>Der Quellcode wird in einem privaten Repository auf GitHub verwaltet. Produktionsdaten der Nutzer werden nicht auf GitHub gespeichert.</p>
+                <ProviderBox
+                  name="GitHub, Inc. (Microsoft Corporation)"
+                  address="88 Colin P Kelly Jr St, San Francisco, CA 94107, USA"
+                  country="USA"
+                  privacyUrl="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement"
+                  safeguard="EU-Standardvertragsklauseln (SCC)"
+                  note="Nur Entwickler des HSE Hub haben Zugriff auf das Repository."
+                />
+              </section>
+
+              <section>
+                <SectionHeading id="cookies" number="8" title="Cookies & lokale Speicherung" />
+                <p>Diese Website verwendet Cookies und vergleichbare Technologien.</p>
+                <SubHeading>8.1 Technisch notwendige Cookies</SubHeading>
+                <p className="text-sm mb-3">Diese Cookies sind für den sicheren Betrieb unerlässlich und erfordern keine Einwilligung (§ 25 Abs. 2 TDDDG):</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="text-left p-3 font-semibold text-gray-700 border border-gray-200">Name</th>
+                        <th className="text-left p-3 font-semibold text-gray-700 border border-gray-200">Zweck</th>
+                        <th className="text-left p-3 font-semibold text-gray-700 border border-gray-200">Dauer</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { name: "sb-*-auth-token", purpose: "Supabase Authentifizierungs-Session", duration: "7 Tage" },
+                        { name: "sb-*-auth-token-code-verifier", purpose: "PKCE-Sicherheit bei OAuth-Login", duration: "Session" },
+                        { name: "cookie-consent", purpose: "Speichert Ihre Cookie-Präferenzen", duration: "1 Jahr" },
+                        { name: "__vercel_live_token", purpose: "Vercel Deployment-Vorschau (nur Entwickler)", duration: "Session" },
+                        { name: "__hs_opt_out", purpose: "HubSpot Cookie-Opt-out Präferenz", duration: "13 Monate" },
+                      ].map((row, i) => (
+                        <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                          <td className="p-3 border border-gray-200 font-mono text-xs">{row.name}</td>
+                          <td className="p-3 border border-gray-200">{row.purpose}</td>
+                          <td className="p-3 border border-gray-200">{row.duration}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <SubHeading>8.2 Analyse- und Marketing-Cookies (nur mit Einwilligung)</SubHeading>
+                <p className="text-sm">Für Analyse- und Marketing-Zwecke setzen wir folgende Tools nur mit Ihrer ausdrücklichen Einwilligung ein (§ 25 Abs. 1 TDDDG i. V. m. Art. 6 Abs. 1 lit. a DSGVO). Sie können Ihre Einwilligung jederzeit über unsere Cookie-Einstellungen widerrufen.</p>
+              </section>
+
+              <section>
+                <SectionHeading id="analyse" number="9" title="Analyse-Tools & Marketing" color="green" />
+                <SubHeading>9.1 Google Analytics 4</SubHeading>
+                <p>Mit Ihrer Einwilligung setzen wir Google Analytics 4 (GA4) ein. GA4 verwendet Cookies, um Nutzerverhalten zu analysieren (Seitenaufrufe, Verweildauer, Absprungrate). IP-Adressen werden vor der Übertragung an Google anonymisiert.</p>
+                <ProviderBox
+                  name="Google Ireland Ltd."
+                  address="Gordon House, Barrow Street, Dublin 4, Irland"
+                  country="USA / Irland"
+                  privacyUrl="https://policies.google.com/privacy"
+                  safeguard="EU-Standardvertragsklauseln; Data Processing Amendment abgeschlossen"
+                  note="Measurement-ID: [G-XXXXXXXXXX]. Datenaufbewahrung: 14 Monate. Opt-out: https://tools.google.com/dlpage/gaoptout"
+                />
+                <SubHeading>9.2 Facebook Pixel (Meta)</SubHeading>
+                <p>Mit Ihrer Einwilligung verwenden wir den Facebook Pixel. Der Pixel ermöglicht Remarketing auf Facebook und Instagram sowie die Messung der Wirksamkeit unserer Anzeigen.</p>
+                <ProviderBox
+                  name="Meta Platforms Ireland Ltd."
+                  address="4 Grand Canal Square, Grand Canal Harbour, Dublin 2, Irland"
+                  country="Irland / USA"
+                  privacyUrl="https://www.facebook.com/privacy/policy/"
+                  safeguard="EU-Standardvertragsklauseln"
+                  note="Pixel-ID: [XXXXXXXXXXXXXXXXXX]. Widerspruch: https://www.facebook.com/ads/preferences/"
+                />
+                <SubHeading>9.3 HubSpot</SubHeading>
+                <p>Mit Ihrer Einwilligung setzen wir HubSpot ein, eine CRM- und Marketing-Plattform. HubSpot erfasst das Verhalten von Website-Besuchern (aufgerufene Seiten, Verweildauer, Formularausfüllungen) und ermöglicht die Analyse von Marketing-Kampagnen sowie die Pflege von Kundenbeziehungen.</p>
+                <ProviderBox
+                  name="HubSpot, Inc."
+                  address="25 First Street, 2nd Floor, Cambridge, MA 02141, USA"
+                  country="USA"
+                  privacyUrl="https://legal.hubspot.com/de/privacy-policy"
+                  safeguard="EU-Standardvertragsklauseln (SCC); HubSpot EU-Infrastruktur verfügbar"
+                  note="Portal-ID: [XXXXXXXX]. Opt-out: https://legal.hubspot.com/de/privacy-policy"
+                />
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
+                  <strong>Hinweis:</strong> Alle drei Tools werden nur nach Ihrer aktiven Einwilligung über unser Cookie-Banner aktiviert. Ohne Einwilligung werden keine Daten an Google, Meta oder HubSpot übermittelt.
+                </div>
+              </section>
+
+              <section>
+                <SectionHeading id="auftragsverarbeitung" number="10" title="Auftragsverarbeitung (Art. 28 DSGVO)" />
+                <p>Da der HSE Hub Daten der Mitarbeiter unserer Kunden verarbeitet, agieren wir als <strong>Auftragsverarbeiter</strong>. Mit jedem Kunden wird ein AVV abgeschlossen, der regelt:</p>
+                <ul className="list-disc pl-6 mt-4 space-y-2 text-sm">
+                  <li>Gegenstand, Dauer und Zweck der Verarbeitung</li>
+                  <li>Art der Daten und Kategorien betroffener Personen</li>
+                  <li>Pflichten und Rechte des Verantwortlichen (Kunden)</li>
+                  <li>Technische und organisatorische Maßnahmen (TOM) gem. Art. 32 DSGVO</li>
+                  <li>Einsatz und Genehmigung von Unterauftragsverarbeitern</li>
+                  <li>Verfahren bei Datenpannen (Art. 33/34 DSGVO)</li>
+                </ul>
+              </section>
+
+              <section>
+                <SectionHeading id="drittlaender" number="11" title="Drittlandübermittlungen (Art. 44 ff. DSGVO)" color="green" />
+                <p className="mb-4">Soweit Daten in Drittländer übermittelt werden, erfolgt dies auf Grundlage geeigneter Garantien gemäß Art. 46 DSGVO:</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="text-left p-3 font-semibold text-gray-700 border border-gray-200">Anbieter</th>
+                        <th className="text-left p-3 font-semibold text-gray-700 border border-gray-200">Land</th>
+                        <th className="text-left p-3 font-semibold text-gray-700 border border-gray-200">Garantie</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { provider: "Vercel", country: "USA", guarantee: "EU-SCC" },
+                        { provider: "Supabase", country: "USA / EU-Region", guarantee: "EU-SCC + EU-Region konfiguriert" },
+                        { provider: "GitHub", country: "USA", guarantee: "EU-SCC" },
+                        { provider: "Google Analytics", country: "USA", guarantee: "EU-SCC" },
+                        { provider: "Meta (Facebook Pixel)", country: "USA", guarantee: "EU-SCC" },
+                        { provider: "HubSpot", country: "USA", guarantee: "EU-SCC" },
+                        { provider: "Stripe", country: "Irland (EU)", guarantee: "Innerhalb EU" },
+                        { provider: "Hostinger", country: "Zypern (EU)", guarantee: "Innerhalb EU" },
+                      ].map((row, i) => (
+                        <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                          <td className="p-3 border border-gray-200 font-medium">{row.provider}</td>
+                          <td className="p-3 border border-gray-200">{row.country}</td>
+                          <td className="p-3 border border-gray-200">{row.guarantee}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-sm text-gray-500 mt-3">SCC = EU-Standardvertragsklauseln gemäß Durchführungsbeschluss (EU) 2021/914.</p>
+              </section>
+
+              <section>
+                <SectionHeading id="rechte" number="12" title="Ihre Rechte als betroffene Person" />
+                <p className="mb-6">
+                  Zur Geltendmachung Ihrer Rechte wenden Sie sich an: <a href="mailto:info@tech-forward.de" className="text-blue-600 hover:underline">info@tech-forward.de</a>. Wir antworten innerhalb von 30 Tagen (Art. 12 Abs. 3 DSGVO).
+                </p>
+                <div className="space-y-4">
+                  <RightItem article="Art. 15" title="Auskunftsrecht" description="Sie können Auskunft über alle verarbeiteten Daten verlangen, einschließlich Zweck, Empfänger und Speicherdauer." />
+                  <RightItem article="Art. 16" title="Recht auf Berichtigung" description="Sie können die Berichtigung unrichtiger oder Vervollständigung unvollständiger Daten verlangen." />
+                  <RightItem article="Art. 17" title="Recht auf Löschung" description="Sie können die Löschung Ihrer Daten verlangen, sofern keine Aufbewahrungspflichten entgegenstehen." />
+                  <RightItem article="Art. 18" title="Recht auf Einschränkung" description="Sie können die Einschränkung der Verarbeitung verlangen, z. B. wenn Sie die Richtigkeit bestreiten." />
+                  <RightItem article="Art. 20" title="Recht auf Datenübertragbarkeit" description="Sie haben das Recht, Ihre Daten in einem maschinenlesbaren Format zu erhalten." />
+                  <RightItem article="Art. 21" title="Widerspruchsrecht" description="Sie können der Verarbeitung auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO jederzeit widersprechen." />
+                  <RightItem article="Art. 7 Abs. 3" title="Widerruf der Einwilligung" description="Eine erteilte Einwilligung können Sie jederzeit mit Wirkung für die Zukunft widerrufen." />
+                  <RightItem article="Art. 77" title="Beschwerderecht" description="Sie haben das Recht, sich bei der zuständigen Datenschutz-Aufsichtsbehörde zu beschweren. Liste: bfdi.bund.de" />
+                </div>
+              </section>
+
+              <section>
+                <SectionHeading id="sicherheit" number="13" title="Datensicherheit (Art. 32 DSGVO)" color="green" />
+                <p className="mb-4">Wir setzen technische und organisatorische Maßnahmen ein:</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { icon: "🔒", title: "Transport-Verschlüsselung", desc: "TLS 1.2 / 1.3 für alle Datenübertragungen (HTTPS)" },
+                    { icon: "🗄️", title: "Verschlüsselung at Rest", desc: "AES-256 für alle gespeicherten Datenbankdaten" },
+                    { icon: "👤", title: "Zugriffskontrolle (RBAC)", desc: "Rollenbasierte Berechtigungen; 2FA verfügbar" },
+                    { icon: "📋", title: "Audit-Logging", desc: "Protokollierung sicherheitsrelevanter Ereignisse" },
+                    { icon: "🔄", title: "Regelmäßige Backups", desc: "Automatische tägliche Backups" },
+                    { icon: "🛡️", title: "Penetrationstests", desc: "Regelmäßige Sicherheitsüberprüfungen" },
+                    { icon: "🔑", title: "Passwort-Hashing", desc: "Passwörter nur als bcrypt-Hash gespeichert" },
+                    { icon: "📧", title: "Mitarbeiterschulung", desc: "Regelmäßige Datenschutzschulungen" },
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                      <span className="text-2xl flex-shrink-0">{item.icon}</span>
+                      <div>
+                        <p className="font-semibold text-sm text-gray-800">{item.title}</p>
+                        <p className="text-xs text-gray-600 mt-0.5">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-sm text-gray-600">
+                  Diese Seite nutzt SSL-/TLS-Verschlüsselung erkennbar am "https://" und dem Schloss-Symbol in der Adresszeile.
+                </p>
+              </section>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+};
+
+export default Datenschutz;
