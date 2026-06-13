@@ -8,7 +8,6 @@ import {
   ADMIN_DETAILED_PERMISSIONS 
 } from "@/types/permissions";
 
-// Enable verbose logging in development
 const DEBUG_RBAC = import.meta.env.DEV;
 
 function logRBAC(message: string, data?: unknown) {
@@ -17,7 +16,6 @@ function logRBAC(message: string, data?: unknown) {
   }
 }
 
-// Legacy permissions interface (for backward compatibility)
 export interface Permissions {
   dashboard: boolean;
   employees: boolean;
@@ -26,14 +24,12 @@ export interface Permissions {
   reports: boolean;
   audits: boolean;
   settings: boolean;
-  // Extended permissions for specific features
   riskAssessments: boolean;
   investigations: boolean;
   incidents: boolean;
   trainings: boolean;
 }
 
-// DENY ALL by default - security first approach
 const DEFAULT_PERMISSIONS: Permissions = {
   dashboard: false,
   employees: false,
@@ -48,7 +44,6 @@ const DEFAULT_PERMISSIONS: Permissions = {
   trainings: false,
 };
 
-// Admin has all permissions
 const ADMIN_PERMISSIONS: Permissions = {
   dashboard: true,
   employees: true,
@@ -63,10 +58,8 @@ const ADMIN_PERMISSIONS: Permissions = {
   trainings: true,
 };
 
-// Super admin has all permissions
 const SUPER_ADMIN_PERMISSIONS: Permissions = ADMIN_PERMISSIONS;
 
-// Map route paths to permission keys
 export const ROUTE_PERMISSION_MAP: Record<string, keyof Permissions> = {
   "/dashboard": "dashboard",
   "/employees": "employees",
@@ -101,16 +94,15 @@ export function usePermissions() {
     logRBAC("Company ID:", companyId);
 
     if (!user || !companyId) {
-      logRBAC("⚠️ No user or companyId - denying all permissions");
+      logRBAC("No user or companyId - denying all permissions");
       setPermissions(DEFAULT_PERMISSIONS);
       setDetailedPermissions(DEFAULT_DETAILED_PERMISSIONS);
       setLoading(false);
       return;
     }
 
-    // Super admin gets all permissions
     if (userRole === "super_admin") {
-      logRBAC("✅ Super Admin detected - granting all permissions");
+      logRBAC("Super Admin detected - granting all permissions");
       setPermissions(SUPER_ADMIN_PERMISSIONS);
       setDetailedPermissions(ADMIN_DETAILED_PERMISSIONS);
       setRoleName("Super Admin");
@@ -118,9 +110,8 @@ export function usePermissions() {
       return;
     }
 
-    // Company admin gets all permissions
     if (userRole === "company_admin") {
-      logRBAC("✅ Company Admin detected - granting all permissions");
+      logRBAC("Company Admin detected - granting all permissions");
       setPermissions(ADMIN_PERMISSIONS);
       setDetailedPermissions(ADMIN_DETAILED_PERMISSIONS);
       setRoleName("Admin");
@@ -129,7 +120,6 @@ export function usePermissions() {
     }
 
     try {
-      // First, get the user's assigned role from team_members table
       logRBAC("Fetching role from team_members table...");
       const { data: teamMember, error: teamError } = await supabase
         .from("team_members")
@@ -139,14 +129,13 @@ export function usePermissions() {
         .maybeSingle();
 
       if (teamError) {
-        logRBAC("❌ Error fetching team member:", teamError);
+        logRBAC("Error fetching team member:", teamError);
       }
 
       const assignedRole = teamMember?.role || "Employee";
       logRBAC("Assigned Role:", assignedRole);
       setRoleName(assignedRole);
 
-      // Now fetch permissions for this role from custom_roles table
       logRBAC("Fetching permissions from custom_roles table for role:", assignedRole);
       const { data: roleData, error: roleError } = await supabase
         .from("custom_roles")
@@ -156,7 +145,7 @@ export function usePermissions() {
         .maybeSingle();
 
       if (roleError) {
-        logRBAC("❌ Error fetching role permissions:", roleError);
+        logRBAC("Error fetching role permissions:", roleError);
       }
 
       logRBAC("Raw roleData from DB:", roleData);
@@ -165,45 +154,39 @@ export function usePermissions() {
         const dbPermissions = roleData.permissions as Record<string, boolean>;
         logRBAC("DB Permissions object:", dbPermissions);
 
-        // Map database permissions to our extended permissions
-        // STRICT: Only grant if explicitly true, never fallback to true
         const mappedPermissions: Permissions = {
-          dashboard: dbPermissions.dashboard === true,
-          employees: dbPermissions.employees === true,
-          healthCheckups: dbPermissions.healthCheckups === true,
-          documents: dbPermissions.documents === true,
-          reports: dbPermissions.reports === true,
-          audits: dbPermissions.audits === true,
-          settings: dbPermissions.settings === true,
-          // Extended permissions: Always granted to all users by default
-          riskAssessments: true,
-          investigations: true,
-          incidents: true,
-          trainings: true,
+          dashboard:        dbPermissions.dashboard === true,
+          employees:        dbPermissions.employees === true,
+          healthCheckups:   dbPermissions.healthCheckups === true,
+          documents:        dbPermissions.documents === true,
+          reports:          dbPermissions.reports === true,
+          audits:           dbPermissions.audits === true,
+          settings:         dbPermissions.settings === true,
+          riskAssessments:  dbPermissions.riskAssessments === true,
+          investigations:   dbPermissions.investigations === true,
+          incidents:        dbPermissions.incidents === true,
+          trainings:        dbPermissions.trainings === true,
         };
 
-        logRBAC("✅ Final mapped permissions:", mappedPermissions);
+        logRBAC("Final mapped permissions:", mappedPermissions);
         setPermissions(mappedPermissions);
 
-        // Handle detailed permissions if available
         if (roleData.detailed_permissions) {
           const detailed = roleData.detailed_permissions as DetailedPermissions;
-          logRBAC("✅ Detailed permissions found:", detailed);
+          logRBAC("Detailed permissions found:", detailed);
           setDetailedPermissions(detailed);
         } else {
-          logRBAC("⚠️ No detailed_permissions, using defaults");
+          logRBAC("No detailed_permissions, using defaults");
           setDetailedPermissions(DEFAULT_DETAILED_PERMISSIONS);
         }
       } else {
-        // NO FALLBACK TO PERMISSIVE DEFAULTS - deny all if no role config found
-        logRBAC("⚠️ No custom_roles entry found for role:", assignedRole);
-        logRBAC("⚠️ DENYING ALL - no permissions configured for this role");
+        logRBAC("No custom_roles entry found for role:", assignedRole);
+        logRBAC("DENYING ALL - no permissions configured for this role");
         setPermissions(DEFAULT_PERMISSIONS);
         setDetailedPermissions(DEFAULT_DETAILED_PERMISSIONS);
       }
     } catch (error) {
-      logRBAC("❌ Exception in fetchPermissions:", error);
-      // On error, deny all
+      logRBAC("Exception in fetchPermissions:", error);
       setPermissions(DEFAULT_PERMISSIONS);
       setDetailedPermissions(DEFAULT_DETAILED_PERMISSIONS);
     } finally {
@@ -218,14 +201,11 @@ export function usePermissions() {
     }
   }, [authLoading, fetchPermissions]);
 
-  // Check if user has permission for a specific feature
   const hasPermission = useCallback(
     (permission: keyof Permissions): boolean => {
-      // Super admin and company admin always have access
       if (userRole === "super_admin" || userRole === "company_admin") {
         return true;
       }
-      // STRICT: permission must be explicitly true, not just truthy
       const result = permissions[permission] === true;
       logRBAC(`hasPermission("${permission}") = ${result}`);
       return result;
@@ -233,20 +213,16 @@ export function usePermissions() {
     [permissions, userRole]
   );
 
-  // Check if user has a specific detailed permission
   const hasDetailedPermission = useCallback(
     (category: PermissionCategory, permission: string): boolean => {
-      // Super admin and company admin always have access
       if (userRole === "super_admin" || userRole === "company_admin") {
         return true;
       }
-      
       const categoryPerms = detailedPermissions[category];
       if (!categoryPerms) {
         logRBAC(`hasDetailedPermission: category "${category}" not found`);
         return false;
       }
-      
       const result = (categoryPerms as unknown as Record<string, boolean>)[permission] === true;
       logRBAC(`hasDetailedPermission("${category}.${permission}") = ${result}`);
       return result;
@@ -254,24 +230,17 @@ export function usePermissions() {
     [detailedPermissions, userRole]
   );
 
-  // Check if user can access a specific route
   const canAccessRoute = useCallback(
     (path: string): boolean => {
-      // Super admin and company admin can access everything
       if (userRole === "super_admin" || userRole === "company_admin") {
         return true;
       }
-
-      // Find the base path (without params)
       const basePath = "/" + path.split("/")[1];
       const permissionKey = ROUTE_PERMISSION_MAP[basePath];
-
       if (!permissionKey) {
-        // Route not in map - DENY by default for unmapped routes (safer)
         logRBAC(`canAccessRoute("${path}") - no mapping found, denying`);
         return false;
       }
-
       const result = permissions[permissionKey] === true;
       logRBAC(`canAccessRoute("${path}") -> ${permissionKey} = ${result}`);
       return result;
