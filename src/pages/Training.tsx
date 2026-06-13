@@ -401,9 +401,9 @@ export default function Training() {
     course.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalEmployeesWithAccess = Object.values(courseAccessByCourse)
-    .flat()
-    .filter((v, i, a) => a.indexOf(v) === i).length;
+const totalEmployeesWithAccess = new Set(
+  Object.values(courseAccessByCourse).flat()
+).size;
 
   const renderAccessDialog = () => (
     <Dialog open={isAccessDialogOpen} onOpenChange={(open) => {
