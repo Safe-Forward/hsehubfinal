@@ -224,10 +224,22 @@ export default function Training() {
 
       const empIds = accessData.map((a: any) => a.employee_id);
 
-      const { data: empData } = await supabase
-        .from("employees")
-        .select("id, full_name")
-        .in("id", empIds);
+// Nur Mitarbeiter die auch in team_members sind (echte Nutzer)
+const { data: teamData } = await supabase
+  .from("team_members")
+  .select("user_id")
+  .eq("company_id", companyId)
+  .not("user_id", "is", null);
+
+const teamUserIds = new Set((teamData || []).map((t: any) => t.user_id));
+
+const { data: empData } = await supabase
+  .from("employees")
+  .select("id, full_name, user_id")
+  .in("id", empIds)
+  .not("user_id", "is", null);
+
+const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.user_id));
 
       const { data: lessonData } = await supabase
         .from("course_lessons")
@@ -257,7 +269,7 @@ export default function Training() {
       const certByEmp: Record<string, any> = {};
       (certData || []).forEach((c: any) => { certByEmp[c.employee_id] = c; });
 
-      const result: EmployeeProgress[] = (empData || []).map((emp: any) => {
+      const result: EmployeeProgress[] = filteredEmpData.map((emp: any) => {
         const completed = Math.min(progressByEmp[emp.id] || 0, totalLessons);
         const pct = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
         return {
