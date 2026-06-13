@@ -170,30 +170,22 @@ export default function Training() {
     }
   };
 
-  const fetchEmployees = async () => {
-    if (!companyId) return;
-    try {
-const { data, error } = await supabase
-  .from("team_members")
-  .select("id, first_name, last_name, user_id")
-  .eq("company_id", companyId)
-  .eq("status", "active")
-  .order("first_name");
-
-const mapped = (data || [])
-  .filter((m: any) => m.user_id)
-  .map((m: any) => ({
-    id: m.user_id,
-    full_name: `${m.first_name} ${m.last_name}`.trim(),
-  }));
-setEmployees(mapped);
-return;
-      if (error) throw error;
-      setEmployees((data as Employee[]) || []);
-    } catch (err: any) {
-      toast({ title: "Fehler beim Laden der Nutzer", description: err.message, variant: "destructive" });
-    }
-  };
+const fetchEmployees = async () => {
+  if (!companyId) return;
+  try {
+    const { data, error } = await supabase
+      .from("employees")
+      .select("id, full_name")
+      .eq("company_id", companyId)
+      .eq("is_active", true)
+      .not("user_id", "is", null)
+      .order("full_name");
+    if (error) throw error;
+    setEmployees((data as Employee[]) || []);
+  } catch (err: any) {
+    toast({ title: "Fehler beim Laden der Nutzer", description: err.message, variant: "destructive" });
+  }
+};
 
   const fetchCourseAccess = async () => {
     if (!companyId) return;
