@@ -290,7 +290,7 @@ export default function CompanyRegistration() {
             onClick={() => navigate("/")}
             className="-ml-4 hover:bg-transparent hover:text-primary"
           >
-            Zurueck zur Startseite
+            Zurück zur Startseite
           </Button>
         </div>
 
