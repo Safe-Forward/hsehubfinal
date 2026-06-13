@@ -173,11 +173,19 @@ export default function Training() {
   const fetchEmployees = async () => {
     if (!companyId) return;
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .eq("company_id", companyId)
-        .order("full_name");
+const { data, error } = await supabase
+  .from("team_members")
+  .select("id, first_name, last_name")
+  .eq("company_id", companyId)
+  .eq("status", "active")
+  .order("first_name");
+
+const mapped = (data || []).map((m: any) => ({
+  id: m.id,
+  full_name: `${m.first_name} ${m.last_name}`.trim(),
+}));
+setEmployees(mapped);
+return;
       if (error) throw error;
       setEmployees((data as Employee[]) || []);
     } catch (err: any) {
