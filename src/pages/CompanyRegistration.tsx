@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Check, Building2, Loader2, Eye, EyeOff } from "lucide-react";
+import { Check, Loader2, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,17 +23,17 @@ const registrationSchema = z
   .object({
     companyName: z
       .string()
-      .min(2, "Company name must be at least 2 characters"),
-    companyEmail: z.string().email("Invalid email address"),
+      .min(2, "Unternehmensname muss mindestens 2 Zeichen lang sein"),
+    companyEmail: z.string().email("Ungültige E-Mail-Adresse"),
     companyPhone: z.string().optional(),
     companyAddress: z.string().optional(),
-    adminName: z.string().min(2, "Name must be at least 2 characters"),
-    adminEmail: z.string().email("Invalid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    adminName: z.string().min(2, "Name muss mindestens 2 Zeichen lang sein"),
+    adminEmail: z.string().email("Ungültige E-Mail-Adresse"),
+    password: z.string().min(8, "Passwort muss mindestens 8 Zeichen lang sein"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Passwörter stimmen nicht überein",
     path: ["confirmPassword"],
   });
 
@@ -42,129 +42,127 @@ type RegistrationForm = z.infer<typeof registrationSchema>;
 const subscriptionPlans = [
   {
     tier: "basic",
-    name: "Package S",
-    subtitle: "HSE Basic - The digital entry point",
+    name: "Paket S",
+    subtitle: "HSE Basic – Der digitale Einstieg",
     price: 149,
     maxEmployees: 5,
-    users: "5 users included (1 admin + 4 users)",
+    users: "5 Benutzer (1 Administrator + 4 Benutzer)",
+    description: "Für kleine Unternehmen, die ihre Arbeitsschutzverwaltung erstmals digitalisieren möchten.",
     features: [
-      "Dashboard (examinations, due dates, documents)",
-      "Employee management (master data, files)",
-      "Examination management (G examinations, appointments, planning)",
-      "Document management (PDF, images) (5 GB Storage)",
-      "Standard reports (CSV/PDF export)",
-      "GDPR export & account deletion",
-      "Task list",
-      "Roles & permissions (doctor, admin, company, employee)",
+      "Dashboard (Prüfungen, Termine, Dokumente)",
+      "Mitarbeiterverwaltung (Stammdaten, Dateien)",
+      "Untersuchungsmanagement (G-Untersuchungen, Termine, Planung)",
+      "Dokumentenverwaltung (PDF, Bilder) (5 GB Speicherplatz)",
+      "Standardberichte (CSV-/PDF-Export)",
+      "Aufgabenliste",
+      "Rollen und Berechtigungen (Arzt, Administrator, Unternehmen, Mitarbeiter)",
     ],
   },
   {
     tier: "standard",
-    name: "Package M",
-    subtitle: "HSE Pro - Structured teamwork",
+    name: "Paket M",
+    subtitle: "HSE Pro – Strukturierte Teamarbeit",
     price: 249,
     maxEmployees: 10,
-    users: "10 users",
+    users: "10 Benutzer (1 Administrator + 9 Benutzer)",
+    description: "Für KMU, die Prozesse, Rollen und Nachvollziehbarkeit benötigen.",
     features: [
-      "Everything from Basic + Pro features",
-      "Incident and near-miss reports",
-      "Risk assessments (GBU module)",
-      "Action tracking",
-      "Advanced task management (assignments + status)",
-      "Automatic reminders & email notifications",
-      "Partner integrations via API token (e.g. laboratory / doctor / service provider)",
+      "Alle Funktionen aus den Paketen „Basic" und „Pro"",
+      "Meldungen zu Vorfällen und Beinaheunfällen",
+      "Risikobewertungen (GBU-Modul)",
+      "Aktionsverfolgung",
+      "Partnerintegrationen über API-Token (z. B. Labor / Arzt / Dienstleister)",
     ],
     popular: true,
   },
   {
     tier: "premium",
-    name: "Package L",
-    subtitle: "HSE Enterprise - For large SMEs & groups",
+    name: "Paket L",
+    subtitle: "HSE Enterprise – Für mittelständische Unternehmen und Konzerne",
     price: 349,
     maxEmployees: 999,
-    users: "unlimited users",
+    users: "Kein Limit",
+    description: "Alle fachlichen HSE-Funktionen auf Organisationsebene.",
     features: [
-      "Everything from Basic + Pro + Enterprise",
-      "Training management",
-      "Courses (up to 20 courses)",
-      "Progress tracking",
-      "Certificates (PDF)",
-      "Audit management",
-      "Multi-client (multiple locations/companies)",
-      "Cross-location reports",
-      "Complete API suite",
-      "Priority Support",
+      "Alle Funktionen von Basic + Pro + Enterprise",
+      "Schulungsmanagement",
+      "Kurse (bis zu 20 Kurse)",
+      "Fortschrittsüberwachung",
+      "Zertifikate (PDF)",
+      "Audit Management",
+      "Mehrere Standorte / Unternehmen verwalten",
+      "Standortübergreifende Berichte",
+      "Prioritäts-Support",
     ],
   },
 ];
 
 const addOns = [
   {
-    id: "safety-course-bundle",
-    name: "Basic safety course bundle",
-    description: "10 standard courses (first aid, PPE, fire safety)",
+    id: "quickstart",
+    name: "Gezielte Einführung",
+    description: "Unverzichtbare Sicherheitsschulungen für Ihr Team",
     price: 149,
-    period: "year",
+    period: "einmalig",
   },
   {
-    id: "quickstart",
-    name: "QuickStart",
-    description: "60-minute remote setup",
+    id: "setup",
+    name: "Setup gemeistert",
+    description: "Schnelle Einarbeitung und Unterstützung bei der Einrichtung",
     price: 149,
-    period: "one-time fee",
+    period: "einmalig",
   },
   {
     id: "priority-support",
-    name: "Priority Support",
-    description: "Response time < 10 hours",
+    name: "Prioritäts-Support",
+    description: "Engagierter Support mit kürzeren Reaktionszeiten",
     price: 49,
-    period: "month",
+    period: "Monat",
   },
   {
     id: "multi-site-basic",
     name: "Multi-Site Basic",
-    description: "Up to 3 locations €59/month",
-    additionalInfo: "Each additional location €29 per month",
-    price: 59,
-    period: "month",
+    description: "Bis zu 3 Standorte (29€ pro zusätzlichem Standort)",
+    price: 99,
+    period: "Monat",
+  },
+  {
+    id: "custom-course-upload",
+    name: "Eigenen Kurs hochladen",
+    description: "Laden Sie Ihre eigenen Schulungsinhalte hoch und verwalten Sie sie",
+    price: 49,
+    period: "Monat",
   },
   {
     id: "storage-50gb",
-    name: "Storage+ 50 GB",
-    description: "€19/month",
+    name: "Speicher+ 50 GB",
+    description: "Zusätzlicher Speicherplatz für Ihre Dokumente",
     price: 19,
-    period: "month",
+    period: "Monat",
     group: "storage",
   },
   {
     id: "storage-200gb",
-    name: "Storage+ 200 GB",
-    description: "€59/month",
+    name: "Speicher+ 200 GB",
+    description: "Zusätzlicher Speicherplatz für Ihre Dokumente",
     price: 59,
-    period: "month",
+    period: "Monat",
     group: "storage",
   },
   {
     id: "storage-unlimited",
-    name: "Storage Unlimited",
-    description: "€149/month",
+    name: "Speicher+ Unbegrenzt",
+    description: "Unbegrenzter Speicherplatz für Ihre Dokumente",
     price: 149,
-    period: "month",
+    period: "Monat",
     group: "storage",
-  },
-  {
-    id: "custom-course-upload",
-    name: "Custom Course Upload",
-    description: "Any number of your own courses",
-    price: 49,
-    period: "month",
   },
 ];
 
 export default function CompanyRegistration() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedTier, setSelectedTier] = useState<
+  const [selectedTier, setSelectedTier] = useState
     "basic" | "standard" | "premium"
   >("standard");
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
@@ -182,9 +180,8 @@ export default function CompanyRegistration() {
 
   const toggleAddOn = (addOnId: string) => {
     const addOn = addOns.find((a) => a.id === addOnId);
-    
+
     setSelectedAddOns((prev) => {
-      // If it's a storage option, deselect other storage options
       if (addOn?.group === "storage") {
         const withoutStorage = prev.filter(
           (id) => !addOns.find((a) => a.id === id && a.group === "storage")
@@ -194,8 +191,6 @@ export default function CompanyRegistration() {
         }
         return [...withoutStorage, addOnId];
       }
-      
-      // For non-storage options, toggle normally
       if (prev.includes(addOnId)) {
         return prev.filter((id) => id !== addOnId);
       }
@@ -205,19 +200,10 @@ export default function CompanyRegistration() {
 
   const onSubmit = async (data: RegistrationForm) => {
     setLoading(true);
-    
-    // Log selected add-ons for debugging/future payment integration
-    console.log("Selected Add-ons:", selectedAddOns);
-    const selectedAddOnsDetails = addOns.filter((addon) =>
-      selectedAddOns.includes(addon.id)
-    );
-    console.log("Selected Add-ons Details:", selectedAddOnsDetails);
-    
+
     try {
-      // Step 1: Sign out any existing session first
       await supabase.auth.signOut();
 
-      // Step 2: Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.adminEmail,
         password: data.password,
@@ -229,12 +215,10 @@ export default function CompanyRegistration() {
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error("User creation failed");
+      if (!authData.user) throw new Error("Benutzererstellung fehlgeschlagen");
 
-      // Step 3: Wait a moment for the user to be fully created in auth.users
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Step 4: Sign in to get a valid session
       const { data: sessionData, error: signInError } =
         await supabase.auth.signInWithPassword({
           email: data.adminEmail,
@@ -242,10 +226,8 @@ export default function CompanyRegistration() {
         });
 
       if (signInError) throw signInError;
-      if (!sessionData.user) throw new Error("Failed to establish session");
+      if (!sessionData.user) throw new Error("Sitzung konnte nicht erstellt werden");
 
-      // Step 5: Call the registration function to complete setup
-      // This function runs with SECURITY DEFINER to bypass RLS
       const selectedPlan = subscriptionPlans.find(
         (p) => p.tier === selectedTier
       )!;
@@ -254,7 +236,7 @@ export default function CompanyRegistration() {
         supabase as any
       ).rpc("register_company", {
         registration_data: {
-          user_id: sessionData.user.id, // Use the confirmed user ID from session
+          user_id: sessionData.user.id,
           company_name: data.companyName,
           company_email: data.companyEmail,
           company_phone: data.companyPhone || "",
@@ -267,50 +249,40 @@ export default function CompanyRegistration() {
       } as any);
 
       if (registrationError) {
-        console.error("Registration function error:", registrationError);
+        console.error("Registrierungsfehler:", registrationError);
         throw registrationError;
       }
 
-      // Check if the function returned an error
       if (registrationResult && !(registrationResult as any).success) {
         throw new Error(
-          (registrationResult as any).error || "Registration failed"
+          (registrationResult as any).error || "Registrierung fehlgeschlagen"
         );
       }
 
-      console.log(
-        "✅ Registration function completed successfully:",
-        registrationResult
-      );
-
       toast({
-        title: "Success! 🎉",
+        title: "Erfolgreich! 🎉",
         description:
-          "Your company has been created! Please wait while we set everything up...",
+          "Ihr Unternehmen wurde erstellt! Bitte warten Sie, während wir alles einrichten...",
       });
 
-      // Wait longer for database to fully commit
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Force sign out and redirect to auth page so user can sign back in
-      console.log("Registration complete, signing out to refresh session...");
       await supabase.auth.signOut();
 
       toast({
-        title: "Almost Done!",
+        title: "Fast geschafft!",
         description:
-          "Please sign in again to access your new company dashboard.",
+          "Bitte melden Sie sich erneut an, um auf Ihr neues Unternehmens-Dashboard zuzugreifen.",
       });
 
-      // Redirect to auth page after a moment
       setTimeout(() => {
         window.location.href = "/auth";
       }, 1500);
     } catch (error: any) {
-      console.error("Registration error:", error);
+      console.error("Registrierungsfehler:", error);
       toast({
-        title: "Registration Failed",
-        description: error.message || "An error occurred during registration",
+        title: "Registrierung fehlgeschlagen",
+        description: error.message || "Bei der Registrierung ist ein Fehler aufgetreten",
         variant: "destructive",
       });
     } finally {
@@ -327,31 +299,32 @@ export default function CompanyRegistration() {
             onClick={() => navigate("/")}
             className="-ml-4 hover:bg-transparent hover:text-primary"
           >
-            ← Back to Homepage
+            ← Zurück zur Startseite
           </Button>
         </div>
+
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <img
-                src="/logo.png"
-                  alt="SafetyHub Logo"
-                  className="h-12 w-12 relative z-10"
-                />
-            <h1 className="text-4xl font-bold">SafetyHub</h1>
+              src="/logo.png"
+              alt="Safe-Forward Logo"
+              className="h-12 w-12 relative z-10"
+            />
+            <h1 className="text-4xl font-bold">Safe-Forward</h1>
           </div>
           <p className="text-xl text-muted-foreground">
-            Choose Your Plan & Register Your Company
+            Paket wählen & Unternehmen registrieren
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            7-day free trial • No credit card required
+            7 Tage kostenlos testen • Keine Kreditkarte erforderlich
           </p>
         </div>
 
         {/* Subscription Plans */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-center mb-8">
-            Choose Your Plan
+            Ihr Paket wählen
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {subscriptionPlans.map((plan) => (
@@ -361,32 +334,33 @@ export default function CompanyRegistration() {
                   selectedTier === plan.tier
                     ? "ring-2 ring-primary shadow-lg scale-105"
                     : "hover:shadow-md"
-                } ${plan.popular ? "border-primary" : ""}`}
+                } ${plan.popular ? "border-green-500 border-2" : ""}`}
                 onClick={() => setSelectedTier(plan.tier as any)}
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>{plan.name}</CardTitle>
                     {plan.popular && (
-                      <Badge className="bg-primary">Most Popular</Badge>
+                      <Badge className="bg-green-600">Beliebt</Badge>
                     )}
                   </div>
-                  <CardDescription className="text-xs mb-2">
+                  <CardDescription className="text-xs mb-2 font-semibold text-gray-700">
                     {plan.subtitle}
                   </CardDescription>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">{plan.price}€</span>
-                    <span className="text-muted-foreground">/month</span>
+                    <span className="text-muted-foreground">/Monat</span>
                   </div>
                   <p className="text-sm text-blue-600 font-semibold mt-2">
                     {plan.users}
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">{plan.description}</p>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
-                        <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
                       </li>
                     ))}
@@ -399,26 +373,28 @@ export default function CompanyRegistration() {
 
         {/* Registration Form and Add-ons */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {/* Registration Form - Left Side (2 columns) */}
+
+          {/* Registration Form */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Company Registration</CardTitle>
+                <CardTitle>Unternehmensregistrierung</CardTitle>
                 <CardDescription>
-                  Fill in your company and admin details to get started
+                  Geben Sie Ihre Unternehmens- und Administratordaten ein, um loszulegen
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
                   {/* Company Details */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Company Information</h3>
+                    <h3 className="text-lg font-semibold">Unternehmensdaten</h3>
                     <div>
-                      <Label htmlFor="companyName">Company Name *</Label>
+                      <Label htmlFor="companyName">Unternehmensname *</Label>
                       <Input
                         id="companyName"
                         {...register("companyName")}
-                        placeholder="Acme Corporation"
+                        placeholder="Mustermann GmbH"
                       />
                       {errors.companyName && (
                         <p className="text-sm text-destructive mt-1">
@@ -429,12 +405,12 @@ export default function CompanyRegistration() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="companyEmail">Invoice Email *</Label>
+                        <Label htmlFor="companyEmail">Rechnungs-E-Mail *</Label>
                         <Input
                           id="companyEmail"
                           type="email"
                           {...register("companyEmail")}
-                          placeholder="billing@company.com"
+                          placeholder="buchhaltung@unternehmen.de"
                         />
                         {errors.companyEmail && (
                           <p className="text-sm text-destructive mt-1">
@@ -443,21 +419,21 @@ export default function CompanyRegistration() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="companyPhone">Phone (Optional)</Label>
+                        <Label htmlFor="companyPhone">Telefon (optional)</Label>
                         <Input
                           id="companyPhone"
                           {...register("companyPhone")}
-                          placeholder="+1 (555) 123-4567"
+                          placeholder="+49 (0) 123 456789"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <Label htmlFor="companyAddress">Address (Optional)</Label>
+                      <Label htmlFor="companyAddress">Adresse (optional)</Label>
                       <Textarea
                         id="companyAddress"
                         {...register("companyAddress")}
-                        placeholder="123 Main St, City, State, ZIP"
+                        placeholder="Musterstraße 1, 12345 Musterstadt"
                         rows={2}
                       />
                     </div>
@@ -465,13 +441,13 @@ export default function CompanyRegistration() {
 
                   {/* Admin Details */}
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Administrator Account</h3>
+                    <h3 className="text-lg font-semibold">Administratorkonto</h3>
                     <div>
-                      <Label htmlFor="adminName">Full Name *</Label>
+                      <Label htmlFor="adminName">Vollständiger Name *</Label>
                       <Input
                         id="adminName"
                         {...register("adminName")}
-                        placeholder="John Doe"
+                        placeholder="Max Mustermann"
                       />
                       {errors.adminName && (
                         <p className="text-sm text-destructive mt-1">
@@ -481,12 +457,12 @@ export default function CompanyRegistration() {
                     </div>
 
                     <div>
-                      <Label htmlFor="adminEmail">Email *</Label>
+                      <Label htmlFor="adminEmail">E-Mail *</Label>
                       <Input
                         id="adminEmail"
                         type="email"
                         {...register("adminEmail")}
-                        placeholder="john@company.com"
+                        placeholder="max@unternehmen.de"
                       />
                       {errors.adminEmail && (
                         <p className="text-sm text-destructive mt-1">
@@ -497,7 +473,7 @@ export default function CompanyRegistration() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="password">Password *</Label>
+                        <Label htmlFor="password">Passwort *</Label>
                         <div className="relative">
                           <Input
                             id="password"
@@ -525,7 +501,7 @@ export default function CompanyRegistration() {
                         )}
                       </div>
                       <div>
-                        <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                        <Label htmlFor="confirmPassword">Passwort bestätigen *</Label>
                         <div className="relative">
                           <Input
                             id="confirmPassword"
@@ -536,7 +512,9 @@ export default function CompanyRegistration() {
                           />
                           <button
                             type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                           >
                             {showConfirmPassword ? (
@@ -566,19 +544,19 @@ export default function CompanyRegistration() {
                       {loading ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creating Account...
+                          Konto wird erstellt...
                         </>
                       ) : (
-                        `Start 7-Day Free Trial (${
+                        `7 Tage kostenlos testen (${
                           subscriptionPlans.find((p) => p.tier === selectedTier)
                             ?.name
                         })`
                       )}
                     </Button>
                     <p className="text-xs text-center text-muted-foreground">
-                      Already have an account?{" "}
+                      Bereits ein Konto?{" "}
                       <a href="/auth" className="text-primary hover:underline">
-                        Sign in
+                        Jetzt anmelden
                       </a>
                     </p>
                   </div>
@@ -587,13 +565,13 @@ export default function CompanyRegistration() {
             </Card>
           </div>
 
-          {/* Add-ons Section - Right Side (1 column) */}
+          {/* Add-ons */}
           <div className="lg:col-span-1">
             <Card className="sticky top-4">
               <CardHeader>
-                <CardTitle className="text-lg">Add-ons</CardTitle>
+                <CardTitle className="text-lg">Verfügbare Add-ons</CardTitle>
                 <CardDescription className="text-xs">
-                  Enhance your plan with optional features
+                  Erweitern Sie Ihr Paket mit optionalen Funktionen
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -616,22 +594,12 @@ export default function CompanyRegistration() {
                         onClick={(e) => e.stopPropagation()}
                       />
                       <div className="flex-1">
-                        <div className="font-semibold text-sm text-red-600">
-                          Add one:
-                        </div>
-                        <div className="font-semibold text-sm">
-                          {addOn.name}
-                        </div>
+                        <div className="font-semibold text-sm">{addOn.name}</div>
                         <div className="text-xs text-muted-foreground mt-1">
                           {addOn.description}
                         </div>
-                        {addOn.additionalInfo && (
-                          <div className="text-xs text-muted-foreground">
-                            {addOn.additionalInfo}
-                          </div>
-                        )}
-                        <div className="text-sm font-bold text-red-600 mt-1">
-                          €{addOn.price}/{addOn.period}
+                        <div className="text-sm font-bold text-primary mt-1">
+                          {addOn.price}€ / {addOn.period}
                         </div>
                       </div>
                     </div>
