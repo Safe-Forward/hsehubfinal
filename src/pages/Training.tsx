@@ -14,9 +14,6 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
-  Play,
-  Lock,
-  BarChart3,
   Star,
 } from "lucide-react";
 import LessonCard from "@/components/training/LessonCard";
@@ -83,7 +80,6 @@ interface Lesson {
 interface Employee {
   id: string;
   full_name: string;
-  email?: string | null;
 }
 
 const COURSE_COLORS = [
@@ -93,13 +89,6 @@ const COURSE_COLORS = [
   "from-orange-500 to-orange-700",
   "from-pink-500 to-rose-700",
   "from-cyan-500 to-cyan-700",
-];
-
-const COURSE_ICONS = [
-  <GraduationCap className="w-10 h-10 text-white" />,
-  <BookOpen className="w-10 h-10 text-white" />,
-  <Award className="w-10 h-10 text-white" />,
-  <Star className="w-10 h-10 text-white" />,
 ];
 
 export default function Training() {
@@ -181,14 +170,14 @@ export default function Training() {
     }
   };
 
-const fetchEmployees = async () => {
+  const fetchEmployees = async () => {
     if (!companyId) return;
     try {
- const { data, error } = await supabase
-  .from("profiles")
-  .select("id, full_name, email")
-  .eq("company_id", companyId)
-  .order("full_name");
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("company_id", companyId)
+        .order("full_name");
       if (error) throw error;
       setEmployees((data as Employee[]) || []);
     } catch (err: any) {
@@ -286,7 +275,7 @@ const fetchEmployees = async () => {
 
   const onCourseDelete = async (courseId: string, courseName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Kurs "${courseName}" wirklich löschen? Alle Lektionen werden ebenfalls gelöscht.`)) return;
+    if (!confirm(`Kurs "${courseName}" wirklich loeschen? Alle Lektionen werden ebenfalls geloescht.`)) return;
     try {
       const { error: lessonsError } = await supabase
         .from("course_lessons").delete().eq("course_id", courseId);
@@ -294,7 +283,7 @@ const fetchEmployees = async () => {
       const { error: courseError } = await supabase
         .from("courses").delete().eq("id", courseId);
       if (courseError) throw courseError;
-      toast({ title: "Erfolgreich", description: "Kurs wurde gelöscht" });
+      toast({ title: "Erfolgreich", description: "Kurs wurde geloescht" });
       fetchCourses();
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
@@ -329,20 +318,20 @@ const fetchEmployees = async () => {
         .from("course_lessons").update({ status: newStatus }).eq("id", lessonId);
       if (error) throw error;
       setLessons(lessons.map((l) => l.id === lessonId ? { ...l, status: newStatus as "draft" | "published" } : l));
-      toast({ title: "Erfolgreich", description: `Lektion ${newStatus === "published" ? "veröffentlicht" : "als Entwurf gespeichert"}` });
+      toast({ title: "Erfolgreich", description: `Lektion ${newStatus === "published" ? "veroeffentlicht" : "als Entwurf gespeichert"}` });
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
     }
   };
 
   const onLessonDelete = async (lessonId: string, lessonName: string) => {
-    if (!confirm(`Lektion "${lessonName}" wirklich löschen?`)) return;
+    if (!confirm(`Lektion "${lessonName}" wirklich loeschen?`)) return;
     try {
       const { error } = await supabase
         .from("course_lessons").delete().eq("id", lessonId);
       if (error) throw error;
       setLessons(lessons.filter((l) => l.id !== lessonId));
-      toast({ title: "Erfolgreich", description: "Lektion wurde gelöscht" });
+      toast({ title: "Erfolgreich", description: "Lektion wurde geloescht" });
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
     }
@@ -356,9 +345,6 @@ const fetchEmployees = async () => {
     .flat()
     .filter((v, i, a) => a.indexOf(v) === i).length;
 
-  const publishedLessonsCount = lessons.filter((l) => l.status === "published").length;
-
-  // ── Access Dialog ─────────────────────────────────────────────────────────
   const renderAccessDialog = () => (
     <Dialog open={isAccessDialogOpen} onOpenChange={(open) => {
       setIsAccessDialogOpen(open);
@@ -368,36 +354,37 @@ const fetchEmployees = async () => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
-            Mitarbeiterzugriff verwalten
+            Nutzerzugriff verwalten
           </DialogTitle>
           <DialogDescription>
             {managingAccessCourse
-              ? `Zugriff für Kurs "${managingAccessCourse.name}" verwalten.`
-              : "Mitarbeiterzugriff verwalten."}
+              ? `Zugriff fuer Kurs "${managingAccessCourse.name}" verwalten.`
+              : "Nutzerzugriff verwalten."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="max-h-[420px] overflow-y-auto border rounded-xl p-3 space-y-2">
           {employees.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Keine aktiven Mitarbeiter gefunden.</p>
+            <div className="text-center py-8 space-y-2">
+              <Users className="w-10 h-10 text-muted-foreground/30 mx-auto" />
+              <p className="text-sm text-muted-foreground">Keine Nutzer gefunden.</p>
+              <p className="text-xs text-muted-foreground">Laden Sie zuerst Nutzer per Einladung ein.</p>
+            </div>
           ) : (
             employees.map((employee) => {
               const checked = selectedEmployeeIds.has(employee.id);
               return (
-                <label key={employee.id}
-                  className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${checked ? "bg-primary/5 border border-primary/20" : "hover:bg-muted/50"}`}
+                <label
+                  key={employee.id}
+                  className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                    checked ? "bg-primary/5 border border-primary/20" : "hover:bg-muted/50"
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                       {employee.full_name.charAt(0).toUpperCase()}
                     </div>
-<div>
-  <p className="text-sm font-medium">{employee.full_name}</p>
-  {employee.email && (
-    <p className="text-xs text-muted-foreground">{employee.email}</p>
-  )}
-
-</div>
+                    <p className="text-sm font-medium">{employee.full_name}</p>
                   </div>
                   <Checkbox
                     checked={checked}
@@ -411,7 +398,7 @@ const fetchEmployees = async () => {
 
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            {selectedEmployeeIds.size} von {employees.length} Mitarbeitern ausgewählt
+            {selectedEmployeeIds.size} von {employees.length} Nutzern ausgewaehlt
           </p>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => {
@@ -441,7 +428,6 @@ const fetchEmployees = async () => {
     );
   }
 
-  // ── Kursdetail-Ansicht ────────────────────────────────────────────────────
   if (selectedCourse) {
     const publishedCount = lessons.filter((l) => l.status === "published").length;
     const draftCount = lessons.filter((l) => l.status === "draft").length;
@@ -449,7 +435,6 @@ const fetchEmployees = async () => {
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-        {/* Header */}
         <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -468,14 +453,13 @@ const fetchEmployees = async () => {
               </Button>
               <Button size="sm" onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}>
                 <Plus className="w-4 h-4 mr-2" />
-                Lektion hinzufügen
+                Lektion hinzufuegen
               </Button>
             </div>
           </div>
         </header>
 
         <main className="container mx-auto px-4 py-8 space-y-6">
-          {/* Kurs-Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
               <CardContent className="p-4">
@@ -498,7 +482,7 @@ const fetchEmployees = async () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{publishedCount}</p>
-                    <p className="text-xs text-muted-foreground">Veröffentlicht</p>
+                    <p className="text-xs text-muted-foreground">Veroeffentlicht</p>
                   </div>
                 </div>
               </CardContent>
@@ -511,7 +495,7 @@ const fetchEmployees = async () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{draftCount}</p>
-                    <p className="text-xs text-muted-foreground">Entwürfe</p>
+                    <p className="text-xs text-muted-foreground">Entwuerfe</p>
                   </div>
                 </div>
               </CardContent>
@@ -524,32 +508,30 @@ const fetchEmployees = async () => {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{accessCount}</p>
-                    <p className="text-xs text-muted-foreground">Mitarbeiter</p>
+                    <p className="text-xs text-muted-foreground">Nutzer mit Zugriff</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Fortschrittsbalken */}
           {lessons.length > 0 && (
             <Card className="border-0 shadow-md">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Veröffentlichungsfortschritt</span>
+                  <span className="text-sm font-medium">Veroeffentlichungsfortschritt</span>
                   <span className="text-sm font-bold text-primary">
                     {Math.round((publishedCount / lessons.length) * 100)}%
                   </span>
                 </div>
                 <Progress value={(publishedCount / lessons.length) * 100} className="h-2" />
                 <p className="text-xs text-muted-foreground mt-2">
-                  {publishedCount} von {lessons.length} Lektionen veröffentlicht
+                  {publishedCount} von {lessons.length} Lektionen veroeffentlicht
                 </p>
               </CardContent>
             </Card>
           )}
 
-          {/* Zertifikat-Banner */}
           <Card className="border-0 shadow-md bg-gradient-to-r from-amber-500 to-orange-600 text-white overflow-hidden relative">
             <div className="absolute right-0 top-0 opacity-10">
               <Award className="w-40 h-40 -mr-8 -mt-8" />
@@ -563,7 +545,7 @@ const fetchEmployees = async () => {
                   <div>
                     <p className="font-bold text-lg">Zertifikate</p>
                     <p className="text-white/80 text-sm">
-                      Mitarbeiter erhalten nach Abschluss aller Lektionen automatisch ein PDF-Zertifikat.
+                      Nutzer erhalten nach Abschluss aller Lektionen automatisch ein PDF-Zertifikat.
                     </p>
                   </div>
                 </div>
@@ -574,17 +556,16 @@ const fetchEmployees = async () => {
             </CardContent>
           </Card>
 
-          {/* Lektionen */}
           <Card className="border-0 shadow-xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-xl">Kursinhalt</CardTitle>
-                  <CardDescription>Lektionen verwalten und veröffentlichen</CardDescription>
+                  <CardDescription>Lektionen verwalten und veroeffentlichen</CardDescription>
                 </div>
                 <Button onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Lektion hinzufügen
+                  Lektion hinzufuegen
                 </Button>
               </div>
             </CardHeader>
@@ -595,7 +576,7 @@ const fetchEmployees = async () => {
                     <BookOpen className="w-10 h-10 text-muted-foreground/40" />
                   </div>
                   <p className="text-lg font-medium text-muted-foreground mb-1">Noch keine Lektionen</p>
-                  <p className="text-sm text-muted-foreground/60 mb-4">Füge die erste Lektion hinzu um den Kurs zu starten</p>
+                  <p className="text-sm text-muted-foreground/60 mb-4">Fuege die erste Lektion hinzu um den Kurs zu starten</p>
                   <Button onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Erste Lektion erstellen
@@ -622,10 +603,8 @@ const fetchEmployees = async () => {
     );
   }
 
-  // ── Kursübersicht ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -641,8 +620,6 @@ const fetchEmployees = async () => {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-
-        {/* Hero Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 text-white p-8 shadow-2xl">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -656,7 +633,7 @@ const fetchEmployees = async () => {
               </div>
               <h2 className="text-3xl font-bold mb-2">Schulungen & Qualifikationen</h2>
               <p className="text-blue-100 max-w-lg">
-                Erstellen Sie Kurse, verwalten Sie Lektionen und stellen Sie Ihren Mitarbeitern
+                Erstellen Sie Kurse, verwalten Sie Lektionen und stellen Sie Ihren Nutzern
                 automatische Zertifikate nach Kursabschluss aus.
               </p>
             </div>
@@ -667,17 +644,16 @@ const fetchEmployees = async () => {
               </div>
               <div className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
                 <p className="text-3xl font-bold">{totalEmployeesWithAccess}</p>
-                <p className="text-xs text-blue-100">Mitarbeiter</p>
+                <p className="text-xs text-blue-100">Zugewiesene Nutzer</p>
               </div>
               <div className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
                 <p className="text-3xl font-bold">{employees.length}</p>
-                <p className="text-xs text-blue-100">Gesamt</p>
+                <p className="text-xs text-blue-100">Nutzer gesamt</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* KPI Kacheln */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="border-0 shadow-md">
             <CardContent className="p-4 flex items-center gap-3">
@@ -697,7 +673,7 @@ const fetchEmployees = async () => {
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalEmployeesWithAccess}</p>
-                <p className="text-xs text-muted-foreground">Zugewiesene Mitarbeiter</p>
+                <p className="text-xs text-muted-foreground">Zugewiesene Nutzer</p>
               </div>
             </CardContent>
           </Card>
@@ -729,7 +705,6 @@ const fetchEmployees = async () => {
           </Card>
         </div>
 
-        {/* Kursliste */}
         <Card className="border-0 shadow-xl">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -751,7 +726,7 @@ const fetchEmployees = async () => {
                       Neuen Kurs erstellen
                     </DialogTitle>
                     <DialogDescription>
-                      Erstellen Sie einen neuen Schulungskurs für Ihre Mitarbeiter.
+                      Erstellen Sie einen neuen Schulungskurs fuer Ihre Nutzer.
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...courseForm}>
@@ -799,7 +774,6 @@ const fetchEmployees = async () => {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Suche */}
             <div className="mb-6">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
@@ -819,7 +793,7 @@ const fetchEmployees = async () => {
                 </div>
                 <p className="text-xl font-semibold mb-2">Noch keine Kurse vorhanden</p>
                 <p className="text-muted-foreground mb-6 max-w-sm">
-                  Erstellen Sie Ihren ersten Schulungskurs und weisen Sie ihn Ihren Mitarbeitern zu.
+                  Erstellen Sie Ihren ersten Schulungskurs und weisen Sie ihn Ihren Nutzern zu.
                 </p>
                 <Button
                   className="bg-gradient-to-r from-blue-600 to-blue-700"
@@ -844,21 +818,18 @@ const fetchEmployees = async () => {
                       className="group rounded-2xl border-2 border-border hover:border-primary/40 hover:shadow-xl transition-all duration-300 overflow-hidden bg-card cursor-pointer"
                       onClick={() => navigate(`/training/${course.id}`)}
                     >
-                      {/* Kurs-Cover */}
                       <div className={`h-32 bg-gradient-to-br ${colorClass} flex items-center justify-center relative overflow-hidden`}>
                         <div className="absolute inset-0 opacity-20">
                           <div className="absolute top-2 right-2 w-16 h-16 bg-white rounded-full" />
                           <div className="absolute bottom-2 left-2 w-10 h-10 bg-white rounded-full" />
                         </div>
                         <GraduationCap className="w-14 h-14 text-white relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                        {/* Badge: Zertifikat */}
                         <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
                           <Award className="w-3 h-3 text-white" />
                           <span className="text-white text-xs font-medium">Zertifikat</span>
                         </div>
                       </div>
 
-                      {/* Kurs-Info */}
                       <div className="p-5">
                         <h3 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors line-clamp-1">
                           {course.name}
@@ -869,20 +840,18 @@ const fetchEmployees = async () => {
                           </p>
                         )}
 
-                        {/* Abdeckungsfortschritt */}
                         <div className="mb-3">
                           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                            <span>Mitarbeiterabdeckung</span>
+                            <span>Nutzerabdeckung</span>
                             <span className="font-medium">{coveragePercent}%</span>
                           </div>
                           <Progress value={coveragePercent} className="h-1.5" />
                         </div>
 
-                        {/* Aktionsleiste */}
                         <div className="flex items-center justify-between pt-2 border-t">
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Users className="w-3.5 h-3.5" />
-                            <span>{accessCount} Mitarbeiter</span>
+                            <span>{accessCount} Nutzer</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <button
@@ -898,7 +867,7 @@ const fetchEmployees = async () => {
                             <button
                               onClick={(e) => onCourseDelete(course.id, course.name, e)}
                               className="p-1.5 rounded-lg bg-destructive/10 hover:bg-destructive hover:text-white text-destructive transition-all"
-                              title="Kurs löschen"
+                              title="Kurs loeschen"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
