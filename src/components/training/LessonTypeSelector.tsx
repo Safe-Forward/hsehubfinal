@@ -5,11 +5,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Video, FileText, Type, Code, FolderOpen } from "lucide-react";
+import { Video, FileText, Type, Code, FolderOpen, ClipboardList } from "lucide-react";
 
 interface LessonTypeSelectorProps {
-  value: "subchapter" | "video_audio" | "pdf" | "text" | "iframe";
-  onChange: (value: "subchapter" | "video_audio" | "pdf" | "text" | "iframe") => void;
+  value: "subchapter" | "video_audio" | "pdf" | "text" | "iframe" | "quiz";
+  onChange: (value: "subchapter" | "video_audio" | "pdf" | "text" | "iframe" | "quiz") => void;
   disabled?: boolean;
 }
 
@@ -23,7 +23,8 @@ export default function LessonTypeSelector({
     { value: "pdf", label: "PDF", icon: FileText },
     { value: "text", label: "Text", icon: Type },
     { value: "iframe", label: "iFrame", icon: Code },
-    { value: "subchapter", label: "Subchapter", icon: FolderOpen },
+    { value: "subchapter", label: "Kapitel", icon: FolderOpen },
+    { value: "quiz", label: "Quiz", icon: ClipboardList },
   ] as const;
 
   return (
