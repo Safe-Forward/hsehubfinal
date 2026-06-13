@@ -706,16 +706,17 @@ export default function Training() {
                 ) : (
                   <div className="space-y-2">
                     {lessons.map((lesson, index) => (
-                      <LessonCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        onDelete={isAdmin ? onLessonDelete : undefined}
-                        onDuplicate={isAdmin ? handleDuplicateLesson : undefined}
-                        onToggleStatus={isAdmin ? handleToggleLessonStatus : undefined}
-                        isCompleted={!isAdmin && completedLessonIds.has(lesson.id)}
-                        lessonNumber={index + 1}
-                        isAdmin={isAdmin}
-                      />
+<LessonCard
+  key={lesson.id}
+  lesson={lesson}
+  onDelete={isAdmin ? onLessonDelete : undefined}
+  onDuplicate={isAdmin ? handleDuplicateLesson : undefined}
+  onToggleStatus={isAdmin ? handleToggleLessonStatus : undefined}
+  isCompleted={!isAdmin && completedLessonIds.has(lesson.id)}
+  isLocked={!isAdmin && !!(lesson as any).unlock_after && !completedLessonIds.has((lesson as any).unlock_after)}
+  lessonNumber={index + 1}
+  isAdmin={isAdmin}
+/>
                     ))}
                   </div>
                 )}
