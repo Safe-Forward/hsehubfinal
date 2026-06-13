@@ -84,7 +84,6 @@ interface Employee {
   id: string;
   full_name: string;
   email?: string | null;
-  role?: string | null;
 }
 
 const COURSE_COLORS = [
@@ -185,11 +184,11 @@ export default function Training() {
 const fetchEmployees = async () => {
     if (!companyId) return;
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, role")
-        .eq("company_id", companyId)
-        .order("full_name");
+ const { data, error } = await supabase
+  .from("profiles")
+  .select("id, full_name, email")
+  .eq("company_id", companyId)
+  .order("full_name");
       if (error) throw error;
       setEmployees((data as Employee[]) || []);
     } catch (err: any) {
@@ -397,9 +396,7 @@ const fetchEmployees = async () => {
   {employee.email && (
     <p className="text-xs text-muted-foreground">{employee.email}</p>
   )}
-  {employee.role && (
-    <p className="text-xs text-muted-foreground capitalize">{employee.role}</p>
-  )}
+
 </div>
                   </div>
                   <Checkbox
