@@ -173,13 +173,30 @@ export default function Training() {
 const fetchEmployees = async () => {
   if (!companyId) return;
   try {
-    const { data, error } = await supabase
-      .from("employees")
-      .select("id, full_name, user_id")
-      .eq("company_id", companyId)
-      .eq("is_active", true)
-      .not("user_id", "is", null)
-      .order("full_name");
+const { data: teamData, error: teamError } = await supabase
+  .from("team_members")
+  .select("user_id")
+  .eq("company_id", companyId)
+  .not("user_id", "is", null);
+
+if (teamError) throw teamError;
+
+const teamUserIds = (teamData || []).map((t: any) => t.user_id);
+
+if (teamUserIds.length === 0) {
+  setEmployees([]);
+  return;
+}
+
+const { data, error } = await supabase
+  .from("employees")
+  .select("id, full_name")
+  .eq("company_id", companyId)
+  .eq("is_active", true)
+  .in("user_id", teamUserIds)
+  .order("full_name");
+if (error) throw error;
+setEmployees((data as Employee[]) || []);
     if (error) throw error;
     setEmployees((data as Employee[]) || []);
   } catch (err: any) {
