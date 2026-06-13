@@ -181,19 +181,18 @@ export default function Training() {
     }
   };
 
-  const fetchEmployees = async () => {
+const fetchEmployees = async () => {
     if (!companyId) return;
     try {
       const { data, error } = await supabase
-        .from("employees")
-        .select("id, full_name, employee_number")
+        .from("profiles")
+        .select("id, full_name, email, role")
         .eq("company_id", companyId)
-        .eq("is_active", true)
         .order("full_name");
       if (error) throw error;
       setEmployees((data as Employee[]) || []);
     } catch (err: any) {
-      toast({ title: "Fehler beim Laden der Mitarbeiter", description: err.message, variant: "destructive" });
+      toast({ title: "Fehler beim Laden der Nutzer", description: err.message, variant: "destructive" });
     }
   };
 
