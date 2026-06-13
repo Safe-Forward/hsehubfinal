@@ -28,7 +28,7 @@ const Impressum = () => {
                     <p>Deutschland</p>
                   </div>
                   <div>
-                    <p><span className="font-semibold">Telefon:</span> +49 163 770 5849</p>
+                    <p><span className="font-semibold">Telefon:</span> +49 163 760 5849</p>
                     <p><span className="font-semibold">E-Mail:</span> info@tech-forward.de</p>
                   </div>
                 </div>
