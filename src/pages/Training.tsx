@@ -14,7 +14,7 @@ import {
   CheckCircle,
   Clock,
   TrendingUp,
-  Star,
+  Download,
 } from "lucide-react";
 import LessonCard from "@/components/training/LessonCard";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import jsPDF from "jspdf";
 
 const courseSchema = z.object({
   name: z.string().min(1, "Kursname ist erforderlich"),
@@ -80,6 +81,16 @@ interface Lesson {
 interface Employee {
   id: string;
   full_name: string;
+}
+
+interface EmployeeProgress {
+  employee_id: string;
+  full_name: string;
+  completed_lessons: number;
+  total_lessons: number;
+  has_certificate: boolean;
+  certificate_number?: string;
+  issued_at?: string;
 }
 
 const COURSE_COLORS = [
@@ -113,6 +124,14 @@ export default function Training() {
   const [savingAccess, setSavingAccess] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
 
+  // Fortschritt & Zertifikate für normale Nutzer
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
+  const [userCertificates, setUserCertificates] = useState<Record<string, any>>({});
+
+  // Admin: Fortschrittsübersicht pro Kurs
+  const [employeeProgress, setEmployeeProgress] = useState<Record<string, EmployeeProgress[]>>({});
+
   const courseForm = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
     defaultValues: { name: "", description: "" },
@@ -125,9 +144,18 @@ export default function Training() {
       if (isAdmin) {
         fetchEmployees();
         fetchCourseAccess();
+      } else {
+        fetchEmployeeId();
       }
     }
   }, [user, loading, navigate, companyId, isAdmin]);
+
+  useEffect(() => {
+    if (employeeId) {
+      fetchUserProgress();
+      fetchUserCertificates();
+    }
+  }, [employeeId]);
 
   useEffect(() => {
     if (urlCourseId && courses.length > 0) {
@@ -135,12 +163,214 @@ export default function Training() {
       if (course && selectedCourse?.id !== urlCourseId) {
         setSelectedCourse(course);
         fetchLessons(urlCourseId);
+        if (isAdmin) fetchEmployeeProgress(urlCourseId);
       }
     } else if (!urlCourseId && selectedCourse) {
       setSelectedCourse(null);
       setLessons([]);
     }
   }, [urlCourseId, courses]);
+
+  const fetchEmployeeId = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("user_id", user.id)
+      .single();
+    if (data) setEmployeeId(data.id);
+  };
+
+  const fetchUserProgress = async () => {
+    if (!employeeId) return;
+    const { data } = await (supabase as any)
+      .from("course_lesson_progress")
+      .select("lesson_id")
+      .eq("employee_id", employeeId);
+    setCompletedLessonIds(new Set((data || []).map((p: any) => p.lesson_id)));
+  };
+
+  const fetchUserCertificates = async () => {
+    if (!employeeId) return;
+    const { data } = await (supabase as any)
+      .from("course_certificates")
+      .select("*")
+      .eq("employee_id", employeeId);
+    const mapped: Record<string, any> = {};
+    (data || []).forEach((c: any) => { mapped[c.course_id] = c; });
+    setUserCertificates(mapped);
+  };
+
+  const fetchEmployeeProgress = async (courseId: string) => {
+    if (!companyId) return;
+    try {
+      // Alle Nutzer mit Zugriff auf diesen Kurs
+      const { data: accessData } = await (supabase as any)
+        .from("course_employee_access")
+        .select("employee_id")
+        .eq("course_id", courseId)
+        .eq("company_id", companyId);
+
+      if (!accessData || accessData.length === 0) {
+        setEmployeeProgress((prev) => ({ ...prev, [courseId]: [] }));
+        return;
+      }
+
+      const empIds = accessData.map((a: any) => a.employee_id);
+
+      // Mitarbeiterdaten
+      const { data: empData } = await supabase
+        .from("employees")
+        .select("id, full_name")
+        .in("id", empIds);
+
+      // Veröffentlichte Lektionen
+      const { data: lessonData } = await supabase
+        .from("course_lessons")
+        .select("id")
+        .eq("course_id", courseId)
+        .eq("status", "published");
+
+      const totalLessons = lessonData?.length || 0;
+
+      // Fortschritt pro Mitarbeiter
+      const { data: progressData } = await (supabase as any)
+        .from("course_lesson_progress")
+        .select("employee_id, lesson_id")
+        .eq("course_id", courseId)
+        .in("employee_id", empIds);
+
+      // Zertifikate
+      const { data: certData } = await (supabase as any)
+        .from("course_certificates")
+        .select("employee_id, certificate_number, issued_at")
+        .eq("course_id", courseId)
+        .in("employee_id", empIds);
+
+      const progressByEmp: Record<string, number> = {};
+      (progressData || []).forEach((p: any) => {
+        progressByEmp[p.employee_id] = (progressByEmp[p.employee_id] || 0) + 1;
+      });
+
+      const certByEmp: Record<string, any> = {};
+      (certData || []).forEach((c: any) => { certByEmp[c.employee_id] = c; });
+
+      const result: EmployeeProgress[] = (empData || []).map((emp: any) => ({
+        employee_id: emp.id,
+        full_name: emp.full_name,
+        completed_lessons: progressByEmp[emp.id] || 0,
+        total_lessons: totalLessons,
+        has_certificate: !!certByEmp[emp.id],
+        certificate_number: certByEmp[emp.id]?.certificate_number,
+        issued_at: certByEmp[emp.id]?.issued_at,
+      }));
+
+      setEmployeeProgress((prev) => ({ ...prev, [courseId]: result }));
+    } catch (err: any) {
+      console.error("Fehler beim Laden des Fortschritts:", err);
+    }
+  };
+
+  const downloadCertificate = async (courseId: string, courseName: string, cert: any) => {
+    const { data: empData } = await supabase
+      .from("employees")
+      .select("full_name")
+      .eq("id", employeeId!)
+      .single();
+
+    const userName = empData?.full_name || "Teilnehmer";
+    const issuedDate = new Date(cert.issued_at).toLocaleDateString("de-DE", {
+      year: "numeric", month: "long", day: "numeric",
+    });
+
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const width = doc.internal.pageSize.getWidth();
+    const height = doc.internal.pageSize.getHeight();
+
+    doc.setFillColor(248, 250, 252);
+    doc.rect(0, 0, width, height, "F");
+    doc.setDrawColor(30, 78, 137);
+    doc.setLineWidth(3);
+    doc.rect(8, 8, width - 16, height - 16);
+    doc.setDrawColor(34, 197, 94);
+    doc.setLineWidth(1);
+    doc.rect(12, 12, width - 24, height - 24);
+
+    doc.setFillColor(15, 41, 66);
+    doc.rect(8, 8, width - 16, 40, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("HSE HUB", width / 2, 24, { align: "center" });
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text("Health, Safety & Environment Management", width / 2, 34, { align: "center" });
+
+    doc.setTextColor(30, 78, 137);
+    doc.setFontSize(32);
+    doc.setFont("helvetica", "bold");
+    doc.text("ZERTIFIKAT", width / 2, 72, { align: "center" });
+
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text("Hiermit wird bestätigt, dass", width / 2, 88, { align: "center" });
+
+    doc.setFontSize(28);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 41, 66);
+    doc.text(userName, width / 2, 108, { align: "center" });
+
+    doc.setDrawColor(34, 197, 94);
+    doc.setLineWidth(1.5);
+    const nameWidth = doc.getTextWidth(userName);
+    doc.line(width / 2 - nameWidth / 2, 112, width / 2 + nameWidth / 2, 112);
+
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text("den folgenden Kurs erfolgreich abgeschlossen hat:", width / 2, 124, { align: "center" });
+
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 78, 137);
+    doc.text(courseName, width / 2, 140, { align: "center" });
+
+    doc.setFillColor(34, 197, 94);
+    doc.rect(width / 2 - 40, 145, 80, 3, "F");
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Ausgestellt am: ${issuedDate}`, width / 2, 162, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Zertifikatsnummer: ${cert.certificate_number}`, width / 2, 172, { align: "center" });
+
+    doc.setDrawColor(100, 100, 100);
+    doc.setLineWidth(0.5);
+    doc.line(40, 188, 110, 188);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Safe-Forward GmbH", 75, 194, { align: "center" });
+    doc.setFontSize(9);
+    doc.text("Geschäftsführung", 75, 200, { align: "center" });
+
+    doc.line(width - 110, 188, width - 40, 188);
+    doc.setFontSize(10);
+    doc.text("HSE Hub", width - 75, 194, { align: "center" });
+    doc.setFontSize(9);
+    doc.text("Schulungsplattform", width - 75, 200, { align: "center" });
+
+    doc.setFillColor(15, 41, 66);
+    doc.rect(8, height - 20, width - 16, 12, "F");
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text("www.safe-forward.de  |  info@tech-forward.de  |  HSE Hub", width / 2, height - 12, { align: "center" });
+
+    doc.save(`Zertifikat_${courseName}_${userName}.pdf`);
+  };
 
   const fetchCourses = async () => {
     if (!companyId) return;
@@ -161,10 +391,7 @@ export default function Training() {
           .eq("user_id", user!.id)
           .single();
 
-        if (!employeeData) {
-          setCourses([]);
-          return;
-        }
+        if (!employeeData) { setCourses([]); return; }
 
         const { data: accessData } = await (supabase as any)
           .from("course_employee_access")
@@ -172,11 +399,7 @@ export default function Training() {
           .eq("employee_id", employeeData.id);
 
         const courseIds = (accessData || []).map((a: any) => a.course_id);
-
-        if (courseIds.length === 0) {
-          setCourses([]);
-          return;
-        }
+        if (courseIds.length === 0) { setCourses([]); return; }
 
         const { data, error } = await supabase
           .from("courses")
@@ -200,11 +423,7 @@ export default function Training() {
         .select("*")
         .eq("course_id", courseId)
         .order("order_index", { ascending: true });
-
-      if (!isAdmin) {
-        query = query.eq("status", "published");
-      }
-
+      if (!isAdmin) query = query.eq("status", "published");
       const { data, error } = await query;
       if (error) throw error;
       setLessons(data || []);
@@ -221,15 +440,10 @@ export default function Training() {
         .select("user_id")
         .eq("company_id", companyId)
         .not("user_id", "is", null);
-
       if (teamError) throw teamError;
 
       const teamUserIds = (teamData || []).map((t: any) => t.user_id);
-
-      if (teamUserIds.length === 0) {
-        setEmployees([]);
-        return;
-      }
+      if (teamUserIds.length === 0) { setEmployees([]); return; }
 
       const { data, error } = await supabase
         .from("employees")
@@ -289,9 +503,9 @@ export default function Training() {
         .eq("company_id", companyId);
       if (deleteError) throw deleteError;
 
-      const employeeIds = Array.from(selectedEmployeeIds);
-      if (employeeIds.length > 0) {
-        const rows = employeeIds.map((employeeId) => ({
+      const empIds = Array.from(selectedEmployeeIds);
+      if (empIds.length > 0) {
+        const rows = empIds.map((employeeId) => ({
           company_id: companyId,
           course_id: managingAccessCourse.id,
           employee_id: employeeId,
@@ -337,11 +551,9 @@ export default function Training() {
     e.stopPropagation();
     if (!confirm(`Kurs "${courseName}" wirklich loeschen?`)) return;
     try {
-      const { error: lessonsError } = await supabase
-        .from("course_lessons").delete().eq("course_id", courseId);
+      const { error: lessonsError } = await supabase.from("course_lessons").delete().eq("course_id", courseId);
       if (lessonsError) throw lessonsError;
-      const { error: courseError } = await supabase
-        .from("courses").delete().eq("id", courseId);
+      const { error: courseError } = await supabase.from("courses").delete().eq("id", courseId);
       if (courseError) throw courseError;
       toast({ title: "Erfolgreich", description: "Kurs wurde geloescht" });
       fetchCourses();
@@ -374,8 +586,7 @@ export default function Training() {
   const handleToggleLessonStatus = async (lessonId: string, currentStatus: string) => {
     const newStatus = currentStatus === "draft" ? "published" : "draft";
     try {
-      const { error } = await supabase
-        .from("course_lessons").update({ status: newStatus }).eq("id", lessonId);
+      const { error } = await supabase.from("course_lessons").update({ status: newStatus }).eq("id", lessonId);
       if (error) throw error;
       setLessons(lessons.map((l) => l.id === lessonId ? { ...l, status: newStatus as "draft" | "published" } : l));
       toast({ title: "Erfolgreich", description: `Lektion ${newStatus === "published" ? "veroeffentlicht" : "als Entwurf gespeichert"}` });
@@ -387,8 +598,7 @@ export default function Training() {
   const onLessonDelete = async (lessonId: string, lessonName: string) => {
     if (!confirm(`Lektion "${lessonName}" wirklich loeschen?`)) return;
     try {
-      const { error } = await supabase
-        .from("course_lessons").delete().eq("id", lessonId);
+      const { error } = await supabase.from("course_lessons").delete().eq("id", lessonId);
       if (error) throw error;
       setLessons(lessons.filter((l) => l.id !== lessonId));
       toast({ title: "Erfolgreich", description: "Lektion wurde geloescht" });
@@ -401,9 +611,10 @@ export default function Training() {
     course.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-const totalEmployeesWithAccess = new Set(
-  Object.values(courseAccessByCourse).flat()
-).size;
+  // ✅ FIX: Nutzerabdeckung – jeder Nutzer nur einmal zählen
+  const totalEmployeesWithAccess = new Set(
+    Object.values(courseAccessByCourse).flat()
+  ).size;
 
   const renderAccessDialog = () => (
     <Dialog open={isAccessDialogOpen} onOpenChange={(open) => {
@@ -422,50 +633,33 @@ const totalEmployeesWithAccess = new Set(
               : "Nutzerzugriff verwalten."}
           </DialogDescription>
         </DialogHeader>
-
         <div className="max-h-[420px] overflow-y-auto border rounded-xl p-3 space-y-2">
           {employees.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <Users className="w-10 h-10 text-muted-foreground/30 mx-auto" />
               <p className="text-sm text-muted-foreground">Keine Nutzer gefunden.</p>
-              <p className="text-xs text-muted-foreground">Laden Sie zuerst Nutzer per Einladung ein.</p>
             </div>
           ) : (
             employees.map((employee) => {
               const checked = selectedEmployeeIds.has(employee.id);
               return (
-                <label
-                  key={employee.id}
-                  className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                    checked ? "bg-primary/5 border border-primary/20" : "hover:bg-muted/50"
-                  }`}
-                >
+                <label key={employee.id} className={`flex items-center justify-between gap-3 p-3 rounded-lg cursor-pointer transition-colors ${checked ? "bg-primary/5 border border-primary/20" : "hover:bg-muted/50"}`}>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                       {employee.full_name.charAt(0).toUpperCase()}
                     </div>
                     <p className="text-sm font-medium">{employee.full_name}</p>
                   </div>
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={(value) => toggleEmployeeAccess(employee.id, Boolean(value))}
-                  />
+                  <Checkbox checked={checked} onCheckedChange={(value) => toggleEmployeeAccess(employee.id, Boolean(value))} />
                 </label>
               );
             })
           )}
         </div>
-
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {selectedEmployeeIds.size} von {employees.length} Nutzern ausgewaehlt
-          </p>
+          <p className="text-sm text-muted-foreground">{selectedEmployeeIds.size} von {employees.length} Nutzern ausgewaehlt</p>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => {
-              setIsAccessDialogOpen(false);
-              setManagingAccessCourse(null);
-              setSelectedEmployeeIds(new Set());
-            }}>
+            <Button type="button" variant="outline" onClick={() => { setIsAccessDialogOpen(false); setManagingAccessCourse(null); setSelectedEmployeeIds(new Set()); }}>
               Abbrechen
             </Button>
             <Button onClick={saveCourseAccess} disabled={savingAccess}>
@@ -488,10 +682,18 @@ const totalEmployeesWithAccess = new Set(
     );
   }
 
+  // ── Kursdetail ────────────────────────────────────────────────────────────
   if (selectedCourse) {
     const publishedCount = lessons.filter((l) => l.status === "published").length;
     const draftCount = lessons.filter((l) => l.status === "draft").length;
     const accessCount = courseAccessByCourse[selectedCourse.id]?.length || 0;
+    const courseProgress = employeeProgress[selectedCourse.id] || [];
+
+    // Nutzer: Fortschritt für diesen Kurs
+    const publishedLessonIds = new Set(lessons.filter((l) => l.status === "published").map((l) => l.id));
+    const userCompletedInCourse = isAdmin ? 0 : lessons.filter((l) => l.status === "published" && completedLessonIds.has(l.id)).length;
+    const userProgressPercent = publishedCount > 0 ? Math.round((userCompletedInCourse / publishedCount) * 100) : 0;
+    const userCert = userCertificates[selectedCourse.id];
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
@@ -522,6 +724,56 @@ const totalEmployeesWithAccess = new Set(
         </header>
 
         <main className="container mx-auto px-4 py-8 space-y-6">
+
+          {/* ── Nutzer: Mein Fortschritt ── */}
+          {!isAdmin && (
+            <Card className="border-0 shadow-md">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-semibold">Mein Fortschritt</p>
+                    <p className="text-sm text-muted-foreground">{userCompletedInCourse} von {publishedCount} Lektionen abgeschlossen</p>
+                  </div>
+                  <span className="text-2xl font-bold text-primary">{userProgressPercent}%</span>
+                </div>
+                <Progress value={userProgressPercent} className="h-3" />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Zertifikat Banner für Nutzer ── */}
+          {!isAdmin && userCert && (
+            <Card className="border-0 shadow-md bg-gradient-to-r from-amber-500 to-orange-600 text-white overflow-hidden relative">
+              <div className="absolute right-0 top-0 opacity-10">
+                <Award className="w-32 h-32 -mr-4 -mt-4" />
+              </div>
+              <CardContent className="p-5 relative z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                      <Award className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg">Kurs abgeschlossen!</p>
+                      <p className="text-white/80 text-sm">Nr. {userCert.certificate_number}</p>
+                      <p className="text-white/70 text-xs">
+                        Ausgestellt am {new Date(userCert.issued_at).toLocaleDateString("de-DE")}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => downloadCertificate(selectedCourse.id, selectedCourse.name, userCert)}
+                    className="bg-white text-orange-600 hover:bg-orange-50"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    PDF herunterladen
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Admin: Stats ── */}
           {isAdmin && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
@@ -579,23 +831,64 @@ const totalEmployeesWithAccess = new Set(
             </div>
           )}
 
+          {/* ── Admin: Veröffentlichungsfortschritt ── */}
           {isAdmin && lessons.length > 0 && (
             <Card className="border-0 shadow-md">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Veroeffentlichungsfortschritt</span>
-                  <span className="text-sm font-bold text-primary">
-                    {Math.round((publishedCount / lessons.length) * 100)}%
-                  </span>
+                  <span className="text-sm font-bold text-primary">{Math.round((publishedCount / lessons.length) * 100)}%</span>
                 </div>
                 <Progress value={(publishedCount / lessons.length) * 100} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-2">
-                  {publishedCount} von {lessons.length} Lektionen veroeffentlicht
-                </p>
+                <p className="text-xs text-muted-foreground mt-2">{publishedCount} von {lessons.length} Lektionen veroeffentlicht</p>
               </CardContent>
             </Card>
           )}
 
+          {/* ── Admin: Fortschrittsübersicht Mitarbeiter ── */}
+          {isAdmin && courseProgress.length > 0 && (
+            <Card className="border-0 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  Lernfortschritt der Teilnehmer
+                </CardTitle>
+                <CardDescription>Übersicht wie weit jeder Nutzer im Kurs ist</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {courseProgress.map((ep) => {
+                    const pct = ep.total_lessons > 0 ? Math.round((ep.completed_lessons / ep.total_lessons) * 100) : 0;
+                    return (
+                      <div key={ep.employee_id} className="flex items-center gap-4">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                          {ep.full_name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium truncate">{ep.full_name}</span>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              {ep.has_certificate && (
+                                <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">
+                                  <Award className="w-3 h-3 mr-1" />
+                                  Zertifikat
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground">{ep.completed_lessons}/{ep.total_lessons}</span>
+                              <span className="text-xs font-bold text-primary w-10 text-right">{pct}%</span>
+                            </div>
+                          </div>
+                          <Progress value={pct} className={`h-2 ${pct === 100 ? "[&>div]:bg-green-500" : ""}`} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* ── Zertifikat Banner ── */}
           <Card className="border-0 shadow-md bg-gradient-to-r from-amber-500 to-orange-600 text-white overflow-hidden relative">
             <div className="absolute right-0 top-0 opacity-10">
               <Award className="w-40 h-40 -mr-8 -mt-8" />
@@ -615,24 +908,19 @@ const totalEmployeesWithAccess = new Set(
                     </p>
                   </div>
                 </div>
-                <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                  Automatisch
-                </Badge>
+                <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">Automatisch</Badge>
               </div>
             </CardContent>
           </Card>
 
+          {/* ── Lektionen ── */}
           <Card className="border-0 shadow-xl">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl">
-                    {isAdmin ? "Kursinhalt" : "Lektionen"}
-                  </CardTitle>
+                  <CardTitle className="text-xl">{isAdmin ? "Kursinhalt" : "Lektionen"}</CardTitle>
                   <CardDescription>
-                    {isAdmin
-                      ? "Lektionen verwalten und veroeffentlichen"
-                      : "Klicken Sie auf eine Lektion um sie zu starten"}
+                    {isAdmin ? "Lektionen verwalten und veroeffentlichen" : "Klicken Sie auf eine Lektion um sie zu starten"}
                   </CardDescription>
                 </div>
                 {isAdmin && (
@@ -653,9 +941,7 @@ const totalEmployeesWithAccess = new Set(
                     {isAdmin ? "Noch keine Lektionen" : "Noch keine Inhalte verfuegbar"}
                   </p>
                   <p className="text-sm text-muted-foreground/60 mb-4">
-                    {isAdmin
-                      ? "Fuege die erste Lektion hinzu um den Kurs zu starten"
-                      : "Der Administrator hat noch keine Lektionen veroeffentlicht"}
+                    {isAdmin ? "Fuege die erste Lektion hinzu um den Kurs zu starten" : "Der Administrator hat noch keine Lektionen veroeffentlicht"}
                   </p>
                   {isAdmin && (
                     <Button onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}>
@@ -667,13 +953,21 @@ const totalEmployeesWithAccess = new Set(
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {lessons.map((lesson) => (
-                    <LessonCard
-                      key={lesson.id}
-                      lesson={lesson}
-                      onDelete={isAdmin ? onLessonDelete : undefined}
-                      onDuplicate={isAdmin ? handleDuplicateLesson : undefined}
-                      onToggleStatus={isAdmin ? handleToggleLessonStatus : undefined}
-                    />
+                    <div key={lesson.id} className="relative">
+                      {/* Abgeschlossen-Indikator für Nutzer */}
+                      {!isAdmin && completedLessonIds.has(lesson.id) && (
+                        <div className="absolute top-2 left-2 z-10 bg-green-500 rounded-full p-1">
+                          <CheckCircle className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                      <LessonCard
+                        key={lesson.id}
+                        lesson={lesson}
+                        onDelete={isAdmin ? onLessonDelete : undefined}
+                        onDuplicate={isAdmin ? handleDuplicateLesson : undefined}
+                        onToggleStatus={isAdmin ? handleToggleLessonStatus : undefined}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
@@ -685,6 +979,7 @@ const totalEmployeesWithAccess = new Set(
     );
   }
 
+  // ── Kursübersicht ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
@@ -694,13 +989,9 @@ const totalEmployeesWithAccess = new Set(
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold">
-                {isAdmin ? "Schulungsmanagement" : "Meine Schulungen"}
-              </h1>
+              <h1 className="text-xl font-bold">{isAdmin ? "Schulungsmanagement" : "Meine Schulungen"}</h1>
               <p className="text-xs text-muted-foreground">
-                {isAdmin
-                  ? "Kurse, Lektionen und Zertifikate verwalten"
-                  : "Ihre zugewiesenen Kurse und Lernfortschritt"}
+                {isAdmin ? "Kurse, Lektionen und Zertifikate verwalten" : "Ihre zugewiesenen Kurse und Lernfortschritt"}
               </p>
             </div>
           </div>
@@ -708,6 +999,8 @@ const totalEmployeesWithAccess = new Set(
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
+
+        {/* Hero Banner */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 text-white p-8 shadow-2xl">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -719,9 +1012,7 @@ const totalEmployeesWithAccess = new Set(
                 <GraduationCap className="w-8 h-8" />
                 <span className="text-lg font-bold">HSE Hub Akademie</span>
               </div>
-              <h2 className="text-3xl font-bold mb-2">
-                {isAdmin ? "Schulungen & Qualifikationen" : "Meine Lernwelt"}
-              </h2>
+              <h2 className="text-3xl font-bold mb-2">{isAdmin ? "Schulungen & Qualifikationen" : "Meine Lernwelt"}</h2>
               <p className="text-blue-100 max-w-lg">
                 {isAdmin
                   ? "Erstellen Sie Kurse, verwalten Sie Lektionen und stellen Sie Ihren Nutzern automatische Zertifikate nach Kursabschluss aus."
@@ -745,10 +1036,17 @@ const totalEmployeesWithAccess = new Set(
                   </div>
                 </>
               )}
+              {!isAdmin && (
+                <div className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
+                  <p className="text-3xl font-bold">{Object.keys(userCertificates).length}</p>
+                  <p className="text-xs text-blue-100">Zertifikate</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
+        {/* KPI Kacheln Admin */}
         {isAdmin && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="border-0 shadow-md">
@@ -790,9 +1088,10 @@ const totalEmployeesWithAccess = new Set(
                   <TrendingUp className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
+                  {/* ✅ FIX Nutzerabdeckung: max 100% */}
                   <p className="text-2xl font-bold">
                     {employees.length > 0
-                      ? Math.round((totalEmployeesWithAccess / employees.length) * 100)
+                      ? Math.min(100, Math.round((totalEmployeesWithAccess / employees.length) * 100))
                       : 0}%
                   </p>
                   <p className="text-xs text-muted-foreground">Abdeckungsquote</p>
@@ -802,17 +1101,14 @@ const totalEmployeesWithAccess = new Set(
           </div>
         )}
 
+        {/* Kursliste */}
         <Card className="border-0 shadow-xl">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl">
-                  {isAdmin ? "Alle Kurse" : "Meine Kurse"}
-                </CardTitle>
+                <CardTitle className="text-2xl">{isAdmin ? "Alle Kurse" : "Meine Kurse"}</CardTitle>
                 <CardDescription>
-                  {isAdmin
-                    ? "Klicken Sie auf einen Kurs um Lektionen zu verwalten"
-                    : "Klicken Sie auf einen Kurs um ihn zu starten"}
+                  {isAdmin ? "Klicken Sie auf einen Kurs um Lektionen zu verwalten" : "Klicken Sie auf einen Kurs um ihn zu starten"}
                 </CardDescription>
               </div>
               {isAdmin && (
@@ -829,46 +1125,26 @@ const totalEmployeesWithAccess = new Set(
                         <GraduationCap className="w-5 h-5 text-primary" />
                         Neuen Kurs erstellen
                       </DialogTitle>
-                      <DialogDescription>
-                        Erstellen Sie einen neuen Schulungskurs fuer Ihre Nutzer.
-                      </DialogDescription>
+                      <DialogDescription>Erstellen Sie einen neuen Schulungskurs fuer Ihre Nutzer.</DialogDescription>
                     </DialogHeader>
                     <Form {...courseForm}>
                       <form onSubmit={courseForm.handleSubmit(onCourseSubmit)} className="space-y-4">
-                        <FormField
-                          control={courseForm.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Kursname *</FormLabel>
-                              <FormControl>
-                                <Input placeholder="z. B. Arbeitssicherheit Grundlagen" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={courseForm.control}
-                          name="description"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Beschreibung (optional)</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="Kurze Beschreibung des Kursinhalts..."
-                                  {...field}
-                                  rows={3}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <FormField control={courseForm.control} name="name" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Kursname *</FormLabel>
+                            <FormControl><Input placeholder="z. B. Arbeitssicherheit Grundlagen" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={courseForm.control} name="description" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Beschreibung (optional)</FormLabel>
+                            <FormControl><Textarea placeholder="Kurze Beschreibung..." {...field} rows={3} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
                         <div className="flex justify-end gap-2 pt-2">
-                          <Button type="button" variant="outline" onClick={() => setIsCourseDialogOpen(false)}>
-                            Abbrechen
-                          </Button>
+                          <Button type="button" variant="outline" onClick={() => setIsCourseDialogOpen(false)}>Abbrechen</Button>
                           <Button type="submit">Kurs erstellen</Button>
                         </div>
                       </form>
@@ -896,19 +1172,12 @@ const totalEmployeesWithAccess = new Set(
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center mb-6">
                   <GraduationCap className="w-12 h-12 text-blue-500" />
                 </div>
-                <p className="text-xl font-semibold mb-2">
-                  {isAdmin ? "Noch keine Kurse vorhanden" : "Noch keine Kurse zugewiesen"}
-                </p>
+                <p className="text-xl font-semibold mb-2">{isAdmin ? "Noch keine Kurse vorhanden" : "Noch keine Kurse zugewiesen"}</p>
                 <p className="text-muted-foreground mb-6 max-w-sm">
-                  {isAdmin
-                    ? "Erstellen Sie Ihren ersten Schulungskurs und weisen Sie ihn Ihren Nutzern zu."
-                    : "Ihr Administrator hat Ihnen noch keine Kurse zugewiesen."}
+                  {isAdmin ? "Erstellen Sie Ihren ersten Schulungskurs." : "Ihr Administrator hat Ihnen noch keine Kurse zugewiesen."}
                 </p>
                 {isAdmin && (
-                  <Button
-                    className="bg-gradient-to-r from-blue-600 to-blue-700"
-                    onClick={() => setIsCourseDialogOpen(true)}
-                  >
+                  <Button className="bg-gradient-to-r from-blue-600 to-blue-700" onClick={() => setIsCourseDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Ersten Kurs erstellen
                   </Button>
@@ -919,9 +1188,13 @@ const totalEmployeesWithAccess = new Set(
                 {filteredCourses.map((course, index) => {
                   const accessCount = courseAccessByCourse[course.id]?.length || 0;
                   const colorClass = COURSE_COLORS[index % COURSE_COLORS.length];
+                  // ✅ FIX: Nutzerabdeckung max 100%
                   const coveragePercent = employees.length > 0
-                    ? Math.round((accessCount / employees.length) * 100)
+                    ? Math.min(100, Math.round((accessCount / employees.length) * 100))
                     : 0;
+
+                  // Nutzer: Fortschritt für diesen Kurs
+                  const userCert = userCertificates[course.id];
 
                   return (
                     <div
@@ -935,10 +1208,18 @@ const totalEmployeesWithAccess = new Set(
                           <div className="absolute bottom-2 left-2 w-10 h-10 bg-white rounded-full" />
                         </div>
                         <GraduationCap className="w-14 h-14 text-white relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                        <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
-                          <Award className="w-3 h-3 text-white" />
-                          <span className="text-white text-xs font-medium">Zertifikat</span>
-                        </div>
+                        {/* Zertifikat Badge */}
+                        {userCert ? (
+                          <div className="absolute top-3 right-3 bg-amber-400 rounded-full px-2 py-1 flex items-center gap-1">
+                            <Award className="w-3 h-3 text-white" />
+                            <span className="text-white text-xs font-medium">Abgeschlossen</span>
+                          </div>
+                        ) : (
+                          <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
+                            <Award className="w-3 h-3 text-white" />
+                            <span className="text-white text-xs font-medium">Zertifikat</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="p-5">
@@ -946,11 +1227,10 @@ const totalEmployeesWithAccess = new Set(
                           {course.name}
                         </h3>
                         {course.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                            {course.description}
-                          </p>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{course.description}</p>
                         )}
 
+                        {/* Admin: Nutzerabdeckung */}
                         {isAdmin && (
                           <div className="mb-3">
                             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
@@ -958,6 +1238,24 @@ const totalEmployeesWithAccess = new Set(
                               <span className="font-medium">{coveragePercent}%</span>
                             </div>
                             <Progress value={coveragePercent} className="h-1.5" />
+                          </div>
+                        )}
+
+                        {/* Nutzer: Zertifikat Download direkt in der Karte */}
+                        {!isAdmin && userCert && (
+                          <div className="mb-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-amber-300 text-amber-700 hover:bg-amber-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadCertificate(course.id, course.name, userCert);
+                              }}
+                            >
+                              <Download className="w-3.5 h-3.5 mr-2" />
+                              Zertifikat herunterladen
+                            </Button>
                           </div>
                         )}
 
@@ -971,17 +1269,14 @@ const totalEmployeesWithAccess = new Set(
                             ) : (
                               <>
                                 <BookOpen className="w-3.5 h-3.5" />
-                                <span>Kurs starten</span>
+                                <span>{userCert ? "Abgeschlossen" : "Kurs starten"}</span>
                               </>
                             )}
                           </div>
                           {isAdmin && (
                             <div className="flex items-center gap-1">
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openAccessDialog(course);
-                                }}
+                                onClick={(e) => { e.stopPropagation(); openAccessDialog(course); }}
                                 className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary transition-all"
                                 title="Zugriff verwalten"
                               >
