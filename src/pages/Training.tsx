@@ -83,7 +83,8 @@ interface Lesson {
 interface Employee {
   id: string;
   full_name: string;
-  employee_number?: string | null;
+  email?: string | null;
+  role?: string | null;
 }
 
 const COURSE_COLORS = [
@@ -391,12 +392,15 @@ const fetchEmployees = async () => {
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white text-xs font-bold">
                       {employee.full_name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{employee.full_name}</p>
-                      {employee.employee_number && (
-                        <p className="text-xs text-muted-foreground">Nr. {employee.employee_number}</p>
-                      )}
-                    </div>
+<div>
+  <p className="text-sm font-medium">{employee.full_name}</p>
+  {employee.email && (
+    <p className="text-xs text-muted-foreground">{employee.email}</p>
+  )}
+  {employee.role && (
+    <p className="text-xs text-muted-foreground capitalize">{employee.role}</p>
+  )}
+</div>
                   </div>
                   <Checkbox
                     checked={checked}
