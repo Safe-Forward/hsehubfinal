@@ -502,12 +502,15 @@ export default function LessonEditor() {
                           <Lock className="w-4 h-4" />
                           Freischalten nach Abschluss von
                         </FormLabel>
-                        <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <Select
+  value={field.value || "none"}
+  onValueChange={(v) => field.onChange(v === "none" ? "" : v)}
+>
                           <SelectTrigger>
                             <SelectValue placeholder="Sofort verfuegbar (keine Voraussetzung)" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Sofort verfuegbar</SelectItem>
+                            <SelectItem value="none">Sofort verfuegbar</SelectItem>
                             {otherLessons.map((l) => (
                               <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
                             ))}
