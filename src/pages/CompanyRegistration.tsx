@@ -67,7 +67,7 @@ const subscriptionPlans = [
     users: "10 Benutzer (1 Administrator + 9 Benutzer)",
     description: "Für KMU, die Prozesse, Rollen und Nachvollziehbarkeit benötigen.",
     features: [
-      "Alle Funktionen aus den Paketen „Basic" und „Pro"",
+      "Alle Funktionen aus den Paketen Basic und Pro",
       "Meldungen zu Vorfällen und Beinaheunfällen",
       "Risikobewertungen (GBU-Modul)",
       "Aktionsverfolgung",
