@@ -129,12 +129,10 @@ export default function Training() {
   const [loadingData, setLoadingData] = useState(false);
   const [activeTab, setActiveTab] = useState<"content" | "progress">("content");
 
-  // Nutzer-States
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [completedLessonIds, setCompletedLessonIds] = useState<Set<string>>(new Set());
   const [userCertificates, setUserCertificates] = useState<Record<string, any>>({});
 
-  // Admin Fortschritt
   const [employeeProgress, setEmployeeProgress] = useState<EmployeeProgress[]>([]);
   const [progressSearch, setProgressSearch] = useState("");
   const [progressSort, setProgressSort] = useState<"name" | "percent">("name");
@@ -207,7 +205,7 @@ export default function Training() {
     setUserCertificates(mapped);
   };
 
-const fetchEmployeeProgress = async (courseId: string) => {
+  const fetchEmployeeProgress = async (courseId: string) => {
     if (!companyId) return;
     setLoadingProgress(true);
     try {
@@ -291,78 +289,14 @@ const fetchEmployeeProgress = async (courseId: string) => {
     }
   };
 
-const teamUserIds = new Set((teamData || []).map((t: any) => t.user_id));
-
-const { data: empData } = await supabase
-  .from("employees")
-  .select("id, full_name, user_id")
-  .in("id", empIds)
-  .not("user_id", "is", null);
-
-const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.user_id));
-
-      const { data: lessonData } = await supabase
-        .from("course_lessons")
-        .select("id")
-        .eq("course_id", courseId)
-        .eq("status", "published");
-
-      const totalLessons = lessonData?.length || 0;
-
-      const { data: progressData } = await (supabase as any)
-        .from("course_lesson_progress")
-        .select("employee_id, lesson_id")
-        .eq("course_id", courseId)
-        .in("employee_id", empIds);
-
-      const { data: certData } = await (supabase as any)
-        .from("course_certificates")
-        .select("employee_id, certificate_number, issued_at")
-        .eq("course_id", courseId)
-        .in("employee_id", empIds);
-
-      const progressByEmp: Record<string, number> = {};
-      (progressData || []).forEach((p: any) => {
-        progressByEmp[p.employee_id] = (progressByEmp[p.employee_id] || 0) + 1;
-      });
-
-      const certByEmp: Record<string, any> = {};
-      (certData || []).forEach((c: any) => { certByEmp[c.employee_id] = c; });
-
-      const result: EmployeeProgress[] = filteredEmpData.map((emp: any) => {
-        const completed = Math.min(progressByEmp[emp.id] || 0, totalLessons);
-        const pct = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
-        return {
-          employee_id: emp.id,
-          full_name: emp.full_name,
-          completed_lessons: completed,
-          total_lessons: totalLessons,
-          has_certificate: !!certByEmp[emp.id],
-          certificate_number: certByEmp[emp.id]?.certificate_number,
-          issued_at: certByEmp[emp.id]?.issued_at,
-          percent: pct,
-        };
-      });
-
-      setEmployeeProgress(result);
-    } catch (err: any) {
-      console.error("Fehler beim Laden des Fortschritts:", err);
-    } finally {
-      setLoadingProgress(false);
-    }
-  };
-
-  const downloadCertificate = async (courseId: string, courseName: string, cert: any) => {
-    const { data: empData } = await supabase.from("employees").select("full_name").eq("id", employeeId!).single();
-    const userName = empData?.full_name || "Teilnehmer";
-    const issuedDate = new Date(cert.issued_at).toLocaleDateString("de-DE", { year: "numeric", month: "long", day: "numeric" });
-
+  const generatePDF = (userName: string, courseName: string, cert: any) => {
+    const issuedDate = new Date(cert.issued_at).toLocaleDateString("de-DE", {
+      year: "numeric", month: "long", day: "numeric",
+    });
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const width = doc.internal.pageSize.getWidth();
     const height = doc.internal.pageSize.getHeight();
-
-    doc.setFillColor(248, 250, 252);
-    doc.rect(0, 0, width, height, "F");
+    doc.setFillColor(248, 250, 252); doc.rect(0, 0, width, height, "F");
     doc.setDrawColor(30, 78, 137); doc.setLineWidth(3); doc.rect(8, 8, width - 16, height - 16);
     doc.setDrawColor(34, 197, 94); doc.setLineWidth(1); doc.rect(12, 12, width - 24, height - 24);
     doc.setFillColor(15, 41, 66); doc.rect(8, 8, width - 16, 40, "F");
@@ -391,7 +325,7 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
     doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.5);
     doc.line(40, 188, 110, 188); doc.setFontSize(10); doc.setTextColor(100, 100, 100);
     doc.text("Safe-Forward GmbH", 75, 194, { align: "center" });
-    doc.setFontSize(9); doc.text("Geschäftsführung", 75, 200, { align: "center" });
+    doc.setFontSize(9); doc.text("Geschaeftsfuehrung", 75, 200, { align: "center" });
     doc.line(width - 110, 188, width - 40, 188); doc.setFontSize(10);
     doc.text("HSE Hub", width - 75, 194, { align: "center" });
     doc.setFontSize(9); doc.text("Schulungsplattform", width - 75, 200, { align: "center" });
@@ -399,6 +333,16 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
     doc.setFontSize(8); doc.setTextColor(255, 255, 255);
     doc.text("www.safe-forward.de  |  info@tech-forward.de  |  HSE Hub", width / 2, height - 12, { align: "center" });
     doc.save(`Zertifikat_${courseName}_${userName}.pdf`);
+  };
+
+  const downloadCertificate = async (courseId: string, courseName: string, cert: any) => {
+    const { data: empData } = await supabase.from("employees").select("full_name").eq("id", employeeId!).single();
+    const userName = empData?.full_name || "Teilnehmer";
+    generatePDF(userName, courseName, cert);
+  };
+
+  const downloadCertificateForEmployee = (employeeName: string, courseName: string, cert: any) => {
+    generatePDF(employeeName, courseName, cert);
   };
 
   const fetchCourses = async () => {
@@ -567,13 +511,11 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
 
   const filteredCourses = courses.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-  // ✅ FIX Nutzerabdeckung: nur Nutzer mit Login (employees aus team_members)
   const employeeIds = new Set(employees.map((e) => e.id));
   const totalEmployeesWithAccess = new Set(
     Object.values(courseAccessByCourse).flat().filter((id) => employeeIds.has(id))
   ).size;
 
-  // Fortschritts-Tab: gefiltert + sortiert
   const filteredProgress = employeeProgress
     .filter((ep) => ep.full_name.toLowerCase().includes(progressSearch.toLowerCase()))
     .sort((a, b) => {
@@ -629,7 +571,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
     );
   }
 
-  // ── Kursdetail ────────────────────────────────────────────────────────────
   if (selectedCourse) {
     const publishedCount = lessons.filter((l) => l.status === "published").length;
     const draftCount = lessons.filter((l) => l.status === "draft").length;
@@ -660,7 +601,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
 
         <main className="container mx-auto px-4 py-8 space-y-6">
 
-          {/* Nutzer: Fortschritt */}
           {!isAdmin && (
             <Card className="border-0 shadow-md">
               <CardContent className="p-5">
@@ -676,7 +616,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
             </Card>
           )}
 
-          {/* Nutzer: Zertifikat Banner */}
           {!isAdmin && userCert && (
             <Card className="border-0 shadow-md bg-gradient-to-r from-amber-500 to-orange-600 text-white overflow-hidden relative">
               <div className="absolute right-0 top-0 opacity-10"><Award className="w-32 h-32 -mr-4 -mt-4" /></div>
@@ -698,7 +637,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
             </Card>
           )}
 
-          {/* Admin: Stats */}
           {isAdmin && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
@@ -728,30 +666,24 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
             </div>
           )}
 
-          {/* Admin: Tabs */}
           {isAdmin && (
             <div className="flex gap-1 border-b">
               <button
                 onClick={() => setActiveTab("content")}
                 className={`px-4 py-2.5 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === "content" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
               >
-                <BookOpen className="w-4 h-4" />
-                Kursinhalt
+                <BookOpen className="w-4 h-4" />Kursinhalt
               </button>
               <button
                 onClick={() => setActiveTab("progress")}
                 className={`px-4 py-2.5 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${activeTab === "progress" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
               >
-                <BarChart3 className="w-4 h-4" />
-                Lernfortschritt
-                {employeeProgress.length > 0 && (
-                  <Badge className="ml-1 h-5 text-xs">{employeeProgress.length}</Badge>
-                )}
+                <BarChart3 className="w-4 h-4" />Lernfortschritt
+                {employeeProgress.length > 0 && <Badge className="ml-1 h-5 text-xs">{employeeProgress.length}</Badge>}
               </button>
             </div>
           )}
 
-          {/* ── Tab: Kursinhalt ── */}
           {(!isAdmin || activeTab === "content") && (
             <Card className="border-0 shadow-xl">
               <CardHeader>
@@ -760,11 +692,7 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
                     <CardTitle className="text-xl">{isAdmin ? "Kursinhalt" : "Lektionen"}</CardTitle>
                     <CardDescription>{isAdmin ? "Lektionen verwalten" : "Klicken Sie auf eine Lektion um sie zu starten"}</CardDescription>
                   </div>
-                  {isAdmin && (
-                    <Button onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}>
-                      <Plus className="w-4 h-4 mr-2" />Lektion hinzufuegen
-                    </Button>
-                  )}
+                  {isAdmin && <Button onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}><Plus className="w-4 h-4 mr-2" />Lektion hinzufuegen</Button>}
                 </div>
               </CardHeader>
               <CardContent>
@@ -795,52 +723,29 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
             </Card>
           )}
 
-          {/* ── Tab: Lernfortschritt ── */}
           {isAdmin && activeTab === "progress" && (
             <Card className="border-0 shadow-xl">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl flex items-center gap-2"><BarChart3 className="w-5 h-5 text-primary" />Lernfortschritt der Teilnehmer</CardTitle>
-                    <CardDescription>Eingeladene Nutzer und ihr Fortschritt in diesem Kurs</CardDescription>
-                  </div>
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2"><BarChart3 className="w-5 h-5 text-primary" />Lernfortschritt der Teilnehmer</CardTitle>
+                  <CardDescription>Eingeladene Nutzer und ihr Fortschritt in diesem Kurs</CardDescription>
                 </div>
-                {/* Filter + Sort */}
                 <div className="flex gap-2 mt-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Nutzer suchen..."
-                      value={progressSearch}
-                      onChange={(e) => setProgressSearch(e.target.value)}
-                      className="pl-9"
-                    />
+                    <Input placeholder="Nutzer suchen..." value={progressSearch} onChange={(e) => setProgressSearch(e.target.value)} className="pl-9" />
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setProgressSort("name"); setProgressSortDir(progressSort === "name" && progressSortDir === "asc" ? "desc" : "asc"); }}
-                    className={progressSort === "name" ? "border-primary text-primary" : ""}
-                  >
-                    {progressSort === "name" && progressSortDir === "desc" ? <SortDesc className="w-4 h-4 mr-1" /> : <SortAsc className="w-4 h-4 mr-1" />}
-                    Name
+                  <Button variant="outline" size="sm" onClick={() => { setProgressSort("name"); setProgressSortDir(progressSort === "name" && progressSortDir === "asc" ? "desc" : "asc"); }} className={progressSort === "name" ? "border-primary text-primary" : ""}>
+                    {progressSort === "name" && progressSortDir === "desc" ? <SortDesc className="w-4 h-4 mr-1" /> : <SortAsc className="w-4 h-4 mr-1" />}Name
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setProgressSort("percent"); setProgressSortDir(progressSort === "percent" && progressSortDir === "asc" ? "desc" : "asc"); }}
-                    className={progressSort === "percent" ? "border-primary text-primary" : ""}
-                  >
-                    {progressSort === "percent" && progressSortDir === "desc" ? <SortDesc className="w-4 h-4 mr-1" /> : <SortAsc className="w-4 h-4 mr-1" />}
-                    Fortschritt
+                  <Button variant="outline" size="sm" onClick={() => { setProgressSort("percent"); setProgressSortDir(progressSort === "percent" && progressSortDir === "asc" ? "desc" : "asc"); }} className={progressSort === "percent" ? "border-primary text-primary" : ""}>
+                    {progressSort === "percent" && progressSortDir === "desc" ? <SortDesc className="w-4 h-4 mr-1" /> : <SortAsc className="w-4 h-4 mr-1" />}Fortschritt
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 {loadingProgress ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  </div>
+                  <div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
                 ) : filteredProgress.length === 0 ? (
                   <div className="text-center py-12">
                     <Users className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
@@ -858,22 +763,24 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
                             <span className="font-medium text-sm">{ep.full_name}</span>
                             <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                               {ep.has_certificate && (
-                                <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">
-                                  <Award className="w-3 h-3 mr-1" />Zertifikat
+                                <Badge
+                                  className="bg-amber-100 text-amber-700 border-amber-200 text-xs cursor-pointer hover:bg-amber-200 transition-colors"
+                                  onClick={() => downloadCertificateForEmployee(
+                                    ep.full_name,
+                                    selectedCourse.name,
+                                    { certificate_number: ep.certificate_number, issued_at: ep.issued_at }
+                                  )}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />Zertifikat
                                 </Badge>
                               )}
                               <span className="text-xs text-muted-foreground">{ep.completed_lessons}/{ep.total_lessons} Lektionen</span>
                               <span className={`text-sm font-bold w-12 text-right ${ep.percent === 100 ? "text-green-600" : "text-primary"}`}>{ep.percent}%</span>
                             </div>
                           </div>
-                          <Progress
-                            value={ep.percent}
-                            className={`h-2 ${ep.percent === 100 ? "[&>div]:bg-green-500" : ""}`}
-                          />
+                          <Progress value={ep.percent} className={`h-2 ${ep.percent === 100 ? "[&>div]:bg-green-500" : ""}`} />
                           {ep.has_certificate && ep.issued_at && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Zertifikat ausgestellt am {new Date(ep.issued_at).toLocaleDateString("de-DE")}
-                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">Zertifikat ausgestellt am {new Date(ep.issued_at).toLocaleDateString("de-DE")}</p>
                           )}
                         </div>
                       </div>
@@ -884,7 +791,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
             </Card>
           )}
 
-          {/* Zertifikat Info Banner */}
           <Card className="border-0 shadow-md bg-gradient-to-r from-amber-500 to-orange-600 text-white overflow-hidden relative">
             <div className="absolute right-0 top-0 opacity-10"><Award className="w-40 h-40 -mr-8 -mt-8" /></div>
             <CardContent className="p-5 relative z-10">
@@ -892,10 +798,7 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
                 <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center"><Award className="w-6 h-6 text-white" /></div>
                 <div>
                   <p className="font-bold text-lg">Zertifikat</p>
-                  <p className="text-white/80 text-sm">
-                    {isAdmin ? "Nutzer erhalten nach Abschluss aller Lektionen automatisch ein PDF-Zertifikat."
-                      : "Nach Abschluss aller Lektionen erhalten Sie automatisch ein PDF-Zertifikat."}
-                  </p>
+                  <p className="text-white/80 text-sm">{isAdmin ? "Nutzer erhalten nach Abschluss aller Lektionen automatisch ein PDF-Zertifikat." : "Nach Abschluss aller Lektionen erhalten Sie automatisch ein PDF-Zertifikat."}</p>
                 </div>
               </div>
             </CardContent>
@@ -907,7 +810,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
     );
   }
 
-  // ── Kursübersicht ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
@@ -923,7 +825,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Hero */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 text-white p-8 shadow-2xl">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -933,10 +834,7 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
             <div>
               <div className="flex items-center gap-2 mb-3"><GraduationCap className="w-8 h-8" /><span className="text-lg font-bold">HSE Hub Akademie</span></div>
               <h2 className="text-3xl font-bold mb-2">{isAdmin ? "Schulungen & Qualifikationen" : "Meine Lernwelt"}</h2>
-              <p className="text-blue-100 max-w-lg">
-                {isAdmin ? "Erstellen Sie Kurse, verwalten Sie Lektionen und stellen Sie Ihren Nutzern automatische Zertifikate aus."
-                  : "Hier finden Sie alle Ihnen zugewiesenen Kurse. Schliessen Sie Lektionen ab und erhalten Sie Ihr Zertifikat."}
-              </p>
+              <p className="text-blue-100 max-w-lg">{isAdmin ? "Erstellen Sie Kurse, verwalten Sie Lektionen und stellen Sie Ihren Nutzern automatische Zertifikate aus." : "Hier finden Sie alle Ihnen zugewiesenen Kurse. Schliessen Sie Lektionen ab und erhalten Sie Ihr Zertifikat."}</p>
             </div>
             <div className="hidden md:flex items-center gap-4">
               <div className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
@@ -965,7 +863,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
           </div>
         </div>
 
-        {/* KPI Admin */}
         {isAdmin && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="border-0 shadow-md">
@@ -990,10 +887,7 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-purple-600" /></div>
                 <div>
-                  {/* ✅ FIX: max 100%, nur echte Nutzer */}
-                  <p className="text-2xl font-bold">
-                    {employees.length > 0 ? Math.min(100, Math.round((totalEmployeesWithAccess / employees.length) * 100)) : 0}%
-                  </p>
+                  <p className="text-2xl font-bold">{employees.length > 0 ? Math.min(100, Math.round((totalEmployeesWithAccess / employees.length) * 100)) : 0}%</p>
                   <p className="text-xs text-muted-foreground">Abdeckungsquote</p>
                 </div>
               </CardContent>
@@ -1001,7 +895,6 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
           </div>
         )}
 
-        {/* Kursliste */}
         <Card className="border-0 shadow-xl">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -1012,9 +905,7 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
               {isAdmin && (
                 <Dialog open={isCourseDialogOpen} onOpenChange={setIsCourseDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
-                      <Plus className="w-4 h-4 mr-2" />Neuen Kurs erstellen
-                    </Button>
+                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"><Plus className="w-4 h-4 mr-2" />Neuen Kurs erstellen</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
@@ -1059,12 +950,9 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredCourses.map((course, index) => {
                   const accessIds = courseAccessByCourse[course.id] || [];
-                  // ✅ FIX: nur echte Nutzer (mit Login) zählen
                   const realAccessCount = accessIds.filter((id) => employeeIds.has(id)).length;
                   const colorClass = COURSE_COLORS[index % COURSE_COLORS.length];
-                  const coveragePercent = employees.length > 0
-                    ? Math.min(100, Math.round((realAccessCount / employees.length) * 100))
-                    : 0;
+                  const coveragePercent = employees.length > 0 ? Math.min(100, Math.round((realAccessCount / employees.length) * 100)) : 0;
                   const userCert = userCertificates[course.id];
 
                   return (
@@ -1089,21 +977,17 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
                           </div>
                         )}
                       </div>
-
                       <div className="p-5">
                         <h3 className="font-bold text-lg mb-1 group-hover:text-primary transition-colors line-clamp-1">{course.name}</h3>
                         {course.description && <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{course.description}</p>}
-
                         {isAdmin && (
                           <div className="mb-3">
                             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                              <span>Nutzerabdeckung</span>
-                              <span className="font-medium">{coveragePercent}%</span>
+                              <span>Nutzerabdeckung</span><span className="font-medium">{coveragePercent}%</span>
                             </div>
                             <Progress value={coveragePercent} className="h-1.5" />
                           </div>
                         )}
-
                         {!isAdmin && userCert && (
                           <div className="mb-3">
                             <Button size="sm" variant="outline" className="w-full border-amber-300 text-amber-700 hover:bg-amber-50"
@@ -1112,19 +996,14 @@ const filteredEmpData = filteredEmpData.filter((e: any) => teamUserIds.has(e.use
                             </Button>
                           </div>
                         )}
-
                         <div className="flex items-center justify-between pt-2 border-t">
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            {isAdmin ? (
-                              <><Users className="w-3.5 h-3.5" /><span>{realAccessCount} Nutzer</span></>
-                            ) : (
-                              <><BookOpen className="w-3.5 h-3.5" /><span>{userCert ? "Abgeschlossen" : "Kurs starten"}</span></>
-                            )}
+                            {isAdmin ? <><Users className="w-3.5 h-3.5" /><span>{realAccessCount} Nutzer</span></> : <><BookOpen className="w-3.5 h-3.5" /><span>{userCert ? "Abgeschlossen" : "Kurs starten"}</span></>}
                           </div>
                           {isAdmin && (
                             <div className="flex items-center gap-1">
-                              <button onClick={(e) => { e.stopPropagation(); openAccessDialog(course); }} className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary transition-all" title="Zugriff verwalten"><Users className="w-4 h-4" /></button>
-                              <button onClick={(e) => onCourseDelete(course.id, course.name, e)} className="p-1.5 rounded-lg bg-destructive/10 hover:bg-destructive hover:text-white text-destructive transition-all" title="Kurs loeschen"><Trash2 className="w-4 h-4" /></button>
+                              <button onClick={(e) => { e.stopPropagation(); openAccessDialog(course); }} className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary transition-all"><Users className="w-4 h-4" /></button>
+                              <button onClick={(e) => onCourseDelete(course.id, course.name, e)} className="p-1.5 rounded-lg bg-destructive/10 hover:bg-destructive hover:text-white text-destructive transition-all"><Trash2 className="w-4 h-4" /></button>
                             </div>
                           )}
                         </div>
