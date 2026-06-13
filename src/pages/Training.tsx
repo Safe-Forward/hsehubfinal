@@ -175,15 +175,17 @@ export default function Training() {
     try {
 const { data, error } = await supabase
   .from("team_members")
-  .select("id, first_name, last_name")
+  .select("id, first_name, last_name, user_id")
   .eq("company_id", companyId)
   .eq("status", "active")
   .order("first_name");
 
-const mapped = (data || []).map((m: any) => ({
-  id: m.id,
-  full_name: `${m.first_name} ${m.last_name}`.trim(),
-}));
+const mapped = (data || [])
+  .filter((m: any) => m.user_id)
+  .map((m: any) => ({
+    id: m.user_id,
+    full_name: `${m.first_name} ${m.last_name}`.trim(),
+  }));
 setEmployees(mapped);
 return;
       if (error) throw error;
