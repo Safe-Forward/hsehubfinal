@@ -99,7 +99,6 @@ export default function Training() {
   const { toast } = useToast();
 
   const isAdmin = userRole === "company_admin" || userRole === "super_admin";
-  console.log("DEBUG Training - userRole:", userRole, "isAdmin:", isAdmin);
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
