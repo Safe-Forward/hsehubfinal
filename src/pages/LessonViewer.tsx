@@ -12,6 +12,7 @@ import {
   Type,
   Code,
   FolderOpen,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -35,14 +36,17 @@ interface Course {
 
 export default function LessonViewer() {
   const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
-  const { user, loading, companyId } = useAuth();
+  const { user, loading, companyId, userRole } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const isAdmin = userRole === "company_admin" || userRole === "super_admin";
+
   const [course, setCourse] = useState<Course | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -56,7 +60,6 @@ export default function LessonViewer() {
 
   const fetchCourse = async () => {
     if (!courseId || !companyId) return;
-
     try {
       const { data, error } = await supabase
         .from("courses")
@@ -64,12 +67,11 @@ export default function LessonViewer() {
         .eq("id", courseId)
         .eq("company_id", companyId)
         .single();
-
       if (error) throw error;
       setCourse(data);
     } catch (err: any) {
       toast({
-        title: "Error loading course",
+        title: "Fehler beim Laden des Kurses",
         description: err.message,
         variant: "destructive",
       });
@@ -79,7 +81,6 @@ export default function LessonViewer() {
 
   const fetchLesson = async () => {
     if (!lessonId || !courseId) return;
-
     try {
       const { data, error } = await supabase
         .from("course_lessons")
@@ -87,12 +88,23 @@ export default function LessonViewer() {
         .eq("id", lessonId)
         .eq("course_id", courseId)
         .single();
-
       if (error) throw error;
+
+      // Normale Nutzer duerfen keine Entwuerfe sehen
+      if (!isAdmin && data.status === "draft") {
+        toast({
+          title: "Kein Zugriff",
+          description: "Diese Lektion ist noch nicht veroeffentlicht.",
+          variant: "destructive",
+        });
+        navigate(`/training/${courseId}`);
+        return;
+      }
+
       setLesson(data);
     } catch (err: any) {
       toast({
-        title: "Error loading lesson",
+        title: "Fehler beim Laden der Lektion",
         description: err.message,
         variant: "destructive",
       });
@@ -104,42 +116,33 @@ export default function LessonViewer() {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case "video_audio":
-        return <Video className="w-6 h-6" />;
-      case "pdf":
-        return <FileText className="w-6 h-6" />;
-      case "text":
-        return <Type className="w-6 h-6" />;
-      case "iframe":
-        return <Code className="w-6 h-6" />;
-      case "subchapter":
-        return <FolderOpen className="w-6 h-6" />;
-      default:
-        return <FileText className="w-6 h-6" />;
+      case "video_audio": return <Video className="w-6 h-6" />;
+      case "pdf": return <FileText className="w-6 h-6" />;
+      case "text": return <Type className="w-6 h-6" />;
+      case "iframe": return <Code className="w-6 h-6" />;
+      case "subchapter": return <FolderOpen className="w-6 h-6" />;
+      default: return <FileText className="w-6 h-6" />;
     }
   };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case "video_audio":
-        return "Video/Audio";
-      case "pdf":
-        return "PDF";
-      case "text":
-        return "Text";
-      case "iframe":
-        return "iFrame";
-      case "subchapter":
-        return "Subchapter";
-      default:
-        return type;
+      case "video_audio": return "Video/Audio";
+      case "pdf": return "PDF";
+      case "text": return "Text";
+      case "iframe": return "iFrame";
+      case "subchapter": return "Kapitel";
+      default: return type;
     }
   };
 
   if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <p className="text-sm text-muted-foreground">Lektion wird geladen...</p>
+        </div>
       </div>
     );
   }
@@ -147,55 +150,68 @@ export default function LessonViewer() {
   if (!lesson) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Lesson not found</p>
+        <p className="text-muted-foreground">Lektion nicht gefunden</p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Header with Breadcrumb */}
+      {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(`/training/${courseId}`)}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span
-                className="hover:text-foreground cursor-pointer"
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => navigate(`/training/${courseId}`)}
               >
-                {course?.name || "Course"}
-              </span>
-              <ChevronRight className="w-4 h-4" />
-              <span className="text-foreground font-medium">
-                {lesson.name}
-              </span>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span
+                  className="hover:text-foreground cursor-pointer"
+                  onClick={() => navigate(`/training/${courseId}`)}
+                >
+                  {course?.name || "Kurs"}
+                </span>
+                <ChevronRight className="w-4 h-4" />
+                <span className="text-foreground font-medium">{lesson.name}</span>
+              </div>
             </div>
+            {/* Admin: Bearbeiten-Button */}
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/training/${courseId}/lesson/${lessonId}`)}
+              >
+                Lektion bearbeiten
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Lesson Info */}
-        <Card className="mb-6">
+        {/* Lektion Info */}
+        <Card className="mb-6 border-0 shadow-md">
           <CardHeader>
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white">
                 {getTypeIcon(lesson.type)}
               </div>
-              <div>
+              <div className="flex-1">
                 <CardTitle className="text-2xl">{lesson.name}</CardTitle>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="outline">{getTypeLabel(lesson.type)}</Badge>
-                  <Badge variant={lesson.status === "published" ? "default" : "secondary"}>
-                    {lesson.status === "published" ? "Published" : "Draft"}
-                  </Badge>
+                  {/* Status nur für Admins sichtbar */}
+                  {isAdmin && (
+                    <Badge variant={lesson.status === "published" ? "default" : "secondary"}>
+                      {lesson.status === "published" ? "Veroeffentlicht" : "Entwurf"}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
@@ -209,7 +225,7 @@ export default function LessonViewer() {
 
         {/* Tags */}
         {lesson.content_data?.tags && Array.isArray(lesson.content_data.tags) && lesson.content_data.tags.length > 0 && (
-          <Card className="mb-6">
+          <Card className="mb-6 border-0 shadow-md">
             <CardHeader>
               <CardTitle className="text-lg">Tags</CardTitle>
             </CardHeader>
@@ -225,30 +241,26 @@ export default function LessonViewer() {
           </Card>
         )}
 
-
-        {/* Content Display */}
-        <Card>
+        {/* Inhalt */}
+        <Card className="border-0 shadow-md">
           <CardHeader>
-            <CardTitle className="text-lg">Content</CardTitle>
+            <CardTitle className="text-lg">Inhalt</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Video/Audio Content */}
+            {/* Video/Audio */}
             {lesson.type === "video_audio" && lesson.content_url && (
               <div className="w-full">
-                {/* Check if it's a YouTube or Vimeo link */}
-                {(lesson.content_url.includes('youtube.com') || 
-                  lesson.content_url.includes('youtu.be') || 
-                  lesson.content_url.includes('vimeo.com')) ? (
+                {(lesson.content_url.includes("youtube.com") ||
+                  lesson.content_url.includes("youtu.be") ||
+                  lesson.content_url.includes("vimeo.com")) ? (
                   <div className="aspect-video bg-black rounded-lg overflow-hidden">
                     <iframe
                       src={
-                        lesson.content_url.includes('youtube.com') 
-                          ? lesson.content_url.replace('watch?v=', 'embed/')
-                          : lesson.content_url.includes('youtu.be')
-                          ? lesson.content_url.replace('youtu.be/', 'youtube.com/embed/')
-                          : lesson.content_url.includes('vimeo.com')
-                          ? lesson.content_url.replace('vimeo.com/', 'player.vimeo.com/video/')
-                          : lesson.content_url
+                        lesson.content_url.includes("youtube.com")
+                          ? lesson.content_url.replace("watch?v=", "embed/")
+                          : lesson.content_url.includes("youtu.be")
+                          ? lesson.content_url.replace("youtu.be/", "youtube.com/embed/")
+                          : lesson.content_url.replace("vimeo.com/", "player.vimeo.com/video/")
                       }
                       className="w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -264,121 +276,133 @@ export default function LessonViewer() {
                       preload="auto"
                       className="w-full h-full"
                     >
-                      Your browser does not support the video tag.
+                      Ihr Browser unterstuetzt kein Video.
                     </video>
                   </div>
                 )}
               </div>
             )}
 
-            {/* PDF Content */}
+            {/* PDF */}
             {lesson.type === "pdf" && lesson.content_url && (
               <div className="w-full space-y-4">
-                {/* Download/View buttons */}
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Force download - for Cloudinary URLs, add fl_attachment flag
+                    onClick={() => {
                       let downloadUrl = lesson.content_url!;
-                      if (downloadUrl.includes('cloudinary.com')) {
-                        // Handle different Cloudinary URL patterns (raw/upload, image/upload, auto/upload)
+                      if (downloadUrl.includes("cloudinary.com")) {
                         downloadUrl = downloadUrl.replace(
                           /\/(raw|image|video|auto)\/upload\//,
-                          '/$1/upload/fl_attachment/'
+                          "/$1/upload/fl_attachment/"
                         );
                       }
-                      // Use fetch to download as blob for better cross-origin handling
                       fetch(downloadUrl)
-                        .then(response => response.blob())
-                        .then(blob => {
+                        .then((r) => r.blob())
+                        .then((blob) => {
                           const url = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
+                          const link = document.createElement("a");
                           link.href = url;
-                          link.download = lesson.name + '.pdf';
+                          link.download = lesson.name + ".pdf";
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
                           window.URL.revokeObjectURL(url);
                         })
-                        .catch(() => {
-                          // Fallback: open in new tab
-                          window.open(lesson.content_url!, '_blank', 'noopener,noreferrer');
-                        });
+                        .catch(() => window.open(lesson.content_url!, "_blank", "noopener,noreferrer"));
                     }}
                   >
                     <FileText className="w-4 h-4 mr-2" />
-                    Download PDF
+                    PDF herunterladen
                   </Button>
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      window.open(lesson.content_url!, '_blank', 'noopener,noreferrer');
-                    }}
+                    onClick={() => window.open(lesson.content_url!, "_blank", "noopener,noreferrer")}
                   >
-                    Open in New Tab
+                    In neuem Tab oeffnen
                   </Button>
                 </div>
-                {/* PDF embed - using object tag for better rendering */}
                 <object
                   data={lesson.content_url}
                   type="application/pdf"
                   className="w-full rounded-lg border-2 border-gray-300"
-                  style={{ height: '800px', minHeight: '600px' }}
+                  style={{ height: "800px", minHeight: "600px" }}
                 >
-                  {/* Fallback for browsers that don't support object tag for PDFs */}
-                  <embed
-                    src={lesson.content_url}
-                    type="application/pdf"
-                    className="w-full h-full"
-                  />
+                  <embed src={lesson.content_url} type="application/pdf" className="w-full h-full" />
                 </object>
                 <p className="text-xs text-muted-foreground text-center">
-                  If the PDF doesn't display correctly, use the "Open in New Tab" button above to view it in full screen
+                  Falls das PDF nicht angezeigt wird, nutzen Sie den Button "In neuem Tab oeffnen"
                 </p>
               </div>
             )}
 
-            {/* Text Content */}
+            {/* Text */}
             {lesson.type === "text" && lesson.content_data?.text_content && (
               <div className="prose prose-sm max-w-none">
                 <p className="whitespace-pre-wrap">{lesson.content_data.text_content}</p>
               </div>
             )}
 
-            {/* iFrame Content */}
+            {/* iFrame */}
             {lesson.type === "iframe" && lesson.content_url && (
               <div className="aspect-video bg-muted rounded-lg overflow-hidden">
                 <iframe
                   src={lesson.content_url}
                   className="w-full h-full"
-                  title="Embedded Content"
+                  title="Eingebetteter Inhalt"
                   allowFullScreen
                 />
               </div>
             )}
 
-            {/* No content available */}
+            {/* Kein Inhalt */}
             {!lesson.content_url && !lesson.content_data?.text_content && (
               <div className="text-center py-12 text-muted-foreground">
                 <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p>No content available for this lesson.</p>
+                <p>Kein Inhalt fuer diese Lektion verfuegbar.</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Back Button */}
-        <div className="flex justify-start mt-6">
-          <Button variant="outline" onClick={() => navigate("/training")}>
+        {/* Abgeschlossen Button für normale Nutzer */}
+        {!isAdmin && (
+          <Card className="mt-6 border-0 shadow-md">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Lektion abschliessen</p>
+                  <p className="text-sm text-muted-foreground">
+                    Markieren Sie diese Lektion als abgeschlossen
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setCompleted(true);
+                    toast({
+                      title: "Lektion abgeschlossen!",
+                      description: "Ihr Fortschritt wurde gespeichert.",
+                    });
+                    navigate(`/training/${courseId}`);
+                  }}
+                  className="bg-gradient-to-r from-green-600 to-green-700"
+                  disabled={completed}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  {completed ? "Abgeschlossen" : "Als abgeschlossen markieren"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Navigation */}
+        <div className="flex justify-between mt-6">
+          <Button variant="outline" onClick={() => navigate(`/training/${courseId}`)}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Course
+            Zurueck zum Kurs
           </Button>
         </div>
       </main>
