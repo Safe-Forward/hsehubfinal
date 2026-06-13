@@ -43,7 +43,7 @@ const subscriptionPlans = [
   {
     tier: "basic",
     name: "Paket S",
-    subtitle: "HSE Basic – Der digitale Einstieg",
+    subtitle: "HSE Basic - Der digitale Einstieg",
     price: 149,
     maxEmployees: 5,
     users: "5 Benutzer (1 Administrator + 4 Benutzer)",
@@ -61,7 +61,7 @@ const subscriptionPlans = [
   {
     tier: "standard",
     name: "Paket M",
-    subtitle: "HSE Pro – Strukturierte Teamarbeit",
+    subtitle: "HSE Pro - Strukturierte Teamarbeit",
     price: 249,
     maxEmployees: 10,
     users: "10 Benutzer (1 Administrator + 9 Benutzer)",
@@ -78,7 +78,7 @@ const subscriptionPlans = [
   {
     tier: "premium",
     name: "Paket L",
-    subtitle: "HSE Enterprise – Für mittelständische Unternehmen und Konzerne",
+    subtitle: "HSE Enterprise - Für mittelständische Unternehmen und Konzerne",
     price: 349,
     maxEmployees: 999,
     users: "Kein Limit",
@@ -122,7 +122,7 @@ const addOns = [
   {
     id: "multi-site-basic",
     name: "Multi-Site Basic",
-    description: "Bis zu 3 Standorte (29€ pro zusätzlichem Standort)",
+    description: "Bis zu 3 Standorte (29 Euro pro zusätzlichem Standort)",
     price: 99,
     period: "Monat",
   },
@@ -162,9 +162,7 @@ const addOns = [
 export default function CompanyRegistration() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [selectedTier, setSelectedTier] = useState
-    "basic" | "standard" | "premium"
-  >("standard");
+  const [selectedTier, setSelectedTier] = useState<"basic" | "standard" | "premium">("standard");
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -180,7 +178,6 @@ export default function CompanyRegistration() {
 
   const toggleAddOn = (addOnId: string) => {
     const addOn = addOns.find((a) => a.id === addOnId);
-
     setSelectedAddOns((prev) => {
       if (addOn?.group === "storage") {
         const withoutStorage = prev.filter(
@@ -200,7 +197,6 @@ export default function CompanyRegistration() {
 
   const onSubmit = async (data: RegistrationForm) => {
     setLoading(true);
-
     try {
       await supabase.auth.signOut();
 
@@ -228,9 +224,7 @@ export default function CompanyRegistration() {
       if (signInError) throw signInError;
       if (!sessionData.user) throw new Error("Sitzung konnte nicht erstellt werden");
 
-      const selectedPlan = subscriptionPlans.find(
-        (p) => p.tier === selectedTier
-      )!;
+      const selectedPlan = subscriptionPlans.find((p) => p.tier === selectedTier)!;
 
       const { data: registrationResult, error: registrationError } = await (
         supabase as any
@@ -260,19 +254,16 @@ export default function CompanyRegistration() {
       }
 
       toast({
-        title: "Erfolgreich! 🎉",
-        description:
-          "Ihr Unternehmen wurde erstellt! Bitte warten Sie, während wir alles einrichten...",
+        title: "Erfolgreich!",
+        description: "Ihr Unternehmen wurde erstellt! Bitte warten Sie, während wir alles einrichten...",
       });
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
-
       await supabase.auth.signOut();
 
       toast({
         title: "Fast geschafft!",
-        description:
-          "Bitte melden Sie sich erneut an, um auf Ihr neues Unternehmens-Dashboard zuzugreifen.",
+        description: "Bitte melden Sie sich erneut an, um auf Ihr neues Unternehmens-Dashboard zuzugreifen.",
       });
 
       setTimeout(() => {
@@ -299,11 +290,10 @@ export default function CompanyRegistration() {
             onClick={() => navigate("/")}
             className="-ml-4 hover:bg-transparent hover:text-primary"
           >
-            ← Zurück zur Startseite
+            Zurueck zur Startseite
           </Button>
         </div>
 
-        {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <img
@@ -314,18 +304,15 @@ export default function CompanyRegistration() {
             <h1 className="text-4xl font-bold">Safe-Forward</h1>
           </div>
           <p className="text-xl text-muted-foreground">
-            Paket wählen & Unternehmen registrieren
+            Paket wählen und Unternehmen registrieren
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            7 Tage kostenlos testen • Keine Kreditkarte erforderlich
+            7 Tage kostenlos testen - Keine Kreditkarte erforderlich
           </p>
         </div>
 
-        {/* Subscription Plans */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-center mb-8">
-            Ihr Paket wählen
-          </h2>
+          <h2 className="text-2xl font-bold text-center mb-8">Ihr Paket wählen</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {subscriptionPlans.map((plan) => (
               <Card
@@ -335,7 +322,7 @@ export default function CompanyRegistration() {
                     ? "ring-2 ring-primary shadow-lg scale-105"
                     : "hover:shadow-md"
                 } ${plan.popular ? "border-green-500 border-2" : ""}`}
-                onClick={() => setSelectedTier(plan.tier as any)}
+                onClick={() => setSelectedTier(plan.tier as "basic" | "standard" | "premium")}
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -348,12 +335,10 @@ export default function CompanyRegistration() {
                     {plan.subtitle}
                   </CardDescription>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold">{plan.price}€</span>
-                    <span className="text-muted-foreground">/Monat</span>
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-muted-foreground"> Euro/Monat</span>
                   </div>
-                  <p className="text-sm text-blue-600 font-semibold mt-2">
-                    {plan.users}
-                  </p>
+                  <p className="text-sm text-blue-600 font-semibold mt-2">{plan.users}</p>
                   <p className="text-xs text-gray-500 mt-1">{plan.description}</p>
                 </CardHeader>
                 <CardContent>
@@ -371,10 +356,7 @@ export default function CompanyRegistration() {
           </div>
         </div>
 
-        {/* Registration Form and Add-ons */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-
-          {/* Registration Form */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
@@ -385,8 +367,6 @@ export default function CompanyRegistration() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
-                  {/* Company Details */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Unternehmensdaten</h3>
                     <div>
@@ -433,13 +413,12 @@ export default function CompanyRegistration() {
                       <Textarea
                         id="companyAddress"
                         {...register("companyAddress")}
-                        placeholder="Musterstraße 1, 12345 Musterstadt"
+                        placeholder="Musterstrasse 1, 12345 Musterstadt"
                         rows={2}
                       />
                     </div>
                   </div>
 
-                  {/* Admin Details */}
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Administratorkonto</h3>
                     <div>
@@ -479,7 +458,7 @@ export default function CompanyRegistration() {
                             id="password"
                             type={showPassword ? "text" : "password"}
                             {...register("password")}
-                            placeholder="••••••••"
+                            placeholder="........"
                             className="pr-10"
                           />
                           <button
@@ -507,14 +486,12 @@ export default function CompanyRegistration() {
                             id="confirmPassword"
                             type={showConfirmPassword ? "text" : "password"}
                             {...register("confirmPassword")}
-                            placeholder="••••••••"
+                            placeholder="........"
                             className="pr-10"
                           />
                           <button
                             type="button"
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                           >
                             {showConfirmPassword ? (
@@ -533,14 +510,8 @@ export default function CompanyRegistration() {
                     </div>
                   </div>
 
-                  {/* Submit */}
                   <div className="flex flex-col gap-4">
-                    <Button
-                      type="submit"
-                      size="lg"
-                      disabled={loading}
-                      className="w-full"
-                    >
+                    <Button type="submit" size="lg" disabled={loading} className="w-full">
                       {loading ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -548,8 +519,7 @@ export default function CompanyRegistration() {
                         </>
                       ) : (
                         `7 Tage kostenlos testen (${
-                          subscriptionPlans.find((p) => p.tier === selectedTier)
-                            ?.name
+                          subscriptionPlans.find((p) => p.tier === selectedTier)?.name
                         })`
                       )}
                     </Button>
@@ -565,7 +535,6 @@ export default function CompanyRegistration() {
             </Card>
           </div>
 
-          {/* Add-ons */}
           <div className="lg:col-span-1">
             <Card className="sticky top-4">
               <CardHeader>
@@ -599,7 +568,7 @@ export default function CompanyRegistration() {
                           {addOn.description}
                         </div>
                         <div className="text-sm font-bold text-primary mt-1">
-                          {addOn.price}€ / {addOn.period}
+                          {addOn.price} Euro / {addOn.period}
                         </div>
                       </div>
                     </div>
