@@ -224,7 +224,6 @@ const fetchEmployeeProgress = async (courseId: string) => {
 
       const empIds = accessData.map((a: any) => a.employee_id);
 
-      // Nur echte eingeladene Nutzer (aus team_members)
       const { data: teamData } = await supabase
         .from("team_members")
         .select("user_id")
