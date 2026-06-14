@@ -249,8 +249,30 @@ export default function Settings() {
   });
   const [isAddingSystem, setIsAddingSystem] = useState(false);
 
-  // Recent Invoices State
-  const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
+// Recent Invoices State
+const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
+
+// Company Settings State (Notifications, Risk Matrix, Intervals)
+const [companySettings, setCompanySettings] = useState({
+  notification_settings: {
+    examinations_days: 60,
+    measures_days: 14,
+    qualifications_days: 30,
+    audits_days: 30,
+    gbu_review_days: 60,
+  },
+  risk_matrix_labels: {
+    likelihood: ["Very unlikely", "unlikely", "possible", "probably", "very probably"],
+    severity: ["very low", "low", "medium", "high", "very high"],
+    result: ["low", "medium", "high", "very high"],
+    colors: { low: "#22c55e", medium: "#f97316", high: "#ef4444", very_high: "#991b1b" },
+  },
+  gbu_intervals: [24] as number[],
+  audit_intervals: [12] as number[],
+});
+const [savingSettings, setSavingSettings] = useState(false);
+const [newGbuInterval, setNewGbuInterval] = useState("");
+const [newAuditInterval, setNewAuditInterval] = useState("");
 
 
   const predefinedISOs = [
@@ -362,9 +384,10 @@ export default function Settings() {
       fetchGInvestigations();
       fetchAllIsoCriteria();
       fetchMyTickets();
-      fetchApiToken();
-      fetchExternalSystems();
-      fetchRecentInvoices();
+fetchApiToken();
+fetchExternalSystems();
+fetchRecentInvoices();
+fetchCompanySettings();
     }
   }, [user, loading, navigate, companyId]);
 
@@ -389,7 +412,62 @@ export default function Settings() {
       setTimeout(scrollToSection, 120);
     }
   }, [location.search]);
+const fetchCompanySettings = async () => {
+  if (!companyId) return;
+  try {
+    const { data, error } = await supabase
+      .from("company_settings")
+      .select("*")
+      .eq("company_id", companyId)
+      .maybeSingle();
 
+    if (error) {
+      console.warn("Could not load company settings:", error.message);
+      return;
+    }
+
+    if (data) {
+      setCompanySettings({
+        notification_settings: data.notification_settings,
+        risk_matrix_labels: data.risk_matrix_labels,
+        gbu_intervals: data.gbu_intervals || [24],
+        audit_intervals: data.audit_intervals || [12],
+      });
+    }
+  } catch (err: any) {
+    console.warn("Could not load company settings:", err.message);
+  }
+};
+
+const saveCompanySettings = async (updates: Partial<typeof companySettings>) => {
+  if (!companyId) return;
+  setSavingSettings(true);
+  try {
+    const newSettings = { ...companySettings, ...updates };
+    const { error } = await supabase
+      .from("company_settings")
+      .upsert(
+        {
+          company_id: companyId,
+          notification_settings: newSettings.notification_settings,
+          risk_matrix_labels: newSettings.risk_matrix_labels,
+          gbu_intervals: newSettings.gbu_intervals,
+          audit_intervals: newSettings.audit_intervals,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "company_id" }
+      );
+
+    if (error) throw error;
+
+    setCompanySettings(newSettings);
+    toast({ title: "Erfolgreich", description: "Einstellungen wurden gespeichert" });
+  } catch (err: any) {
+    toast({ title: "Fehler", description: err.message, variant: "destructive" });
+  } finally {
+    setSavingSettings(false);
+  }
+};
   const fetchRecentInvoices = async () => {
     if (!companyId) return;
     try {
@@ -5708,132 +5786,131 @@ export default function Settings() {
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Target className="w-5 h-5" />
-                        Risikomatrix-Labels
-                      </CardTitle>
-                      <CardDescription>
-                        Passe Achsen- und Ergebnisbeschriftungen an eure
-                        Nomenklatur an.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-6 p-6 bg-white rounded-lg border">
-                        <div className="grid grid-cols-3 gap-6">
-                          {/* Likelihood Column */}
-                          <div>
-                            <h4 className="font-medium mb-3">Likelihood</h4>
-                            <div className="space-y-2">
-                              <Input
-                                defaultValue="Very unlikely"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="unlikely"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="possible"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="probably"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="very probably"
-                                className="bg-white border-gray-300"
-                              />
-                            </div>
-                          </div>
+<Card>
+  <CardHeader>
+    <div className="flex items-center justify-between">
+      <div>
+        <CardTitle className="flex items-center gap-2">
+          <Target className="w-5 h-5" />
+          Risikomatrix-Labels
+        </CardTitle>
+        <CardDescription>
+          Passe Achsen- und Ergebnisbeschriftungen an eure Nomenklatur an.
+        </CardDescription>
+      </div>
+      <Button
+        size="sm"
+        className="bg-green-600 hover:bg-green-700 text-white"
+        onClick={() => saveCompanySettings({ risk_matrix_labels: companySettings.risk_matrix_labels })}
+        disabled={savingSettings}
+      >
+        {savingSettings ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+        Speichern
+      </Button>
+    </div>
+  </CardHeader>
+  <CardContent>
+    <div className="space-y-6 p-6 bg-white rounded-lg border">
+      <div className="grid grid-cols-3 gap-6">
+        {/* Likelihood Column */}
+        <div>
+          <h4 className="font-medium mb-3">Likelihood</h4>
+          <div className="space-y-2">
+            {companySettings.risk_matrix_labels.likelihood.map((label, idx) => (
+              <Input
+                key={`likelihood-${idx}`}
+                value={label}
+                onChange={(e) => {
+                  const updated = [...companySettings.risk_matrix_labels.likelihood];
+                  updated[idx] = e.target.value;
+                  setCompanySettings((prev) => ({
+                    ...prev,
+                    risk_matrix_labels: { ...prev.risk_matrix_labels, likelihood: updated },
+                  }));
+                }}
+                className="bg-white border-gray-300"
+              />
+            ))}
+          </div>
+        </div>
 
-                          {/* Severity Column */}
-                          <div>
-                            <h4 className="font-medium mb-3">Severity</h4>
-                            <div className="space-y-2">
-                              <Input
-                                defaultValue="very low"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="low"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="medium"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="high"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="very high"
-                                className="bg-white border-gray-300"
-                              />
-                            </div>
-                          </div>
+        {/* Severity Column */}
+        <div>
+          <h4 className="font-medium mb-3">Severity</h4>
+          <div className="space-y-2">
+            {companySettings.risk_matrix_labels.severity.map((label, idx) => (
+              <Input
+                key={`severity-${idx}`}
+                value={label}
+                onChange={(e) => {
+                  const updated = [...companySettings.risk_matrix_labels.severity];
+                  updated[idx] = e.target.value;
+                  setCompanySettings((prev) => ({
+                    ...prev,
+                    risk_matrix_labels: { ...prev.risk_matrix_labels, severity: updated },
+                  }));
+                }}
+                className="bg-white border-gray-300"
+              />
+            ))}
+          </div>
+        </div>
 
-                          {/* Result Column */}
-                          <div>
-                            <h4 className="font-medium mb-3">Result</h4>
-                            <div className="space-y-2">
-                              <Input
-                                defaultValue="low"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="medium"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="high"
-                                className="bg-white border-gray-300"
-                              />
-                              <Input
-                                defaultValue="very high"
-                                className="bg-white border-gray-300"
-                              />
-                            </div>
-                          </div>
-                        </div>
+        {/* Result Column */}
+        <div>
+          <h4 className="font-medium mb-3">Result</h4>
+          <div className="space-y-2">
+            {companySettings.risk_matrix_labels.result.map((label, idx) => (
+              <Input
+                key={`result-${idx}`}
+                value={label}
+                onChange={(e) => {
+                  const updated = [...companySettings.risk_matrix_labels.result];
+                  updated[idx] = e.target.value;
+                  setCompanySettings((prev) => ({
+                    ...prev,
+                    risk_matrix_labels: { ...prev.risk_matrix_labels, result: updated },
+                  }));
+                }}
+                className="bg-white border-gray-300"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
-                        {/* Color Configuration */}
-                        <div className="grid grid-cols-4 gap-4 pt-4 border-t">
-                          <div>
-                            <label className="text-sm mb-2 block">
-                              Farbe: Niedrig{" "}
-                              <span className="text-red-600">low</span>
-                            </label>
-                            <div className="h-12 bg-green-500 rounded border-2 border-gray-300"></div>
-                          </div>
-                          <div>
-                            <label className="text-sm mb-2 block">
-                              Farbe: Mittel{" "}
-                              <span className="text-red-600">medium</span>
-                            </label>
-                            <div className="h-12 bg-orange-500 rounded border-2 border-gray-300"></div>
-                          </div>
-                          <div>
-                            <label className="text-sm mb-2 block">
-                              Farbe: Hoch{" "}
-                              <span className="text-red-600">high</span>
-                            </label>
-                            <div className="h-12 bg-red-500 rounded border-2 border-gray-300"></div>
-                          </div>
-                          <div>
-                            <label className="text-sm mb-2 block">
-                              Farbe: Sehr hoch{" "}
-                              <span className="text-red-600">very high</span>
-                            </label>
-                            <div className="h-12 bg-red-800 rounded border-2 border-gray-300"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+      {/* Color Configuration */}
+      <div className="grid grid-cols-4 gap-4 pt-4 border-t">
+        {[
+          { key: "low", label: "Farbe: Niedrig", tag: "low" },
+          { key: "medium", label: "Farbe: Mittel", tag: "medium" },
+          { key: "high", label: "Farbe: Hoch", tag: "high" },
+          { key: "very_high", label: "Farbe: Sehr hoch", tag: "very high" },
+        ].map((c) => (
+          <div key={c.key}>
+            <label className="text-sm mb-2 block">
+              {c.label} <span className="text-red-600">{c.tag}</span>
+            </label>
+            <div className="relative h-12 rounded border-2 border-gray-300 overflow-hidden">
+              <input
+                type="color"
+                value={(companySettings.risk_matrix_labels.colors as any)[c.key] || "#22c55e"}
+                onChange={(e) => {
+                  const updatedColors = { ...companySettings.risk_matrix_labels.colors, [c.key]: e.target.value };
+                  setCompanySettings((prev) => ({
+                    ...prev,
+                    risk_matrix_labels: { ...prev.risk_matrix_labels, colors: updatedColors },
+                  }));
+                }}
+                className="absolute inset-0 w-full h-full cursor-pointer border-0"
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
                   <Card>
                     <CardHeader>
