@@ -762,10 +762,7 @@ const getRoleBadgeVariant = (role: string) => {
     }
   };
 
-  const kpiConfig: Record
-    string,
-    { title: string; value: string | number; subtitle?: string; icon: any; gradient: string }
-  > = {
+const kpiConfig: { [key: string]: { title: string; value: string | number; subtitle?: string; icon: any; gradient: string } } = {
     employees: {
       title: t("dashboard.totalEmployees"),
       value: stats.employees,
