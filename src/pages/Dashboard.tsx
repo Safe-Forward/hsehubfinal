@@ -289,8 +289,8 @@ const [stats, setStats] = useState({
     if (!companyId) return;
 
     try {
-      // Fetch counts for key tables and compute compliance rate
-      const [employeesRes, risksRes, auditsRes, tasksRes, completedAuditsRes] =
+// Fetch counts for key tables and compute compliance rate
+      const [employeesRes, risksRes, auditsRes, tasksRes, auditProgressRes] =
         await Promise.all([
           supabase
             .from("employees")
@@ -308,19 +308,26 @@ const [stats, setStats] = useState({
             .from("tasks")
             .select("id", { count: "exact", head: true })
             .eq("company_id", companyId),
-          // completed audits for compliance calculation
+          // audit checklist progress for compliance calculation
           supabase
             .from("audits")
-            .select("id", { count: "exact", head: true })
-            .eq("company_id", companyId)
-            .eq("status", "completed"),
+            .select("total_items, completed_items")
+            .eq("company_id", companyId),
         ]);
 
-const totalAudits = auditsRes.count || 0;
-      const completedAudits = completedAuditsRes.count || 0;
+      const totalAudits = auditsRes.count || 0;
+      const auditItems = auditProgressRes.data || [];
+      const totalItemsSum = auditItems.reduce(
+        (sum: number, a: any) => sum + (a.total_items || 0),
+        0
+      );
+      const completedItemsSum = auditItems.reduce(
+        (sum: number, a: any) => sum + (a.completed_items || 0),
+        0
+      );
       const complianceRate =
-        totalAudits > 0
-          ? Math.round((completedAudits / totalAudits) * 100)
+        totalItemsSum > 0
+          ? Math.round((completedItemsSum / totalItemsSum) * 100)
           : 0;
 
       // Calculate overdue obligations
