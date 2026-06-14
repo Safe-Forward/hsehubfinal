@@ -5912,146 +5912,264 @@ const saveCompanySettings = async (updates: Partial<typeof companySettings>) => 
   </CardContent>
 </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5" />
-                        Risk Assessment Intervals
-                      </CardTitle>
-                      <CardDescription>
-                        Set up recurring risk assessment schedules
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-medium mb-3">
-                            Prüfintervalle & Fälligkeiten
-                          </h4>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Define one or more interval options for GBU and
-                            Audits.
-                          </p>
+<Card>
+  <CardHeader>
+    <div className="flex items-center justify-between">
+      <div>
+        <CardTitle className="flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5" />
+          Risk Assessment Intervals
+        </CardTitle>
+        <CardDescription>
+          Set up recurring risk assessment schedules
+        </CardDescription>
+      </div>
+      <Button
+        size="sm"
+        className="bg-green-600 hover:bg-green-700 text-white"
+        onClick={() => saveCompanySettings({ gbu_intervals: companySettings.gbu_intervals, audit_intervals: companySettings.audit_intervals })}
+        disabled={savingSettings}
+      >
+        {savingSettings ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+        Speichern
+      </Button>
+    </div>
+  </CardHeader>
+  <CardContent>
+    <div className="space-y-4">
+      <div>
+        <h4 className="font-medium mb-3">
+          Prüfintervalle & Fälligkeiten
+        </h4>
+        <p className="text-sm text-muted-foreground mb-4">
+          Define one or more interval options for GBU and Audits.
+        </p>
 
-                          {/* GBU Intervals */}
-                          <div className="mb-4">
-                            <Label className="mb-2 block">
-                              GBU intervals (months)
-                            </Label>
-                            <div className="flex gap-2 mb-2">
-                              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
-                                <span className="text-sm">24 mo</span>
-                                <button className="text-muted-foreground hover:text-foreground">
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Input
-                                placeholder="e.g. 12"
-                                className="max-w-[200px]"
-                              />
-                              <Button size="sm">
-                                <Plus className="w-4 h-4 mr-1" />
-                                Add
-                              </Button>
-                            </div>
-                          </div>
+        {/* GBU Intervals */}
+        <div className="mb-4">
+          <Label className="mb-2 block">
+            GBU intervals (months)
+          </Label>
+          <div className="flex gap-2 mb-2 flex-wrap">
+            {companySettings.gbu_intervals.map((interval, idx) => (
+              <div key={`gbu-${idx}`} className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
+                <span className="text-sm">{interval} mo</span>
+                <button
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    const updated = companySettings.gbu_intervals.filter((_, i) => i !== idx);
+                    setCompanySettings((prev) => ({ ...prev, gbu_intervals: updated }));
+                  }}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g. 12"
+              type="number"
+              className="max-w-[200px]"
+              value={newGbuInterval}
+              onChange={(e) => setNewGbuInterval(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newGbuInterval.trim()) {
+                  const val = parseInt(newGbuInterval, 10);
+                  if (!isNaN(val) && !companySettings.gbu_intervals.includes(val)) {
+                    setCompanySettings((prev) => ({ ...prev, gbu_intervals: [...prev.gbu_intervals, val].sort((a, b) => a - b) }));
+                  }
+                  setNewGbuInterval("");
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                const val = parseInt(newGbuInterval, 10);
+                if (!isNaN(val) && !companySettings.gbu_intervals.includes(val)) {
+                  setCompanySettings((prev) => ({ ...prev, gbu_intervals: [...prev.gbu_intervals, val].sort((a, b) => a - b) }));
+                }
+                setNewGbuInterval("");
+              }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add
+            </Button>
+          </div>
+        </div>
 
-                          {/* Audit Intervals */}
-                          <div>
-                            <Label className="mb-2 block">
-                              Audit intervals (months)
-                            </Label>
-                            <div className="flex gap-2 mb-2">
-                              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
-                                <span className="text-sm">12 mo</span>
-                                <button className="text-muted-foreground hover:text-foreground">
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Input
-                                placeholder="e.g. 12"
-                                className="max-w-[200px]"
-                              />
-                              <Button size="sm">
-                                <Plus className="w-4 h-4 mr-1" />
-                                Add
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+        {/* Audit Intervals */}
+        <div>
+          <Label className="mb-2 block">
+            Audit intervals (months)
+          </Label>
+          <div className="flex gap-2 mb-2 flex-wrap">
+            {companySettings.audit_intervals.map((interval, idx) => (
+              <div key={`audit-${idx}`} className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
+                <span className="text-sm">{interval} mo</span>
+                <button
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    const updated = companySettings.audit_intervals.filter((_, i) => i !== idx);
+                    setCompanySettings((prev) => ({ ...prev, audit_intervals: updated }));
+                  }}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g. 12"
+              type="number"
+              className="max-w-[200px]"
+              value={newAuditInterval}
+              onChange={(e) => setNewAuditInterval(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newAuditInterval.trim()) {
+                  const val = parseInt(newAuditInterval, 10);
+                  if (!isNaN(val) && !companySettings.audit_intervals.includes(val)) {
+                    setCompanySettings((prev) => ({ ...prev, audit_intervals: [...prev.audit_intervals, val].sort((a, b) => a - b) }));
+                  }
+                  setNewAuditInterval("");
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                const val = parseInt(newAuditInterval, 10);
+                if (!isNaN(val) && !companySettings.audit_intervals.includes(val)) {
+                  setCompanySettings((prev) => ({ ...prev, audit_intervals: [...prev.audit_intervals, val].sort((a, b) => a - b) }));
+                }
+                setNewAuditInterval("");
+              }}
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Bell className="w-5 h-5" />
-                        Notification Logic
-                      </CardTitle>
-                      <CardDescription>
-                        Set up automated notifications and reminders
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-medium mb-3">
-                            Benachrichtigungslogik
-                          </h4>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Define reminders in days before due dates
-                          </p>
+<Card>
+  <CardHeader>
+    <div className="flex items-center justify-between">
+      <div>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="w-5 h-5" />
+          Notification Logic
+        </CardTitle>
+        <CardDescription>
+          Set up automated notifications and reminders
+        </CardDescription>
+      </div>
+      <Button
+        size="sm"
+        className="bg-green-600 hover:bg-green-700 text-white"
+        onClick={() => saveCompanySettings({ notification_settings: companySettings.notification_settings })}
+        disabled={savingSettings}
+      >
+        {savingSettings ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+        Speichern
+      </Button>
+    </div>
+  </CardHeader>
+  <CardContent>
+    <div className="space-y-4">
+      <div>
+        <h4 className="font-medium mb-3">
+          Benachrichtigungslogik
+        </h4>
+        <p className="text-sm text-muted-foreground mb-4">
+          Define reminders in days before due dates
+        </p>
 
-                          <div className="grid grid-cols-2 gap-6">
-                            {/* Examinations */}
-                            <div>
-                              <Label className="mb-2 block">
-                                Examinations (days before)
-                              </Label>
-                              <Input defaultValue="60" type="number" />
-                            </div>
+        <div className="grid grid-cols-2 gap-6">
+          {/* Examinations */}
+          <div>
+            <Label className="mb-2 block">
+              Examinations (days before)
+            </Label>
+            <Input
+              type="number"
+              value={companySettings.notification_settings.examinations_days}
+              onChange={(e) => setCompanySettings((prev) => ({
+                ...prev,
+                notification_settings: { ...prev.notification_settings, examinations_days: Number(e.target.value) },
+              }))}
+            />
+          </div>
 
-                            {/* Measures */}
-                            <div>
-                              <Label className="mb-2 block">
-                                Measures (days before)
-                              </Label>
-                              <Input defaultValue="14" type="number" />
-                            </div>
+          {/* Measures */}
+          <div>
+            <Label className="mb-2 block">
+              Measures (days before)
+            </Label>
+            <Input
+              type="number"
+              value={companySettings.notification_settings.measures_days}
+              onChange={(e) => setCompanySettings((prev) => ({
+                ...prev,
+                notification_settings: { ...prev.notification_settings, measures_days: Number(e.target.value) },
+              }))}
+            />
+          </div>
 
-                            {/* Qualifications */}
-                            <div>
-                              <Label className="mb-2 block">
-                                Qualifications (days before)
-                              </Label>
-                              <Input defaultValue="30" type="number" />
-                            </div>
+          {/* Qualifications */}
+          <div>
+            <Label className="mb-2 block">
+              Qualifications (days before)
+            </Label>
+            <Input
+              type="number"
+              value={companySettings.notification_settings.qualifications_days}
+              onChange={(e) => setCompanySettings((prev) => ({
+                ...prev,
+                notification_settings: { ...prev.notification_settings, qualifications_days: Number(e.target.value) },
+              }))}
+            />
+          </div>
 
-                            {/* Audits */}
-                            <div>
-                              <Label className="mb-2 block">
-                                Audits (days before)
-                              </Label>
-                              <Input defaultValue="30" type="number" />
-                            </div>
+          {/* Audits */}
+          <div>
+            <Label className="mb-2 block">
+              Audits (days before)
+            </Label>
+            <Input
+              type="number"
+              value={companySettings.notification_settings.audits_days}
+              onChange={(e) => setCompanySettings((prev) => ({
+                ...prev,
+                notification_settings: { ...prev.notification_settings, audits_days: Number(e.target.value) },
+              }))}
+            />
+          </div>
 
-                            {/* GBU review */}
-                            <div>
-                              <Label className="mb-2 block">
-                                GBU review (days before)
-                              </Label>
-                              <Input defaultValue="60" type="number" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+          {/* GBU review */}
+          <div>
+            <Label className="mb-2 block">
+              GBU review (days before)
+            </Label>
+            <Input
+              type="number"
+              value={companySettings.notification_settings.gbu_review_days}
+              onChange={(e) => setCompanySettings((prev) => ({
+                ...prev,
+                notification_settings: { ...prev.notification_settings, gbu_review_days: Number(e.target.value) },
+              }))}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
                 </div>
               </TabsContent>
 
