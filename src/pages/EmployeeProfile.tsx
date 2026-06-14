@@ -36,6 +36,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Combobox } from "@/components/ui/combobox";
+import { Progress } from "@/components/ui/progress";
+import jsPDF from "jspdf";
 import {
   Table,
   TableBody,
@@ -84,8 +86,9 @@ import {
   FileCode,
   Calendar as CalendarIcon,
   Hash,
-  CheckCircle,
+CheckCircle,
   Bell,
+  Award,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -245,8 +248,12 @@ export default function EmployeeProfile() {
   );
   const [editingDocumentTitle, setEditingDocumentTitle] = useState("");
 
-  // Custom input states
+// Custom input states
   const [exposureGroups, setExposureGroups] = useState<any[]>([]);
+
+  // Training / Certificates state
+  const [courseProgressList, setCourseProgressList] = useState<any[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
 
   // Profile fields states
   const [profileFields, setProfileFields] = useState<any[]>([]);
@@ -322,10 +329,11 @@ export default function EmployeeProfile() {
       fetchTasks();
       fetchEmployees();
       fetchGInvestigations();
-      fetchProfileFields();
+fetchProfileFields();
       fetchProfileFieldTemplates();
       fetchTeamMembers();
       fetchUserProfile(); // Fetch logged-in user's profile for note authorship
+      fetchEmployeeCourses();
     }
   }, [id, companyId]);
 
@@ -644,7 +652,7 @@ export default function EmployeeProfile() {
     }
   };
 
-  const fetchGInvestigations = async () => {
+const fetchGInvestigations = async () => {
     if (!companyId) return;
 
     try {
@@ -664,6 +672,145 @@ export default function EmployeeProfile() {
       console.error("Error fetching G-Investigations:", error);
       setGInvestigations([]);
     }
+  };
+
+  // ── Training & Certificates ─────────────────────────────────────────────
+  const fetchEmployeeCourses = async () => {
+    if (!id || !companyId) return;
+    setLoadingCourses(true);
+    try {
+      // Which courses does this employee have access to?
+      const { data: accessData, error: accessError } = await (supabase as any)
+        .from("course_employee_access")
+        .select("course_id")
+        .eq("employee_id", id);
+
+      if (accessError) throw accessError;
+
+      const courseIds = (accessData || []).map((a: any) => a.course_id);
+      if (courseIds.length === 0) {
+        setCourseProgressList([]);
+        return;
+      }
+
+      const { data: coursesData, error: coursesError } = await supabase
+        .from("courses")
+        .select("id, name")
+        .in("id", courseIds);
+
+      if (coursesError) throw coursesError;
+
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from("course_lessons")
+        .select("id, course_id")
+        .in("course_id", courseIds)
+        .eq("status", "published");
+
+      if (lessonsError) throw lessonsError;
+
+      const { data: progressData, error: progressError } = await (supabase as any)
+        .from("course_lesson_progress")
+        .select("course_id, lesson_id")
+        .eq("employee_id", id)
+        .in("course_id", courseIds);
+
+      if (progressError) throw progressError;
+
+      const { data: certData, error: certError } = await (supabase as any)
+        .from("course_certificates")
+        .select("course_id, certificate_number, issued_at")
+        .eq("employee_id", id)
+        .in("course_id", courseIds);
+
+      if (certError) throw certError;
+
+      const lessonsByCourse: Record<string, number> = {};
+      (lessonsData || []).forEach((l: any) => {
+        lessonsByCourse[l.course_id] = (lessonsByCourse[l.course_id] || 0) + 1;
+      });
+
+      const progressByCourse: Record<string, Set<string>> = {};
+      (progressData || []).forEach((p: any) => {
+        if (!progressByCourse[p.course_id]) progressByCourse[p.course_id] = new Set();
+        progressByCourse[p.course_id].add(p.lesson_id);
+      });
+
+      const certByCourse: Record<string, any> = {};
+      (certData || []).forEach((c: any) => {
+        certByCourse[c.course_id] = c;
+      });
+
+      const result = (coursesData || []).map((course: any) => {
+        const total = lessonsByCourse[course.id] || 0;
+        const completed = Math.min(progressByCourse[course.id]?.size || 0, total);
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        return {
+          course_id: course.id,
+          course_name: course.name,
+          total_lessons: total,
+          completed_lessons: completed,
+          percent,
+          certificate: certByCourse[course.id] || null,
+        };
+      });
+
+      setCourseProgressList(result);
+    } catch (error) {
+      console.error("Error fetching employee courses:", error);
+      setCourseProgressList([]);
+    } finally {
+      setLoadingCourses(false);
+    }
+  };
+
+  const generatePDF = (userName: string, courseName: string, cert: any) => {
+    const issuedDate = new Date(cert.issued_at).toLocaleDateString("de-DE", {
+      year: "numeric", month: "long", day: "numeric",
+    });
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const width = doc.internal.pageSize.getWidth();
+    const height = doc.internal.pageSize.getHeight();
+    doc.setFillColor(248, 250, 252); doc.rect(0, 0, width, height, "F");
+    doc.setDrawColor(30, 78, 137); doc.setLineWidth(3); doc.rect(8, 8, width - 16, height - 16);
+    doc.setDrawColor(34, 197, 94); doc.setLineWidth(1); doc.rect(12, 12, width - 24, height - 24);
+    doc.setFillColor(15, 41, 66); doc.rect(8, 8, width - 16, 40, "F");
+    doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold");
+    doc.text("HSE HUB", width / 2, 24, { align: "center" });
+    doc.setFontSize(11); doc.setFont("helvetica", "normal");
+    doc.text("Health, Safety & Environment Management", width / 2, 34, { align: "center" });
+    doc.setTextColor(30, 78, 137); doc.setFontSize(32); doc.setFont("helvetica", "bold");
+    doc.text("ZERTIFIKAT", width / 2, 72, { align: "center" });
+    doc.setFontSize(14); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100);
+    doc.text("Hiermit wird bestätigt, dass", width / 2, 88, { align: "center" });
+    doc.setFontSize(28); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 41, 66);
+    doc.text(userName, width / 2, 108, { align: "center" });
+    doc.setDrawColor(34, 197, 94); doc.setLineWidth(1.5);
+    const nameWidth = doc.getTextWidth(userName);
+    doc.line(width / 2 - nameWidth / 2, 112, width / 2 + nameWidth / 2, 112);
+    doc.setFontSize(13); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100);
+    doc.text("den folgenden Kurs erfolgreich abgeschlossen hat:", width / 2, 124, { align: "center" });
+    doc.setFontSize(20); doc.setFont("helvetica", "bold"); doc.setTextColor(30, 78, 137);
+    doc.text(courseName, width / 2, 140, { align: "center" });
+    doc.setFillColor(34, 197, 94); doc.rect(width / 2 - 40, 145, 80, 3, "F");
+    doc.setFontSize(12); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100);
+    doc.text(`Ausgestellt am: ${issuedDate}`, width / 2, 162, { align: "center" });
+    doc.setFontSize(9); doc.setTextColor(150, 150, 150);
+    doc.text(`Zertifikatsnummer: ${cert.certificate_number}`, width / 2, 172, { align: "center" });
+    doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.5);
+    doc.line(40, 188, 110, 188); doc.setFontSize(10); doc.setTextColor(100, 100, 100);
+    doc.text("Safe-Forward GmbH", 75, 194, { align: "center" });
+    doc.setFontSize(9); doc.text("Geschaeftsfuehrung", 75, 200, { align: "center" });
+    doc.line(width - 110, 188, width - 40, 188); doc.setFontSize(10);
+    doc.text("HSE Hub", width - 75, 194, { align: "center" });
+    doc.setFontSize(9); doc.text("Schulungsplattform", width - 75, 200, { align: "center" });
+    doc.setFillColor(15, 41, 66); doc.rect(8, height - 20, width - 16, 12, "F");
+    doc.setFontSize(8); doc.setTextColor(255, 255, 255);
+    doc.text("www.safe-forward.de  |  info@tech-forward.de  |  HSE Hub", width / 2, height - 12, { align: "center" });
+    doc.save(`Zertifikat_${courseName}_${userName}.pdf`);
+  };
+
+  const downloadCertificateForEmployee = (employeeName: string, courseName: string, cert: any) => {
+    generatePDF(employeeName, courseName, cert);
   };
 
   const fetchTeamMembers = async () => {
@@ -2872,7 +3019,7 @@ export default function EmployeeProfile() {
                   </div>
                 </div>
 
-                {/* 3. Contact Card - THIRD */}
+{/* 3. Contact Card - THIRD */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-lg">Contact</CardTitle>
@@ -2892,6 +3039,71 @@ export default function EmployeeProfile() {
                         </span>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* 3.4. Trainings & Zertifikate Card */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <GraduationCap className="w-4 h-4" />
+                      Schulungen & Zertifikate
+                    </CardTitle>
+                    <CardDescription>
+                      Zugewiesene Kurse, Fortschritt und ausgestellte Zertifikate
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingCourses ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      </div>
+                    ) : courseProgressList.length === 0 ? (
+                      <p className="text-center text-muted-foreground text-sm py-4">
+                        Keine Kurse zugewiesen
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {courseProgressList.map((course) => (
+                          <div key={course.course_id} className="p-3 border rounded-lg space-y-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="font-medium text-sm">{course.course_name}</p>
+                              {course.certificate ? (
+                                <Badge
+                                  className="bg-amber-100 text-amber-700 border-amber-200 text-xs cursor-pointer hover:bg-amber-200 transition-colors flex-shrink-0"
+                                  onClick={() =>
+                                    downloadCertificateForEmployee(
+                                      employee?.full_name || "Teilnehmer",
+                                      course.course_name,
+                                      course.certificate
+                                    )
+                                  }
+                                >
+                                  <Download className="w-3 h-3 mr-1" />
+                                  Zertifikat
+                                </Badge>
+                              ) : (
+                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                  {course.completed_lessons}/{course.total_lessons} Lektionen
+                                </span>
+                              )}
+                            </div>
+                            <Progress
+                              value={course.percent}
+                              className={`h-2 ${course.percent === 100 ? "[&>div]:bg-green-500" : ""}`}
+                            />
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>{course.percent}% abgeschlossen</span>
+                              {course.certificate?.issued_at && (
+                                <span>
+                                  Ausgestellt am {new Date(course.certificate.issued_at).toLocaleDateString("de-DE")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
