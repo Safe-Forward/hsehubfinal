@@ -35,6 +35,7 @@ import {
   BarChart,
   TrendingUp,
   Bell,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -50,6 +51,25 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const ALL_KPI_IDS = [
+  "employees",
+  "overdueObligations",
+  "recentIncidents",
+  "recentHazards",
+  "openMeasures",
+  "upcomingCheckups",
+  "trainingCompletionRate",
+  "auditComplianceRate",
+];
+
+const DEFAULT_KPI_IDS = [...ALL_KPI_IDS];
 
 export default function Dashboard() {
   const { user, userRole, companyId, companyName, loading, signOut } =
@@ -57,7 +77,7 @@ export default function Dashboard() {
   const { logError } = useAuditLog();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
+const [stats, setStats] = useState({
     employees: 0,
     riskAssessments: 0,
     audits: 0,
@@ -66,6 +86,10 @@ export default function Dashboard() {
     overdueObligations: 0,
     recentIncidents: 0,
     recentHazards: 0,
+    openMeasures: 0,
+    overdueMeasures: 0,
+    upcomingCheckups: 0,
+    trainingCompletionRate: 0,
   });
 
   const [investigationStats, setInvestigationStats] = useState<any[]>([]);
@@ -73,6 +97,34 @@ export default function Dashboard() {
   const [taskStatusFilter, setTaskStatusFilter] = useState<string>("upcoming");
   const [currentEmployeeId, setCurrentEmployeeId] = useState<string | null>(null);
   const [currentEmployeeName, setCurrentEmployeeName] = useState<string | null>(null);
+
+  // Customizable KPI cards
+  const [visibleKpis, setVisibleKpis] = useState<string[]>(DEFAULT_KPI_IDS);
+  const [kpiSettingsOpen, setKpiSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("hse_dashboard_visible_kpis");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setVisibleKpis(parsed.filter((id: string) => ALL_KPI_IDS.includes(id)));
+        }
+      }
+    } catch (e) {
+      console.error("Error loading KPI preferences:", e);
+    }
+  }, []);
+
+  const toggleKpiVisibility = (id: string) => {
+    setVisibleKpis((prev) => {
+      const updated = prev.includes(id)
+        ? prev.filter((k) => k !== id)
+        : [...prev, id];
+      localStorage.setItem("hse_dashboard_visible_kpis", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   useEffect(() => {
     const fetchEmployeeId = async () => {
@@ -264,12 +316,12 @@ export default function Dashboard() {
             .eq("status", "completed"),
         ]);
 
-      const totalAudits = auditsRes.count || 0;
+const totalAudits = auditsRes.count || 0;
       const completedAudits = completedAuditsRes.count || 0;
       const complianceRate =
         totalAudits > 0
           ? Math.round((completedAudits / totalAudits) * 100)
-          : 85;
+          : 0;
 
       // Calculate overdue obligations
       const overdueObligations = await fetchOverdueObligations();
@@ -280,6 +332,15 @@ export default function Dashboard() {
       // Calculate recent hazards (last 7 days)
       const recentHazards = await fetchRecentHazards();
 
+      // Calculate open/overdue measures
+      const measuresStats = await fetchMeasuresStats();
+
+      // Calculate upcoming health checkups (next 30 days)
+      const upcomingCheckups = await fetchUpcomingCheckups();
+
+      // Calculate training completion rate
+      const trainingCompletionRate = await fetchTrainingCompletionRate();
+
       setStats({
         employees: employeesRes.count || 0,
         riskAssessments: risksRes.count || 0,
@@ -289,6 +350,10 @@ export default function Dashboard() {
         overdueObligations,
         recentIncidents,
         recentHazards,
+        openMeasures: measuresStats.open,
+        overdueMeasures: measuresStats.overdue,
+        upcomingCheckups,
+        trainingCompletionRate,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -548,7 +613,7 @@ export default function Dashboard() {
     }
   };
 
-  const fetchRecentHazards = async (): Promise<number> => {
+const fetchRecentHazards = async (): Promise<number> => {
     if (!companyId) return 0;
 
     try {
@@ -564,6 +629,105 @@ export default function Dashboard() {
       return count || 0;
     } catch (error) {
       console.error("Error fetching recent hazards:", error);
+      return 0;
+    }
+  };
+
+  const fetchMeasuresStats = async (): Promise<{ open: number; overdue: number }> => {
+    if (!companyId) return { open: 0, overdue: 0 };
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      const [openRes, overdueRes] = await Promise.all([
+        supabase
+          .from("measures")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .neq("status", "completed"),
+        supabase
+          .from("measures")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .neq("status", "completed")
+          .lt("due_date", today),
+      ]);
+
+      return { open: openRes.count || 0, overdue: overdueRes.count || 0 };
+    } catch (error) {
+      console.error("Error fetching measures stats:", error);
+      return { open: 0, overdue: 0 };
+    }
+  };
+
+  const fetchUpcomingCheckups = async (): Promise<number> => {
+    if (!companyId) return 0;
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const future = new Date();
+      future.setDate(future.getDate() + 30);
+      const futureStr = future.toISOString().split("T")[0];
+
+      const [byDueDate, byAppointment] = await Promise.all([
+        supabase
+          .from("health_checkups")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .in("status", ["open", "planned"])
+          .gte("due_date", today)
+          .lte("due_date", futureStr),
+        supabase
+          .from("health_checkups")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .in("status", ["open", "planned"])
+          .is("due_date", null)
+          .gte("appointment_date", today)
+          .lte("appointment_date", futureStr),
+      ]);
+
+      return (byDueDate.count || 0) + (byAppointment.count || 0);
+    } catch (error) {
+      console.error("Error fetching upcoming checkups:", error);
+      return 0;
+    }
+  };
+
+  const fetchTrainingCompletionRate = async (): Promise<number> => {
+    if (!companyId) return 0;
+
+    try {
+      const { data: accessData, error: accessError } = await (supabase as any)
+        .from("course_employee_access")
+        .select("employee_id, course_id")
+        .eq("company_id", companyId);
+
+      if (accessError) throw accessError;
+
+      const total = accessData?.length || 0;
+      if (total === 0) return 0;
+
+      const employeeIds = [...new Set((accessData || []).map((a: any) => a.employee_id))];
+
+      const { data: certData, error: certError } = await (supabase as any)
+        .from("course_certificates")
+        .select("employee_id, course_id")
+        .in("employee_id", employeeIds);
+
+      if (certError) throw certError;
+
+      const certSet = new Set(
+        (certData || []).map((c: any) => `${c.employee_id}_${c.course_id}`)
+      );
+
+      const completed = (accessData || []).filter((a: any) =>
+        certSet.has(`${a.employee_id}_${a.course_id}`)
+      ).length;
+
+      return Math.round((completed / total) * 100);
+    } catch (error) {
+      console.error("Error fetching training completion rate:", error);
       return 0;
     }
   };
@@ -587,7 +751,7 @@ export default function Dashboard() {
     );
   }
 
-  const getRoleBadgeVariant = (role: string) => {
+const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "super_admin":
         return "destructive";
@@ -596,6 +760,72 @@ export default function Dashboard() {
       default:
         return "secondary";
     }
+  };
+
+  const kpiConfig: Record
+    string,
+    { title: string; value: string | number; subtitle?: string; icon: any; gradient: string }
+  > = {
+    employees: {
+      title: t("dashboard.totalEmployees"),
+      value: stats.employees,
+      icon: Users,
+      gradient: "from-blue-500 via-blue-600 to-blue-700",
+    },
+    overdueObligations: {
+      title: t("dashboard.overdueObligations"),
+      value: stats.overdueObligations,
+      icon: AlertTriangle,
+      gradient: "from-red-500 via-red-600 to-red-700",
+    },
+    recentIncidents: {
+      title: `${t("dashboard.last7Days")}: ${t("dashboard.incidents")}`,
+      value: stats.recentIncidents,
+      icon: AlertTriangle,
+      gradient: "from-amber-500 via-orange-500 to-orange-600",
+    },
+    recentHazards: {
+      title: `${t("dashboard.last7Days")}: ${t("dashboard.hazards")}`,
+      value: stats.recentHazards,
+      icon: Shield,
+      gradient: "from-green-500 via-green-600 to-emerald-700",
+    },
+    openMeasures: {
+      title: "Offene Maßnahmen",
+      value: stats.openMeasures,
+      subtitle: stats.overdueMeasures > 0 ? `${stats.overdueMeasures} überfällig` : undefined,
+      icon: ListTodo,
+      gradient: "from-purple-500 via-purple-600 to-purple-700",
+    },
+    upcomingCheckups: {
+      title: "Anstehende Untersuchungen (30 Tage)",
+      value: stats.upcomingCheckups,
+      icon: Clock,
+      gradient: "from-cyan-500 via-cyan-600 to-cyan-700",
+    },
+    trainingCompletionRate: {
+      title: "Schulungsabschlussquote",
+      value: `${stats.trainingCompletionRate}%`,
+      icon: FileCheck,
+      gradient: "from-teal-500 via-teal-600 to-teal-700",
+    },
+    auditComplianceRate: {
+      title: "Audit Compliance-Rate",
+      value: `${stats.complianceRate}%`,
+      icon: BarChart,
+      gradient: "from-indigo-500 via-indigo-600 to-indigo-700",
+    },
+  };
+
+  const kpiLabels: Record<string, string> = {
+    employees: t("dashboard.totalEmployees"),
+    overdueObligations: t("dashboard.overdueObligations"),
+    recentIncidents: `${t("dashboard.last7Days")}: ${t("dashboard.incidents")}`,
+    recentHazards: `${t("dashboard.last7Days")}: ${t("dashboard.hazards")}`,
+    openMeasures: "Offene Maßnahmen",
+    upcomingCheckups: "Anstehende Untersuchungen (30 Tage)",
+    trainingCompletionRate: "Schulungsabschlussquote",
+    auditComplianceRate: "Audit Compliance-Rate",
   };
 
   return (
@@ -622,92 +852,70 @@ export default function Dashboard() {
         </div>
       </div >
 
-      <>
+<>
+          {/* KPI Settings */}
+          <div className="flex items-center justify-end mb-3">
+            <Popover open={kpiSettingsOpen} onOpenChange={setKpiSettingsOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <SlidersHorizontal className="w-4 h-4 mr-2" />
+                  Kacheln anpassen
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72" align="end">
+                <p className="text-sm font-medium mb-3">Sichtbare Kacheln</p>
+                <div className="space-y-2">
+                  {ALL_KPI_IDS.map((id) => (
+                    <label key={id} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={visibleKpis.includes(id)}
+                        onCheckedChange={() => toggleKpiVisibility(id)}
+                      />
+                      {kpiLabels[id]}
+                    </label>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12">
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-                <CardTitle className="text-sm font-semibold text-white/90 tracking-wide">
-                  {t("dashboard.totalEmployees")}
-                </CardTitle>
-                <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-md flex items-center justify-center shadow-lg ring-2 ring-white/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                  <Users className="h-7 w-7 text-white drop-shadow-md" />
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <div className="text-5xl font-bold text-white mb-1 tracking-tight">
-                  {stats.employees}
-                </div>
-
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-                <CardTitle className="text-sm font-semibold text-white/90 tracking-wide">
-                  {t("dashboard.overdueObligations")}
-                </CardTitle>
-                <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-md flex items-center justify-center shadow-lg ring-2 ring-white/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                  <AlertTriangle className="h-7 w-7 text-white drop-shadow-md" />
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <div className="text-5xl font-bold text-white mb-1 tracking-tight">
-                  {stats.overdueObligations}
-                </div>
-
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600 text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-                <CardTitle className="text-sm font-semibold text-white/90 tracking-wide">
-                  {t("dashboard.last7Days")}: {t("dashboard.incidents")}
-                </CardTitle>
-                <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-md flex items-center justify-center shadow-lg ring-2 ring-white/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                  <svg
-                    className="h-7 w-7 text-white drop-shadow-md"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            {visibleKpis.length === 0 ? (
+              <div className="col-span-full text-center py-8 text-muted-foreground border rounded-xl">
+                Keine Kacheln ausgewählt. Klicke auf "Kacheln anpassen" um Kacheln hinzuzufügen.
+              </div>
+            ) : (
+              visibleKpis.map((id) => {
+                const config = kpiConfig[id];
+                if (!config) return null;
+                const Icon = config.icon;
+                return (
+                  <Card
+                    key={id}
+                    className={`border-0 shadow-xl bg-gradient-to-br ${config.gradient} text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                  </svg>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <div className="text-5xl font-bold text-white mb-1 tracking-tight">
-                  {stats.recentIncidents}
-                </div>
-
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-                <CardTitle className="text-sm font-semibold text-white/90 tracking-wide">
-                  {t("dashboard.last7Days")}: {t("dashboard.hazards")}
-                </CardTitle>
-                <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-md flex items-center justify-center shadow-lg ring-2 ring-white/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                  <Shield className="h-7 w-7 text-white drop-shadow-md" />
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <div className="text-5xl font-bold text-white mb-1 tracking-tight">
-                  {stats.recentHazards}
-                </div>
-
-              </CardContent>
-            </Card>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
+                      <CardTitle className="text-sm font-semibold text-white/90 tracking-wide">
+                        {config.title}
+                      </CardTitle>
+                      <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-md flex items-center justify-center shadow-lg ring-2 ring-white/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                        <Icon className="h-7 w-7 text-white drop-shadow-md" />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="relative z-10">
+                      <div className="text-5xl font-bold text-white mb-1 tracking-tight">
+                        {config.value}
+                      </div>
+                      {config.subtitle && (
+                        <p className="text-sm text-white/80 mt-1">{config.subtitle}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
 
           {/* Dashboard Widgets */}
