@@ -67,6 +67,11 @@ import {
   Line,
   AreaChart,
   Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -120,6 +125,31 @@ interface NavSection {
   icon: React.ReactNode;
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  planned: "#3b82f6",
+  open: "#3b82f6",
+  in_progress: "#f59e0b",
+  pending: "#f59e0b",
+  completed: "#10b981",
+  done: "#10b981",
+  cancelled: "#6b7280",
+  low: "#22c55e",
+  medium: "#f59e0b",
+  high: "#ef4444",
+  very_high: "#991b1b",
+  unknown: "#9ca3af",
+};
+
+const CHART_COLOR_PALETTE = ["#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#991b1b"];
+
+const getStatusColor = (key: string, index: number) =>
+  STATUS_COLORS[(key || "").toLowerCase()] || CHART_COLOR_PALETTE[index % CHART_COLOR_PALETTE.length];
+
+const formatStatusLabel = (key: string) =>
+  (key || "Unknown")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 export default function Reports() {
   const { user, companyId, loading } = useAuth();
   const { t } = useLanguage();
@@ -153,6 +183,12 @@ export default function Reports() {
 
   const [trainingMatrix, setTrainingMatrix] = useState<TrainingStatus[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+
+  // Section-specific chart breakdowns
+  const [auditStatusData, setAuditStatusData] = useState<any[]>([]);
+  const [riskLevelData, setRiskLevelData] = useState<any[]>([]);
+  const [incidentTypeData, setIncidentTypeData] = useState<any[]>([]);
+  const [measuresStatusData, setMeasuresStatusData] = useState<any[]>([]);
 
   // Analytics & Report Builder State
   const [customReports, setCustomReports] = useState<ReportConfig[]>([]);
@@ -262,6 +298,7 @@ export default function Reports() {
     if (companyId) {
       fetchReportData();
       fetchChartData();
+      fetchSectionChartData();
     }
   }, [companyId, dateRange]);
 
@@ -580,7 +617,6 @@ export default function Reports() {
       if (empError) throw empError;
 
       const matrix: TrainingStatus[] = [];
-
       for (const emp of employees || []) {
         const { data: trainings, error: trainError } = await supabase
           .from("training_records")
@@ -706,6 +742,89 @@ export default function Reports() {
       console.error("Error fetching chart data:", error);
       // Fallback to empty data on error
       setChartData([]);
+    }
+  };
+
+  const fetchSectionChartData = async () => {
+    if (!companyId) return;
+    const { startIso, endIso } = getDateRangeBounds(dateRange);
+
+    try {
+      // Audit status distribution
+      const { data: auditData } = await supabase
+        .from("audits")
+        .select("status")
+        .eq("company_id", companyId)
+        .gte("created_at", startIso)
+        .lte("created_at", endIso);
+
+      const auditGrouped: Record<string, number> = {};
+      (auditData || []).forEach((a: any) => {
+        const key = a.status || "unknown";
+        auditGrouped[key] = (auditGrouped[key] || 0) + 1;
+      });
+      setAuditStatusData(Object.entries(auditGrouped).map(([name, value]) => ({ name, value })));
+
+      // Risk level distribution
+      const { data: riskData } = await supabase
+        .from("risk_assessments")
+        .select("risk_level")
+        .eq("company_id", companyId)
+        .gte("assessment_date", startIso)
+        .lte("assessment_date", endIso);
+
+      const riskGrouped: Record<string, number> = {};
+      (riskData || []).forEach((r: any) => {
+        const key = r.risk_level || "unknown";
+        riskGrouped[key] = (riskGrouped[key] || 0) + 1;
+      });
+      setRiskLevelData(Object.entries(riskGrouped).map(([name, value]) => ({ name, value })));
+
+      // Incident type distribution
+      const { data: incidentData } = await supabase
+        .from("incidents")
+        .select("incident_type")
+        .eq("company_id", companyId)
+        .gte("incident_date", startIso)
+        .lte("incident_date", endIso);
+
+      const incidentGrouped: Record<string, number> = {};
+      (incidentData || []).forEach((i: any) => {
+        const key = i.incident_type || "unknown";
+        incidentGrouped[key] = (incidentGrouped[key] || 0) + 1;
+      });
+      setIncidentTypeData(Object.entries(incidentGrouped).map(([name, value]) => ({ name, value })));
+
+      // Measures status distribution (combine both tables)
+      const [measuresRes, riskMeasuresRes] = await Promise.all([
+        supabase
+          .from("measures" as any)
+          .select("status")
+          .eq("company_id", companyId)
+          .gte("created_at", startIso)
+          .lte("created_at", endIso),
+        supabase
+          .from("risk_assessment_measures")
+          .select("progress_status")
+          .eq("company_id", companyId)
+          .gte("created_at", startIso)
+          .lte("created_at", endIso),
+      ]);
+
+      const measuresGrouped: Record<string, number> = {};
+      (measuresRes.data || []).forEach((m: any) => {
+        const key = m.status || "unknown";
+        measuresGrouped[key] = (measuresGrouped[key] || 0) + 1;
+      });
+      (riskMeasuresRes.data || []).forEach((m: any) => {
+        let key = m.progress_status || "unknown";
+        if (key === "not_started") key = "planned";
+        if (key === "blocked") key = "cancelled";
+        measuresGrouped[key] = (measuresGrouped[key] || 0) + 1;
+      });
+      setMeasuresStatusData(Object.entries(measuresGrouped).map(([name, value]) => ({ name, value })));
+    } catch (error) {
+      console.error("Error fetching section chart data:", error);
     }
   };
 
@@ -1118,7 +1237,7 @@ export default function Reports() {
             const name = item.departments?.name || "Unassigned";
             acc[name] = (acc[name] || 0) + 1;
             return acc;
-          }, {});
+            }, {});
           return Object.entries(grouped).map(([name, value]) => ({ name, value }));
         } else {
           // risk_level or approval_status
@@ -1738,7 +1857,7 @@ export default function Reports() {
         headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: "bold" },
         alternateRowStyles: { fillColor: [249, 250, 251] },
         margin: { left: 14, right: 14 },
-      });
+        });
       cursorY = (doc as any).lastAutoTable.finalY + 10;
     }
 
@@ -1913,19 +2032,19 @@ export default function Reports() {
             />
           )}
           {activeSection === "risk-assessments" && (
-            <RiskAssessmentsSection stats={stats} chartData={chartData} />
+            <RiskAssessmentsSection stats={stats} chartData={chartData} riskLevelData={riskLevelData} />
           )}
           {activeSection === "audits" && (
-            <AuditsSection stats={stats} chartData={chartData} />
+            <AuditsSection stats={stats} chartData={chartData} auditStatusData={auditStatusData} />
           )}
           {activeSection === "incidents" && (
-            <IncidentsSection stats={stats} chartData={chartData} />
+            <IncidentsSection stats={stats} chartData={chartData} incidentTypeData={incidentTypeData} />
           )}
           {activeSection === "trainings" && (
             <TrainingsSection stats={stats} trainingMatrix={trainingMatrix} chartData={chartData} />
           )}
           {activeSection === "measures" && (
-            <MeasuresSection stats={stats} chartData={chartData} />
+            <MeasuresSection stats={stats} chartData={chartData} measuresStatusData={measuresStatusData} />
           )}
           {activeSection === "tasks" && (
             <TasksSection stats={stats} chartData={chartData} />
@@ -3037,16 +3156,25 @@ function KPICard({
 }
 
 // Sections with draggable card layouts
-function RiskAssessmentsSection({ stats, chartData }: { stats: ReportStats; chartData: any[] }) {
+function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { stats: ReportStats; chartData: any[]; riskLevelData: any[] }) {
   const { toast } = useToast();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
   const defaultLayout = {
-    lg: [{ i: "risk-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false }],
-    md: [{ i: "risk-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false }],
-    sm: [{ i: "risk-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false }],
+    lg: [
+      { i: "risk-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "risk-level-chart", x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3, static: false },
+    ],
+    md: [
+      { i: "risk-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
+      { i: "risk-level-chart", x: 0, y: 2, w: 10, h: 4, minW: 4, minH: 3, static: false },
+    ],
+    sm: [
+      { i: "risk-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "risk-level-chart", x: 0, y: 2, w: 6, h: 4, minW: 4, minH: 3, static: false },
+    ],
   };
 
   useEffect(() => {
@@ -3150,12 +3278,42 @@ function RiskAssessmentsSection({ stats, chartData }: { stats: ReportStats; char
             color="bg-orange-50 text-orange-600"
           />
         </div>
+        <div key="risk-level-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
+          <Card className="dashboard-grid-card border shadow-sm h-full group">
+            <div className="drag-handle border-b flex items-center px-3 py-1">
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <CardHeader className="py-3 pb-2">
+              <CardTitle className="text-base">Risk Level Distribution</CardTitle>
+              <CardDescription>Risk assessments grouped by risk level</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 pb-4 pt-0">
+              {riskLevelData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  No data for selected date range
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={riskLevelData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="75%">
+                      {riskLevelData.map((entry, index) => (
+                        <Cell key={`risk-cell-${index}`} fill={getStatusColor(entry.name, index)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </ResponsiveGridLayout>
     </div>
   );
 }
 
-function AuditsSection({ stats, chartData }: { stats: ReportStats; chartData: any[] }) {
+function AuditsSection({ stats, chartData, auditStatusData }: { stats: ReportStats; chartData: any[]; auditStatusData: any[] }) {
   const { toast } = useToast();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
@@ -3165,14 +3323,17 @@ function AuditsSection({ stats, chartData }: { stats: ReportStats; chartData: an
     lg: [
       { i: "audit-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "audit-completed", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "audit-status-chart", x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3, static: false },
     ],
     md: [
       { i: "audit-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
       { i: "audit-completed", x: 5, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
+      { i: "audit-status-chart", x: 0, y: 2, w: 10, h: 4, minW: 4, minH: 3, static: false },
     ],
     sm: [
       { i: "audit-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "audit-completed", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "audit-status-chart", x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3, static: false },
     ],
   };
 
@@ -3286,12 +3447,42 @@ function AuditsSection({ stats, chartData }: { stats: ReportStats; chartData: an
             color="bg-green-50 text-green-600"
           />
         </div>
+        <div key="audit-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
+          <Card className="dashboard-grid-card border shadow-sm h-full group">
+            <div className="drag-handle border-b flex items-center px-3 py-1">
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <CardHeader className="py-3 pb-2">
+              <CardTitle className="text-base">Audit Status Distribution</CardTitle>
+              <CardDescription>Audits grouped by current status</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 pb-4 pt-0">
+              {auditStatusData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  No data for selected date range
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={auditStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="40%" outerRadius="75%">
+                      {auditStatusData.map((entry, index) => (
+                        <Cell key={`audit-cell-${index}`} fill={getStatusColor(entry.name, index)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </ResponsiveGridLayout>
     </div>
   );
 }
 
-function IncidentsSection({ stats, chartData }: { stats: ReportStats; chartData: any[] }) {
+function IncidentsSection({ stats, chartData, incidentTypeData }: { stats: ReportStats; chartData: any[]; incidentTypeData: any[] }) {
   const { toast } = useToast();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
@@ -3302,16 +3493,22 @@ function IncidentsSection({ stats, chartData }: { stats: ReportStats; chartData:
       { i: "incident-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-open", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-closed", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-trend-chart", x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3, static: false },
+      { i: "incident-type-chart", x: 6, y: 4, w: 6, h: 4, minW: 4, minH: 3, static: false },
     ],
     md: [
       { i: "incident-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-open", x: 5, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-closed", x: 0, y: 2, w: 5, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-trend-chart", x: 0, y: 4, w: 5, h: 4, minW: 4, minH: 3, static: false },
+      { i: "incident-type-chart", x: 5, y: 4, w: 5, h: 4, minW: 4, minH: 3, static: false },
     ],
     sm: [
       { i: "incident-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-open", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-closed", x: 0, y: 4, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-trend-chart", x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3, static: false },
+      { i: "incident-type-chart", x: 0, y: 10, w: 6, h: 4, minW: 4, minH: 3, static: false },
     ],
   };
 
@@ -3433,6 +3630,64 @@ function IncidentsSection({ stats, chartData }: { stats: ReportStats; chartData:
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
           />
+        </div>
+        <div key="incident-trend-chart" data-grid={{ x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3 }}>
+          <Card className="dashboard-grid-card border shadow-sm h-full group">
+            <div className="drag-handle border-b flex items-center px-3 py-1">
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <CardHeader className="py-3 pb-2">
+              <CardTitle className="text-base">Incidents per Period</CardTitle>
+              <CardDescription>Number of incidents reported over time</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 pb-4 pt-0">
+              {chartData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  No data for selected date range
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="month" stroke="#888" fontSize={12} />
+                    <YAxis stroke="#888" fontSize={12} allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="incidents" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        <div key="incident-type-chart" data-grid={{ x: 6, y: 4, w: 6, h: 4, minW: 4, minH: 3 }}>
+          <Card className="dashboard-grid-card border shadow-sm h-full group">
+            <div className="drag-handle border-b flex items-center px-3 py-1">
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <CardHeader className="py-3 pb-2">
+              <CardTitle className="text-base">Incidents by Type</CardTitle>
+              <CardDescription>Breakdown of incidents by category</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 pb-4 pt-0">
+              {incidentTypeData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  No data for selected date range
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={incidentTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="75%">
+                      {incidentTypeData.map((entry, index) => (
+                        <Cell key={`incident-type-cell-${index}`} fill={getStatusColor(entry.name, index)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </ResponsiveGridLayout>
     </div>
@@ -3654,7 +3909,7 @@ function TrainingsSection({
   );
 }
 
-function MeasuresSection({ stats, chartData }: { stats: ReportStats; chartData: any[] }) {
+function MeasuresSection({ stats, chartData, measuresStatusData }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[] }) {
   const { toast } = useToast();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
@@ -3665,16 +3920,19 @@ function MeasuresSection({ stats, chartData }: { stats: ReportStats; chartData: 
       { i: "measures-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "measures-completed", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "measures-progress", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "measures-status-chart", x: 0, y: 4, w: 12, h: 4, minW: 4, minH: 3, static: false },
     ],
     md: [
       { i: "measures-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
       { i: "measures-completed", x: 5, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
       { i: "measures-progress", x: 0, y: 2, w: 5, h: 2, minW: 2, minH: 2, static: false },
+      { i: "measures-status-chart", x: 0, y: 4, w: 10, h: 4, minW: 4, minH: 3, static: false },
     ],
     sm: [
       { i: "measures-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "measures-completed", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "measures-progress", x: 0, y: 4, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "measures-status-chart", x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3, static: false },
     ],
   };
 
@@ -3796,6 +4054,36 @@ function MeasuresSection({ stats, chartData }: { stats: ReportStats; chartData: 
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
           />
+        </div>
+        <div key="measures-status-chart" data-grid={{ x: 0, y: 4, w: 12, h: 4, minW: 4, minH: 3 }}>
+          <Card className="dashboard-grid-card border shadow-sm h-full group">
+            <div className="drag-handle border-b flex items-center px-3 py-1">
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <CardHeader className="py-3 pb-2">
+              <CardTitle className="text-base">Measures Status Distribution</CardTitle>
+              <CardDescription>All measures grouped by status</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 pb-4 pt-0">
+              {measuresStatusData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  No data for selected date range
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={measuresStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="40%" outerRadius="75%">
+                      {measuresStatusData.map((entry, index) => (
+                        <Cell key={`measures-cell-${index}`} fill={getStatusColor(entry.name, index)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </ResponsiveGridLayout>
     </div>
