@@ -3778,8 +3778,8 @@ function TrainingsSection({
   }, []);
 
 
-  const resetLayout = useCallback(() => {
-    const defaultLayouts = { lg: defaultLayout, md: defaultLayout, sm: defaultLayout } as any;
+const resetLayout = useCallback(() => {
+    const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     try {
       localStorage.removeItem('hse_layout_trainings');
