@@ -481,30 +481,6 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            {/* TEMP DEBUG BUTTON - remove after diagnosing */}
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                console.log("DEBUG: employeeId =", employeeId, "companyId =", companyId);
-                const { data, error } = await supabase
-                  .from("notification_preferences")
-                  .upsert(
-                    {
-                      employee_id: employeeId,
-                      company_id: companyId,
-                      category: "risk",
-                      in_app_enabled: true,
-                      email_enabled: false,
-                    },
-                    { onConflict: "employee_id,category" }
-                  )
-                  .select();
-                console.log("DEBUG upsert result - data:", data, "error:", JSON.stringify(error));
-              }}
-            >
-              DEBUG: Test Upsert
-            </Button>
-
             {/* ── Notification Preferences ───────────────────────────────── */}
             <Card>
               <CardHeader>
