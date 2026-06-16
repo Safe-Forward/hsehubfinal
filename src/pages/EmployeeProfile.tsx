@@ -1346,58 +1346,6 @@ const fetchGInvestigations = async () => {
         },
       });
 
-      // Auto-send in-app notifications to @mentioned users on save
-      try {
-        const plainText = (notesTextareaRef.current?.textContent || textContent).toLowerCase();
-        console.log("=== Note mention notification check ===");
-        console.log("Plain text:", plainText);
-
-        // Fetch all team members for this company (fresh fetch to avoid stale state)
-        const { data: allMembers, error: membersError } = await supabase
-          .from("team_members")
-          .select("id, first_name, last_name, user_id, email")
-          .eq("company_id", companyId);
-
-        if (membersError) {
-          console.error("Failed to fetch team members for mention notifications:", membersError);
-        }
-
-        console.log("Team members fetched:", allMembers?.length || 0);
-
-        if (allMembers && allMembers.length > 0) {
-          for (const member of allMembers) {
-            // Skip self-notification
-            if (member.user_id === user?.id) continue;
-            if (!member.user_id) continue;
-
-            const fullName = `${member.first_name} ${member.last_name}`.toLowerCase().trim();
-            const isMentioned = plainText.includes(`@${fullName}`);
-            console.log(`Checking @${fullName}: ${isMentioned}`);
-
-            // Check if the note text contains @fullname
-            if (isMentioned) {
-              const { error: notifError } = await supabase.from("notifications").insert({
-                user_id: member.user_id,
-                company_id: companyId,
-                title: "You were mentioned in a note",
-                message: `${authorName} mentioned you: ${textContent.substring(0, 100)}${textContent.length > 100 ? '...' : ''}`,
-                type: "info",
-                category: "system",
-                is_read: false,
-                related_id: employee?.id,
-              });
-              if (notifError) {
-                console.error("Notification insert error for", member.first_name, ":", notifError);
-              } else {
-                console.log("✅ Notification sent to:", member.first_name, member.last_name);
-              }
-            }
-          }
-        }
-      } catch (notifErr) {
-        console.error("Failed to send mention notifications:", notifErr);
-        // Don't fail the whole save if notification fails
-      }
 
       toast.success("Note added successfully");
       setNotes("");
