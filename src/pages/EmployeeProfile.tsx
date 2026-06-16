@@ -4519,18 +4519,7 @@ const handleCreateTask = async () => {
                                           <Bell className="w-3 h-3 mr-1" />
                                           Notify
                                         </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                          onClick={() => {
-                                            setReplyingToNoteId(note.id);
-                                            setReplyText(`@${note.author} `);
-                                          }}
-                                        >
-                                          <Reply className="w-3 h-3 mr-1" />
-                                          Reply
-                                        </Button>
+                                        
                                       </div>
 
                                       {/* Display existing replies */}
