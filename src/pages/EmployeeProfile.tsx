@@ -2172,7 +2172,7 @@ const fetchGInvestigations = async () => {
     }
   };
 
-  const handleCreateTask = async () => {
+const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
 
     try {
@@ -2200,6 +2200,53 @@ const fetchGInvestigations = async () => {
         `Task created: ${newTaskTitle}`,
         { taskId: data.id, taskTitle: newTaskTitle }
       );
+
+      // ── Send mention notifications via SECURITY DEFINER RPC ────────────────
+      try {
+        let senderName = user?.email || "Someone";
+        if (user?.email && companyId) {
+          const { data: senderEmp } = await supabase
+            .from("employees")
+            .select("full_name")
+            .ilike("email", user.email)
+            .eq("company_id", companyId)
+            .maybeSingle();
+          if (senderEmp?.full_name) {
+            senderName = senderEmp.full_name;
+          } else {
+            const { data: senderMember } = await supabase
+              .from("team_members")
+              .select("first_name, last_name")
+              .ilike("email", user.email)
+              .eq("company_id", companyId)
+              .maybeSingle();
+            if (senderMember) {
+              senderName = `${senderMember.first_name} ${senderMember.last_name}`.trim();
+            }
+          }
+        }
+
+        const combinedText = `${data.title || ""} ${data.description || ""}`;
+        const { data: notifCount, error: notifErr } = await supabase.rpc(
+          "notify_task_mentions",
+          {
+            p_company_id: companyId,
+            p_task_id: data.id,
+            p_task_title: data.title,
+            p_task_text: combinedText,
+            p_sender_name: senderName,
+            p_assigned_to: id ?? null,
+          }
+        );
+        if (notifErr) {
+          console.error("❌ Task notification RPC error:", notifErr);
+        } else {
+          console.log(`✅ Task notifications sent: ${notifCount}`);
+        }
+      } catch (notifErr) {
+        console.error("❌ Exception sending task notifications:", notifErr);
+      }
+      // ─────────────────────────────────────────────────────────────────────
 
       // ALSO log to audit_logs for Super Admin Activity tab
       console.log("🔵 [EMPLOYEE PROFILE TASK] Creating audit log...");
