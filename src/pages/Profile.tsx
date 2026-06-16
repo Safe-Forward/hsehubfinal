@@ -19,6 +19,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Camera, Save, Mail, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+const NOTIF_CATEGORIES = [
+  { key: "task", label: "Tasks & Mentions in Tasks" },
+  { key: "mention", label: "Mentions in Notes" },
+  { key: "training", label: "Training" },
+  { key: "audit", label: "Audits" },
+  { key: "measure", label: "Measures" },
+  { key: "risk", label: "Risk Assessments" },
+  { key: "checkup", label: "Health Check-Ups" },
+];
+
+type NotifPref = { in_app_enabled: boolean; email_enabled: boolean };
+
 export default function Profile() {
   const { user, loading, userRole, companyId } = useAuth();
   const { t, language, setLanguage } = useLanguage();
@@ -32,6 +44,11 @@ export default function Profile() {
     lastName: "",
     email: user?.email || "",
   });
+
+  // ── Notification preferences state ──────────────────────────────────────
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, NotifPref>>({});
+  const [isLoadingNotifPrefs, setIsLoadingNotifPrefs] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -78,6 +95,118 @@ export default function Profile() {
 
     fetchProfile();
   }, [user, toast]);
+
+  // ── Fetch the employee record + existing notification preferences ───────
+  useEffect(() => {
+    const fetchNotifPrefs = async () => {
+      if (!user?.id || !companyId) return;
+
+      setIsLoadingNotifPrefs(true);
+      try {
+        // Try to resolve the employee record for the logged-in user.
+        // First by email, then by user_id as a fallback (mirrors the pattern
+        // used elsewhere in the app, e.g. Tasks.tsx / EmployeeProfile.tsx).
+        let empId: string | null = null;
+
+        if (user.email) {
+          const { data: empByEmail } = await supabase
+            .from("employees")
+            .select("id")
+            .ilike("email", user.email)
+            .eq("company_id", companyId)
+            .maybeSingle();
+          empId = empByEmail?.id || null;
+        }
+
+        if (!empId) {
+          const { data: empByUserId } = await supabase
+            .from("employees")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("company_id", companyId)
+            .maybeSingle();
+          empId = empByUserId?.id || null;
+        }
+
+        setEmployeeId(empId);
+
+        if (empId) {
+          const { data: prefs, error: prefsError } = await supabase
+            .from("notification_preferences")
+            .select("category, in_app_enabled, email_enabled")
+            .eq("employee_id", empId);
+
+          if (prefsError) {
+            console.error("Error fetching notification preferences:", prefsError);
+          }
+
+          const prefsMap: Record<string, NotifPref> = {};
+          (prefs || []).forEach((p: any) => {
+            prefsMap[p.category] = {
+              in_app_enabled: p.in_app_enabled,
+              email_enabled: p.email_enabled,
+            };
+          });
+          setNotifPrefs(prefsMap);
+        }
+      } catch (error) {
+        console.error("Unexpected error fetching notification preferences:", error);
+      } finally {
+        setIsLoadingNotifPrefs(false);
+      }
+    };
+
+    fetchNotifPrefs();
+  }, [user, companyId]);
+
+  // ── Update a single preference (in_app_enabled or email_enabled) ─────────
+  const updateNotifPref = async (
+    category: string,
+    field: "in_app_enabled" | "email_enabled",
+    value: boolean
+  ) => {
+    if (!employeeId || !companyId) {
+      toast({
+        title: "Error",
+        description: "Could not determine your employee record. Preferences cannot be saved.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const current: NotifPref =
+      notifPrefs[category] || { in_app_enabled: true, email_enabled: true };
+    const updated: NotifPref = { ...current, [field]: value };
+
+    // Optimistic UI update
+    setNotifPrefs((prev) => ({ ...prev, [category]: updated }));
+
+    try {
+      const { error } = await supabase
+        .from("notification_preferences")
+        .upsert(
+          {
+            employee_id: employeeId,
+            company_id: companyId,
+            category,
+            in_app_enabled: updated.in_app_enabled,
+            email_enabled: updated.email_enabled,
+          },
+          { onConflict: "employee_id,category" }
+        );
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating notification preference:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update notification preference",
+        variant: "destructive",
+      });
+      // Revert optimistic update on failure
+      setNotifPrefs((prev) => ({ ...prev, [category]: current }));
+    }
+  };
 
   const handleSave = async () => {
     if (!user?.id) return;
@@ -352,36 +481,74 @@ export default function Profile() {
               </CardContent>
             </Card>
 
+            {/* ── Notification Preferences ───────────────────────────────── */}
             <Card>
               <CardHeader>
                 <CardTitle>{t("profile.notifications")}</CardTitle>
                 <CardDescription>
-                  {t("profile.notificationsDesc")}
+                  Choose which notifications you want to receive, and how.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">
-                      {t("profile.emailNotifications")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t("profile.emailNotificationsDesc")}
-                    </p>
+                {!employeeId && !isLoadingNotifPrefs ? (
+                  <p className="text-sm text-muted-foreground">
+                    No employee record could be matched to your account, so
+                    notification preferences are not available.
+                  </p>
+                ) : isLoadingNotifPrefs ? (
+                  <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
                   </div>
-                  <input type="checkbox" defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">
-                      {t("profile.smsNotifications")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {t("profile.smsNotificationsDesc")}
-                    </p>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="grid grid-cols-[1fr_70px_70px] gap-4 pb-2 border-b text-sm font-medium text-muted-foreground">
+                      <span>Category</span>
+                      <span className="text-center">In-App</span>
+                      <span className="text-center">Email</span>
+                    </div>
+                    {NOTIF_CATEGORIES.map((cat) => {
+                      const pref = notifPrefs[cat.key];
+                      const inAppChecked = pref?.in_app_enabled ?? true;
+                      const emailChecked = pref?.email_enabled ?? true;
+                      return (
+                        <div
+                          key={cat.key}
+                          className="grid grid-cols-[1fr_70px_70px] gap-4 items-center py-2 border-b last:border-b-0"
+                        >
+                          <span className="text-sm">{cat.label}</span>
+                          <div className="flex justify-center">
+                            <input
+                              type="checkbox"
+                              checked={inAppChecked}
+                              onChange={(e) =>
+                                updateNotifPref(
+                                  cat.key,
+                                  "in_app_enabled",
+                                  e.target.checked
+                                )
+                              }
+                              className="w-4 h-4 cursor-pointer"
+                            />
+                          </div>
+                          <div className="flex justify-center">
+                            <input
+                              type="checkbox"
+                              checked={emailChecked}
+                              onChange={(e) =>
+                                updateNotifPref(
+                                  cat.key,
+                                  "email_enabled",
+                                  e.target.checked
+                                )
+                              }
+                              className="w-4 h-4 cursor-pointer"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <input type="checkbox" />
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
