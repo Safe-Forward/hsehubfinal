@@ -199,6 +199,7 @@ export default function EmployeeProfile() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [selectedNoteVisibility, setSelectedNoteVisibility] = useState<string>("");
+  const [notifPrefs, setNotifPrefs] = useState<Record<string, {in_app_enabled: boolean; email_enabled: boolean}>>({});
   const [userProfile, setUserProfile] = useState<any>(null); // Store logged-in user's profile
 
   // Task enhancement states
@@ -351,6 +352,7 @@ fetchProfileFields();
       fetchProfileFieldTemplates();
       fetchTeamMembers();
       fetchUserProfile(); // Fetch logged-in user's profile for note authorship
+      fetchNotifPrefs();
       fetchEmployeeCourses();
     }
   }, [id, companyId]);
@@ -845,6 +847,33 @@ const fetchGInvestigations = async () => {
       console.error("Error fetching team members:", error);
       setTeamMembers([]);
     }
+  };
+
+  const fetchNotifPrefs = async () => {
+    if (!id || !user?.id) return;
+    // Only fetch for own profile
+    const { data: emp } = await supabase.from("employees").select("user_id").eq("id", id).single();
+    if (emp?.user_id !== user.id) return;
+
+    const { data } = await supabase
+      .from("notification_preferences")
+      .select("category, in_app_enabled, email_enabled")
+      .eq("employee_id", id);
+
+    if (data) {
+      const map: Record<string, {in_app_enabled: boolean; email_enabled: boolean}> = {};
+      data.forEach((r: any) => { map[r.category] = { in_app_enabled: r.in_app_enabled, email_enabled: r.email_enabled }; });
+      setNotifPrefs(map);
+    }
+  };
+
+  const saveNotifPref = async (category: string, field: "in_app_enabled" | "email_enabled", value: boolean) => {
+    if (!id || !companyId) return;
+    setNotifPrefs(prev => ({ ...prev, [category]: { ...( prev[category] ?? { in_app_enabled: true, email_enabled: true }), [field]: value } }));
+    await supabase.from("notification_preferences").upsert(
+      { employee_id: id, company_id: companyId, category, [field]: value },
+      { onConflict: "employee_id,category" }
+    );
   };
 
   const fetchUserProfile = async () => {
@@ -4546,6 +4575,61 @@ p_sender_name: senderName,
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Notification Preferences — nur auf eigenem Profil */}
+                {employee?.user_id === user?.id && (() => {
+                  const categories = [
+                    { key: "task",     label: "Aufgaben-Zuweisung" },
+                    { key: "mention",  label: "@Erwähnungen" },
+                    { key: "measure",  label: "Maßnahmen" },
+                    { key: "audit",    label: "Audits" },
+                    { key: "training", label: "Schulungen" },
+                    { key: "checkup",  label: "Gesundheits-Check-Ups" },
+                  ];
+                  return (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <Bell className="w-4 h-4" />
+                          Benachrichtigungseinstellungen
+                        </CardTitle>
+                        <CardDescription>
+                          Wähle wie du über Ereignisse informiert werden möchtest
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-1">
+                          {/* Header */}
+                          <div className="grid grid-cols-[1fr_auto_auto] gap-4 pb-2 border-b text-xs font-medium text-muted-foreground">
+                            <span>Kategorie</span>
+                            <span className="w-16 text-center">In-App</span>
+                            <span className="w-16 text-center">E-Mail</span>
+                          </div>
+                          {categories.map(({ key, label }) => {
+                            const pref = notifPrefs[key] ?? { in_app_enabled: true, email_enabled: true };
+                            return (
+                              <div key={key} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center py-2 border-b last:border-0">
+                                <span className="text-sm">{label}</span>
+                                <div className="w-16 flex justify-center">
+                                  <Switch
+                                    checked={pref.in_app_enabled}
+                                    onCheckedChange={v => saveNotifPref(key, "in_app_enabled", v)}
+                                  />
+                                </div>
+                                <div className="w-16 flex justify-center">
+                                  <Switch
+                                    checked={pref.email_enabled}
+                                    onCheckedChange={v => saveNotifPref(key, "email_enabled", v)}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
               </div>
             </div>
           </TabsContent>
