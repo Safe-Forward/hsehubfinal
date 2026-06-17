@@ -210,6 +210,21 @@ export default function EmployeeProfile() {
   >("medium");
   const [hideCompletedTasks, setHideCompletedTasks] = useState(false);
 
+  // Persist hideCompletedTasks preference per user in localStorage
+  useEffect(() => {
+    if (user?.id) {
+      const stored = localStorage.getItem(`hideCompletedTasks_${user.id}`);
+      if (stored !== null) setHideCompletedTasks(stored === 'true');
+    }
+  }, [user?.id]);
+
+  const toggleHideCompleted = (value: boolean) => {
+    setHideCompletedTasks(value);
+    if (user?.id) {
+      localStorage.setItem(`hideCompletedTasks_${user.id}`, String(value));
+    }
+  };
+
   // Separate mention dropdown states for Tasks and Notes
   const [showTaskMentionDropdown, setShowTaskMentionDropdown] = useState(false);
   const [taskMentionSearch, setTaskMentionSearch] = useState("");
@@ -3918,7 +3933,7 @@ p_sender_name: senderName,
                             size="sm"
                             className="text-xs text-muted-foreground"
                             onClick={() =>
-                              setHideCompletedTasks(!hideCompletedTasks)
+                              toggleHideCompleted(!hideCompletedTasks)
                             }
                           >
                             {hideCompletedTasks ? (
