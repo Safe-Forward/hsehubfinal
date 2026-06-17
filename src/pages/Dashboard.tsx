@@ -563,30 +563,11 @@ const [stats, setStats] = useState({
 
       let filteredData = rawData || [];
 
-      // Apply client-side visibility filter for all users (including admins)
-      filteredData = filteredData.filter((task: any) => {
-        const title = (task.title || "").toLowerCase();
-        const desc = (task.description || "").toLowerCase();
-        const hasAnyMention = title.includes("@") || desc.includes("@");
-
-        // Broadcast task: no @ in either field — show to everyone
-        if (!hasAnyMention) return true;
-
-        // Check if this employee is @mentioned (in title or description)
-        if (currentEmployeeName) {
-          const nameLower = currentEmployeeName.toLowerCase();
-          if (title.includes(`@${nameLower}`) || desc.includes(`@${nameLower}`)) {
-            return true;
-          }
-        }
-
-        // Directly assigned to this employee
-        if (currentEmployeeId && task.assigned_to === currentEmployeeId) {
-          return true;
-        }
-
-        return false;
-      });
+      // Show only tasks assigned to the current user (assigned_to = their employee ID).
+      // Admins/HSE Managers with view_all see all tasks via the Tasks page.
+      filteredData = currentEmployeeId
+        ? filteredData.filter((task: any) => task.assigned_to === currentEmployeeId)
+        : [];
 
       // Keep limit at 20 after client-side filter
       filteredData = filteredData.slice(0, 20);
