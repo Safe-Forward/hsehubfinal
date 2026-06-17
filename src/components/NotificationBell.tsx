@@ -324,16 +324,17 @@ export default function NotificationBell() {
         return;
       }
 
-      // Tasks: look up the assigned employee, then deep-link to their profile
+      // Tasks: navigate to the employee PROFILE the task was created on
       if (notification.related_table === "tasks" && notification.related_id) {
         const { data } = await supabase
           .from("tasks")
-          .select("assigned_to")
+          .select("employee_profile_id, assigned_to")
           .eq("id", notification.related_id)
           .maybeSingle();
 
-        if (data?.assigned_to) {
-          navigate(`/employees/${data.assigned_to}`);
+        const profileId = (data as any)?.employee_profile_id || data?.assigned_to;
+        if (profileId) {
+          navigate(`/employees/${profileId}`);
           return;
         }
       }
