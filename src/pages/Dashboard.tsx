@@ -564,11 +564,12 @@ const [stats, setStats] = useState({
 
       let filteredData = rawData || [];
 
-      // RLS (user_can_view_task) already restricts which tasks are returned:
-      // - Regular employee: only sees tasks on their profile or assigned to them
-      // - view_all role (HSE Manager, Doctor): sees all company tasks
-      // - Admin/Super Admin: sees everything
-      // No additional client-side filter needed.
+      // Dashboard = persönliche Aufgabenliste.
+      // Jeder sieht nur Tasks die ihm zugewiesen sind (assigned_to = eigene employee.id).
+      // Aufgaben anderer Mitarbeiter werden über die Mitarbeiterprofile eingesehen.
+      filteredData = currentEmployeeId
+        ? filteredData.filter((task: any) => task.assigned_to === currentEmployeeId)
+        : [];
 
       // Keep limit at 20 after client-side filter
       filteredData = filteredData.slice(0, 20);
