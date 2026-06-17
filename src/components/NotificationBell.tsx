@@ -24,6 +24,7 @@ interface Notification {
   is_read: boolean;
   created_at: string;
   related_id?: string;
+  related_table?: string;
 }
 
 export default function NotificationBell() {
@@ -122,6 +123,7 @@ export default function NotificationBell() {
           is_read: task.status === "completed",
           created_at: task.created_at,
           related_id: task.id,
+          related_table: "tasks",
         });
       }
     }
@@ -179,7 +181,7 @@ export default function NotificationBell() {
         (payload) => {
           const newNotif = payload.new as Notification;
           setNotifications((prev) => [newNotif, ...prev]);
-          
+
           // Only increment unread count if the notification is unread
           if (!newNotif.is_read) {
             setUnreadCount((prev) => prev + 1);
@@ -212,7 +214,7 @@ export default function NotificationBell() {
           setNotifications((prev) =>
             prev.map((n) => (n.id === updatedNotif.id ? updatedNotif : n))
           );
-          
+
           // Recalculate unread count to ensure accuracy
           setNotifications((prev) => {
             const count = prev.filter((n) => !n.is_read).length;
@@ -300,12 +302,12 @@ export default function NotificationBell() {
     return colors[type] || "bg-gray-500";
   };
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
     markAsRead(notification.id);
     setOpen(false);
 
-    // Navigate based on category
-    const routes: Record<string, string> = {
+    // Fallback routes for categories without a specific record to deep-link to
+    const fallbackRoutes: Record<string, string> = {
       task: "/tasks",
       training: "/training",
       audit: "/audits",
@@ -315,7 +317,61 @@ export default function NotificationBell() {
       message: "/messages",
     };
 
-    const route = routes[notification.category];
+    try {
+      // Direct case: related record IS an employee (note mentions)
+      if (notification.related_table === "employees" && notification.related_id) {
+        navigate(`/employees/${notification.related_id}`);
+        return;
+      }
+
+      // Tasks: look up the assigned employee, then deep-link to their profile
+      if (notification.related_table === "tasks" && notification.related_id) {
+        const { data } = await supabase
+          .from("tasks")
+          .select("assigned_to")
+          .eq("id", notification.related_id)
+          .maybeSingle();
+
+        if (data?.assigned_to) {
+          navigate(`/employees/${data.assigned_to}`);
+          return;
+        }
+      }
+
+      // Training records: look up the employee, then deep-link to their profile
+      if (notification.related_table === "training_records" && notification.related_id) {
+        const { data } = await supabase
+          .from("training_records")
+          .select("employee_id")
+          .eq("id", notification.related_id)
+          .maybeSingle();
+
+        if (data?.employee_id) {
+          navigate(`/employees/${data.employee_id}`);
+          return;
+        }
+      }
+
+      // Health checkups: look up the employee, then deep-link to their profile
+      if (notification.related_table === "health_checkups" && notification.related_id) {
+        const { data } = await supabase
+          .from("health_checkups")
+          .select("employee_id")
+          .eq("id", notification.related_id)
+          .maybeSingle();
+
+        if (data?.employee_id) {
+          navigate(`/employees/${data.employee_id}`);
+          return;
+        }
+      }
+    } catch (error) {
+      console.error("Error resolving notification deep link:", error);
+      // Fall through to the generic fallback route below
+    }
+
+    // Fallback: generic category overview page
+    const route = fallbackRoutes[notification.category];
     if (route) {
       navigate(route);
     }
