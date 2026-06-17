@@ -618,7 +618,7 @@ fetchProfileFields();
     try {
       const { data, error } = await supabase
         .from("tasks")
-        .select("*")
+        .select(`*, assigned_employee:employees!tasks_assigned_to_fkey(id, full_name)`)
         .eq("employee_profile_id", id)
         .order("due_date", { ascending: true });
 
@@ -4001,6 +4001,14 @@ p_sender_name: senderName,
                                         >
                                           {task.priority}
                                         </Badge>
+                                        {task.assigned_to !== id && (task as any).assigned_employee && (
+                                          <Badge
+                                            variant="outline"
+                                            className="text-[10px] px-1 py-0 border-blue-400 text-blue-600 dark:text-blue-400"
+                                          >
+                                            @{(task as any).assigned_employee.full_name}
+                                          </Badge>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
