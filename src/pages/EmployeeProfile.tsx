@@ -632,23 +632,16 @@ fetchProfileFields();
   const fetchEmployees = async () => {
     if (!companyId) return;
     try {
-      // Fetch from team_members table for @ mention functionality
       const { data, error } = await supabase
-        .from("team_members")
-        .select("id, first_name, last_name, email, role")
+        .from("employees")
+        .select("id, full_name, email, employee_number")
         .eq("company_id", companyId);
 
       if (error) throw error;
 
-      // Map to employees format for @ mention display
-      setEmployees((data || []).map((tm: any) => ({
-        id: tm.id,
-        full_name: `${tm.first_name} ${tm.last_name}`,
-        employee_number: tm.email,
-        role: tm.role,
-      })));
+      setEmployees(data || []);
     } catch (error) {
-      console.error("Error fetching team members:", error);
+      console.error("Error fetching employees:", error);
     }
   };
 
@@ -2130,26 +2123,30 @@ const handleCreateTask = async () => {
 let finalAssignedTo = id;
 let finalTaskTitle = newTaskTitle;
 
-const mentionMatch = newTaskTitle.match(/@([^\s@]+(?:\s+[^\s@]+)*?)(?=\s|$|@)/);
+// Extract full text after @ (up to next @ or end), then prefix-match against
+// all employee names so multi-word names like "Will Baker" are found correctly.
+const mentionMatch = newTaskTitle.match(/@(.+?)(?=\s*@|$)/);
 if (mentionMatch && companyId) {
-  const mentionedName = mentionMatch[1].trim();
+  const rawAfterMention = mentionMatch[1].trim();
 
-  const { data: mentionedEmployee } = await supabase
+  const { data: allEmployees } = await supabase
     .from("employees")
-    .select("id")
-    .eq("company_id", companyId)
-    .ilike("full_name", mentionedName)
-    .maybeSingle();
+    .select("id, full_name")
+    .eq("company_id", companyId);
 
-  if (mentionedEmployee) {
-    finalAssignedTo = mentionedEmployee.id;
-    // Strip the @mention from the title for a clean task name
+  // Longest prefix match wins (handles "Will" vs "Will Baker" ambiguity)
+  const matchedEmployee = (allEmployees || [])
+    .filter(emp =>
+      rawAfterMention.toLowerCase().startsWith(emp.full_name.toLowerCase())
+    )
+    .sort((a, b) => b.full_name.length - a.full_name.length)[0];
+
+  if (matchedEmployee) {
+    finalAssignedTo = matchedEmployee.id;
     finalTaskTitle = newTaskTitle
-      .replace(/@[^\s@]+(?:\s+[^\s@]+)*?(?=\s|$|@)/, "")
+      .replace(new RegExp(`@${matchedEmployee.full_name}\\s*`, "i"), "")
       .trim();
   }
-  // If no matching employee is found, fall back to the profile owner
-  // (treated as a general task, not shown on the dashboard since it has no valid mention).
 }
 
       const { data, error } = await supabase
