@@ -530,7 +530,8 @@ const [stats, setStats] = useState({
           status,
           priority,
           assigned_to,
-          assigned_employee:employees!tasks_assigned_to_fkey (
+          employee_profile_id,
+          profile_employee:employees!tasks_employee_profile_id_fkey (
             id,
             full_name
           )
@@ -563,11 +564,11 @@ const [stats, setStats] = useState({
 
       let filteredData = rawData || [];
 
-      // Show only tasks assigned to the current user (assigned_to = their employee ID).
-      // Admins/HSE Managers with view_all see all tasks via the Tasks page.
-      filteredData = currentEmployeeId
-        ? filteredData.filter((task: any) => task.assigned_to === currentEmployeeId)
-        : [];
+      // RLS (user_can_view_task) already restricts which tasks are returned:
+      // - Regular employee: only sees tasks on their profile or assigned to them
+      // - view_all role (HSE Manager, Doctor): sees all company tasks
+      // - Admin/Super Admin: sees everything
+      // No additional client-side filter needed.
 
       // Keep limit at 20 after client-side filter
       filteredData = filteredData.slice(0, 20);
@@ -1066,15 +1067,15 @@ const kpiConfig: { [key: string]: { title: string; value: string | number; subti
                             </p>
 
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                              {/* Assigned To */}
-                              {task.assigned_employee ? (
+                              {/* Employee profile the task belongs to */}
+                              {(task as any).profile_employee ? (
                                 <div className="flex items-center gap-1">
                                   <Users className="w-3 h-3" />
                                   <Link
-                                    to={`/employees/${task.assigned_to}`}
+                                    to={`/employees/${(task as any).employee_profile_id || task.assigned_to}`}
                                     className="hover:text-primary hover:underline transition-colors"
                                   >
-                                    {task.assigned_employee.full_name}
+                                    {(task as any).profile_employee.full_name}
                                   </Link>
                                 </div>
                               ) : (
