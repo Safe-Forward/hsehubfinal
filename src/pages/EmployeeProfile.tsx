@@ -619,7 +619,7 @@ fetchProfileFields();
       const { data, error } = await supabase
         .from("tasks")
         .select("*")
-        .eq("assigned_to", id)
+        .eq("employee_profile_id", id)
         .order("due_date", { ascending: true });
 
       if (error) throw error;
@@ -2154,6 +2154,7 @@ if (mentionMatch && companyId) {
         .insert({
           title: finalTaskTitle,
           assigned_to: finalAssignedTo,
+          employee_profile_id: id,
           company_id: companyId,
           status: "pending",
           priority: newTaskPriority,
