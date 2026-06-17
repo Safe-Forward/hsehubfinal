@@ -2124,11 +2124,35 @@ const handleCreateTask = async () => {
     if (!newTaskTitle.trim()) return;
 
     try {
+      // Check if the task title @mentions a specific employee.
+      // If so, assign the task to THAT employee instead of the profile owner.
+      // Only a single mention is supported; titles can't contain commas/multiple @s in practice.
+      let finalAssignedTo = id;
+      let finalTaskTitle = newTaskTitle;
+
+      const mentionMatch = newTaskTitle.match(/@([^\s@]+(?:\s+[^\s@]+)*?)(?=\s|$|@)/);
+      if (mentionMatch) {
+        const mentionedName = mentionMatch[1].trim().toLowerCase();
+        const mentionedEmployee = employees.find(
+          (emp) => emp.full_name.toLowerCase() === mentionedName
+        );
+
+        if (mentionedEmployee) {
+          finalAssignedTo = mentionedEmployee.id;
+          // Strip the @mention from the title for a clean task name
+          finalTaskTitle = newTaskTitle
+            .replace(/@[^\s@]+(?:\s+[^\s@]+)*?(?=\s|$|@)/, "")
+            .trim();
+        }
+        // If no matching employee is found, fall back to the profile owner
+        // (treated as a general task, not shown on the dashboard since it has no valid mention).
+      }
+
       const { data, error } = await supabase
         .from("tasks")
         .insert({
-          title: newTaskTitle,
-          assigned_to: id,
+          title: finalTaskTitle,
+          assigned_to: finalAssignedTo,
           company_id: companyId,
           status: "pending",
           priority: newTaskPriority,
@@ -2182,8 +2206,8 @@ const handleCreateTask = async () => {
             p_task_id: data.id,
             p_task_title: data.title,
             p_task_text: combinedText,
-            p_sender_name: senderName,
-            p_assigned_to: id ?? null,
+p_sender_name: senderName,
+            p_assigned_to: finalAssignedTo ?? null,
           }
         );
         if (notifErr) {
