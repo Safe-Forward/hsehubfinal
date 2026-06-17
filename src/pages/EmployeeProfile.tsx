@@ -3928,8 +3928,9 @@ p_sender_name: senderName,
                         </div>
                       </div>
 
-                      {/* Hide completed tasks toggle — always visible */}
-                      <div className="flex justify-center">
+                      {/* Hide completed tasks toggle — nur wenn erledigte Tasks vorhanden */}
+                      {tasks.some((t) => t.status === "completed") && (
+                        <div className="flex justify-center">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -3941,12 +3942,9 @@ p_sender_name: senderName,
                             {hideCompletedTasks ? (
                               <>
                                 <Eye className="w-3 h-3 mr-1" />
-                                Show completed tasks
-                                {tasks.filter((t) => t.status === "completed").length > 0 && (
-                                  <span className="ml-1">
-                                    ({tasks.filter((t) => t.status === "completed").length})
-                                  </span>
-                                )}
+                                Show completed tasks (
+                                {tasks.filter((t) => t.status === "completed").length}
+                                )
                               </>
                             ) : (
                               <>
@@ -3956,6 +3954,7 @@ p_sender_name: senderName,
                             )}
                           </Button>
                         </div>
+                      )}
 
                       <ScrollArea className="h-[300px]">
                         <div className="space-y-2 pr-4">
