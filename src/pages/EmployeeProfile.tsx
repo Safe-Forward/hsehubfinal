@@ -210,13 +210,16 @@ export default function EmployeeProfile() {
   >("medium");
   const [hideCompletedTasks, setHideCompletedTasks] = useState(false);
 
-  // Persist hideCompletedTasks preference per user in localStorage
+  // Persist hideCompletedTasks preference per user in localStorage.
+  // Runs whenever user?.id becomes available (handles async auth loading).
   useEffect(() => {
-    if (user?.id) {
-      const stored = localStorage.getItem(`hideCompletedTasks_${user.id}`);
-      if (stored !== null) setHideCompletedTasks(stored === 'true');
+    if (!user?.id) return;
+    const key = `hideCompletedTasks_${user.id}`;
+    const stored = localStorage.getItem(key);
+    if (stored !== null) {
+      setHideCompletedTasks(stored === 'true');
     }
-  }, [user?.id]);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggleHideCompleted = (value: boolean) => {
     setHideCompletedTasks(value);
@@ -3925,9 +3928,8 @@ p_sender_name: senderName,
                         </div>
                       </div>
 
-                      {/* Hide completed tasks toggle */}
-                      {tasks.some((t) => t.status === "completed") && (
-                        <div className="flex justify-center">
+                      {/* Hide completed tasks toggle — always visible */}
+                      <div className="flex justify-center">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -3939,12 +3941,12 @@ p_sender_name: senderName,
                             {hideCompletedTasks ? (
                               <>
                                 <Eye className="w-3 h-3 mr-1" />
-                                Show completed tasks (
-                                {
-                                  tasks.filter((t) => t.status === "completed")
-                                    .length
-                                }
-                                )
+                                Show completed tasks
+                                {tasks.filter((t) => t.status === "completed").length > 0 && (
+                                  <span className="ml-1">
+                                    ({tasks.filter((t) => t.status === "completed").length})
+                                  </span>
+                                )}
                               </>
                             ) : (
                               <>
@@ -3954,7 +3956,6 @@ p_sender_name: senderName,
                             )}
                           </Button>
                         </div>
-                      )}
 
                       <ScrollArea className="h-[300px]">
                         <div className="space-y-2 pr-4">
