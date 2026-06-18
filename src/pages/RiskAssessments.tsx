@@ -374,7 +374,7 @@ export default function RiskAssessments() {
           .from("department_managers")
           .select("department_id, manager_user_id")
           .eq("company_id", companyId)
-          .eq("manager_type", "line"),
+          .eq("manager_type", "disciplinary"),
 
       ]);
 

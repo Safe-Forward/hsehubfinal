@@ -854,7 +854,7 @@ const handleUpdateManager = async (
           .from("department_managers")
           .select("department_id, manager_user_id")
           .eq("company_id", companyId)
-          .eq("manager_type", "line");
+          .eq("manager_type", "disciplinary");
         if (dmData) {
           const dmMap: Record<string, string> = {};
           dmData.forEach((dm: any) => { if (dm.manager_user_id) dmMap[dm.department_id] = dm.manager_user_id; });
@@ -4105,7 +4105,7 @@ const handleUpdateManager = async (
                                             const { error: upsertErr } = await (supabase as any)
                                               .from("department_managers")
                                               .upsert(
-                                                { department_id: dept.id, manager_user_id: userId, company_id: companyId, manager_type: "line" },
+                                                { department_id: dept.id, manager_user_id: userId, company_id: companyId, manager_type: "disciplinary" },
                                                 { onConflict: "department_id,company_id,manager_type" }
                                               );
                                             if (upsertErr) {
@@ -4119,7 +4119,7 @@ const handleUpdateManager = async (
                                               .delete()
                                               .eq("department_id", dept.id)
                                               .eq("company_id", companyId)
-                                              .eq("manager_type", "line");
+                                              .eq("manager_type", "disciplinary");
                                             if (delErr) {
                                               toast({ title: "Fehler beim Löschen", description: delErr.message, variant: "destructive" });
                                               return;
