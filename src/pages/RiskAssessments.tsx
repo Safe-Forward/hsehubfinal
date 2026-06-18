@@ -786,7 +786,7 @@ export default function RiskAssessments() {
     }
   };
 
-  const canApprove = userRole === "Admin" || userRole === "Line Manager" || userRole === "HSE Manager";
+  const canApprove = userRole === "company_admin" || userRole === "super_admin";
 
   const filteredRisks = risks.filter((r) => {
     const matchesSearch = !searchTerm ||
