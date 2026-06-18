@@ -1991,19 +1991,6 @@ export default function RiskAssessments() {
                         <TableCell>{risk.assessment_date}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1 flex-wrap">
-                            {/* Approve/Reject — for pending_approval */}
-                            {risk.approval_status === "pending_approval" && canApprove && (
-                              <>
-                                <Button variant="outline" size="sm" className="text-xs h-7 text-green-700 border-green-300 hover:bg-green-50"
-                                  onClick={() => { setSelectedRisk(risk); setIsApprovalDialogOpen(true); }}>
-                                  <Check className="w-3 h-3 mr-1" />Freigeben
-                                </Button>
-                                <Button variant="outline" size="sm" className="text-xs h-7 text-red-700 border-red-300 hover:bg-red-50"
-                                  onClick={() => { setSelectedRisk(risk); setIsRejectionDialogOpen(true); }}>
-                                  <X className="w-3 h-3 mr-1" />Ablehnen
-                                </Button>
-                              </>
-                            )}
                             {/* After rejection: resubmit */}
                             {risk.approval_status === "rejected" && (
                               <Button variant="outline" size="sm" className="text-xs h-7"
@@ -2657,18 +2644,33 @@ export default function RiskAssessments() {
                   variant="outline"
                   onClick={() => setIsMatrixDialogOpen(false)}
                 >
-                  {language === "de" ? "Schließen" : "Close"}
+                  Schließen
                 </Button>
-                <Button
-                  onClick={() => {
-                    setIsMatrixDialogOpen(false);
-                    setIsApprovalDialogOpen(true);
-                  }}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  {language === "de" ? "Genehmigen" : "Approve"}
-                </Button>
+                {selectedRisk?.approval_status === "pending_approval" && canApprove && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="text-red-700 border-red-300 hover:bg-red-50"
+                      onClick={() => {
+                        setIsMatrixDialogOpen(false);
+                        setIsRejectionDialogOpen(true);
+                      }}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Ablehnen
+                    </Button>
+                    <Button
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => {
+                        setIsMatrixDialogOpen(false);
+                        setIsApprovalDialogOpen(true);
+                      }}
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Genehmigen
+                    </Button>
+                  </div>
+                )}
               </div>
             </DialogFooter>
           </DialogContent>
