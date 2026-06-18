@@ -210,6 +210,9 @@ export default function RiskAssessments() {
   const [isMatrixDialogOpen, setIsMatrixDialogOpen] = useState(false);
   const [isApprovalDialogOpen, setIsApprovalDialogOpen] = useState(false);
   const [approvalComment, setApprovalComment] = useState("");
+  const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false);
+  const [rejectionComment, setRejectionComment] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [formStep, setFormStep] = useState(1);
@@ -691,46 +694,115 @@ export default function RiskAssessments() {
     );
   }
 
+  const handleSubmitForReview = async (risk: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("risk_assessments")
+        .update({
+          approval_status: "pending_review",
+          submitted_at: new Date().toISOString(),
+          submitted_by: user?.id,
+        })
+        .eq("id", risk.id);
+      if (error) throw error;
+      toast({ title: "Eingereicht", description: "GBU wurde zur Prüfung eingereicht." });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    }
+  };
+
   const handleApproveRisk = async () => {
     if (!selectedRisk) return;
-
     try {
-      // Update approval status and add comment to notes if provided
+      const { data: { user } } = await supabase.auth.getUser();
       const updateData: any = {
         approval_status: "approved",
+        approved_at: new Date().toISOString(),
+        approved_by: user?.id,
+        rejection_comment: null,
       };
-
-      // Append approval comment to notes if provided
       if (approvalComment) {
         const existingNotes = selectedRisk.notes || "";
-        const approvalNote = `\n\n[Approval Comment - ${new Date().toLocaleDateString()}]: ${approvalComment}`;
-        updateData.notes = existingNotes + approvalNote;
+        updateData.notes = existingNotes + `\n\n[Freigabe ${new Date().toLocaleDateString()}]: ${approvalComment}`;
       }
-
       const { error } = await supabase
         .from("risk_assessments")
         .update(updateData)
         .eq("id", selectedRisk.id);
-
       if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Risk assessment approved successfully",
-      });
-
+      toast({ title: "Freigegeben", description: "GBU wurde erfolgreich freigegeben." });
       setIsApprovalDialogOpen(false);
       setApprovalComment("");
       setSelectedRisk(null);
       fetchData();
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
     }
   };
+
+  const handleRejectRisk = async () => {
+    if (!selectedRisk || !rejectionComment.trim()) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("risk_assessments")
+        .update({
+          approval_status: "rejected",
+          rejection_comment: rejectionComment,
+          rejected_at: new Date().toISOString(),
+          rejected_by: user?.id,
+        })
+        .eq("id", selectedRisk.id);
+      if (error) throw error;
+      toast({ title: "Abgelehnt", description: "GBU wurde abgelehnt. Ersteller wird informiert." });
+      setIsRejectionDialogOpen(false);
+      setRejectionComment("");
+      setSelectedRisk(null);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleRetractToEdit = async (risk: any) => {
+    try {
+      const { error } = await supabase
+        .from("risk_assessments")
+        .update({ approval_status: "draft", rejection_comment: null })
+        .eq("id", risk.id);
+      if (error) throw error;
+      toast({ title: "Zurückgezogen", description: "GBU ist wieder im Entwurf-Modus." });
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const getApprovalStatusBadge = (status: string) => {
+    switch (status) {
+      case "approved":
+        return { label: "Freigegeben", variant: "default" as const, className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" };
+      case "pending_review":
+        return { label: "In Prüfung", variant: "outline" as const, className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" };
+      case "rejected":
+        return { label: "Abgelehnt", variant: "destructive" as const, className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" };
+      default:
+        return { label: "Entwurf", variant: "secondary" as const, className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" };
+    }
+  };
+
+  const canApprove = userRole === "Admin" || userRole === "Line Manager" || userRole === "HSE Manager";
+
+  const filteredRisks = risks.filter((r) => {
+    const matchesSearch = !searchTerm ||
+      r.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || r.approval_status === statusFilter ||
+      (!r.approval_status && statusFilter === "draft");
+    return matchesSearch && matchesStatus;
+  });
 
   const getRiskLevelColor = (level: string) => {
     switch (level) {
@@ -1732,15 +1804,43 @@ export default function RiskAssessments() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="mb-6">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input
-                  placeholder={t("risks.search")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 h-12 border-2 focus:border-primary transition-colors"
-                />
+            <div className="mb-6 space-y-3">
+              <div className="flex gap-3 flex-col sm:flex-row">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                  <Input
+                    placeholder={t("risks.search")}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-12 h-12 border-2 focus:border-primary transition-colors"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-12 w-full sm:w-48">
+                    <SelectValue placeholder="Status filtern" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Status</SelectItem>
+                    <SelectItem value="draft">Entwurf</SelectItem>
+                    <SelectItem value="pending_review">In Prüfung</SelectItem>
+                    <SelectItem value="approved">Freigegeben</SelectItem>
+                    <SelectItem value="rejected">Abgelehnt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Status summary pills */}
+              <div className="flex gap-2 flex-wrap text-xs">
+                {["draft","pending_review","approved","rejected"].map((s) => {
+                  const count = risks.filter(r => (r.approval_status || "draft") === s).length;
+                  if (count === 0) return null;
+                  const cfg = getApprovalStatusBadge(s);
+                  return (
+                    <button key={s} onClick={() => setStatusFilter(statusFilter === s ? "all" : s)}
+                      className={`px-2 py-1 rounded-full border font-medium transition-all ${cfg.className} ${statusFilter === s ? "ring-2 ring-offset-1 ring-current" : ""}`}>
+                      {cfg.label}: {count}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1748,6 +1848,7 @@ export default function RiskAssessments() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
                     <TableHead className="whitespace-nowrap">
                       {language === "de" ? "Risikotitel" : "Risk Title"}
                     </TableHead>
@@ -1803,6 +1904,21 @@ export default function RiskAssessments() {
                         key={risk.id}
                         className="hover:bg-muted/70 transition-all duration-200 border-b border-border/50 hover:shadow-sm group"
                       >
+                        <TableCell>
+                          {(() => {
+                            const cfg = getApprovalStatusBadge(risk.approval_status || "draft");
+                            return (
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${cfg.className}`}>
+                                {cfg.label}
+                              </span>
+                            );
+                          })()}
+                          {risk.rejection_comment && (
+                            <div className="text-xs text-red-600 dark:text-red-400 mt-1 max-w-[120px] truncate" title={risk.rejection_comment}>
+                              ↳ {risk.rejection_comment}
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell className="font-medium">
                           {risk.title}
                         </TableCell>
@@ -1880,6 +1996,37 @@ export default function RiskAssessments() {
                           )}
                         </TableCell>
                         <TableCell>{risk.assessment_date}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {/* Submit for review — only for draft/rejected */}
+                            {(risk.approval_status === "draft" || !risk.approval_status || risk.approval_status === "rejected") && (
+                              <Button variant="outline" size="sm" className="text-xs h-7"
+                                onClick={() => handleSubmitForReview(risk)}>
+                                Einreichen
+                              </Button>
+                            )}
+                            {/* Approve/Reject — only for pending_review and if canApprove */}
+                            {risk.approval_status === "pending_review" && canApprove && (
+                              <>
+                                <Button variant="outline" size="sm" className="text-xs h-7 text-green-700 border-green-300 hover:bg-green-50"
+                                  onClick={() => { setSelectedRisk(risk); setIsApprovalDialogOpen(true); }}>
+                                  <Check className="w-3 h-3 mr-1" />Freigeben
+                                </Button>
+                                <Button variant="outline" size="sm" className="text-xs h-7 text-red-700 border-red-300 hover:bg-red-50"
+                                  onClick={() => { setSelectedRisk(risk); setIsRejectionDialogOpen(true); }}>
+                                  <X className="w-3 h-3 mr-1" />Ablehnen
+                                </Button>
+                              </>
+                            )}
+                            {/* Retract from rejected back to draft */}
+                            {risk.approval_status === "rejected" && (
+                              <Button variant="ghost" size="sm" className="text-xs h-7"
+                                onClick={() => handleRetractToEdit(risk)}>
+                                Bearbeiten
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
@@ -2537,6 +2684,40 @@ export default function RiskAssessments() {
                   {language === "de" ? "Genehmigen" : "Approve"}
                 </Button>
               </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rejection Dialog */}
+        <Dialog open={isRejectionDialogOpen} onOpenChange={setIsRejectionDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>GBU ablehnen</DialogTitle>
+              <DialogDescription>
+                Gib einen Ablehnungsgrund an — dieser wird dem Ersteller angezeigt.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="rejection-comment">Ablehnungsgrund *</Label>
+                <Textarea
+                  id="rejection-comment"
+                  placeholder="z.B. Gefährdungen sind unvollständig beschrieben..."
+                  value={rejectionComment}
+                  onChange={(e) => setRejectionComment(e.target.value)}
+                  rows={4}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setIsRejectionDialogOpen(false); setRejectionComment(""); }}>
+                Abbrechen
+              </Button>
+              <Button variant="destructive" disabled={!rejectionComment.trim()} onClick={handleRejectRisk}>
+                <X className="w-4 h-4 mr-2" />
+                Ablehnen
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
