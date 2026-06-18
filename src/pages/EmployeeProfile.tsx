@@ -236,6 +236,7 @@ export default function EmployeeProfile() {
   const [showNotesMentionDropdown, setShowNotesMentionDropdown] =
     useState(false);
   const [notesMentionSearch, setNotesMentionSearch] = useState("");
+  const [teamMembersForMention, setTeamMembersForMention] = useState<any[]>([]);
   const [cursorPosition, setCursorPosition] = useState(0);
 
   // Enhanced note visibility state
@@ -348,6 +349,7 @@ export default function EmployeeProfile() {
       fetchActivityLogs();
       fetchTasks();
       fetchEmployees();
+      fetchTeamMembersForMention();
       fetchGInvestigations();
 fetchProfileFields();
       fetchProfileFieldTemplates();
@@ -664,6 +666,23 @@ fetchProfileFields();
       setEmployees(data || []);
     } catch (error) {
       console.error("Error fetching employees:", error);
+    }
+  };
+
+  const fetchTeamMembersForMention = async () => {
+    if (!companyId) return;
+    try {
+      const { data } = await supabase
+        .from("team_members")
+        .select("id, first_name, last_name, email, user_id, role")
+        .eq("company_id", companyId)
+        .order("first_name");
+      setTeamMembersForMention((data || []).map(m => ({
+        ...m,
+        full_name: `${m.first_name} ${m.last_name}`.trim(),
+      })));
+    } catch (err) {
+      console.error("Error fetching team members for mention:", err);
     }
   };
 
@@ -1736,11 +1755,11 @@ const fetchGInvestigations = async () => {
   };
 
   // Separate filtered employee lists for Tasks and Notes
-  const filteredTaskEmployees = employees.filter((emp) =>
+  const filteredTaskEmployees = teamMembersForMention.filter((emp) =>
     emp.full_name.toLowerCase().includes(taskMentionSearch.toLowerCase())
   );
 
-  const filteredNotesEmployees = employees.filter((emp) =>
+  const filteredNotesEmployees = teamMembersForMention.filter((emp) =>
     emp.full_name.toLowerCase().includes(notesMentionSearch.toLowerCase())
   );
 
