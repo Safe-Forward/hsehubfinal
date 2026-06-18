@@ -13,7 +13,6 @@ import {
   AlertTriangle,
   Clock,
   Shield,
-  CheckSquare,
   Users,
   Settings as SettingsIcon,
   BookOpen,
@@ -28,15 +27,9 @@ import {
   Upload,
   Loader2,
   FileText,
-  RefreshCw,
   ChevronDown,
   ChevronRight,
-  Mail,
-  Send,
   Headphones,
-  Eye,
-  EyeOff,
-  Copy,
   Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -100,7 +93,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { RolePermissionEditor } from "@/components/settings/RolePermissionEditor";
+import { TeamTab } from "@/components/settings/tabs/TeamTab";
+import { UserRolesTab } from "@/components/settings/tabs/UserRolesTab";
+import { MedicalCareTab } from "@/components/settings/tabs/MedicalCareTab";
+import { ApiIntegrationTab } from "@/components/settings/tabs/ApiIntegrationTab";
+import { SupportTab } from "@/components/settings/tabs/SupportTab";
 import {
   CustomRole,
   PermissionCategory,
@@ -113,7 +110,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { sendMemberInvitation, sendNoteNotification } from "@/services/emailService";
+
 
 const baseSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -3093,18 +3090,7 @@ const handleUpdateManager = async (
     }
   };
 
-  const renderUserRolesTab = () => (
-    <RolePermissionEditor
-      roles={customRolesData}
-      selectedRole={selectedRoleForEdit}
-      onSelectRole={setSelectedRoleForEdit}
-      onUpdatePermission={handleUpdateDetailedPermission}
-      onCreateRole={handleCreateNewRole}
-      onDeleteRole={handleDeleteRoleEnhanced}
-      onUpdateRoleDescription={handleUpdateRoleDescription}
-      isLoading={isRolesLoading}
-    />
-  );
+
 
   const renderTable = (data: any[], title: string) => (
     <Card>
@@ -3533,263 +3519,16 @@ const handleUpdateManager = async (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               {/* Tab 1: Team Management */}
               <TabsContent value="team">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle>{t("settings.teamManagement")}</CardTitle>
-                        <CardDescription>
-                          {t("settings.teamManagementDesc")}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-4 gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
-                        <div>
-                          <Label>{t("settings.firstName")}</Label>
-                          <Input
-                            placeholder={t("settings.enterFirstName")}
-                            value={teamMemberForm.firstName}
-                            onChange={(e) =>
-                              setTeamMemberForm((prev) => ({
-                                ...prev,
-                                firstName: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>{t("settings.lastName")}</Label>
-                          <Input
-                            placeholder={t("settings.enterLastName")}
-                            value={teamMemberForm.lastName}
-                            onChange={(e) =>
-                              setTeamMemberForm((prev) => ({
-                                ...prev,
-                                lastName: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>{t("common.email")}</Label>
-                          <Input
-                            type="email"
-                            placeholder={t("settings.enterEmail")}
-                            value={teamMemberForm.email}
-                            onChange={(e) =>
-                              setTeamMemberForm((prev) => ({
-                                ...prev,
-                                email: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>{t("settings.userRole")}</Label>
-                          <Select
-                            value={teamMemberForm.role}
-                            onValueChange={(value) =>
-                              setTeamMemberForm((prev) => ({
-                                ...prev,
-                                role: value,
-                              }))
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder={t("settings.selectRole")}
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.keys(roles).map((role) => (
-                                <SelectItem key={role} value={role}>
-                                  {role}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="col-span-4 flex justify-end">
-                          <Button
-                            onClick={handleAddTeamMember}
-                            disabled={isAddingTeamMember}
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            {isAddingTeamMember
-                              ? "Adding..."
-                              : t("settings.addTeamMember")}
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="rounded-md border">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{t("settings.name")}</TableHead>
-                              <TableHead>{t("settings.email")}</TableHead>
-                              <TableHead>{t("settings.role")}</TableHead>
-                              <TableHead className="text-right">
-                                {t("common.actions")}
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {teamMembers.length === 0 ? (
-                              <TableRow>
-                                <TableCell
-                                  colSpan={4}
-                                  className="text-center py-8 text-muted-foreground"
-                                >
-                                  {t("settings.noTeamMembers")}
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              teamMembers.map((member) => (
-                                <TableRow key={member.id}>
-                                  <TableCell className="font-medium">
-                                    {member.first_name} {member.last_name}
-                                  </TableCell>
-                                  <TableCell>{member.email}</TableCell>
-                                  <TableCell>
-                                    <Select
-                                      value={member.role}
-                                      onValueChange={(newRole) =>
-                                        handleChangeTeamMemberRole(
-                                          member.id,
-                                          `${member.first_name} ${member.last_name}`,
-                                          member.role,
-                                          newRole
-                                        )
-                                      }
-                                    >
-                                      <SelectTrigger className="w-[180px]">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {Object.keys(roles).map((role) => (
-                                          <SelectItem key={role} value={role}>
-                                            {role}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <div className="flex justify-end gap-2">
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={async () => {
-                                              try {
-                                                await sendMemberInvitation(
-                                                  member.id,
-                                                  member.email,
-                                                  `${member.first_name} ${member.last_name}`
-                                                );
-                                                toast({
-                                                  title: "Success",
-                                                  description: "Invitation email sent successfully",
-                                                });
-                                              } catch (err: any) {
-                                                toast({
-                                                  title: "Error",
-                                                  description: err.message || "Failed to send invitation",
-                                                  variant: "destructive",
-                                                });
-                                              }
-                                            }}
-                                          >
-                                            <Send className="w-4 h-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Send Invite</TooltipContent>
-                                      </Tooltip>
-
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={async () => {
-                                              try {
-                                                const { data: { user } } = await supabase.auth.getUser();
-                                                const currentUserName = user?.user_metadata?.full_name || "Admin";
-
-                                                await sendNoteNotification(
-                                                  member.email,
-                                                  `${member.first_name} ${member.last_name}`,
-                                                  "You have been mentioned in a note. Please check HSE Hub for details.",
-                                                  currentUserName
-                                                );
-                                                toast({
-                                                  title: "Success",
-                                                  description: "Notification email sent successfully",
-                                                });
-                                              } catch (err: any) {
-                                                toast({
-                                                  title: "Error",
-                                                  description: err.message || "Failed to send notification",
-                                                  variant: "destructive",
-                                                });
-                                              }
-                                            }}
-                                          >
-                                            <Mail className="w-4 h-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Send Mail</TooltipContent>
-                                      </Tooltip>
-
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={async () => {
-                                              try {
-                                                const { error } = await supabase
-                                                  .from("team_members")
-                                                  .delete()
-                                                  .eq("id", member.id);
-
-                                                if (error) throw error;
-
-                                                toast({
-                                                  title: "Success",
-                                                  description: "Team member removed successfully",
-                                                });
-                                                fetchTeamMembers();
-                                              } catch (err: any) {
-                                                toast({
-                                                  title: "Error",
-                                                  description: err.message,
-                                                  variant: "destructive",
-                                                });
-                                              }
-                                            }}
-                                          >
-                                            <Trash2 className="w-4 h-4" />
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Delete</TooltipContent>
-                                      </Tooltip>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <TeamTab
+                  teamMembers={teamMembers}
+                  teamMemberForm={teamMemberForm}
+                  setTeamMemberForm={setTeamMemberForm}
+                  isAddingTeamMember={isAddingTeamMember}
+                  roles={roles}
+                  handleAddTeamMember={handleAddTeamMember}
+                  handleChangeTeamMemberRole={handleChangeTeamMemberRole}
+                  fetchTeamMembers={fetchTeamMembers}
+                />
               </TabsContent>
 
               {/* Organisation & Führung */}
@@ -4027,7 +3766,16 @@ const handleUpdateManager = async (
 
               {/* Tab 2: User Roles (RBAC) */}
               <TabsContent value="user-roles">
-                {renderUserRolesTab()}
+                <UserRolesTab
+                  customRolesData={customRolesData}
+                  selectedRoleForEdit={selectedRoleForEdit}
+                  setSelectedRoleForEdit={setSelectedRoleForEdit}
+                  handleUpdateDetailedPermission={handleUpdateDetailedPermission}
+                  handleCreateNewRole={handleCreateNewRole}
+                  handleDeleteRoleEnhanced={handleDeleteRoleEnhanced}
+                  handleUpdateRoleDescription={handleUpdateRoleDescription}
+                  isRolesLoading={isRolesLoading}
+                />
               </TabsContent>
 
               {/* Tab 3: Configuration */}
@@ -6464,360 +6212,34 @@ const handleUpdateManager = async (
 
               {/* Tab 6: Occupational Medical Care */}
               <TabsContent value="medical-care">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Stethoscope className="w-5 h-5" />
-                      {t("gcode.title")}
-                    </CardTitle>
-                    <CardDescription>{t("gcode.description")}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between pb-2 border-b">
-                        <p className="text-sm text-muted-foreground">
-                          {selectedGInvestigations.length} {t("gcode.of")} 46{" "}
-                          {t("gcode.selectedCount")}
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={toggleSelectAll}
-                        >
-                          <CheckSquare className="w-4 h-4 mr-2" />
-                          {isAllSelected()
-                            ? t("gcode.deselectAll")
-                            : t("gcode.selectAll")}
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {[
-                          { code: "G 1.1", key: "G1.1" },
-                          { code: "G 1.2", key: "G1.2" },
-                          { code: "G 1.3", key: "G1.3" },
-                          { code: "G 1.4", key: "G1.4" },
-                          { code: "G 2", key: "G2" },
-                          { code: "G 3", key: "G3" },
-                          { code: "G 4", key: "G4" },
-                          { code: "G 5", key: "G5" },
-                          { code: "G 6", key: "G6" },
-                          { code: "G 7", key: "G7" },
-                          { code: "G 8", key: "G8" },
-                          { code: "G 9", key: "G9" },
-                          { code: "G 10", key: "G10" },
-                          { code: "G 11", key: "G11" },
-                          { code: "G 12", key: "G12" },
-                          { code: "G 13", key: "G13" },
-                          { code: "G 14", key: "G14" },
-                          { code: "G 15", key: "G15" },
-                          { code: "G 16", key: "G16" },
-                          { code: "G 17", key: "G17" },
-                          { code: "G 18", key: "G18" },
-                          { code: "G 19", key: "G19" },
-                          { code: "G 20", key: "G20" },
-                          { code: "G 21", key: "G21" },
-                          { code: "G 22", key: "G22" },
-                          { code: "G 23", key: "G23" },
-                          { code: "G 24", key: "G24" },
-                          { code: "G 25", key: "G25" },
-                          { code: "G 26", key: "G26" },
-                          { code: "G 27", key: "G27" },
-                          { code: "G 28", key: "G28" },
-                          { code: "G 29", key: "G29" },
-                          { code: "G 30", key: "G30" },
-                          { code: "G 31", key: "G31" },
-                          { code: "G 32", key: "G32" },
-                          { code: "G 33", key: "G33" },
-                          { code: "G 34", key: "G34" },
-                          { code: "G 35", key: "G35" },
-                          { code: "G 36", key: "G36" },
-                          { code: "G 37", key: "G37" },
-                          { code: "G 38", key: "G38" },
-                          { code: "G 39", key: "G39" },
-                          { code: "G 40", key: "G40" },
-                          { code: "G 41", key: "G41" },
-                          { code: "G 42", key: "G42" },
-                          { code: "G 43", key: "G43" },
-                          { code: "G 44", key: "G44" },
-                          { code: "G 45", key: "G45" },
-                          { code: "G 46", key: "G46" },
-                        ].map((item) => (
-                          <div
-                            key={item.code}
-                            className="flex items-start space-x-3 p-2 hover:bg-muted/30 rounded"
-                          >
-                            <input
-                              type="checkbox"
-                              id={item.code.replace(/\s/g, "-")}
-                              className={`w-4 h-4 cursor-pointer mt-1 flex-shrink-0 rounded border-2 transition-all ${selectedGInvestigations.includes(item.code)
-                                ? "border-red-500 bg-red-500 text-white accent-red-500"
-                                : "border-gray-300 hover:border-red-300"
-                                }`}
-                              checked={selectedGInvestigations.includes(
-                                item.code
-                              )}
-                              onChange={() => toggleGInvestigation(item.code)}
-                            />
-                            <label
-                              htmlFor={item.code.replace(/\s/g, "-")}
-                              className={`text-sm cursor-pointer flex-1 transition-colors ${selectedGInvestigations.includes(item.code)
-                                ? "text-foreground font-medium"
-                                : "text-muted-foreground"
-                                }`}
-                            >
-                              <span
-                                className={`font-medium ${selectedGInvestigations.includes(item.code)
-                                  ? "text-red-600"
-                                  : ""
-                                  }`}
-                              >
-                                {item.code}
-                              </span>{" "}
-                              {t(`gcode.${item.key}`)}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex justify-end pt-4 border-t">
-                        <Button onClick={saveGInvestigations}>
-                          <CheckSquare className="w-4 h-4 mr-2" />
-                          {t("gcode.saveButton")}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <MedicalCareTab
+                  selectedGInvestigations={selectedGInvestigations}
+                  toggleGInvestigation={toggleGInvestigation}
+                  toggleSelectAll={toggleSelectAll}
+                  isAllSelected={isAllSelected}
+                  saveGInvestigations={saveGInvestigations}
+                />
               </TabsContent>
 
               {/* Tab 7: API Integration */}
               <TabsContent value="api-integration">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Plug className="w-5 h-5" />
-                      {t("settings.apiIntegration")}
-                    </CardTitle>
-                    <CardDescription>
-                      {t("settings.apiIntegrationDesc")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="api-token">
-                            {t("settings.apiToken")}
-                          </Label>
-                          <div className="flex gap-2 mt-2">
-                            <Input
-                              id="api-token"
-                              type={showApiToken ? "text" : "password"}
-                              value={apiToken || "••••••••••••••••••••••••••••••••"}
-                              readOnly
-                              className="font-mono"
-                            />
-                            {apiToken && (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => setShowApiToken(!showApiToken)}
-                                >
-                                  {showApiToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={copyApiToken}
-                                  title="Copy to clipboard"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              variant="outline"
-                              onClick={generateApiToken}
-                              disabled={isGeneratingToken}
-                            >
-                              {isGeneratingToken ? (
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              ) : (
-                                <RefreshCw className="w-4 h-4 mr-2" />
-                              )}
-                              {t("settings.generateNewToken")}
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {t("settings.apiTokenDesc")}
-                          </p>
-                        </div>
-
-                        <div>
-                          <Label>{t("settings.apiDocumentation")}</Label>
-                          <div className="p-4 border rounded-lg mt-2">
-                            <p className="text-sm mb-2">
-                              {t("settings.baseUrl")}{" "}
-                              <code className="bg-muted px-2 py-1 rounded">
-                                https://api.safe-forward.de/v1
-                              </code>
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {t("settings.apiDocsDesc")}
-                            </p>
-                            <Button
-                              variant="link"
-                              className="px-0 mt-2"
-                              onClick={() => window.open('https://docs.safe-forward.de/api', '_blank')}
-                            >
-                              {t("settings.viewApiDocs")} →
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label>{t("settings.connectedSystems")}</Label>
-                          <div className="rounded-md border mt-2">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>
-                                    {t("settings.systemName")}
-                                  </TableHead>
-                                  <TableHead>{t("common.status")}</TableHead>
-                                  <TableHead>
-                                    {t("settings.lastSync")}
-                                  </TableHead>
-                                  <TableHead className="text-right">
-                                    {t("common.actions")}
-                                  </TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {externalSystems.length === 0 ? (
-                                  <TableRow>
-                                    <TableCell
-                                      colSpan={4}
-                                      className="text-center py-8 text-muted-foreground"
-                                    >
-                                      {t("settings.noSystemsConnected")}
-                                    </TableCell>
-                                  </TableRow>
-                                ) : (
-                                  externalSystems.map((system) => (
-                                    <TableRow key={system.id}>
-                                      <TableCell className="font-medium">
-                                        {system.name}
-                                        <span className="text-xs text-muted-foreground ml-2">
-                                          ({system.system_type})
-                                        </span>
-                                      </TableCell>
-                                      <TableCell>
-                                        <Badge variant={system.status === 'active' ? "default" : "secondary"}>
-                                          {system.status === 'active' ? "Active" : system.status === 'error' ? 'Error' : "Inactive"}
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell>
-                                        {system.last_sync_at
-                                          ? new Date(system.last_sync_at).toLocaleString()
-                                          : "Never"
-                                        }
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-destructive"
-                                          onClick={() => deleteExternalSystem(system.id, system.name)}
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))
-                                )}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end">
-                          <Dialog open={isAddSystemDialogOpen} onOpenChange={setIsAddSystemDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button>
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add External System
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Add External System</DialogTitle>
-                                <DialogDescription>
-                                  Connect an external system for data synchronization.
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div>
-                                  <Label htmlFor="system-name">System Name *</Label>
-                                  <Input
-                                    id="system-name"
-                                    placeholder="e.g., SAP HR, Salesforce"
-                                    value={newSystemForm.name}
-                                    onChange={(e) => setNewSystemForm(prev => ({ ...prev, name: e.target.value }))}
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="system-type">System Type</Label>
-                                  <Select
-                                    value={newSystemForm.type}
-                                    onValueChange={(value) => setNewSystemForm(prev => ({ ...prev, type: value }))}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="webhook">Webhook</SelectItem>
-                                      <SelectItem value="rest_api">REST API</SelectItem>
-                                      <SelectItem value="erp">ERP System</SelectItem>
-                                      <SelectItem value="sap">SAP</SelectItem>
-                                      <SelectItem value="oracle">Oracle ERP</SelectItem>
-                                      <SelectItem value="quickbooks">QuickBooks</SelectItem>
-                                      <SelectItem value="sftp">SFTP</SelectItem>
-                                      <SelectItem value="database">Database</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div>
-                                  <Label htmlFor="system-endpoint">Endpoint URL *</Label>
-                                  <Input
-                                    id="system-endpoint"
-                                    placeholder="https://api.example.com/webhook"
-                                    value={newSystemForm.endpoint}
-                                    onChange={(e) => setNewSystemForm(prev => ({ ...prev, endpoint: e.target.value }))}
-                                  />
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsAddSystemDialogOpen(false)}>
-                                  Cancel
-                                </Button>
-                                <Button onClick={addExternalSystem} disabled={isAddingSystem}>
-                                  {isAddingSystem ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  ) : (
-                                    <Plus className="w-4 h-4 mr-2" />
-                                  )}
-                                  Add System
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ApiIntegrationTab
+                  apiToken={apiToken}
+                  showApiToken={showApiToken}
+                  setShowApiToken={setShowApiToken}
+                  isGeneratingToken={isGeneratingToken}
+                  externalSystems={externalSystems}
+                  isAddSystemDialogOpen={isAddSystemDialogOpen}
+                  setIsAddSystemDialogOpen={setIsAddSystemDialogOpen}
+                  newSystemForm={newSystemForm}
+                  setNewSystemForm={setNewSystemForm}
+                  isAddingSystem={isAddingSystem}
+                  generateApiToken={generateApiToken}
+                  copyApiToken={copyApiToken}
+                  addExternalSystem={addExternalSystem}
+                  deleteExternalSystem={deleteExternalSystem}
+                  testExternalSystem={testExternalSystem}
+                />
               </TabsContent>
 
 
@@ -6886,177 +6308,13 @@ const handleUpdateManager = async (
 
               {/* Tab 9: Support */}
               <TabsContent value="support">
-                <div className="space-y-6">
-                  {/* Submit Ticket Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Headphones className="w-5 h-5" />
-                        Submit a Support Ticket
-                      </CardTitle>
-                      <CardDescription>
-                        Having an issue? Submit a ticket and our team will help you.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label>Category *</Label>
-                            <Select
-                              value={ticketForm.category}
-                              onValueChange={(value) =>
-                                setTicketForm((prev) => ({ ...prev, category: value }))
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="login_issue">Login Issue</SelectItem>
-                                <SelectItem value="payment_error">Payment Error</SelectItem>
-                                <SelectItem value="bug">Bug Report</SelectItem>
-                                <SelectItem value="feature_request">Feature Request</SelectItem>
-                                <SelectItem value="performance">Performance Issue</SelectItem>
-                                <SelectItem value="other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label>Priority</Label>
-                            <Select
-                              value={ticketForm.priority}
-                              onValueChange={(value) =>
-                                setTicketForm((prev) => ({ ...prev, priority: value }))
-                              }
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="low">Low</SelectItem>
-                                <SelectItem value="medium">Medium</SelectItem>
-                                <SelectItem value="high">High</SelectItem>
-                                <SelectItem value="urgent">Urgent</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div>
-                          <Label>Title *</Label>
-                          <Input
-                            placeholder="Brief summary of your issue"
-                            value={ticketForm.title}
-                            onChange={(e) =>
-                              setTicketForm((prev) => ({ ...prev, title: e.target.value }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label>Description *</Label>
-                          <Textarea
-                            placeholder="Please describe your issue in detail. Include any error messages, steps to reproduce, etc."
-                            rows={5}
-                            value={ticketForm.description}
-                            onChange={(e) =>
-                              setTicketForm((prev) => ({ ...prev, description: e.target.value }))
-                            }
-                          />
-                        </div>
-                        <div className="flex justify-end">
-                          <Button onClick={submitTicket} disabled={isSubmittingTicket}>
-                            {isSubmittingTicket ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Submitting...
-                              </>
-                            ) : (
-                              <>
-                                <Send className="w-4 h-4 mr-2" />
-                                Submit Ticket
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* My Tickets Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>My Recent Tickets</CardTitle>
-                      <CardDescription>
-                        Track the status of your submitted tickets
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="rounded-md border">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Title</TableHead>
-                              <TableHead>Category</TableHead>
-                              <TableHead>Priority</TableHead>
-                              <TableHead>Status</TableHead>
-                              <TableHead>Created</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {myTickets.length === 0 ? (
-                              <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                  <Headphones className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                                  No tickets submitted yet
-                                </TableCell>
-                              </TableRow>
-                            ) : (
-                              myTickets.map((ticket) => (
-                                <TableRow key={ticket.id}>
-                                  <TableCell className="font-medium">{ticket.title}</TableCell>
-                                  <TableCell>
-                                    <Badge variant="outline">
-                                      {ticket.category?.replace("_", " ")}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge
-                                      variant={
-                                        ticket.priority === "urgent"
-                                          ? "destructive"
-                                          : ticket.priority === "high"
-                                            ? "default"
-                                            : "secondary"
-                                      }
-                                    >
-                                      {ticket.priority}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Badge
-                                      variant={
-                                        ticket.status === "open"
-                                          ? "destructive"
-                                          : ticket.status === "in_progress"
-                                            ? "secondary"
-                                            : "default"
-                                      }
-                                    >
-                                      {ticket.status?.replace("_", " ")}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>
-                                    {new Date(ticket.created_at).toLocaleDateString()}
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                <SupportTab
+                  ticketForm={ticketForm}
+                  setTicketForm={setTicketForm}
+                  isSubmittingTicket={isSubmittingTicket}
+                  myTickets={myTickets}
+                  submitTicket={submitTicket}
+                />
               </TabsContent>
             </Tabs>
           </div>
