@@ -194,7 +194,7 @@ const printStyles = `
 `;
 
 export default function RiskAssessments() {
-  const { user, loading, companyId } = useAuth();
+  const { user, loading, companyId, userRole } = useAuth();
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
