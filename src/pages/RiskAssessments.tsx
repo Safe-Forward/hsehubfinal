@@ -215,7 +215,6 @@ export default function RiskAssessments() {
   const [rejectionComment, setRejectionComment] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentManagers, setDepartmentManagers] = useState<any[]>([]);
-  const [currentEmployeeId, setCurrentEmployeeId] = useState<string | null>(null);
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [formStep, setFormStep] = useState(1);
@@ -333,7 +332,6 @@ export default function RiskAssessments() {
         riskCategoriesRes,
         measureBuildingBlocksRes,
         deptManagersRes,
-        currentEmpRes,
       ] = await Promise.all([
         supabase
           .from("risk_assessments")
@@ -374,15 +372,10 @@ export default function RiskAssessments() {
           .order("name"),
         (supabase as any)
           .from("department_managers")
-          .select("department_id, manager_employee_id")
+          .select("department_id, manager_user_id")
           .eq("company_id", companyId)
           .eq("manager_type", "line"),
-        (supabase as any)
-          .from("employees")
-          .select("id")
-          .eq("company_id", companyId)
-          .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-          .maybeSingle(),
+
       ]);
 
       if (risksRes.error) throw risksRes.error;
@@ -413,7 +406,6 @@ export default function RiskAssessments() {
       setDepartments(departmentsRes.data || []);
       setExposureGroups(exposureGroupsRes.data || []);
       setDepartmentManagers(deptManagersRes?.data || []);
-      setCurrentEmployeeId(currentEmpRes?.data?.id || null);
 
       const hazardCategoriesFromDb = (riskCategoriesRes.data || [])
         .map((item) => item.name)
@@ -866,7 +858,7 @@ export default function RiskAssessments() {
     // No manager assigned for this department → fallback to admin
     if (deptManagers.length === 0) return isAdmin;
     // Check if current user is the department manager
-    return !!currentEmployeeId && deptManagers.some(dm => dm.manager_employee_id === currentEmployeeId);
+    return !!user?.id && deptManagers.some(dm => dm.manager_user_id === user?.id);
   };
 
   const filteredRisks = risks.filter((r) => {
@@ -2083,14 +2075,8 @@ export default function RiskAssessments() {
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
-                            {/* Pencil — editable only when not approved */}
                             {risk.approval_status !== "approved" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => loadRiskForEdit(risk)}
-                              >
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => loadRiskForEdit(risk)}>
                                 <Pencil className="w-4 h-4" />
                               </Button>
                             )}

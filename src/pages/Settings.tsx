@@ -170,7 +170,8 @@ export default function Settings() {
   const [auditCategories, setAuditCategories] = useState<any[]>([]);
   const [measureBuildingBlocks, setMeasureBuildingBlocks] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
-  const [deptManagers, setDeptManagers] = useState<Record<string, string>>({}); // dept_id → employee_id
+  const [deptManagers, setDeptManagers] = useState<Record<string, string>>({}); // dept_id → manager_user_id
+  const [deptManagerSearch, setDeptManagerSearch] = useState<Record<string, string>>({}); // dept_id → search query
   const [profileFieldTemplates, setProfileFieldTemplates] = useState<any[]>([]);
   const [selectedProfileTemplateId, setSelectedProfileTemplateId] = useState<string | null>(null);
   const [templateFields, setTemplateFields] = useState<any[]>([]);
@@ -851,12 +852,12 @@ const handleUpdateManager = async (
       if (companyId) {
         const { data: dmData } = await (supabase as any)
           .from("department_managers")
-          .select("department_id, manager_employee_id")
+          .select("department_id, manager_user_id")
           .eq("company_id", companyId)
           .eq("manager_type", "line");
         if (dmData) {
           const dmMap: Record<string, string> = {};
-          dmData.forEach((dm: any) => { dmMap[dm.department_id] = dm.manager_employee_id; });
+          dmData.forEach((dm: any) => { if (dm.manager_user_id) dmMap[dm.department_id] = dm.manager_user_id; });
           setDeptManagers(dmMap);
         }
       }
@@ -4099,15 +4100,15 @@ const handleUpdateManager = async (
                                       <Select
                                         value={deptManagers[dept.id] || "__none__"}
                                         onValueChange={async (val) => {
-                                          const empId = val === "__none__" ? null : val;
-                                          if (empId) {
+                                          const userId = val === "__none__" ? null : val;
+                                          if (userId) {
                                             await (supabase as any)
                                               .from("department_managers")
                                               .upsert(
-                                                { department_id: dept.id, manager_employee_id: empId, company_id: companyId, manager_type: "line" },
+                                                { department_id: dept.id, manager_user_id: userId, manager_employee_id: null, company_id: companyId, manager_type: "line" },
                                                 { onConflict: "department_id,company_id,manager_type" }
                                               );
-                                            setDeptManagers(prev => ({ ...prev, [dept.id]: empId }));
+                                            setDeptManagers(prev => ({ ...prev, [dept.id]: userId }));
                                           } else {
                                             await (supabase as any)
                                               .from("department_managers")
@@ -4117,19 +4118,44 @@ const handleUpdateManager = async (
                                               .eq("manager_type", "line");
                                             setDeptManagers(prev => { const n = { ...prev }; delete n[dept.id]; return n; });
                                           }
+                                          setDeptManagerSearch(prev => ({ ...prev, [dept.id]: "" }));
                                           toast({ title: "Gespeichert", description: "Abteilungsleiter aktualisiert" });
                                         }}
                                       >
-                                        <SelectTrigger className="w-[200px] h-8 text-xs">
-                                          <SelectValue placeholder="— Kein Leiter —" />
+                                        <SelectTrigger className="w-[220px] h-8 text-xs">
+                                          <SelectValue placeholder="— Kein Leiter —">
+                                            {deptManagers[dept.id]
+                                              ? (() => {
+                                                  const m = teamMembers.find(tm => tm.user_id === deptManagers[dept.id]);
+                                                  return m ? `${m.first_name} ${m.last_name}` : "Unbekannt";
+                                                })()
+                                              : "— Kein Leiter —"}
+                                          </SelectValue>
                                         </SelectTrigger>
                                         <SelectContent>
+                                          <div className="px-2 pb-1 pt-1">
+                                            <input
+                                              className="w-full h-7 px-2 text-xs border rounded bg-background"
+                                              placeholder="Suchen..."
+                                              value={deptManagerSearch[dept.id] || ""}
+                                              onChange={e => setDeptManagerSearch(prev => ({ ...prev, [dept.id]: e.target.value }))}
+                                              onClick={e => e.stopPropagation()}
+                                              onKeyDown={e => e.stopPropagation()}
+                                            />
+                                          </div>
                                           <SelectItem value="__none__">— Kein Leiter —</SelectItem>
-                                          {employees.map((emp) => (
-                                            <SelectItem key={emp.id} value={emp.id}>
-                                              {emp.full_name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || emp.email}
-                                            </SelectItem>
-                                          ))}
+                                          {teamMembers
+                                            .filter(tm => {
+                                              const q = (deptManagerSearch[dept.id] || "").toLowerCase();
+                                              if (!q) return true;
+                                              return `${tm.first_name} ${tm.last_name} ${tm.email}`.toLowerCase().includes(q);
+                                            })
+                                            .map((tm) => (
+                                              <SelectItem key={tm.user_id || tm.id} value={tm.user_id || tm.id}>
+                                                {tm.first_name} {tm.last_name}
+                                                <span className="text-muted-foreground ml-1 text-xs">· {tm.role}</span>
+                                              </SelectItem>
+                                            ))}
                                         </SelectContent>
                                       </Select>
                                     </TableCell>
