@@ -695,7 +695,7 @@ export default function RiskAssessments() {
       const { error } = await (supabase as any)
         .from("risk_assessments")
         .update({
-          approval_status: "pending_review",
+          approval_status: "pending_approval",
           submitted_at: new Date().toISOString(),
           submitted_by: user?.id,
         })
@@ -777,7 +777,7 @@ export default function RiskAssessments() {
     switch (status) {
       case "approved":
         return { label: "Freigegeben", variant: "default" as const, className: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" };
-      case "pending_review":
+      case "pending_approval":
         return { label: "In Prüfung", variant: "outline" as const, className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300" };
       case "rejected":
         return { label: "Abgelehnt", variant: "destructive" as const, className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" };
@@ -1815,7 +1815,7 @@ export default function RiskAssessments() {
                   <SelectContent>
                     <SelectItem value="all">Alle Status</SelectItem>
                     <SelectItem value="draft">Entwurf</SelectItem>
-                    <SelectItem value="pending_review">In Prüfung</SelectItem>
+                    <SelectItem value="pending_approval">In Prüfung</SelectItem>
                     <SelectItem value="approved">Freigegeben</SelectItem>
                     <SelectItem value="rejected">Abgelehnt</SelectItem>
                   </SelectContent>
@@ -1823,7 +1823,7 @@ export default function RiskAssessments() {
               </div>
               {/* Status summary pills */}
               <div className="flex gap-2 flex-wrap text-xs">
-                {["draft","pending_review","approved","rejected"].map((s) => {
+                {["draft","pending_approval","approved","rejected"].map((s) => {
                   const count = risks.filter(r => (r.approval_status || "draft") === s).length;
                   if (count === 0) return null;
                   const cfg = getApprovalStatusBadge(s);
@@ -1998,8 +1998,8 @@ export default function RiskAssessments() {
                                 Einreichen
                               </Button>
                             )}
-                            {/* Approve/Reject — only for pending_review and if canApprove */}
-                            {risk.approval_status === "pending_review" && canApprove && (
+                            {/* Approve/Reject — only for pending_approval and if canApprove */}
+                            {risk.approval_status === "pending_approval" && canApprove && (
                               <>
                                 <Button variant="outline" size="sm" className="text-xs h-7 text-green-700 border-green-300 hover:bg-green-50"
                                   onClick={() => { setSelectedRisk(risk); setIsApprovalDialogOpen(true); }}>
