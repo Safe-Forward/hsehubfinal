@@ -201,6 +201,7 @@ export default function EmployeeProfile() {
   const [selectedNoteVisibility, setSelectedNoteVisibility] = useState<string>("");
   const [notifPrefs, setNotifPrefs] = useState<Record<string, {in_app_enabled: boolean; email_enabled: boolean}>>({});
   const [userProfile, setUserProfile] = useState<any>(null); // Store logged-in user's profile
+  const [linkedTeamMember, setLinkedTeamMember] = useState<any>(null); // Team member linked via user_id
 
   // Task enhancement states
   const [newTaskDueDate, setNewTaskDueDate] = useState<Date | undefined>(
@@ -351,6 +352,7 @@ export default function EmployeeProfile() {
 fetchProfileFields();
       fetchProfileFieldTemplates();
       fetchTeamMembers();
+      fetchLinkedTeamMember();
       fetchUserProfile(); // Fetch logged-in user's profile for note authorship
       fetchNotifPrefs();
       fetchEmployeeCourses();
@@ -846,6 +848,52 @@ const fetchGInvestigations = async () => {
     } catch (error) {
       console.error("Error fetching team members:", error);
       setTeamMembers([]);
+    }
+  };
+
+  const fetchLinkedTeamMember = async () => {
+    if (!companyId || !id) return;
+    try {
+      // Get the employee's user_id first
+      const { data: empData, error: empError } = await supabase
+        .from("employees")
+        .select("user_id")
+        .eq("id", id)
+        .single();
+
+      if (empError || !empData?.user_id) {
+        setLinkedTeamMember(null);
+        return;
+      }
+
+      // Find team member with the same user_id
+      const { data: tmData, error: tmError } = await supabase
+        .from("team_members")
+        .select("*")
+        .eq("company_id", companyId)
+        .eq("user_id", empData.user_id)
+        .maybeSingle();
+
+      if (tmError || !tmData) {
+        setLinkedTeamMember(null);
+        return;
+      }
+
+      // If there's a line_manager_id, fetch the manager's name
+      if (tmData.line_manager_id) {
+        const { data: managerData } = await supabase
+          .from("team_members")
+          .select("first_name, last_name, role")
+          .eq("id", tmData.line_manager_id)
+          .single();
+
+        setLinkedTeamMember({ ...tmData, line_manager: managerData || null });
+      } else {
+        setLinkedTeamMember({ ...tmData, line_manager: null });
+      }
+    } catch (error) {
+      console.error("Error fetching linked team member:", error);
+      setLinkedTeamMember(null);
     }
   };
 
@@ -3779,6 +3827,55 @@ p_sender_name: senderName,
 
               {/* Right Column - Tasks & Notes */}
               <div className="lg:col-span-1 space-y-6">
+                {/* Team Member Info Panel */}
+                {linkedTeamMember && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Users className="w-4 h-4" />
+                        Team-Rolle
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm shrink-0">
+                          {(linkedTeamMember.first_name?.[0] ?? "")}
+                          {(linkedTeamMember.last_name?.[0] ?? "")}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {linkedTeamMember.first_name} {linkedTeamMember.last_name}
+                          </p>
+                          <Badge variant="outline" className="text-xs mt-0.5">
+                            {linkedTeamMember.role}
+                          </Badge>
+                        </div>
+                      </div>
+                      {linkedTeamMember.line_manager && (
+                        <div className="border-t pt-3 text-sm">
+                          <span className="text-muted-foreground text-xs uppercase tracking-wide font-medium">
+                            Vorgesetzter
+                          </span>
+                          <p className="mt-0.5 font-medium">
+                            {linkedTeamMember.line_manager.first_name}{" "}
+                            {linkedTeamMember.line_manager.last_name}
+                          </p>
+                          {linkedTeamMember.line_manager.role && (
+                            <p className="text-xs text-muted-foreground">
+                              {linkedTeamMember.line_manager.role}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {!linkedTeamMember.line_manager_id && (
+                        <p className="text-xs text-muted-foreground border-t pt-2">
+                          Kein Vorgesetzter zugeordnet
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Tasks Section */}
                 <Card>
                   <CardHeader>
