@@ -218,6 +218,7 @@ export default function RiskAssessments() {
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [formStep, setFormStep] = useState(1);
+  const [editingRiskId, setEditingRiskId] = useState<string | null>(null);
   const [editableNotes, setEditableNotes] = useState("");
   const [hazardCategories, setHazardCategories] = useState<string[]>(
     DEFAULT_HAZARD_CATEGORIES
@@ -569,81 +570,97 @@ export default function RiskAssessments() {
 
       console.log("Inserting risk assessment with data:", insertData);
 
-      // Insert risk assessment
-      const { data: createdData, error } = await supabase
-        .from("risk_assessments")
-        .insert([insertData])
-        .select("id");
+      if (editingRiskId) {
+        // UPDATE mode
+        const { error: updateError } = await (supabase as any)
+          .from("risk_assessments")
+          .update({
+            title: insertData.title,
+            description: insertData.description,
+            department_id: insertData.department_id,
+            location_id: insertData.location_id,
+            exposure_group_id: insertData.exposure_group_id,
+            line_manager_id: insertData.line_manager_id,
+            hazard_category: insertData.hazard_category,
+            probability_before: insertData.probability_before,
+            probability_after: insertData.probability_after,
+            extent_damage_before: insertData.extent_damage_before,
+            extent_damage_after: insertData.extent_damage_after,
+            risk_level: insertData.risk_level,
+            risk_matrix_label: insertData.risk_matrix_label,
+            mitigation_measures: insertData.mitigation_measures,
+            notes: insertData.notes,
+            assessment_date: insertData.assessment_date,
+          })
+          .eq("id", editingRiskId);
 
-      if (error) {
-        console.error("Risk create error:", error);
-        console.error("Error details:", JSON.stringify(error, null, 2));
-        console.error("Error code:", error.code);
-        console.error("Error hint:", error.hint);
-        console.error("Error details property:", error.details);
-        toast({
-          title: "Error creating risk assessment",
-          description: error.message || "An error occurred while creating the assessment",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const created = createdData && createdData.length > 0 ? createdData[0] : null;
-
-      if (!created) {
-        console.error("No data returned after insert");
-        toast({
-          title: "Error",
-          description: "Risk assessment was not created properly",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Insert measures
-      const validMeasures = measures.filter((m) => m.measure_building_block);
-      console.log("Valid measures to insert:", validMeasures);
-
-      if (created && validMeasures.length > 0) {
-        const measuresData = validMeasures.map((m) => ({
-          risk_assessment_id: created.id,
-          company_id: companyId,
-          measure_building_block: m.measure_building_block,
-          responsible_person: m.responsible_person && m.responsible_person.trim() !== "" && m.responsible_person !== "__none__" ? m.responsible_person : null,
-          due_date: m.due_date && m.due_date.trim() !== "" ? m.due_date : null,
-          progress_status: m.progress_status || "not_started",
-          notes: m.notes && m.notes.trim() !== "" ? m.notes : null,
-        }));
-
-        console.log("Measures data to insert:", measuresData);
-
-        const { error: measuresError } = await supabase
-          .from("risk_assessment_measures")
-          .insert(measuresData);
-
-        if (measuresError) {
-          console.error("Measures create error:", measuresError);
-          toast({
-            title: "Warning",
-            description:
-              "Risk assessment created but some measures failed to save.",
-            variant: "destructive",
-          });
-        } else {
-          console.log("Measures inserted successfully");
+        if (updateError) {
+          toast({ title: "Fehler", description: updateError.message, variant: "destructive" });
+          return;
         }
-      } else {
-        console.log("No valid measures to insert");
-      }
 
-      toast({
-        title: "Success",
-        description: "Risk assessment created successfully",
-      });
-      setIsDialogOpen(false);
-      resetForm();
-      fetchData();
+        // Replace measures: delete old, insert new
+        await supabase.from("risk_assessment_measures").delete().eq("risk_assessment_id", editingRiskId);
+        const validMeasures = measures.filter((m) => m.measure_building_block);
+        if (validMeasures.length > 0) {
+          await supabase.from("risk_assessment_measures").insert(
+            validMeasures.map((m) => ({
+              risk_assessment_id: editingRiskId,
+              company_id: companyId,
+              measure_building_block: m.measure_building_block,
+              responsible_person: m.responsible_person && m.responsible_person !== "__none__" ? m.responsible_person : null,
+              due_date: m.due_date || null,
+              progress_status: m.progress_status || "not_started",
+              notes: m.notes || null,
+            }))
+          );
+        }
+
+        toast({ title: "Gespeichert", description: "GBU wurde aktualisiert." });
+        setEditingRiskId(null);
+        setIsDialogOpen(false);
+        resetForm();
+        fetchData();
+      } else {
+        // INSERT mode
+        const { data: createdData, error } = await supabase
+          .from("risk_assessments")
+          .insert([insertData])
+          .select("id");
+
+        if (error) {
+          toast({ title: "Error creating risk assessment", description: error.message || "An error occurred", variant: "destructive" });
+          return;
+        }
+
+        const created = createdData && createdData.length > 0 ? createdData[0] : null;
+        if (!created) {
+          toast({ title: "Error", description: "Risk assessment was not created properly", variant: "destructive" });
+          return;
+        }
+
+        const validMeasures = measures.filter((m) => m.measure_building_block);
+        if (validMeasures.length > 0) {
+          const measuresData = validMeasures.map((m) => ({
+            risk_assessment_id: created.id,
+            company_id: companyId,
+            measure_building_block: m.measure_building_block,
+            responsible_person: m.responsible_person && m.responsible_person !== "__none__" ? m.responsible_person : null,
+            due_date: m.due_date || null,
+            progress_status: m.progress_status || "not_started",
+            notes: m.notes || null,
+          }));
+          const { error: measuresError } = await supabase.from("risk_assessment_measures").insert(measuresData);
+          if (measuresError) {
+            toast({ title: "Warning", description: "Assessment created but some measures failed to save.", variant: "destructive" });
+          }
+        }
+
+        toast({ title: "Success", description: "Risk assessment created successfully" });
+        setIsDialogOpen(false);
+        resetForm();
+        fetchData();
+      }
     } catch (err: unknown) {
       console.error("Unexpected error creating risk assessment:", err);
       const e = err as { message?: string } | Error | null;
@@ -655,6 +672,41 @@ export default function RiskAssessments() {
         variant: "destructive",
       });
     }
+  };
+
+  const loadRiskForEdit = (risk: any) => {
+    setEditingRiskId(risk.id);
+    setFormData({
+      title: risk.title || "",
+      description: risk.description || "",
+      department_id: risk.department_id || "__none__",
+      location_id: risk.location_id || "__none__",
+      exposure_group_id: risk.exposure_group_id || "__none__",
+      line_manager_id: risk.line_manager_id || "__none__",
+      hazard_category: risk.hazard_category || "",
+      probability_before: risk.probability_before || 3,
+      probability_after: risk.probability_after || 2,
+      extent_damage_before: risk.extent_damage_before || 3,
+      extent_damage_after: risk.extent_damage_after || 2,
+      risk_matrix_label: risk.risk_matrix_label || "",
+      mitigation_measures: risk.mitigation_measures || "",
+      notes: risk.notes || "",
+      assessment_date: risk.assessment_date || new Date().toISOString().split("T")[0],
+    });
+    setMeasures(
+      risk.measures?.length > 0
+        ? risk.measures.map((m: any) => ({
+            id: m.id,
+            measure_building_block: m.measure_building_block || "",
+            responsible_person: m.responsible_person || "__none__",
+            due_date: m.due_date || "",
+            progress_status: m.progress_status || "not_started",
+            notes: m.notes || "",
+          }))
+        : [{ measure_building_block: "", responsible_person: "__none__", due_date: "", progress_status: "not_started", notes: "" }]
+    );
+    setFormStep(1);
+    setIsDialogOpen(true);
   };
 
   const resetForm = () => {
@@ -885,7 +937,7 @@ export default function RiskAssessments() {
                   <FileDown className="w-4 h-4 mr-2" />
                   {language === "de" ? "PDF Export" : "Export PDF"}
                 </Button>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingRiskId(null); resetForm(); } }}>
                   <DialogTrigger asChild>
                     <Button className="whitespace-nowrap">
                       <Plus className="w-4 h-4 mr-2" />
@@ -896,7 +948,7 @@ export default function RiskAssessments() {
                   </DialogTrigger>
                   <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>{t("risks.new")}</DialogTitle>
+                      <DialogTitle>{editingRiskId ? "GBU bearbeiten" : t("risks.new")}</DialogTitle>
                       <DialogDescription>
                         {t("risks.subtitle")}
                       </DialogDescription>
@@ -1899,7 +1951,7 @@ export default function RiskAssessments() {
                         ? "Bewertungsdatum"
                         : "Assessment Date"}
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">
+                    <TableHead className="whitespace-nowrap text-center">
                       {language === "de" ? "Aktionen" : "Actions"}
                     </TableHead>
                   </TableRow>
@@ -2028,10 +2080,23 @@ export default function RiskAssessments() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {/* Pencil — editable only when not approved */}
+                            {risk.approval_status !== "approved" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => loadRiskForEdit(risk)}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            )}
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="h-8 w-8 p-0"
                             onClick={async () => {
                               if (confirm(
                                 language === "de"
@@ -2093,6 +2158,7 @@ export default function RiskAssessments() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
