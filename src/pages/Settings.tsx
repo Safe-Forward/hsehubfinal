@@ -98,7 +98,7 @@ import { UserRolesTab } from "@/components/settings/tabs/UserRolesTab";
 import { MedicalCareTab } from "@/components/settings/tabs/MedicalCareTab";
 import { ApiIntegrationTab } from "@/components/settings/tabs/ApiIntegrationTab";
 import { SupportTab } from "@/components/settings/tabs/SupportTab";
-import { OrgChartTab } from "@/components/settings/OrgChartTab";
+import OrgChartTab from "@/components/settings/OrgChartTab";
 import {
   CustomRole,
   PermissionCategory,
@@ -3764,7 +3764,7 @@ const handleUpdateManager = async (
                   </Card>
 
                   {/* Org Chart Visualization */}
-                  <OrgChartTab companyId={companyId} />
+                  <OrgChartTab />
                 </div>
               </TabsContent>
 

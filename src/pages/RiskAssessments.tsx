@@ -682,10 +682,6 @@ export default function RiskAssessments() {
   };
 
 
-  const filteredRisks = risks.filter((risk) =>
-    risk.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   if (loading || loadingData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
