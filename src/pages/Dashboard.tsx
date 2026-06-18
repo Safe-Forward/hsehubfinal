@@ -34,8 +34,14 @@ import {
   ListTodo,
   BarChart,
   TrendingUp,
+  TrendingDown,
   Bell,
   SlidersHorizontal,
+  Plus,
+  ClipboardList,
+  UserPlus,
+  Zap,
+  XCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -77,7 +83,8 @@ export default function Dashboard() {
   const { logError } = useAuditLog();
   const { t } = useLanguage();
   const navigate = useNavigate();
-const [stats, setStats] = useState({
+
+  const [stats, setStats] = useState({
     employees: 0,
     riskAssessments: 0,
     audits: 0,
@@ -90,6 +97,9 @@ const [stats, setStats] = useState({
     overdueMeasures: 0,
     upcomingCheckups: 0,
     trainingCompletionRate: 0,
+    // For context labels
+    totalMeasures: 0,
+    overdueCheckups: 0,
   });
 
   const [investigationStats, setInvestigationStats] = useState<any[]>([]);
@@ -101,6 +111,9 @@ const [stats, setStats] = useState({
   // Customizable KPI cards
   const [visibleKpis, setVisibleKpis] = useState<string[]>(DEFAULT_KPI_IDS);
   const [kpiSettingsOpen, setKpiSettingsOpen] = useState(false);
+
+  // Overdue measures older than 30 days (for critical warnings)
+  const [oldOverdueMeasures, setOldOverdueMeasures] = useState(0);
 
   useEffect(() => {
     try {
@@ -131,8 +144,6 @@ const [stats, setStats] = useState({
       if (user?.email && companyId) {
         console.log("🔍 Looking up Employee ID for:", user.email, "Company:", companyId);
 
-        // Find employee by email and company_id (Reliable fallback since auth_user_id column might not exist)
-        // Use ilike for case-insensitive matching
         const { data: empByEmail, error } = await supabase
           .from("employees")
           .select("id, full_name")
@@ -149,7 +160,6 @@ const [stats, setStats] = useState({
           setCurrentEmployeeId(empByEmail.id);
           setCurrentEmployeeName(empByEmail.full_name);
         } else {
-          // Fallback 1: case-insensitive email match
           const { data: empByEmailInsen } = await supabase
             .from("employees")
             .select("id, full_name")
@@ -162,7 +172,6 @@ const [stats, setStats] = useState({
             setCurrentEmployeeId(empByEmailInsen.id);
             setCurrentEmployeeName(empByEmailInsen.full_name);
           } else {
-            // Fallback 2: match by auth user_id stored in employees.user_id column
             console.log("⚠️ Email lookup failed — trying auth user_id fallback for:", user.id);
             const { data: empByUserId } = await supabase
               .from("employees")
@@ -176,7 +185,6 @@ const [stats, setStats] = useState({
               setCurrentEmployeeId(empByUserId.id);
               setCurrentEmployeeName(empByUserId.full_name);
             } else {
-              // Fallback 3: look up team_members table by user_id
               console.log("⚠️ Not in employees table — trying team_members by user_id...");
               const { data: memberByUserId } = await supabase
                 .from("team_members")
@@ -190,7 +198,6 @@ const [stats, setStats] = useState({
                 console.log("✅ Found in team_members (by user_id):", fullName);
                 setCurrentEmployeeName(fullName);
               } else {
-                // Fallback 4: look up team_members by email
                 const { data: memberByEmail } = await supabase
                   .from("team_members")
                   .select("id, first_name, last_name")
@@ -204,7 +211,6 @@ const [stats, setStats] = useState({
                   setCurrentEmployeeName(fullName);
                 } else {
                   console.warn("⚠️ No profile found in employees or team_members. Showing broadcast tasks only.");
-                  // Sentinel "" triggers fetchTasks to at least show broadcast tasks
                   setCurrentEmployeeName("");
                 }
               }
@@ -236,7 +242,6 @@ const [stats, setStats] = useState({
   useEffect(() => {
     if (!companyId || userRole === "super_admin") return;
 
-    // Keep top stat cards in sync with inserts/updates/deletes.
     const statTables = [
       "employees",
       "training_records",
@@ -264,7 +269,6 @@ const [stats, setStats] = useState({
         .subscribe()
     );
 
-    // Fallback refresh in case realtime is unavailable in some environments.
     const refreshInterval = window.setInterval(() => {
       fetchStats();
     }, 60000);
@@ -278,8 +282,6 @@ const [stats, setStats] = useState({
   }, [companyId, userRole]);
 
   useEffect(() => {
-    // Re-fetch tasks whenever employee identity resolves (currentEmployeeName becomes
-    // a string — even "" means "lookup finished, no profile found, show broadcast only")
     if (companyId && userRole !== "super_admin" && currentEmployeeName !== null) {
       fetchTasks();
     }
@@ -289,7 +291,6 @@ const [stats, setStats] = useState({
     if (!companyId) return;
 
     try {
-// Fetch counts for key tables and compute compliance rate
       const [employeesRes, risksRes, auditsRes, tasksRes, auditProgressRes] =
         await Promise.all([
           supabase
@@ -308,7 +309,6 @@ const [stats, setStats] = useState({
             .from("tasks")
             .select("id", { count: "exact", head: true })
             .eq("company_id", companyId),
-          // audit checklist progress for compliance calculation
           supabase
             .from("audits")
             .select("total_items, completed_items")
@@ -330,23 +330,43 @@ const [stats, setStats] = useState({
           ? Math.round((completedItemsSum / totalItemsSum) * 100)
           : 0;
 
-      // Calculate overdue obligations
       const overdueObligations = await fetchOverdueObligations();
-
-      // Calculate recent incidents (last 7 days)
       const recentIncidents = await fetchRecentIncidents();
-
-      // Calculate recent hazards (last 7 days)
       const recentHazards = await fetchRecentHazards();
-
-      // Calculate open/overdue measures
       const measuresStats = await fetchMeasuresStats();
-
-      // Calculate upcoming health checkups (next 30 days)
       const upcomingCheckups = await fetchUpcomingCheckups();
-
-      // Calculate training completion rate
       const trainingCompletionRate = await fetchTrainingCompletionRate();
+
+      // Fetch overdue measures older than 30 days for critical warnings
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+      const { count: oldOverdueCount } = await supabase
+        .from("measures")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .neq("status", "completed")
+        .lt("due_date", thirtyDaysAgoStr);
+      setOldOverdueMeasures(oldOverdueCount || 0);
+
+      // Overdue checkups count for context
+      const today = new Date().toISOString().split("T")[0];
+      const [overdueCheckupsByDue, overdueCheckupsByAppt] = await Promise.all([
+        supabase
+          .from("health_checkups")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .in("status", ["open", "planned"])
+          .lt("due_date", today),
+        supabase
+          .from("health_checkups")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .in("status", ["open", "planned"])
+          .is("due_date", null)
+          .lt("appointment_date", today),
+      ]);
+      const overdueCheckups = (overdueCheckupsByDue.count || 0) + (overdueCheckupsByAppt.count || 0);
 
       setStats({
         employees: employeesRes.count || 0,
@@ -361,6 +381,8 @@ const [stats, setStats] = useState({
         overdueMeasures: measuresStats.overdue,
         upcomingCheckups,
         trainingCompletionRate,
+        totalMeasures: measuresStats.open,
+        overdueCheckups,
       });
     } catch (error) {
       console.error("Error fetching stats:", error);
@@ -373,7 +395,6 @@ const [stats, setStats] = useState({
     try {
       const today = new Date().toISOString().split("T")[0];
 
-      // Count expired trainings, overdue measures, and overdue health checkups.
       const [
         expiredTrainings,
         overdueMeasures,
@@ -432,9 +453,8 @@ const [stats, setStats] = useState({
     try {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      sevenDaysAgo.setHours(0, 0, 0, 0); // Start of day
+      sevenDaysAgo.setHours(0, 0, 0, 0);
 
-      // Use date-only format (YYYY-MM-DD) for comparison to avoid timezone issues
       const dateString = sevenDaysAgo.toISOString().split("T")[0];
 
       const { count, error } = await supabase
@@ -462,7 +482,6 @@ const [stats, setStats] = useState({
       console.log("=== Fetching Investigation Stats ===");
       console.log("Company ID:", companyId);
 
-      // Fetch ONLY health checkups as per user requirement (ignoring 'investigations' table)
       const { data: checkupsData, error: checkupsError } = await supabase
         .from("health_checkups")
         .select("id, status")
@@ -472,10 +491,6 @@ const [stats, setStats] = useState({
 
       console.log("✅ Health checkups fetched:", checkupsData?.length || 0);
 
-      // Mock investigations result to keep existing logic structure temporarily (or rewrite below)
-      // Actually, better to rewrite the processing logic here.
-
-      // Initialize status counts
       const statusCounts = {
         open: 0,
         planned: 0,
@@ -503,20 +518,14 @@ const [stats, setStats] = useState({
         { status: "Done", count: statusCounts.done, color: "#10b981", percent: statusCounts.done / (total || 1) },
       ]);
 
-      return; // Early return to skip the old logic below
+      return;
     } catch (error) {
       console.error("Error fetching investigation stats:", error);
     }
   };
 
-
-
   const fetchTasks = async () => {
     if (!companyId) return;
-
-    // No guard here — even users without a linked employee profile
-    // should see broadcast tasks (tasks with no @mention).
-    // The client-side filter below handles all cases correctly.
 
     try {
       let query = supabase
@@ -539,18 +548,11 @@ const [stats, setStats] = useState({
         )
         .eq("company_id", companyId);
 
-      // Apply status filter based on dropdown selection
       if (taskStatusFilter === "upcoming") {
         query = query.in("status", ["pending", "in_progress"]);
       } else if (taskStatusFilter === "completed") {
         query = query.eq("status", "completed");
       }
-
-      // Task visibility logic (evaluated CLIENT-SIDE after fetch):
-      // Broadcast  → neither title nor description has any @  → everyone sees it
-      // Mentioned  → title OR description contains @TheirName   → only that person
-      // Assigned   → assigned_to = their employee ID           → always visible
-      // Admin/SA   → see everything (no filter applied)
 
       const { data: rawData, error } = await query
         .order("due_date", { ascending: true, nullsFirst: false })
@@ -564,14 +566,10 @@ const [stats, setStats] = useState({
 
       let filteredData = rawData || [];
 
-      // Dashboard = persönliche Aufgabenliste.
-      // Jeder sieht nur Tasks die ihm zugewiesen sind (assigned_to = eigene employee.id).
-      // Aufgaben anderer Mitarbeiter werden über die Mitarbeiterprofile eingesehen.
       filteredData = currentEmployeeId
         ? filteredData.filter((task: any) => task.assigned_to === currentEmployeeId)
         : [];
 
-      // Keep limit at 20 after client-side filter
       filteredData = filteredData.slice(0, 20);
 
       console.log("Fetched tasks data:", filteredData);
@@ -596,14 +594,13 @@ const [stats, setStats] = useState({
 
       if (error) throw error;
 
-      // Refresh tasks
       await fetchTasks();
     } catch (error) {
       console.error("Error updating task status:", error);
     }
   };
 
-const fetchRecentHazards = async (): Promise<number> => {
+  const fetchRecentHazards = async (): Promise<number> => {
     if (!companyId) return 0;
 
     try {
@@ -741,7 +738,7 @@ const fetchRecentHazards = async (): Promise<number> => {
     );
   }
 
-const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "super_admin":
         return "destructive";
@@ -752,55 +749,162 @@ const getRoleBadgeVariant = (role: string) => {
     }
   };
 
-const kpiConfig: { [key: string]: { title: string; value: string | number; subtitle?: string; icon: any; gradient: string } } = {
+  // ─── Critical warnings logic ───────────────────────────────────────────────
+  const criticalWarnings: { label: string; count: number; link: string }[] = [];
+  if (stats.overdueCheckups > 0) {
+    criticalWarnings.push({
+      label: `${stats.overdueCheckups} überfällige Untersuchung${stats.overdueCheckups !== 1 ? "en" : ""}`,
+      count: stats.overdueCheckups,
+      link: "/health-checkups",
+    });
+  }
+  if (oldOverdueMeasures > 0) {
+    criticalWarnings.push({
+      label: `${oldOverdueMeasures} offene Maßnahme${oldOverdueMeasures !== 1 ? "n" : ""} älter als 30 Tage`,
+      count: oldOverdueMeasures,
+      link: "/measures",
+    });
+  }
+  if (stats.recentIncidents > 0) {
+    criticalWarnings.push({
+      label: `${stats.recentIncidents} Vorfall${stats.recentIncidents !== 1 ? "fälle" : ""} in den letzten 7 Tagen`,
+      count: stats.recentIncidents,
+      link: "/incidents",
+    });
+  }
+
+  // ─── KPI card config with trend + color logic ──────────────────────────────
+  const kpiConfig: {
+    [key: string]: {
+      title: string;
+      value: string | number;
+      subtitle?: string;
+      icon: any;
+      gradient: string;
+      isCritical?: boolean;
+      isGood?: boolean;
+      trend?: "up" | "down" | "neutral";
+      context?: string;
+    };
+  } = {
     employees: {
       title: t("dashboard.totalEmployees"),
       value: stats.employees,
       icon: Users,
       gradient: "from-blue-500 via-blue-600 to-blue-700",
+      trend: "neutral",
     },
     overdueObligations: {
       title: t("dashboard.overdueObligations"),
       value: stats.overdueObligations,
       icon: AlertTriangle,
-      gradient: "from-red-500 via-red-600 to-red-700",
+      gradient:
+        stats.overdueObligations > 0
+          ? "from-red-500 via-red-600 to-red-700"
+          : "from-green-500 via-green-600 to-emerald-700",
+      isCritical: stats.overdueObligations > 0,
+      isGood: stats.overdueObligations === 0,
+      trend: stats.overdueObligations > 0 ? "up" : "neutral",
     },
     recentIncidents: {
       title: `${t("dashboard.last7Days")}: ${t("dashboard.incidents")}`,
       value: stats.recentIncidents,
       icon: AlertTriangle,
-      gradient: "from-amber-500 via-orange-500 to-orange-600",
+      gradient:
+        stats.recentIncidents > 0
+          ? "from-orange-500 via-orange-600 to-red-600"
+          : "from-green-500 via-green-600 to-emerald-700",
+      isCritical: stats.recentIncidents > 0,
+      isGood: stats.recentIncidents === 0,
+      trend: stats.recentIncidents > 0 ? "up" : "neutral",
     },
     recentHazards: {
       title: `${t("dashboard.last7Days")}: ${t("dashboard.hazards")}`,
       value: stats.recentHazards,
       icon: Shield,
-      gradient: "from-green-500 via-green-600 to-emerald-700",
+      gradient:
+        stats.recentHazards > 0
+          ? "from-amber-500 via-amber-600 to-orange-600"
+          : "from-green-500 via-green-600 to-emerald-700",
+      isCritical: stats.recentHazards > 0,
+      isGood: stats.recentHazards === 0,
+      trend: stats.recentHazards > 0 ? "up" : "neutral",
     },
     openMeasures: {
       title: "Offene Maßnahmen",
       value: stats.openMeasures,
-      subtitle: stats.overdueMeasures > 0 ? `${stats.overdueMeasures} überfällig` : undefined,
+      subtitle:
+        stats.overdueMeasures > 0
+          ? `${stats.overdueMeasures} überfällig`
+          : undefined,
       icon: ListTodo,
-      gradient: "from-purple-500 via-purple-600 to-purple-700",
+      gradient:
+        stats.overdueMeasures > 0
+          ? "from-red-500 via-red-600 to-red-700"
+          : stats.openMeasures > 0
+          ? "from-purple-500 via-purple-600 to-purple-700"
+          : "from-green-500 via-green-600 to-emerald-700",
+      isCritical: stats.overdueMeasures > 0,
+      isGood: stats.openMeasures === 0,
+      trend: stats.overdueMeasures > 0 ? "up" : "neutral",
     },
     upcomingCheckups: {
       title: "Anstehende Untersuchungen (30 Tage)",
       value: stats.upcomingCheckups,
       icon: Clock,
-      gradient: "from-cyan-500 via-cyan-600 to-cyan-700",
+      gradient:
+        stats.overdueCheckups > 0
+          ? "from-red-500 via-red-600 to-red-700"
+          : "from-cyan-500 via-cyan-600 to-cyan-700",
+      isCritical: stats.overdueCheckups > 0,
+      isGood: stats.overdueCheckups === 0 && stats.upcomingCheckups === 0,
+      trend: stats.overdueCheckups > 0 ? "up" : "neutral",
+      context:
+        stats.overdueCheckups > 0
+          ? `${stats.overdueCheckups} überfällig`
+          : undefined,
     },
     trainingCompletionRate: {
       title: "Schulungsabschlussquote",
       value: `${stats.trainingCompletionRate}%`,
       icon: FileCheck,
-      gradient: "from-teal-500 via-teal-600 to-teal-700",
+      gradient:
+        stats.trainingCompletionRate >= 80
+          ? "from-green-500 via-green-600 to-emerald-700"
+          : stats.trainingCompletionRate >= 50
+          ? "from-amber-500 via-amber-600 to-orange-600"
+          : "from-red-500 via-red-600 to-red-700",
+      isCritical: stats.trainingCompletionRate < 50,
+      isGood: stats.trainingCompletionRate >= 80,
+      trend:
+        stats.trainingCompletionRate >= 80
+          ? "up"
+          : stats.trainingCompletionRate < 50
+          ? "down"
+          : "neutral",
+      context:
+        stats.employees > 0
+          ? `von ${stats.employees} Mitarbeitern`
+          : undefined,
     },
     auditComplianceRate: {
       title: "Audit Compliance-Rate",
       value: `${stats.complianceRate}%`,
       icon: BarChart,
-      gradient: "from-indigo-500 via-indigo-600 to-indigo-700",
+      gradient:
+        stats.complianceRate >= 80
+          ? "from-green-500 via-green-600 to-emerald-700"
+          : stats.complianceRate >= 50
+          ? "from-amber-500 via-amber-600 to-orange-600"
+          : "from-red-500 via-red-600 to-red-700",
+      isCritical: stats.complianceRate < 50,
+      isGood: stats.complianceRate >= 80,
+      trend:
+        stats.complianceRate >= 80
+          ? "up"
+          : stats.complianceRate < 50
+          ? "down"
+          : "neutral",
     },
   };
 
@@ -817,19 +921,23 @@ const kpiConfig: { [key: string]: { title: string; value: string | number; subti
 
   return (
     <div className="p-4 sm:p-6 md:p-8">
+      {/* ── Header ── */}
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">
-            {companyName
-              ? <span>{companyName} {t("dashboard.title")}</span>
-              : <span>{t("dashboard.title")}</span>}
+            {companyName ? (
+              <span>
+                {companyName} {t("dashboard.title")}
+              </span>
+            ) : (
+              <span>{t("dashboard.title")}</span>
+            )}
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             {t("dashboard.welcome")}
           </p>
         </div>
 
-        {/* Show setup button when user is logged in but has no company */}
         <div className="ml-4 flex gap-2">
           {user && !companyId && (
             <Button onClick={() => navigate("/setup-company")}>
@@ -837,302 +945,389 @@ const kpiConfig: { [key: string]: { title: string; value: string | number; subti
             </Button>
           )}
         </div>
-      </div >
+      </div>
 
-<>
-          {/* KPI Settings */}
-          <div className="flex items-center justify-end mb-3">
-            <Popover open={kpiSettingsOpen} onOpenChange={setKpiSettingsOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <SlidersHorizontal className="w-4 h-4 mr-2" />
-                  Kacheln anpassen
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-72" align="end">
-                <p className="text-sm font-medium mb-3">Sichtbare Kacheln</p>
-                <div className="space-y-2">
-                  {ALL_KPI_IDS.map((id) => (
-                    <label key={id} className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Checkbox
-                        checked={visibleKpis.includes(id)}
-                        onCheckedChange={() => toggleKpiVisibility(id)}
-                      />
-                      {kpiLabels[id]}
-                    </label>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
+      <>
+        {/* ── Quick Action Buttons ── */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Button
+            onClick={() => navigate("/incidents/new")}
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white shadow-md"
+          >
+            <AlertTriangle className="w-4 h-4" />
+            <span className="hidden sm:inline">Neuen Vorfall melden</span>
+            <span className="sm:hidden">Vorfall</span>
+          </Button>
+          <Button
+            onClick={() => navigate("/employees/new")}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span className="hidden sm:inline">Mitarbeiter hinzufügen</span>
+            <span className="sm:hidden">Mitarbeiter</span>
+          </Button>
+          <Button
+            onClick={() => navigate("/audits/new")}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+          >
+            <ClipboardList className="w-4 h-4" />
+            <span className="hidden sm:inline">Audit starten</span>
+            <span className="sm:hidden">Audit</span>
+          </Button>
+        </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-10 sm:mb-12">
-            {visibleKpis.length === 0 ? (
-              <div className="col-span-full text-center py-8 text-muted-foreground border rounded-xl">
-                Keine Kacheln ausgewählt. Klicke auf "Kacheln anpassen" um Kacheln hinzuzufügen.
+        {/* ── Critical Warnings Banner ── */}
+        {criticalWarnings.length > 0 && (
+          <div className="mb-6 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <Zap className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
-            ) : (
-              visibleKpis.map((id) => {
-                const config = kpiConfig[id];
-                if (!config) return null;
-                const Icon = config.icon;
-                return (
-                  <Card
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">
+                  Kritische Warnungen ({criticalWarnings.length})
+                </p>
+                <ul className="space-y-1.5">
+                  {criticalWarnings.map((w, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                      <Link
+                        to={w.link}
+                        className="text-sm text-red-700 dark:text-red-300 hover:underline"
+                      >
+                        {w.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── KPI Settings ── */}
+        <div className="flex items-center justify-end mb-3">
+          <Popover open={kpiSettingsOpen} onOpenChange={setKpiSettingsOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SlidersHorizontal className="w-4 h-4 mr-2" />
+                Kacheln anpassen
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72" align="end">
+              <p className="text-sm font-medium mb-3">Sichtbare Kacheln</p>
+              <div className="space-y-2">
+                {ALL_KPI_IDS.map((id) => (
+                  <label
                     key={id}
-                    className={`border-0 shadow-xl bg-gradient-to-br ${config.gradient} text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate`}
+                    className="flex items-center gap-2 text-sm cursor-pointer"
                   >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-                      <CardTitle className="text-sm font-semibold text-white/90 tracking-wide">
-                        {config.title}
-                      </CardTitle>
-                      <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-md flex items-center justify-center shadow-lg ring-2 ring-white/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                        <Icon className="h-7 w-7 text-white drop-shadow-md" />
-                      </div>
-                    </CardHeader>
-                    <CardContent className="relative z-10">
-                      <div className="text-5xl font-bold text-white mb-1 tracking-tight">
+                    <Checkbox
+                      checked={visibleKpis.includes(id)}
+                      onCheckedChange={() => toggleKpiVisibility(id)}
+                    />
+                    {kpiLabels[id]}
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* ── Stats Grid ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-10 sm:mb-12">
+          {visibleKpis.length === 0 ? (
+            <div className="col-span-full text-center py-8 text-muted-foreground border rounded-xl">
+              Keine Kacheln ausgewählt. Klicke auf "Kacheln anpassen" um
+              Kacheln hinzuzufügen.
+            </div>
+          ) : (
+            visibleKpis.map((id) => {
+              const config = kpiConfig[id];
+              if (!config) return null;
+              const Icon = config.icon;
+              const showTrendUp = config.trend === "up";
+              const showTrendDown = config.trend === "down";
+              return (
+                <Card
+                  key={id}
+                  className={`border-0 shadow-xl bg-gradient-to-br ${config.gradient} text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate`}
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
+
+                  {/* Critical pulse ring */}
+                  {config.isCritical && (
+                    <div className="absolute top-3 left-3 w-2.5 h-2.5 rounded-full bg-white animate-ping opacity-70"></div>
+                  )}
+
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+                    <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 tracking-wide leading-tight">
+                      {config.title}
+                    </CardTitle>
+                    <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-white/25 backdrop-blur-md flex items-center justify-center shadow-lg ring-2 ring-white/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 flex-shrink-0">
+                      <Icon className="h-5 w-5 sm:h-7 sm:w-7 text-white drop-shadow-md" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="relative z-10 pb-3">
+                    <div className="flex items-end gap-2">
+                      <div className="text-3xl sm:text-5xl font-bold text-white tracking-tight">
                         {config.value}
                       </div>
-                      {config.subtitle && (
-                        <p className="text-sm text-white/80 mt-1">{config.subtitle}</p>
+                      {/* Trend icon */}
+                      {showTrendUp && (
+                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white/80 mb-1 flex-shrink-0" />
                       )}
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
-          </div>
+                      {showTrendDown && (
+                        <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-white/80 mb-1 flex-shrink-0" />
+                      )}
+                    </div>
+                    {(config.subtitle || config.context) && (
+                      <p className="text-xs sm:text-sm text-white/80 mt-1 leading-tight">
+                        {config.subtitle || config.context}
+                      </p>
+                    )}
+                    {/* Good state indicator */}
+                    {config.isGood && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <CheckCircle className="w-3.5 h-3.5 text-white/80" />
+                        <span className="text-xs text-white/80">Alles OK</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
 
-          {/* Dashboard Widgets */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-            {/* Investigation Statistics Chart */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2">
-                  <ListTodo className="w-5 h-5" />
-                  {t("dashboard.investigationsByStatus")}
-                </CardTitle>
-                <CardDescription>
-                  {t("dashboard.investigationStatusOverview")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {investigationStats.reduce(
-                  (sum, item) => sum + item.count,
-                  0
-                ) === 0 ? (
-                  <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                    {t("investigations.noInvestigations")}
+        {/* ── Dashboard Widgets ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          {/* Investigation Statistics Chart */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2">
+                <ListTodo className="w-5 h-5" />
+                {t("dashboard.investigationsByStatus")}
+              </CardTitle>
+              <CardDescription>
+                {t("dashboard.investigationStatusOverview")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {investigationStats.reduce(
+                (sum, item) => sum + item.count,
+                0
+              ) === 0 ? (
+                <div className="flex items-center justify-center h-[280px] sm:h-[300px] text-muted-foreground">
+                  {t("investigations.noInvestigations")}
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart margin={{ top: 20, right: 30, left: 30, bottom: 0 }}>
+                    <Pie
+                      data={investigationStats}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="55%"
+                      innerRadius={0}
+                      fill="#8884d8"
+                      dataKey="count"
+                      nameKey="status"
+                      stroke="#fff"
+                      strokeWidth={2}
+                    >
+                      {investigationStats.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: any, name: any, props: any) => {
+                        return [
+                          `${value} (${(
+                            (value /
+                              investigationStats.reduce(
+                                (sum, item) => sum + item.count,
+                                0
+                              )) *
+                            100
+                          ).toFixed(1)}%)`,
+                          props.payload.status,
+                        ];
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                {investigationStats.map((item, index) => {
+                  return (
+                    <div key={index} className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      ></div>
+                      <span
+                        className="text-sm font-medium"
+                        style={{ color: item.color }}
+                      >
+                        {item.status}: {item.count}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Task Overview */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <ListTodo className="w-5 h-5" />
+                    {t("dashboard.taskOverview")}
+                  </CardTitle>
+                  <CardDescription>
+                    {taskStatusFilter === "upcoming"
+                      ? t("dashboard.upcomingTasks")
+                      : t("dashboard.completedTasks")}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <Button
+                    variant={
+                      taskStatusFilter === "upcoming" ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() => setTaskStatusFilter("upcoming")}
+                  >
+                    {t("dashboard.upcoming")}
+                  </Button>
+                  <Button
+                    variant={
+                      taskStatusFilter === "completed" ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() => setTaskStatusFilter("completed")}
+                  >
+                    {t("dashboard.completed")}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[280px] sm:h-[300px] pr-4">
+                {tasks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <ListTodo className="w-12 h-12 mb-3 opacity-20" />
+                    <p className="text-sm">
+                      {t("dashboard.noTasks")} (
+                      {taskStatusFilter === "upcoming"
+                        ? t("dashboard.upcomingTasks").toLowerCase()
+                        : t("dashboard.completedTasks").toLowerCase()}
+                      )
+                    </p>
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart margin={{ top: 20, right: 30, left: 30, bottom: 0 }}>
-                      {/* Default Legend removed as requested */}
-                      <Pie
-                        data={investigationStats}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius="55%"
-                        innerRadius={0}
-                        fill="#8884d8"
-                        dataKey="count"
-                        nameKey="status"
-                        stroke="#fff"
-                        strokeWidth={2}
+                  <div className="space-y-2">
+                    {tasks.map((task: any) => (
+                      <div
+                        key={task.id}
+                        className="group relative flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-muted/30 to-muted/50 hover:from-muted/50 hover:to-muted/70 border border-border/50 hover:border-border transition-all duration-200 hover:shadow-md"
                       >
-                        {investigationStats.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value: any, name: any, props: any) => {
-                          return [
-                            `${value} (${(
-                              (value /
-                                investigationStats.reduce(
-                                  (sum, item) => sum + item.count,
-                                  0
-                                )) *
-                              100
-                            ).toFixed(1)}%)`,
-                            props.payload.status,
-                          ];
-                        }}
-                      />
+                        {/* Custom Checkbox */}
+                        <div className="relative flex items-center justify-center mt-0.5">
+                          <input
+                            type="checkbox"
+                            checked={task.status === "completed"}
+                            onChange={() =>
+                              toggleTaskStatus(task.id, task.status)
+                            }
+                            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-muted-foreground/30 bg-background checked:bg-primary checked:border-primary transition-all duration-200 hover:border-primary/50"
+                          />
+                          <CheckCircle className="absolute w-3.5 h-3.5 text-primary-foreground opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                        </div>
 
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-                <div className="grid grid-cols-2 gap-3 mt-4">
-                  {investigationStats.map((item, index) => {
-                    return (
-                      <div key={index} className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: item.color }}
-                        ></div>
-                        <span
-                          className="text-sm font-medium"
-                          style={{ color: item.color }}
-                        >
-                          {item.status}: {item.count}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Task Overview */}
-            <Card className="border-0 shadow-sm">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <ListTodo className="w-5 h-5" />
-                      {t("dashboard.taskOverview")}
-                    </CardTitle>
-                    <CardDescription>
-                      {taskStatusFilter === "upcoming"
-                        ? t("dashboard.upcomingTasks")
-                        : t("dashboard.completedTasks")}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={
-                        taskStatusFilter === "upcoming" ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => setTaskStatusFilter("upcoming")}
-                    >
-                      {t("dashboard.upcoming")}
-                    </Button>
-                    <Button
-                      variant={
-                        taskStatusFilter === "completed" ? "default" : "outline"
-                      }
-                      size="sm"
-                      onClick={() => setTaskStatusFilter("completed")}
-                    >
-                      {t("dashboard.completed")}
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[300px] pr-4">
-                  {tasks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                      <ListTodo className="w-12 h-12 mb-3 opacity-20" />
-                      <p className="text-sm">
-                        {t("dashboard.noTasks")} (
-                        {taskStatusFilter === "upcoming"
-                          ? t("dashboard.upcomingTasks").toLowerCase()
-                          : t("dashboard.completedTasks").toLowerCase()}
-                        )
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      {tasks.map((task: any) => (
-                        <div
-                          key={task.id}
-                          className="group relative flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-muted/30 to-muted/50 hover:from-muted/50 hover:to-muted/70 border border-border/50 hover:border-border transition-all duration-200 hover:shadow-md"
-                        >
-                          {/* Custom Checkbox */}
-                          <div className="relative flex items-center justify-center mt-0.5">
-                            <input
-                              type="checkbox"
-                              checked={task.status === "completed"}
-                              onChange={() =>
-                                toggleTaskStatus(task.id, task.status)
-                              }
-                              className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-muted-foreground/30 bg-background checked:bg-primary checked:border-primary transition-all duration-200 hover:border-primary/50"
-                            />
-                            <CheckCircle className="absolute w-3.5 h-3.5 text-primary-foreground opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
-                          </div>
-
-                          {/* Task Content */}
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className={`font-semibold text-sm mb-1.5 ${task.status === "completed"
+                        {/* Task Content */}
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`font-semibold text-sm mb-1.5 ${
+                              task.status === "completed"
                                 ? "line-through text-muted-foreground"
                                 : ""
-                                }`}
-                            >
-                              {task.title}
-                            </p>
+                            }`}
+                          >
+                            {task.title}
+                          </p>
 
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                              {/* Employee profile the task belongs to */}
-                              {(task as any).profile_employee ? (
-                                <div className="flex items-center gap-1">
-                                  <Users className="w-3 h-3" />
-                                  <Link
-                                    to={`/employees/${(task as any).employee_profile_id || task.assigned_to}`}
-                                    className="hover:text-primary hover:underline transition-colors"
-                                  >
-                                    {(task as any).profile_employee.full_name}
-                                  </Link>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1">
-                                  <Users className="w-3 h-3" />
-                                  <span>{t("dashboard.unassigned")}</span>
-                                </div>
-                              )}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            {(task as any).profile_employee ? (
+                              <div className="flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                <Link
+                                  to={`/employees/${
+                                    (task as any).employee_profile_id ||
+                                    task.assigned_to
+                                  }`}
+                                  className="hover:text-primary hover:underline transition-colors"
+                                >
+                                  {(task as any).profile_employee.full_name}
+                                </Link>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                <span>{t("dashboard.unassigned")}</span>
+                              </div>
+                            )}
 
-                              {/* Due Date */}
-                              {task.due_date && (
-                                <div className="flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  <span>
-                                    {new Date(
-                                      task.due_date
-                                    ).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                            {task.due_date && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                <span>
+                                  {new Date(
+                                    task.due_date
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                            )}
                           </div>
-
-                          {/* Priority Badge */}
-                          {task.priority && (
-                            <Badge
-                              variant={
-                                task.priority === "high" ||
-                                  task.priority === "urgent"
-                                  ? "destructive"
-                                  : task.priority === "medium"
-                                    ? "default"
-                                    : "secondary"
-                              }
-                              className="text-xs font-semibold px-2.5 py-0.5 flex items-center gap-1"
-                            >
-                              {task.priority === "high" ||
-                                task.priority === "urgent" ? (
-                                <AlertTriangle className="w-3 h-3" />
-                              ) : task.priority === "medium" ? (
-                                <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                              ) : (
-                                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                              )}
-                              {t(`dashboard.${task.priority}`)}
-                            </Badge>
-                          )}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          </div>
-        </>
-    </div >
+
+                        {/* Priority Badge */}
+                        {task.priority && (
+                          <Badge
+                            variant={
+                              task.priority === "high" ||
+                              task.priority === "urgent"
+                                ? "destructive"
+                                : task.priority === "medium"
+                                ? "default"
+                                : "secondary"
+                            }
+                            className="text-xs font-semibold px-2.5 py-0.5 flex items-center gap-1 flex-shrink-0"
+                          >
+                            {task.priority === "high" ||
+                            task.priority === "urgent" ? (
+                              <AlertTriangle className="w-3 h-3" />
+                            ) : task.priority === "medium" ? (
+                              <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
+                            )}
+                            {t(`dashboard.${task.priority}`)}
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    </div>
   );
 }
