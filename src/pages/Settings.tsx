@@ -4102,20 +4102,28 @@ const handleUpdateManager = async (
                                         onValueChange={async (val) => {
                                           const userId = val === "__none__" ? null : val;
                                           if (userId) {
-                                            await (supabase as any)
+                                            const { error: upsertErr } = await (supabase as any)
                                               .from("department_managers")
                                               .upsert(
                                                 { department_id: dept.id, manager_user_id: userId, company_id: companyId, manager_type: "line" },
                                                 { onConflict: "department_id,company_id,manager_type" }
                                               );
+                                            if (upsertErr) {
+                                              toast({ title: "Fehler beim Speichern", description: upsertErr.message, variant: "destructive" });
+                                              return;
+                                            }
                                             setDeptManagers(prev => ({ ...prev, [dept.id]: userId }));
                                           } else {
-                                            await (supabase as any)
+                                            const { error: delErr } = await (supabase as any)
                                               .from("department_managers")
                                               .delete()
                                               .eq("department_id", dept.id)
                                               .eq("company_id", companyId)
                                               .eq("manager_type", "line");
+                                            if (delErr) {
+                                              toast({ title: "Fehler beim Löschen", description: delErr.message, variant: "destructive" });
+                                              return;
+                                            }
                                             setDeptManagers(prev => { const n = { ...prev }; delete n[dept.id]; return n; });
                                           }
                                           setDeptManagerSearch(prev => ({ ...prev, [dept.id]: "" }));
