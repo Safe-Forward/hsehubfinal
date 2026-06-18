@@ -545,7 +545,7 @@ export default function RiskAssessments() {
         assessment_date: formData.assessment_date,
         document_paths:
           uploadedDocuments.length > 0 ? uploadedDocuments : null,
-        approval_status: "draft",
+        approval_status: "pending_approval",
         status: "open",
         company_id: companyId,
       };
@@ -763,7 +763,7 @@ export default function RiskAssessments() {
     try {
       const { error } = await (supabase as any)
         .from("risk_assessments")
-        .update({ approval_status: "draft", rejection_comment: null })
+        .update({ approval_status: "pending_approval", rejection_comment: null })
         .eq("id", risk.id);
       if (error) throw error;
       toast({ title: "Zurückgezogen", description: "GBU ist wieder im Entwurf-Modus." });
@@ -1991,14 +1991,7 @@ export default function RiskAssessments() {
                         <TableCell>{risk.assessment_date}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1 flex-wrap">
-                            {/* Submit for review — only for draft/rejected */}
-                            {(risk.approval_status === "draft" || !risk.approval_status || risk.approval_status === "rejected") && (
-                              <Button variant="outline" size="sm" className="text-xs h-7"
-                                onClick={() => handleSubmitForReview(risk)}>
-                                Einreichen
-                              </Button>
-                            )}
-                            {/* Approve/Reject — only for pending_approval and if canApprove */}
+                            {/* Approve/Reject — for pending_approval */}
                             {risk.approval_status === "pending_approval" && canApprove && (
                               <>
                                 <Button variant="outline" size="sm" className="text-xs h-7 text-green-700 border-green-300 hover:bg-green-50"
@@ -2011,11 +2004,11 @@ export default function RiskAssessments() {
                                 </Button>
                               </>
                             )}
-                            {/* Retract from rejected back to draft */}
+                            {/* After rejection: resubmit */}
                             {risk.approval_status === "rejected" && (
-                              <Button variant="ghost" size="sm" className="text-xs h-7"
+                              <Button variant="outline" size="sm" className="text-xs h-7"
                                 onClick={() => handleRetractToEdit(risk)}>
-                                Bearbeiten
+                                Überarbeiten & neu einreichen
                               </Button>
                             )}
                           </div>
@@ -2715,46 +2708,158 @@ export default function RiskAssessments() {
           </DialogContent>
         </Dialog>
 
-        {/* Approval Dialog */}
-        <Dialog
-          open={isApprovalDialogOpen}
-          onOpenChange={setIsApprovalDialogOpen}
-        >
-          <DialogContent>
+        {/* Approval Dialog — full GBU details */}
+        <Dialog open={isApprovalDialogOpen} onOpenChange={setIsApprovalDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Approve Risk Assessment</DialogTitle>
+              <DialogTitle className="text-xl">GBU freigeben</DialogTitle>
               <DialogDescription>
-                Leave an optional comment and approve this risk assessment
+                Prüfe alle Details und gib die Gefährdungsbeurteilung frei oder lehne sie ab.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="approval-comment">Comment (optional)</Label>
-                <Textarea
-                  id="approval-comment"
-                  placeholder="Add your approval comment here..."
-                  value={approvalComment}
-                  onChange={(e) => setApprovalComment(e.target.value)}
-                  rows={4}
-                  className="mt-2"
-                />
-              </div>
-            </div>
+            {selectedRisk && (
+              <div className="space-y-5">
+                {/* Header Info */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-muted/40 rounded-lg">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Titel</p>
+                    <p className="font-semibold">{selectedRisk.title || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Bewertungsdatum</p>
+                    <p className="font-medium">{selectedRisk.assessment_date || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Abteilung</p>
+                    <p className="font-medium">{selectedRisk.departments?.name || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Standort</p>
+                    <p className="font-medium">{selectedRisk.locations?.name || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Expo-Gruppe</p>
+                    <p className="font-medium">{selectedRisk.exposure_groups?.name || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Gefährdungskategorie</p>
+                    <p className="font-medium">{selectedRisk.hazard_category || "—"}</p>
+                  </div>
+                </div>
 
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsApprovalDialogOpen(false);
-                  setApprovalComment("");
-                }}
-              >
-                Cancel
+                {/* Risk Scores */}
+                <div>
+                  <p className="text-sm font-semibold mb-2">Risikobewertung</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-muted/40 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Risiko vorher</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold">{selectedRisk.risk_score_before ?? "—"}</span>
+                        <Badge variant={getRiskLevelColor(getRiskLevel(selectedRisk.risk_score_before || 0))}>
+                          {getRiskLevel(selectedRisk.risk_score_before || 0)}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-muted/40 rounded-lg">
+                      <p className="text-xs text-muted-foreground mb-1">Risiko nachher</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold">{selectedRisk.risk_score_after ?? "—"}</span>
+                        <Badge variant={getRiskLevelColor(getRiskLevel(selectedRisk.risk_score_after || 0))}>
+                          {getRiskLevel(selectedRisk.risk_score_after || 0)}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {selectedRisk.description && (
+                  <div>
+                    <p className="text-sm font-semibold mb-1">Beschreibung</p>
+                    <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3">{selectedRisk.description}</p>
+                  </div>
+                )}
+
+                {/* Mitigation */}
+                {selectedRisk.mitigation_measures && (
+                  <div>
+                    <p className="text-sm font-semibold mb-1">Schutzmaßnahmen</p>
+                    <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3">{selectedRisk.mitigation_measures}</p>
+                  </div>
+                )}
+
+                {/* Measures */}
+                {selectedRisk.measures && selectedRisk.measures.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold mb-2">Maßnahmen ({selectedRisk.measures.length})</p>
+                    <div className="space-y-2">
+                      {selectedRisk.measures.map((m: any, i: number) => (
+                        <div key={i} className="flex items-start justify-between gap-3 p-3 bg-muted/40 rounded-lg text-sm">
+                          <div className="flex-1">
+                            <p className="font-medium">{m.measure_building_block || "—"}</p>
+                            {m.responsible_person_name && (
+                              <p className="text-xs text-muted-foreground mt-0.5">Verantwortlich: {m.responsible_person_name}</p>
+                            )}
+                            {m.due_date && (
+                              <p className="text-xs text-muted-foreground">Fällig: {m.due_date}</p>
+                            )}
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
+                            m.progress_status === "completed" || m.progress_status === "done"
+                              ? "bg-green-100 text-green-800"
+                              : m.progress_status === "in_progress"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-700"
+                          }`}>
+                            {m.progress_status === "completed" || m.progress_status === "done" ? "Erledigt"
+                              : m.progress_status === "in_progress" ? "In Bearbeitung"
+                              : "Offen"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {selectedRisk.notes && (
+                  <div>
+                    <p className="text-sm font-semibold mb-1">Notizen</p>
+                    <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3 whitespace-pre-wrap">{selectedRisk.notes}</p>
+                  </div>
+                )}
+
+                {/* Approval Comment */}
+                <div className="border-t pt-4">
+                  <Label htmlFor="approval-comment">Kommentar zur Freigabe (optional)</Label>
+                  <Textarea
+                    id="approval-comment"
+                    placeholder="z.B. GBU vollständig und plausibel — freigegeben."
+                    value={approvalComment}
+                    onChange={(e) => setApprovalComment(e.target.value)}
+                    rows={3}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="flex gap-2 mt-4">
+              <Button variant="outline" onClick={() => { setIsApprovalDialogOpen(false); setApprovalComment(""); }}>
+                Abbrechen
               </Button>
-              <Button onClick={handleApproveRisk}>
+              <Button variant="destructive" onClick={() => {
+                setIsApprovalDialogOpen(false);
+                setApprovalComment("");
+                setIsRejectionDialogOpen(true);
+              }}>
+                <X className="w-4 h-4 mr-2" />
+                Ablehnen
+              </Button>
+              <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={handleApproveRisk}>
                 <Check className="w-4 h-4 mr-2" />
-                Approve
+                Freigeben
               </Button>
             </DialogFooter>
           </DialogContent>
