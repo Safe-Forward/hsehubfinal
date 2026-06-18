@@ -2062,19 +2062,14 @@ export default function RiskAssessments() {
                           )}
                         </TableCell>
                         <TableCell>{risk.assessment_date}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 flex-wrap">
-                            {/* After rejection: resubmit */}
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1 flex-wrap">
                             {risk.approval_status === "rejected" && (
-                              <Button variant="outline" size="sm" className="text-xs h-7"
+                              <Button variant="outline" size="sm" className="text-xs h-7 whitespace-nowrap"
                                 onClick={() => handleRetractToEdit(risk)}>
-                                Überarbeiten & neu einreichen
+                                Überarbeiten
                               </Button>
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-1">
                             {risk.approval_status !== "approved" && (
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => loadRiskForEdit(risk)}>
                                 <Pencil className="w-4 h-4" />

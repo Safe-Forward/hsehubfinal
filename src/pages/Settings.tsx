@@ -4105,7 +4105,7 @@ const handleUpdateManager = async (
                                             await (supabase as any)
                                               .from("department_managers")
                                               .upsert(
-                                                { department_id: dept.id, manager_user_id: userId, manager_employee_id: null, company_id: companyId, manager_type: "line" },
+                                                { department_id: dept.id, manager_user_id: userId, company_id: companyId, manager_type: "line" },
                                                 { onConflict: "department_id,company_id,manager_type" }
                                               );
                                             setDeptManagers(prev => ({ ...prev, [dept.id]: userId }));
