@@ -215,6 +215,7 @@ export default function RiskAssessments() {
   const [rejectionComment, setRejectionComment] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentManagers, setDepartmentManagers] = useState<any[]>([]);
+  const [teamMembersMap, setTeamMembersMap] = useState<Record<string, string>>({});
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [formStep, setFormStep] = useState(1);
@@ -357,7 +358,7 @@ export default function RiskAssessments() {
           .order("name"),
         supabase
           .from("team_members")
-          .select("id, first_name, last_name, email, role")
+          .select("id, user_id, first_name, last_name, email, role")
           .eq("company_id", companyId)
           .order("first_name"),
         supabase
@@ -407,6 +408,15 @@ export default function RiskAssessments() {
       setExposureGroups(exposureGroupsRes.data || []);
       setDepartmentManagers(deptManagersRes?.data || []);
 
+      // Build user_id → full name map for approver display
+      const membersMap: Record<string, string> = {};
+      for (const m of (employeesRes.data || [])) {
+        if (m.user_id) {
+          membersMap[m.user_id] = `${m.first_name} ${m.last_name}`;
+        }
+      }
+      setTeamMembersMap(membersMap);
+
       const hazardCategoriesFromDb = (riskCategoriesRes.data || [])
         .map((item) => item.name)
         .filter(
@@ -455,7 +465,7 @@ export default function RiskAssessments() {
       const doc = new jsPDF();
 
       // Add Metadata
-      const title = language === "de" ? "Risikobewertungsbericht" : "Risk Assessment Report";
+      const title = "Risikobewertungsbericht";
       const timestamp = new Date().toLocaleString();
 
       // Title
@@ -464,7 +474,7 @@ export default function RiskAssessments() {
 
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`${t("common.generatedOn") || "Generated on"}: ${timestamp}`, 14, 30);
+      doc.text(`${t("common.generatedOn") || "Erstellt am"}: ${timestamp}`, 14, 30);
 
       // Define columns
       const tableColumn = [
@@ -502,14 +512,14 @@ export default function RiskAssessments() {
       doc.save("Risk_Assessments.pdf");
 
       toast({
-        title: "Success",
-        description: "PDF exported successfully",
+        title: "Erfolg",
+        description: "PDF erfolgreich exportiert",
       });
     } catch (error) {
       console.error("PDF Export Error:", error);
       toast({
-        title: "Error",
-        description: "Failed to export PDF",
+        title: "Fehler",
+        description: "PDF-Export fehlgeschlagen",
         variant: "destructive",
       });
     }
@@ -622,13 +632,13 @@ export default function RiskAssessments() {
           .select("id");
 
         if (error) {
-          toast({ title: "Error creating risk assessment", description: error.message || "An error occurred", variant: "destructive" });
+          toast({ title: "Fehler beim Erstellen", description: error.message || "Ein Fehler ist aufgetreten", variant: "destructive" });
           return;
         }
 
         const created = createdData && createdData.length > 0 ? createdData[0] : null;
         if (!created) {
-          toast({ title: "Error", description: "Risk assessment was not created properly", variant: "destructive" });
+          toast({ title: "Fehler", description: "GBU wurde nicht korrekt erstellt", variant: "destructive" });
           return;
         }
 
@@ -645,11 +655,11 @@ export default function RiskAssessments() {
           }));
           const { error: measuresError } = await supabase.from("risk_assessment_measures").insert(measuresData);
           if (measuresError) {
-            toast({ title: "Warning", description: "Assessment created but some measures failed to save.", variant: "destructive" });
+            toast({ title: "Hinweis", description: "GBU erstellt, aber einige Maßnahmen konnten nicht gespeichert werden.", variant: "destructive" });
           }
         }
 
-        toast({ title: "Success", description: "Risk assessment created successfully" });
+        toast({ title: "Erfolg", description: "GBU erfolgreich erstellt" });
         setIsDialogOpen(false);
         resetForm();
         fetchData();
@@ -1945,7 +1955,7 @@ export default function RiskAssessments() {
                         : "Assessment Date"}
                     </TableHead>
                     <TableHead className="whitespace-nowrap text-center">
-                      {language === "de" ? "Aktionen" : "Actions"}
+                      Aktionen
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1979,9 +1989,21 @@ export default function RiskAssessments() {
                               </span>
                             );
                           })()}
-                          {risk.rejection_comment && (
-                            <div className="text-xs text-red-600 dark:text-red-400 mt-1 max-w-[120px] truncate" title={risk.rejection_comment}>
-                              ↳ {risk.rejection_comment}
+                          {risk.approval_status === "approved" && risk.approved_by && (
+                            <div className="text-xs text-green-700 dark:text-green-400 mt-1">
+                              <span className="font-medium">
+                                {teamMembersMap[risk.approved_by] || risk.approved_by}
+                              </span>
+                              {risk.approved_at && (
+                                <span className="text-muted-foreground ml-1">
+                                  {new Date(risk.approved_at).toLocaleDateString("de-DE")}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {risk.approval_status === "rejected" && risk.rejection_comment && (
+                            <div className="text-xs text-red-600 dark:text-red-400 mt-1 max-w-[150px]" title={risk.rejection_comment}>
+                              <span className="truncate block">↳ {risk.rejection_comment}</span>
                             </div>
                           )}
                         </TableCell>
@@ -2106,31 +2128,22 @@ export default function RiskAssessments() {
 
                                   if (error) {
                                     toast({
-                                      title: language === "de" ? "Fehler" : "Error",
-                                      description:
-                                        language === "de"
-                                          ? "Risikobewertung konnte nicht gelöscht werden"
-                                          : "Failed to delete risk assessment",
+                                      title: "Fehler",
+                                      description: "Risikobewertung konnte nicht gelöscht werden",
                                       variant: "destructive",
                                     });
                                   } else {
                                     toast({
-                                      title: language === "de" ? "Erfolg" : "Success",
-                                      description:
-                                        language === "de"
-                                          ? "Risikobewertung erfolgreich gelöscht"
-                                          : "Risk assessment deleted successfully",
+                                      title: "Erfolg",
+                                      description: "Risikobewertung erfolgreich gelöscht",
                                     });
                                     fetchData();
                                   }
                                 } catch (err) {
                                   console.error("Error deleting risk assessment:", err);
                                   toast({
-                                    title: language === "de" ? "Fehler" : "Error",
-                                    description:
-                                      language === "de"
-                                        ? "Ein Fehler ist aufgetreten"
-                                        : "An error occurred",
+                                    title: "Fehler",
+                                    description: "Ein Fehler ist aufgetreten",
                                     variant: "destructive",
                                   });
                                 }
