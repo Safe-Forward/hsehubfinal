@@ -4138,6 +4138,11 @@ p_sender_name: senderName,
                                       >
                                         {task.title}
                                       </span>
+                                      {task.assigned_to !== id && (task as any).assigned_employee && (
+                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                          → Zugewiesen an: {(task as any).assigned_employee.full_name}
+                                        </p>
+                                      )}
                                       <div className="flex flex-wrap items-center gap-1 mt-1">
                                         {task.due_date && (
                                           <Badge
@@ -4161,14 +4166,6 @@ p_sender_name: senderName,
                                         >
                                           {task.priority}
                                         </Badge>
-                                        {task.assigned_to !== id && (task as any).assigned_employee && (
-                                          <Badge
-                                            variant="outline"
-                                            className="text-[10px] px-1 py-0 border-blue-400 text-blue-600 dark:text-blue-400"
-                                          >
-                                            @{(task as any).assigned_employee.full_name}
-                                          </Badge>
-                                        )}
                                       </div>
                                     </div>
                                   </div>

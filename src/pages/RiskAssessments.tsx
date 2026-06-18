@@ -670,7 +670,7 @@ export default function RiskAssessments() {
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -2268,20 +2268,14 @@ export default function RiskAssessments() {
                       window.open(pdfUrl, '_blank');
 
                       toast({
-                        title: language === "de" ? "Erfolg" : "Success",
-                        description:
-                          language === "de"
-                            ? "PDF erfolgreich erstellt"
-                            : "PDF generated successfully",
+                        title: "Erfolg",
+                        description: "PDF erfolgreich erstellt",
                       });
                     } catch (error) {
                       console.error('PDF generation error:', error);
                       toast({
-                        title: language === "de" ? "Fehler" : "Error",
-                        description:
-                          language === "de"
-                            ? "PDF konnte nicht erstellt werden"
-                            : "Failed to generate PDF",
+                        title: "Fehler",
+                        description: "PDF konnte nicht erstellt werden",
                         variant: "destructive",
                       });
                     }
@@ -2556,11 +2550,8 @@ export default function RiskAssessments() {
                                       fetchData(false);
                                     } else {
                                       toast({
-                                        title: language === "de" ? "Fehler" : "Error",
-                                        description:
-                                          language === "de"
-                                            ? "Status konnte nicht aktualisiert werden"
-                                            : "Failed to update status",
+                                        title: "Fehler",
+                                        description: "Status konnte nicht aktualisiert werden",
                                         variant: "destructive",
                                       });
                                     }
@@ -2634,14 +2625,14 @@ export default function RiskAssessments() {
 
                                     if (error) {
                                       toast({
-                                        title: language === "de" ? "Fehler" : "Error",
-                                        description: language === "de" ? "Status konnte nicht aktualisiert werden" : "Failed to update status",
+                                        title: "Fehler",
+                                        description: "Status konnte nicht aktualisiert werden",
                                         variant: "destructive",
                                       });
                                     } else {
                                       toast({
-                                        title: language === "de" ? "Erfolg" : "Success",
-                                        description: language === "de" ? `Status auf "${label}" aktualisiert` : `Status updated to "${label}"`,
+                                        title: "Erfolg",
+                                        description: `Status auf "${label}" aktualisiert`,
                                       });
                                       fetchData(false);
                                     }
@@ -2683,14 +2674,14 @@ export default function RiskAssessments() {
 
                               if (error) {
                                 toast({
-                                  title: language === "de" ? "Fehler" : "Error",
-                                  description: language === "de" ? "Notizen konnten nicht gespeichert werden" : "Failed to save notes",
+                                  title: "Fehler",
+                                  description: "Notizen konnten nicht gespeichert werden",
                                   variant: "destructive",
                                 });
                               } else {
                                 toast({
-                                  title: language === "de" ? "Erfolg" : "Success",
-                                  description: language === "de" ? "Notizen erfolgreich gespeichert" : "Notes saved successfully",
+                                  title: "Erfolg",
+                                  description: "Notizen erfolgreich gespeichert",
                                 });
                                 fetchData(false);
                               }
