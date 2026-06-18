@@ -170,6 +170,7 @@ export default function Settings() {
   const [auditCategories, setAuditCategories] = useState<any[]>([]);
   const [measureBuildingBlocks, setMeasureBuildingBlocks] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
+  const [deptManagers, setDeptManagers] = useState<Record<string, string>>({}); // dept_id → employee_id
   const [profileFieldTemplates, setProfileFieldTemplates] = useState<any[]>([]);
   const [selectedProfileTemplateId, setSelectedProfileTemplateId] = useState<string | null>(null);
   const [templateFields, setTemplateFields] = useState<any[]>([]);
@@ -845,6 +846,20 @@ const handleUpdateManager = async (
       setAuditCategories(audit.data || []);
       setMeasureBuildingBlocks(measures.data || []);
       setEmployees(emps.data || []);
+
+      // Load department managers
+      if (companyId) {
+        const { data: dmData } = await (supabase as any)
+          .from("department_managers")
+          .select("department_id, manager_employee_id")
+          .eq("company_id", companyId)
+          .eq("manager_type", "line");
+        if (dmData) {
+          const dmMap: Record<string, string> = {};
+          dmData.forEach((dm: any) => { dmMap[dm.department_id] = dm.manager_employee_id; });
+          setDeptManagers(dmMap);
+        }
+      }
     } catch (err: unknown) {
       const e = err as { message?: string } | Error | null;
       const message =
@@ -3892,6 +3907,7 @@ const handleUpdateManager = async (
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Name</TableHead>
+                                <TableHead>Abteilungsleiter</TableHead>
                                 <TableHead className="text-right">
                                   Actions
                                 </TableHead>
@@ -4078,6 +4094,44 @@ const handleUpdateManager = async (
                                   <TableRow key={dept.id}>
                                     <TableCell className="font-medium">
                                       {dept.name}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Select
+                                        value={deptManagers[dept.id] || "__none__"}
+                                        onValueChange={async (val) => {
+                                          const empId = val === "__none__" ? null : val;
+                                          if (empId) {
+                                            await (supabase as any)
+                                              .from("department_managers")
+                                              .upsert(
+                                                { department_id: dept.id, manager_employee_id: empId, company_id: companyId, manager_type: "line" },
+                                                { onConflict: "department_id,company_id,manager_type" }
+                                              );
+                                            setDeptManagers(prev => ({ ...prev, [dept.id]: empId }));
+                                          } else {
+                                            await (supabase as any)
+                                              .from("department_managers")
+                                              .delete()
+                                              .eq("department_id", dept.id)
+                                              .eq("company_id", companyId)
+                                              .eq("manager_type", "line");
+                                            setDeptManagers(prev => { const n = { ...prev }; delete n[dept.id]; return n; });
+                                          }
+                                          toast({ title: "Gespeichert", description: "Abteilungsleiter aktualisiert" });
+                                        }}
+                                      >
+                                        <SelectTrigger className="w-[200px] h-8 text-xs">
+                                          <SelectValue placeholder="— Kein Leiter —" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="__none__">— Kein Leiter —</SelectItem>
+                                          {employees.map((emp) => (
+                                            <SelectItem key={emp.id} value={emp.id}>
+                                              {emp.full_name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || emp.email}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
                                     </TableCell>
                                     <TableCell className="text-right">
                                       <div className="flex justify-end gap-2">

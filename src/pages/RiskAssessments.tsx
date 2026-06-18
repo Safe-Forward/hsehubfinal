@@ -213,6 +213,8 @@ export default function RiskAssessments() {
   const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false);
   const [rejectionComment, setRejectionComment] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [departmentManagers, setDepartmentManagers] = useState<any[]>([]);
+  const [currentEmployeeId, setCurrentEmployeeId] = useState<string | null>(null);
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [loadingData, setLoadingData] = useState(false);
   const [formStep, setFormStep] = useState(1);
@@ -328,6 +330,8 @@ export default function RiskAssessments() {
         employeesRes,
         riskCategoriesRes,
         measureBuildingBlocksRes,
+        deptManagersRes,
+        currentEmpRes,
       ] = await Promise.all([
         supabase
           .from("risk_assessments")
@@ -366,6 +370,17 @@ export default function RiskAssessments() {
           .select("name")
           .eq("company_id", companyId)
           .order("name"),
+        (supabase as any)
+          .from("department_managers")
+          .select("department_id, manager_employee_id")
+          .eq("company_id", companyId)
+          .eq("manager_type", "line"),
+        (supabase as any)
+          .from("employees")
+          .select("id")
+          .eq("company_id", companyId)
+          .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+          .maybeSingle(),
       ]);
 
       if (risksRes.error) throw risksRes.error;
@@ -395,6 +410,8 @@ export default function RiskAssessments() {
       setLocations(locationsRes.data || []);
       setDepartments(departmentsRes.data || []);
       setExposureGroups(exposureGroupsRes.data || []);
+      setDepartmentManagers(deptManagersRes?.data || []);
+      setCurrentEmployeeId(currentEmpRes?.data?.id || null);
 
       const hazardCategoriesFromDb = (riskCategoriesRes.data || [])
         .map((item) => item.name)
@@ -786,7 +803,18 @@ export default function RiskAssessments() {
     }
   };
 
-  const canApprove = userRole === "company_admin" || userRole === "super_admin";
+  const isAdmin = userRole === "company_admin" || userRole === "super_admin";
+
+  const canApproveRisk = (risk: any): boolean => {
+    const deptId = risk?.department_id;
+    // No department on GBU → only admin
+    if (!deptId) return isAdmin;
+    const deptManagers = departmentManagers.filter(dm => dm.department_id === deptId);
+    // No manager assigned for this department → fallback to admin
+    if (deptManagers.length === 0) return isAdmin;
+    // Check if current user is the department manager
+    return !!currentEmployeeId && deptManagers.some(dm => dm.manager_employee_id === currentEmployeeId);
+  };
 
   const filteredRisks = risks.filter((r) => {
     const matchesSearch = !searchTerm ||
@@ -2646,7 +2674,7 @@ export default function RiskAssessments() {
                 >
                   Schließen
                 </Button>
-                {selectedRisk?.approval_status === "pending_approval" && canApprove && (
+                {selectedRisk?.approval_status === "pending_approval" && canApproveRisk(selectedRisk) && (
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
