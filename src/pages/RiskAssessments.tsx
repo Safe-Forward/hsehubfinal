@@ -692,8 +692,7 @@ export default function RiskAssessments() {
 
   const handleSubmitForReview = async (risk: any) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("risk_assessments")
         .update({
           approval_status: "pending_review",
@@ -712,7 +711,6 @@ export default function RiskAssessments() {
   const handleApproveRisk = async () => {
     if (!selectedRisk) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       const updateData: any = {
         approval_status: "approved",
         approved_at: new Date().toISOString(),
@@ -723,7 +721,7 @@ export default function RiskAssessments() {
         const existingNotes = selectedRisk.notes || "";
         updateData.notes = existingNotes + `\n\n[Freigabe ${new Date().toLocaleDateString()}]: ${approvalComment}`;
       }
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("risk_assessments")
         .update(updateData)
         .eq("id", selectedRisk.id);
@@ -741,8 +739,7 @@ export default function RiskAssessments() {
   const handleRejectRisk = async () => {
     if (!selectedRisk || !rejectionComment.trim()) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("risk_assessments")
         .update({
           approval_status: "rejected",
@@ -764,7 +761,7 @@ export default function RiskAssessments() {
 
   const handleRetractToEdit = async (risk: any) => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("risk_assessments")
         .update({ approval_status: "draft", rejection_comment: null })
         .eq("id", risk.id);

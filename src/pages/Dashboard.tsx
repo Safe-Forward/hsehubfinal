@@ -792,119 +792,49 @@ export default function Dashboard() {
       value: stats.employees,
       icon: Users,
       gradient: "from-blue-500 via-blue-600 to-blue-700",
-      trend: "neutral",
     },
     overdueObligations: {
       title: t("dashboard.overdueObligations"),
       value: stats.overdueObligations,
       icon: AlertTriangle,
-      gradient:
-        stats.overdueObligations > 0
-          ? "from-red-500 via-red-600 to-red-700"
-          : "from-green-500 via-green-600 to-emerald-700",
-      isCritical: stats.overdueObligations > 0,
-      isGood: stats.overdueObligations === 0,
-      trend: stats.overdueObligations > 0 ? "up" : "neutral",
+      gradient: "from-red-500 via-red-600 to-red-700",
     },
     recentIncidents: {
       title: `${t("dashboard.last7Days")}: ${t("dashboard.incidents")}`,
       value: stats.recentIncidents,
       icon: AlertTriangle,
-      gradient:
-        stats.recentIncidents > 0
-          ? "from-orange-500 via-orange-600 to-red-600"
-          : "from-green-500 via-green-600 to-emerald-700",
-      isCritical: stats.recentIncidents > 0,
-      isGood: stats.recentIncidents === 0,
-      trend: stats.recentIncidents > 0 ? "up" : "neutral",
+      gradient: "from-orange-500 via-orange-600 to-red-600",
     },
     recentHazards: {
       title: `${t("dashboard.last7Days")}: ${t("dashboard.hazards")}`,
       value: stats.recentHazards,
       icon: Shield,
-      gradient:
-        stats.recentHazards > 0
-          ? "from-amber-500 via-amber-600 to-orange-600"
-          : "from-green-500 via-green-600 to-emerald-700",
-      isCritical: stats.recentHazards > 0,
-      isGood: stats.recentHazards === 0,
-      trend: stats.recentHazards > 0 ? "up" : "neutral",
+      gradient: "from-amber-500 via-amber-600 to-orange-600",
     },
     openMeasures: {
       title: "Offene Maßnahmen",
       value: stats.openMeasures,
-      subtitle:
-        stats.overdueMeasures > 0
-          ? `${stats.overdueMeasures} überfällig`
-          : undefined,
       icon: ListTodo,
-      gradient:
-        stats.overdueMeasures > 0
-          ? "from-red-500 via-red-600 to-red-700"
-          : stats.openMeasures > 0
-          ? "from-purple-500 via-purple-600 to-purple-700"
-          : "from-green-500 via-green-600 to-emerald-700",
-      isCritical: stats.overdueMeasures > 0,
-      isGood: stats.openMeasures === 0,
-      trend: stats.overdueMeasures > 0 ? "up" : "neutral",
+      gradient: "from-purple-500 via-purple-600 to-purple-700",
     },
     upcomingCheckups: {
       title: "Anstehende Untersuchungen (30 Tage)",
       value: stats.upcomingCheckups,
       icon: Clock,
-      gradient:
-        stats.overdueCheckups > 0
-          ? "from-red-500 via-red-600 to-red-700"
-          : "from-cyan-500 via-cyan-600 to-cyan-700",
-      isCritical: stats.overdueCheckups > 0,
-      isGood: stats.overdueCheckups === 0 && stats.upcomingCheckups === 0,
-      trend: stats.overdueCheckups > 0 ? "up" : "neutral",
-      context:
-        stats.overdueCheckups > 0
-          ? `${stats.overdueCheckups} überfällig`
-          : undefined,
+      gradient: "from-cyan-500 via-cyan-600 to-cyan-700",
     },
     trainingCompletionRate: {
       title: "Schulungsabschlussquote",
       value: `${stats.trainingCompletionRate}%`,
       icon: FileCheck,
-      gradient:
-        stats.trainingCompletionRate >= 80
-          ? "from-green-500 via-green-600 to-emerald-700"
-          : stats.trainingCompletionRate >= 50
-          ? "from-amber-500 via-amber-600 to-orange-600"
-          : "from-red-500 via-red-600 to-red-700",
-      isCritical: stats.trainingCompletionRate < 50,
-      isGood: stats.trainingCompletionRate >= 80,
-      trend:
-        stats.trainingCompletionRate >= 80
-          ? "up"
-          : stats.trainingCompletionRate < 50
-          ? "down"
-          : "neutral",
-      context:
-        stats.employees > 0
-          ? `von ${stats.employees} Mitarbeitern`
-          : undefined,
+      gradient: "from-violet-500 via-violet-600 to-violet-700",
+      context: stats.employees > 0 ? `von ${stats.employees} Mitarbeitern` : undefined,
     },
     auditComplianceRate: {
       title: "Audit Compliance-Rate",
       value: `${stats.complianceRate}%`,
       icon: BarChart,
-      gradient:
-        stats.complianceRate >= 80
-          ? "from-green-500 via-green-600 to-emerald-700"
-          : stats.complianceRate >= 50
-          ? "from-amber-500 via-amber-600 to-orange-600"
-          : "from-red-500 via-red-600 to-red-700",
-      isCritical: stats.complianceRate < 50,
-      isGood: stats.complianceRate >= 80,
-      trend:
-        stats.complianceRate >= 80
-          ? "up"
-          : stats.complianceRate < 50
-          ? "down"
-          : "neutral",
+      gradient: "from-indigo-500 via-indigo-600 to-indigo-700",
     },
   };
 
@@ -948,63 +878,6 @@ export default function Dashboard() {
       </div>
 
       <>
-        {/* ── Quick Action Buttons ── */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          <Button
-            onClick={() => navigate("/incidents/new")}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white shadow-md"
-          >
-            <AlertTriangle className="w-4 h-4" />
-            <span className="hidden sm:inline">Neuen Vorfall melden</span>
-            <span className="sm:hidden">Vorfall</span>
-          </Button>
-          <Button
-            onClick={() => navigate("/employees/new")}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-md"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span className="hidden sm:inline">Mitarbeiter hinzufügen</span>
-            <span className="sm:hidden">Mitarbeiter</span>
-          </Button>
-          <Button
-            onClick={() => navigate("/audits/new")}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
-          >
-            <ClipboardList className="w-4 h-4" />
-            <span className="hidden sm:inline">Audit starten</span>
-            <span className="sm:hidden">Audit</span>
-          </Button>
-        </div>
-
-        {/* ── Critical Warnings Banner ── */}
-        {criticalWarnings.length > 0 && (
-          <div className="mb-6 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 mt-0.5">
-                <Zap className="w-5 h-5 text-red-600 dark:text-red-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">
-                  Kritische Warnungen ({criticalWarnings.length})
-                </p>
-                <ul className="space-y-1.5">
-                  {criticalWarnings.map((w, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                      <Link
-                        to={w.link}
-                        className="text-sm text-red-700 dark:text-red-300 hover:underline"
-                      >
-                        {w.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── KPI Settings ── */}
         <div className="flex items-center justify-end mb-3">
           <Popover open={kpiSettingsOpen} onOpenChange={setKpiSettingsOpen}>
@@ -1046,20 +919,12 @@ export default function Dashboard() {
               const config = kpiConfig[id];
               if (!config) return null;
               const Icon = config.icon;
-              const showTrendUp = config.trend === "up";
-              const showTrendDown = config.trend === "down";
               return (
                 <Card
                   key={id}
                   className={`border-0 shadow-xl bg-gradient-to-br ${config.gradient} text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate`}
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
-
-                  {/* Critical pulse ring */}
-                  {config.isCritical && (
-                    <div className="absolute top-3 left-3 w-2.5 h-2.5 rounded-full bg-white animate-ping opacity-70"></div>
-                  )}
-
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                     <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 tracking-wide leading-tight">
                       {config.title}
@@ -1069,29 +934,13 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="relative z-10 pb-3">
-                    <div className="flex items-end gap-2">
-                      <div className="text-3xl sm:text-5xl font-bold text-white tracking-tight">
-                        {config.value}
-                      </div>
-                      {/* Trend icon */}
-                      {showTrendUp && (
-                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white/80 mb-1 flex-shrink-0" />
-                      )}
-                      {showTrendDown && (
-                        <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-white/80 mb-1 flex-shrink-0" />
-                      )}
+                    <div className="text-3xl sm:text-5xl font-bold text-white tracking-tight">
+                      {config.value}
                     </div>
-                    {(config.subtitle || config.context) && (
+                    {config.context && (
                       <p className="text-xs sm:text-sm text-white/80 mt-1 leading-tight">
-                        {config.subtitle || config.context}
+                        {config.context}
                       </p>
-                    )}
-                    {/* Good state indicator */}
-                    {config.isGood && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <CheckCircle className="w-3.5 h-3.5 text-white/80" />
-                        <span className="text-xs text-white/80">Alles OK</span>
-                      </div>
                     )}
                   </CardContent>
                 </Card>
