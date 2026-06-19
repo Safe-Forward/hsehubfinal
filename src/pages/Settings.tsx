@@ -592,7 +592,7 @@ const handleUpdateManager = async (
         p_company_id: companyId,
       });
     } catch (err: any) {
-      toast({ title: "Error generating token", description: err.message, variant: "destructive" });
+      toast({ title: "Fehler", description: err.message, variant: "destructive" });
     } finally {
       setIsGeneratingToken(false);
     }
@@ -634,7 +634,7 @@ const handleUpdateManager = async (
 
       if (error) throw error;
 
-      toast({ title: "System connected", description: `${newSystemForm.name} has been added.` });
+      toast({ title: "Verbunden", description: `${newSystemForm.name} wurde hinzugefügt.` });
       setNewSystemForm({ name: "", type: "webhook", endpoint: "" });
       setIsAddSystemDialogOpen(false);
       fetchExternalSystems();
@@ -649,7 +649,7 @@ const handleUpdateManager = async (
         p_company_id: companyId,
       });
     } catch (err: any) {
-      toast({ title: "Error adding system", description: err.message, variant: "destructive" });
+      toast({ title: "Fehler", description: err.message, variant: "destructive" });
     } finally {
       setIsAddingSystem(false);
     }
@@ -666,10 +666,10 @@ const handleUpdateManager = async (
 
       if (error) throw error;
 
-      toast({ title: "System removed", description: `${systemName} has been disconnected.` });
+      toast({ title: "Entfernt", description: `${systemName} wurde getrennt.` });
       fetchExternalSystems();
     } catch (err: any) {
-      toast({ title: "Error removing system", description: err.message, variant: "destructive" });
+      toast({ title: "Fehler", description: err.message, variant: "destructive" });
     }
   };
 
@@ -685,15 +685,15 @@ const handleUpdateManager = async (
       });
 
       if (response.ok) {
-        toast({ title: "Connection successful", description: `${system.name} responded with status ${response.status}` });
+        toast({ title: "Verbindung erfolgreich", description: `${system.name} antwortete mit Status ${response.status}` });
         // Update last sync time
         await supabase.from("external_systems").update({ last_sync_at: new Date().toISOString() }).eq("id", system.id);
         fetchExternalSystems();
       } else {
-        toast({ title: "Connection failed", description: `${system.name} returned status ${response.status}`, variant: "destructive" });
+        toast({ title: "Verbindung fehlgeschlagen", description: `${system.name} antwortete mit Status ${response.status}`, variant: "destructive" });
       }
     } catch (err: any) {
-      toast({ title: "Connection test failed", description: err.message || "Could not reach the endpoint", variant: "destructive" });
+      toast({ title: "Verbindungstest fehlgeschlagen", description: err.message || "Endpunkt nicht erreichbar", variant: "destructive" });
     }
   };
 
@@ -713,8 +713,8 @@ const handleUpdateManager = async (
 
       if (missing.length === 0) {
         toast({
-          title: "Already up to date",
-          description: "All predefined hazard categories are already available.",
+          title: "Bereits aktuell",
+          description: "Alle vordefinierten Gefahrenkategorien sind bereits vorhanden.",
         });
         return;
       }
@@ -762,7 +762,7 @@ const handleUpdateManager = async (
 
       if (missing.length === 0) {
         toast({
-          title: "Already up to date",
+          title: "Bereits aktuell",
           description:
             "All predefined measure building blocks are already available.",
         });
@@ -866,7 +866,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error loading data",
+        title: "Ladefehler",
         description: message,
         variant: "destructive",
       });
@@ -1211,7 +1211,7 @@ const handleUpdateManager = async (
     if (!ticketForm.category || !ticketForm.title || !ticketForm.description) {
       toast({
         title: "Fehler",
-        description: "Please fill in all required fields",
+        description: "Bitte alle Pflichtfelder ausfüllen",
         variant: "destructive",
       });
       return;
@@ -1379,7 +1379,7 @@ const handleUpdateManager = async (
 
       toast({
         title: "Gespeichert",
-        description: "Approval workflow saved successfully",
+        description: "Freigabe-Workflow wurde gespeichert",
       });
 
       fetchApprovalWorkflows();
@@ -1495,7 +1495,7 @@ const handleUpdateManager = async (
     ) {
       toast({
         title: "Fehler",
-        description: "Please fill in all fields",
+        description: "Bitte alle Felder ausfüllen",
         variant: "destructive",
       });
       return;
@@ -1521,7 +1521,7 @@ const handleUpdateManager = async (
 
       toast({
         title: "Gespeichert",
-        description: "Team member added successfully",
+        description: "Teammitglied wurde hinzugefügt",
       });
 
       // Create audit log
@@ -1946,7 +1946,7 @@ const handleUpdateManager = async (
 
       toast({
         title: "Gespeichert",
-        description: "Custom criterion added successfully",
+        description: "Kriterium wurde hinzugefügt",
       });
 
       // Reset inputs
@@ -1959,7 +1959,7 @@ const handleUpdateManager = async (
       console.error("Error adding custom criterion:", error);
       toast({
         title: "Fehler",
-        description: error.message || "Failed to add custom criterion",
+        description: error.message || "Kriterium konnte nicht hinzugefügt werden",
         variant: "destructive",
       });
     }
