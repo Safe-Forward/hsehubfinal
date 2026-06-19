@@ -116,8 +116,8 @@ export default function Documents() {
     } catch (error: any) {
       console.error("Error fetching documents:", error);
       toast({
-        title: "Error",
-        description: "Failed to load documents",
+        title: "Fehler",
+        description: "Dokumente konnten nicht geladen werden",
         variant: "destructive",
       });
     } finally {
@@ -178,7 +178,7 @@ export default function Documents() {
 
     if (!uploadFile || !companyId || !user) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Please select a file and fill in required fields",
         variant: "destructive",
       });
@@ -187,7 +187,7 @@ export default function Documents() {
 
     if (!uploadTitle.trim()) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Please enter a document title",
         variant: "destructive",
       });
@@ -251,8 +251,8 @@ export default function Documents() {
       });
 
       toast({
-        title: "Success",
-        description: "Document uploaded successfully",
+        title: "Gespeichert",
+        description: "Dokument wurde hochgeladen",
       });
 
       // Reset form and refresh
@@ -263,7 +263,7 @@ export default function Documents() {
       console.error("Error uploading document:", error);
       toast({
         title: "Upload Failed",
-        description: error.message || "Failed to upload document",
+        description: error.message || "Dokument konnte nicht hochgeladen werden",
         variant: "destructive",
       });
     } finally {
@@ -302,14 +302,14 @@ export default function Documents() {
       URL.revokeObjectURL(url);
 
       toast({
-        title: "Success",
-        description: "Document downloaded successfully",
+        title: "Gespeichert",
+        description: "Dokument wurde heruntergeladen",
       });
     } catch (error: any) {
       console.error("Error downloading document:", error);
       toast({
         title: "Download Failed",
-        description: error.message || "Failed to download document",
+        description: error.message || "Dokument konnte nicht heruntergeladen werden",
         variant: "destructive",
       });
     }
@@ -347,8 +347,8 @@ export default function Documents() {
       if (dbError) throw dbError;
 
       toast({
-        title: "Success",
-        description: "Document deleted successfully",
+        title: "Gespeichert",
+        description: "Dokument wurde gelöscht",
       });
 
       logAction({
@@ -367,7 +367,7 @@ export default function Documents() {
       console.error("Error deleting document:", error);
       toast({
         title: "Delete Failed",
-        description: error.message || "Failed to delete document",
+        description: error.message || "Dokument konnte nicht gelöscht werden",
         variant: "destructive",
       });
     }

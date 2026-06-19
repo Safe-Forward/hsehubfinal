@@ -143,8 +143,8 @@ export default function Measures() {
     } catch (error: any) {
       console.error("Error fetching measures:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch measures",
+        title: "Fehler",
+        description: error.message || "Maßnahmen konnten nicht geladen werden",
         variant: "destructive",
       });
     }
@@ -196,8 +196,8 @@ export default function Measures() {
 
         if (error) throw error;
         toast({
-          title: "Success",
-          description: "Measure updated successfully",
+          title: "Gespeichert",
+          description: "Maßnahme wurde aktualisiert",
         });
       } else {
         const { error } = await supabase
@@ -206,8 +206,8 @@ export default function Measures() {
 
         if (error) throw error;
         toast({
-          title: "Success",
-          description: "Measure created successfully",
+          title: "Gespeichert",
+          description: "Maßnahme wurde erstellt",
         });
       }
 
@@ -216,8 +216,8 @@ export default function Measures() {
       fetchMeasures();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save measure",
+        title: "Fehler",
+        description: error.message || "Maßnahme konnte nicht gespeichert werden",
         variant: "destructive",
       });
     }
@@ -232,12 +232,12 @@ export default function Measures() {
         .delete()
         .eq("id", id);
       if (error) throw error;
-      toast({ title: "Success", description: "Measure deleted successfully" });
+      toast({ title: "Gespeichert", description: "Maßnahme wurde gelöscht" });
       fetchMeasures();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete measure",
+        title: "Fehler",
+        description: error.message || "Maßnahme konnte nicht gelöscht werden",
         variant: "destructive",
       });
     }
@@ -344,7 +344,7 @@ export default function Measures() {
 
     doc.save(`measures_report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
     toast({
-      title: "Success",
+      title: "Gespeichert",
       description: "PDF exported successfully",
     });
   };

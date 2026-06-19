@@ -567,7 +567,7 @@ export default function AuditDetails() {
 
       doc.save(`audit_${audit.iso_code || "report"}_${today}.pdf`);
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: t("common.pdfExported"),
       });
     } catch (error: any) {
@@ -688,7 +688,7 @@ export default function AuditDetails() {
                   if (deleteError) {
                     console.error("Delete error:", deleteError);
                     toast({
-                      title: "Error",
+                      title: "Fehler",
                       description: deleteError.message,
                       variant: "destructive",
                     });
@@ -814,7 +814,7 @@ export default function AuditDetails() {
                 } catch (err: any) {
                   console.error("Regeneration error:", err);
                   toast({
-                    title: "Error",
+                    title: "Fehler",
                     description: err.message || "Failed to regenerate checklist",
                     variant: "destructive",
                   });

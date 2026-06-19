@@ -597,7 +597,7 @@ export default function Reports() {
     } catch (error: any) {
       console.error("Error fetching report data:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message || "Failed to fetch report data",
         variant: "destructive",
       });
@@ -1664,7 +1664,7 @@ export default function Reports() {
     } catch (error) {
       console.error("Error selecting template:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Failed to load template data",
         variant: "destructive",
       });

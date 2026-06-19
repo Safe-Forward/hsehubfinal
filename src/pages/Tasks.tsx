@@ -276,7 +276,7 @@ export default function Tasks() {
         console.error("❌ [TASK LOG] Exception:", auditErr);
       }
 
-      toast({ title: "Success", description: "Task created successfully" });
+      toast({ title: "Gespeichert", description: "Aufgabe wurde erstellt" });
       setIsDialogOpen(false);
       form.reset();
       fetchData();
@@ -285,7 +285,7 @@ export default function Tasks() {
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });

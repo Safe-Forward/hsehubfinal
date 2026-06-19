@@ -223,8 +223,8 @@ export default function Audits() {
       }
 
       toast({
-        title: "Success",
-        description: "Audit created successfully!",
+        title: "Gespeichert",
+        description: "Audit wurde erstellt",
       });
 
       setIsDialogOpen(false);
@@ -288,7 +288,7 @@ export default function Audits() {
       if (!sections || sections.length === 0) {
         console.warn("No ISO criteria found for:", isoCode);
         toast({
-          title: "Warning",
+          title: "Hinweis",
           description: `No ISO criteria found for ${isoCode}. Please import ISO criteria in Settings first.`,
           variant: "destructive",
         });
@@ -342,7 +342,7 @@ export default function Audits() {
     } catch (err: any) {
       console.error("Error generating checklist:", err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: `Failed to generate checklist: ${err.message}`,
         variant: "destructive",
       });
@@ -380,15 +380,15 @@ export default function Audits() {
       });
 
       toast({
-        title: "Success",
-        description: "Audit deleted successfully",
+        title: "Gespeichert",
+        description: "Audit wurde gelöscht",
       });
 
       setDeleteAudit(null);
       fetchData();
     } catch (err: any) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: err.message,
         variant: "destructive",
       });

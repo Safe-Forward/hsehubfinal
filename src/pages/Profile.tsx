@@ -72,7 +72,7 @@ export default function Profile() {
         if (error) {
           console.error("Error fetching profile:", error);
           toast({
-            title: "Error",
+            title: "Fehler",
             description: "Failed to load profile data",
             variant: "destructive",
           });
@@ -167,7 +167,7 @@ export default function Profile() {
   ) => {
     if (!employeeId || !companyId) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Could not determine your employee record. Preferences cannot be saved.",
         variant: "destructive",
       });
@@ -199,7 +199,7 @@ export default function Profile() {
     } catch (error) {
       console.error("Error updating notification preference:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Failed to update notification preference",
         variant: "destructive",
       });
@@ -224,7 +224,7 @@ export default function Profile() {
       if (error) {
         console.error("Error updating profile:", error);
         toast({
-          title: "Error",
+          title: "Fehler",
           description: "Failed to update profile",
           variant: "destructive",
         });
@@ -239,7 +239,7 @@ export default function Profile() {
     } catch (error) {
       console.error("Unexpected error updating profile:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "An unexpected error occurred",
         variant: "destructive",
       });
