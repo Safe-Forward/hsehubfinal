@@ -179,8 +179,8 @@ export default function Messages() {
     } catch (error: any) {
       console.error("Failed to send message - full error:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
+        title: "Fehler",
+        description: error.message || "Nachricht konnte nicht gesendet werden",
         variant: "destructive",
       });
     }
