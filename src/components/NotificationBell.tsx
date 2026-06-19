@@ -366,6 +366,12 @@ export default function NotificationBell() {
           return;
         }
       }
+
+      // GBU-Freigabe / Ablehnung → direkt zur Risikobewertungen-Seite
+      if (notification.related_table === "risk_assessments") {
+        navigate("/risk-assessments");
+        return;
+      }
     } catch (error) {
       console.error("Error resolving notification deep link:", error);
       // Fall through to the generic fallback route below

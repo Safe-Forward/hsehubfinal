@@ -798,6 +798,25 @@ export default function RiskAssessments() {
         .update(updateData)
         .eq("id", selectedRisk.id);
       if (error) throw error;
+
+      // In-App-Notification an Ersteller (submitted_by), außer er genehmigt selbst
+      try {
+        if (selectedRisk.submitted_by && selectedRisk.submitted_by !== user?.id) {
+          await supabase.from("notifications").insert({
+            company_id: companyId,
+            user_id: selectedRisk.submitted_by,
+            title: "GBU freigegeben ✅",
+            message: `Ihre Gefährdungsbeurteilung „${selectedRisk.title}" wurde freigegeben.`,
+            type: "success",
+            category: "risk",
+            related_id: selectedRisk.id,
+            related_table: "risk_assessments",
+          });
+        }
+      } catch (notifErr) {
+        console.error("GBU-Freigabe-Notification fehlgeschlagen:", notifErr);
+      }
+
       toast({ title: "Freigegeben", description: "GBU wurde erfolgreich freigegeben." });
       setIsApprovalDialogOpen(false);
       setApprovalComment("");
@@ -821,6 +840,25 @@ export default function RiskAssessments() {
         })
         .eq("id", selectedRisk.id);
       if (error) throw error;
+
+      // In-App-Notification an Ersteller (submitted_by), außer er lehnt selbst ab
+      try {
+        if (selectedRisk.submitted_by && selectedRisk.submitted_by !== user?.id) {
+          await supabase.from("notifications").insert({
+            company_id: companyId,
+            user_id: selectedRisk.submitted_by,
+            title: "GBU abgelehnt ❌",
+            message: `Ihre Gefährdungsbeurteilung „${selectedRisk.title}" wurde abgelehnt. Grund: ${rejectionComment}`,
+            type: "error",
+            category: "risk",
+            related_id: selectedRisk.id,
+            related_table: "risk_assessments",
+          });
+        }
+      } catch (notifErr) {
+        console.error("GBU-Ablehnung-Notification fehlgeschlagen:", notifErr);
+      }
+
       toast({ title: "Abgelehnt", description: "GBU wurde abgelehnt. Ersteller wird informiert." });
       setIsRejectionDialogOpen(false);
       setRejectionComment("");
