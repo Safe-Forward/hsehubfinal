@@ -1983,7 +1983,7 @@ const handleUpdateManager = async (
 
       toast({
         title: "Gespeichert",
-        description: "Criterion deleted successfully",
+        description: "Kriterium wurde gelöscht",
       });
 
       // Manually remove from state for instant UI update
@@ -2010,7 +2010,7 @@ const handleUpdateManager = async (
       console.error("Error deleting criterion:", error);
       toast({
         title: "Fehler",
-        description: error.message || "Failed to delete criterion",
+        description: error.message || "Kriterium konnte nicht gelöscht werden",
         variant: "destructive",
       });
     }
@@ -2057,7 +2057,7 @@ const handleUpdateManager = async (
       console.error("Error deleting criteria:", error);
       toast({
         title: "Fehler",
-        description: error.message || "Failed to delete criteria",
+        description: error.message || "Kriterien konnten nicht gelöscht werden",
         variant: "destructive",
       });
     }
@@ -2091,7 +2091,7 @@ const handleUpdateManager = async (
 
         toast({
           title: "Gespeichert",
-          description: "Custom criterion deleted successfully",
+          description: "Kriterium wurde gelöscht",
         });
 
         // Refresh the criteria data
@@ -2127,7 +2127,7 @@ const handleUpdateManager = async (
 
       toast({
         title: "Gespeichert",
-        description: "Section deleted successfully",
+        description: "Abschnitt wurde gelöscht",
       });
 
       // Refresh the criteria data
@@ -2136,7 +2136,7 @@ const handleUpdateManager = async (
       console.error("Error deleting section:", error);
       toast({
         title: "Fehler",
-        description: error.message || "Failed to delete section",
+        description: error.message || "Abschnitt konnte nicht gelöscht werden",
         variant: "destructive",
       });
     }
@@ -2195,7 +2195,7 @@ const handleUpdateManager = async (
 
       if (uniqueIsoCodes.length === 0) {
         toast({
-          title: "No data found",
+          title: "Keine Daten",
           description:
             "No ISO criteria found in database. Please import ISO standards first.",
           variant: "destructive",
@@ -2507,13 +2507,13 @@ const handleUpdateManager = async (
 
       toast({
         title: "Gespeichert",
-        description: "Permission updated successfully",
+        description: "Berechtigung wurde aktualisiert",
       });
     } catch (error) {
       console.error("Error updating permission:", error);
       toast({
         title: "Fehler",
-        description: "Failed to update permission",
+        description: "Berechtigung konnte nicht aktualisiert werden",
         variant: "destructive",
       });
     }
@@ -2523,7 +2523,7 @@ const handleUpdateManager = async (
     if (!customRoleName.trim()) {
       toast({
         title: "Fehler",
-        description: "Role name cannot be empty",
+        description: "Rollenname darf nicht leer sein",
         variant: "destructive",
       });
       return;
@@ -2532,7 +2532,7 @@ const handleUpdateManager = async (
     if (roles[customRoleName]) {
       toast({
         title: "Fehler",
-        description: "Role already exists",
+        description: "Rolle existiert bereits",
         variant: "destructive",
       });
       return;
@@ -2605,7 +2605,7 @@ const handleUpdateManager = async (
     if (predefinedRoles.includes(roleName)) {
       toast({
         title: "Fehler",
-        description: "Cannot delete predefined roles",
+        description: "Vordefinierte Rollen können nicht gelöscht werden",
         variant: "destructive",
       });
       return;
@@ -2727,7 +2727,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("common.success"),
-        description: t("settings.permissionUpdated") || "Permission updated successfully",
+        description: t("settings.permissionUpdated") || "Berechtigung wurde aktualisiert",
       });
     } catch (err: unknown) {
       // Revert on error
@@ -2749,7 +2749,7 @@ const handleUpdateManager = async (
     if (!hasDetailedPermission('settings', 'user_role_management')) {
       toast({
         title: "Permission Denied",
-        description: "You do not have permission to manage roles",
+        description: "Keine Berechtigung zur Rollenverwaltung",
         variant: "destructive",
       });
       return;
@@ -2815,7 +2815,7 @@ const handleUpdateManager = async (
     if (!hasDetailedPermission('settings', 'user_role_management')) {
       toast({
         title: "Permission Denied",
-        description: "You do not have permission to manage roles",
+        description: "Keine Berechtigung zur Rollenverwaltung",
         variant: "destructive",
       });
       return;
@@ -2846,7 +2846,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("common.success"),
-        description: "Description updated successfully",
+        description: "Beschreibung wurde aktualisiert",
       });
     } catch (err: unknown) {
       const e = err as { message?: string } | Error | null;
@@ -2884,7 +2884,7 @@ const handleUpdateManager = async (
     if (!templateForm.name.trim()) {
       toast({
         title: t("settings.error"),
-        description: "Template name is required",
+        description: "Vorlagenname ist erforderlich",
         variant: "destructive",
       });
       return;
@@ -2946,7 +2946,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("settings.success"),
-        description: "Template deleted successfully",
+        description: "Vorlage wurde gelöscht",
       });
 
       if (selectedProfileTemplateId === templateId) {
@@ -3004,7 +3004,7 @@ const handleUpdateManager = async (
     if (!selectedProfileTemplateId) {
       toast({
         title: t("settings.error"),
-        description: "Please select a template first",
+        description: "Bitte zuerst eine Vorlage auswählen",
         variant: "destructive",
       });
       return;
@@ -3013,7 +3013,7 @@ const handleUpdateManager = async (
     if (!profileFieldForm.fieldName || !profileFieldForm.fieldLabel) {
       toast({
         title: t("settings.error"),
-        description: "Field name and label are required",
+        description: "Feldname und Bezeichnung sind erforderlich",
         variant: "destructive",
       });
       return;
@@ -3039,7 +3039,7 @@ const handleUpdateManager = async (
 
         toast({
           title: t("settings.success"),
-          description: "Profile field updated successfully",
+          description: "Profilfeld wurde aktualisiert",
         });
       } else {
         // Create new field
@@ -3062,7 +3062,7 @@ const handleUpdateManager = async (
 
         toast({
           title: t("settings.success"),
-          description: "Profile field added successfully",
+          description: "Profilfeld wurde hinzugefügt",
         });
       }
 
@@ -3092,7 +3092,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("settings.success"),
-        description: "Profile field deleted successfully",
+        description: "Profilfeld wurde gelöscht",
       });
 
       if (selectedProfileTemplateId) {
@@ -4970,7 +4970,7 @@ const handleUpdateManager = async (
                                 } else {
                                   toast({
                                     title: "Gespeichert",
-                                    description: "Category added successfully",
+                                    description: "Kategorie wurde hinzugefügt",
                                   });
                                   if (input) input.value = "";
                                   fetchAllData();
@@ -5288,7 +5288,7 @@ const handleUpdateManager = async (
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 onClick={async () => {
                                   toast({
-                                    title: "Saved",
+                                    title: "Gespeichert",
                                     description:
                                       "ISO selection saved successfully",
                                   });
@@ -5626,7 +5626,7 @@ const handleUpdateManager = async (
                                     }
 
                                     toast({
-                                      title: "Saved",
+                                      title: "Gespeichert",
                                       description: `Criteria selection saved (${selectedCriteria.length} items)`,
                                     });
                                   }}
