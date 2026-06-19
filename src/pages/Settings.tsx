@@ -730,7 +730,7 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: `${missing.length} predefined hazard categories added.`,
       });
       fetchAllData();
@@ -739,7 +739,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -779,7 +779,7 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: `${missing.length} predefined measure building blocks added.`,
       });
       fetchAllData();
@@ -788,7 +788,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -1192,13 +1192,13 @@ const handleUpdateManager = async (
       }
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: "G-Investigations saved successfully",
       });
     } catch (err: any) {
       toast({
-        title: "Error",
-        description: err.message || "Failed to save G-Investigations",
+        title: "Fehler",
+        description: err.message || "G-Untersuchungen konnten nicht gespeichert werden",
         variant: "destructive",
       });
     }
@@ -1210,7 +1210,7 @@ const handleUpdateManager = async (
 
     if (!ticketForm.category || !ticketForm.title || !ticketForm.description) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Please fill in all required fields",
         variant: "destructive",
       });
@@ -1249,8 +1249,8 @@ const handleUpdateManager = async (
       fetchMyTickets();
     } catch (err: any) {
       toast({
-        title: "Error",
-        description: err.message || "Failed to submit ticket",
+        title: "Fehler",
+        description: err.message || "Support-Ticket konnte nicht gesendet werden",
         variant: "destructive",
       });
     } finally {
@@ -1378,14 +1378,14 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: "Approval workflow saved successfully",
       });
 
       fetchApprovalWorkflows();
     } catch (err: any) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: err.message,
         variant: "destructive",
       });
@@ -1407,7 +1407,7 @@ const handleUpdateManager = async (
       fetchApprovalWorkflows();
     } catch (err: any) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: err.message,
         variant: "destructive",
       });
@@ -1447,7 +1447,7 @@ const handleUpdateManager = async (
       });
     } catch (err: any) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: err.message,
         variant: "destructive",
       });
@@ -1477,7 +1477,7 @@ const handleUpdateManager = async (
 
     } catch (err: any) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: err.message,
         variant: "destructive",
       });
@@ -1494,7 +1494,7 @@ const handleUpdateManager = async (
       !teamMemberForm.role
     ) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Please fill in all fields",
         variant: "destructive",
       });
@@ -1520,7 +1520,7 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: "Team member added successfully",
       });
 
@@ -1549,7 +1549,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -1571,7 +1571,7 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: `Role updated from ${oldRole} to ${newRole}`,
       });
 
@@ -1591,7 +1591,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -1620,7 +1620,7 @@ const handleUpdateManager = async (
 
     if (!companyId || !currentTableName) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Missing required data. Please try again.",
         variant: "destructive",
       });
@@ -1646,7 +1646,7 @@ const handleUpdateManager = async (
           .eq("company_id", companyId);
 
         if (error) throw error;
-        toast({ title: "Success", description: "Item updated successfully" });
+        toast({ title: "Gespeichert", description: "Element wurde aktualisiert" });
 
         // Create audit log
         const itemType = tableName.endsWith('s') ? tableName.slice(0, -1) : tableName;
@@ -1667,7 +1667,7 @@ const handleUpdateManager = async (
         ]).select(); // Added select to get ID
 
         if (error) throw error;
-        toast({ title: "Success", description: "Item created successfully" });
+        toast({ title: "Gespeichert", description: "Element wurde erstellt" });
 
         // Create audit log
         const itemType = tableName.endsWith('s') ? tableName.slice(0, -1) : tableName;
@@ -1691,7 +1691,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -1712,7 +1712,7 @@ const handleUpdateManager = async (
       const tableName = deleteItem.tableName;
       if (!tableName) {
         toast({
-          title: "Error",
+          title: "Fehler",
           description: "Table name is missing. Please try again.",
           variant: "destructive",
         });
@@ -1727,7 +1727,7 @@ const handleUpdateManager = async (
 
       if (error) throw error;
 
-      toast({ title: "Success", description: "Item deleted successfully" });
+      toast({ title: "Gespeichert", description: "Item deleted successfully" });
 
       // Create audit log
       const itemType = tableName.endsWith('s') ? tableName.slice(0, -1) : tableName;
@@ -1749,7 +1749,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -1760,7 +1760,7 @@ const handleUpdateManager = async (
   const importIsoCriteria = async (isoCode: string) => {
     if (!companyId) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Company ID not found",
         variant: "destructive",
       });
@@ -1840,7 +1840,7 @@ const handleUpdateManager = async (
       }
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: `${data.iso_name} criteria imported successfully! (${data.total_criteria} criteria)`,
       });
 
@@ -1849,7 +1849,7 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error importing ISO criteria:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message || "Failed to import ISO criteria",
         variant: "destructive",
       });
@@ -1890,7 +1890,7 @@ const handleUpdateManager = async (
   const handleAddCustomCriterion = async () => {
     if (!activeISOForCriteria || !newCriterionId.trim() || !newCriterionText.trim()) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Please enter both Criterion ID and Title",
         variant: "destructive",
       });
@@ -1913,7 +1913,7 @@ const handleUpdateManager = async (
 
       if (sectionError || !sectionData) {
         toast({
-          title: "Error",
+          title: "Fehler",
           description: `Could not find section for this ISO. Please try again.`,
           variant: "destructive",
         });
@@ -1945,7 +1945,7 @@ const handleUpdateManager = async (
       if (insertError) throw insertError;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: "Custom criterion added successfully",
       });
 
@@ -1958,7 +1958,7 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error adding custom criterion:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message || "Failed to add custom criterion",
         variant: "destructive",
       });
@@ -1982,7 +1982,7 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: "Criterion deleted successfully",
       });
 
@@ -2009,7 +2009,7 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error deleting criterion:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message || "Failed to delete criterion",
         variant: "destructive",
       });
@@ -2029,7 +2029,7 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: `${subsectionIds.length} criterion(s) deleted successfully`,
       });
 
@@ -2056,7 +2056,7 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error deleting criteria:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message || "Failed to delete criteria",
         variant: "destructive",
       });
@@ -2090,7 +2090,7 @@ const handleUpdateManager = async (
         }
 
         toast({
-          title: "Success",
+          title: "Gespeichert",
           description: "Custom criterion deleted successfully",
         });
 
@@ -2126,7 +2126,7 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: "Section deleted successfully",
       });
 
@@ -2135,7 +2135,7 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error deleting section:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message || "Failed to delete section",
         variant: "destructive",
       });
@@ -2226,7 +2226,7 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error updating English translations:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message || "Failed to update English translations",
         variant: "destructive",
       });
@@ -2354,7 +2354,7 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error adding German translations:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message || "Failed to add German translations",
         variant: "destructive",
       });
@@ -2506,13 +2506,13 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: "Permission updated successfully",
       });
     } catch (error) {
       console.error("Error updating permission:", error);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Failed to update permission",
         variant: "destructive",
       });
@@ -2522,7 +2522,7 @@ const handleUpdateManager = async (
   const addCustomRole = async () => {
     if (!customRoleName.trim()) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Role name cannot be empty",
         variant: "destructive",
       });
@@ -2531,7 +2531,7 @@ const handleUpdateManager = async (
 
     if (roles[customRoleName]) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Role already exists",
         variant: "destructive",
       });
@@ -2540,7 +2540,7 @@ const handleUpdateManager = async (
 
     if (!companyId) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Company ID not found",
         variant: "destructive",
       });
@@ -2577,7 +2577,7 @@ const handleUpdateManager = async (
       setCustomRoleName("");
       setIsAddingCustomRole(false);
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: `Role "${customRoleName}" created successfully`,
       });
     } catch (err: unknown) {
@@ -2585,7 +2585,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -2604,7 +2604,7 @@ const handleUpdateManager = async (
 
     if (predefinedRoles.includes(roleName)) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: "Cannot delete predefined roles",
         variant: "destructive",
       });
@@ -2635,7 +2635,7 @@ const handleUpdateManager = async (
       }
 
       toast({
-        title: "Success",
+        title: "Gespeichert",
         description: `Role "${roleName}" deleted successfully`,
       });
 
@@ -2646,7 +2646,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error",
+        title: "Fehler",
         description: message,
         variant: "destructive",
       });
@@ -3832,13 +3832,13 @@ const handleUpdateManager = async (
                                     .then(({ data, error }) => {
                                       if (error) {
                                         toast({
-                                          title: "Error",
+                                          title: "Fehler",
                                           description: error.message,
                                           variant: "destructive",
                                         });
                                       } else {
                                         toast({
-                                          title: "Success",
+                                          title: "Gespeichert",
                                           description:
                                             "Location added successfully",
                                         });
@@ -3873,13 +3873,13 @@ const handleUpdateManager = async (
                                   .then(({ data, error }) => {
                                     if (error) {
                                       toast({
-                                        title: "Error",
+                                        title: "Fehler",
                                         description: error.message,
                                         variant: "destructive",
                                       });
                                     } else {
                                       toast({
-                                        title: "Success",
+                                        title: "Gespeichert",
                                         description:
                                           "Location added successfully",
                                       });
@@ -3998,13 +3998,13 @@ const handleUpdateManager = async (
                                     .then(({ data, error }) => {
                                       if (error) {
                                         toast({
-                                          title: "Error",
+                                          title: "Fehler",
                                           description: error.message,
                                           variant: "destructive",
                                         });
                                       } else {
                                         toast({
-                                          title: "Success",
+                                          title: "Gespeichert",
                                           description:
                                             "Department added successfully",
                                         });
@@ -4039,13 +4039,13 @@ const handleUpdateManager = async (
                                   .then(({ data, error }) => {
                                     if (error) {
                                       toast({
-                                        title: "Error",
+                                        title: "Fehler",
                                         description: error.message,
                                         variant: "destructive",
                                       });
                                     } else {
                                       toast({
-                                        title: "Success",
+                                        title: "Gespeichert",
                                         description:
                                           "Department added successfully",
                                       });
@@ -4379,13 +4379,13 @@ const handleUpdateManager = async (
                                     .then(({ data, error }) => {
                                       if (error) {
                                         toast({
-                                          title: "Error",
+                                          title: "Fehler",
                                           description: error.message,
                                           variant: "destructive",
                                         });
                                       } else {
                                         toast({
-                                          title: "Success",
+                                          title: "Gespeichert",
                                           description:
                                             "Exposure group added successfully",
                                         });
@@ -4420,13 +4420,13 @@ const handleUpdateManager = async (
                                   .then(({ data, error }) => {
                                     if (error) {
                                       toast({
-                                        title: "Error",
+                                        title: "Fehler",
                                         description: error.message,
                                         variant: "destructive",
                                       });
                                     } else {
                                       toast({
-                                        title: "Success",
+                                        title: "Gespeichert",
                                         description:
                                           "Exposure group added successfully",
                                       });
@@ -4929,13 +4929,13 @@ const handleUpdateManager = async (
                                     ]);
                                   if (error) {
                                     toast({
-                                      title: "Error",
+                                      title: "Fehler",
                                       description: error.message,
                                       variant: "destructive",
                                     });
                                   } else {
                                     toast({
-                                      title: "Success",
+                                      title: "Gespeichert",
                                       description:
                                         "Category added successfully",
                                     });
@@ -4963,13 +4963,13 @@ const handleUpdateManager = async (
                                   ]);
                                 if (error) {
                                   toast({
-                                    title: "Error",
+                                    title: "Fehler",
                                     description: error.message,
                                     variant: "destructive",
                                   });
                                 } else {
                                   toast({
-                                    title: "Success",
+                                    title: "Gespeichert",
                                     description: "Category added successfully",
                                   });
                                   if (input) input.value = "";
@@ -5092,13 +5092,13 @@ const handleUpdateManager = async (
                                     ]);
                                   if (error) {
                                     toast({
-                                      title: "Error",
+                                      title: "Fehler",
                                       description: error.message,
                                       variant: "destructive",
                                     });
                                   } else {
                                     toast({
-                                      title: "Success",
+                                      title: "Gespeichert",
                                       description: `Measure building block "${value}" added`,
                                     });
                                     input.value = "";
@@ -5124,13 +5124,13 @@ const handleUpdateManager = async (
                                   ]);
                                 if (error) {
                                   toast({
-                                    title: "Error",
+                                    title: "Fehler",
                                     description: error.message,
                                     variant: "destructive",
                                   });
                                 } else {
                                   toast({
-                                    title: "Success",
+                                    title: "Gespeichert",
                                     description: `Measure building block "${value}" added`,
                                   });
                                   if (input) input.value = "";
@@ -5191,13 +5191,13 @@ const handleUpdateManager = async (
 
                                             if (error) {
                                               toast({
-                                                title: "Error",
+                                                title: "Fehler",
                                                 description: error.message,
                                                 variant: "destructive",
                                               });
                                             } else {
                                               toast({
-                                                title: "Success",
+                                                title: "Gespeichert",
                                                 description:
                                                   "Measure building block deleted",
                                               });
@@ -5275,7 +5275,7 @@ const handleUpdateManager = async (
                                   setSelectedISOs(allISOIds);
 
                                   toast({
-                                    title: "Success",
+                                    title: "Gespeichert",
                                     description: "All ISOs selected and saved",
                                   });
                                 }}

@@ -187,8 +187,8 @@ export default function Incidents() {
     } catch (error: any) {
       console.error("Error fetching incidents:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch incidents",
+        title: "Fehler",
+        description: error.message || "Vorfälle konnten nicht geladen werden",
         variant: "destructive",
       });
     }
@@ -289,8 +289,8 @@ export default function Incidents() {
         }
 
         toast({
-          title: "Success",
-          description: "Incident updated successfully",
+          title: "Gespeichert",
+          description: "Vorfall wurde aktualisiert",
         });
       } else {
         const { data: newIncident, error } = await supabase
@@ -341,8 +341,8 @@ export default function Incidents() {
         }
 
         toast({
-          title: "Success",
-          description: "Incident reported successfully",
+          title: "Erstellt",
+          description: "Vorfall wurde gemeldet",
         });
       }
 
@@ -351,15 +351,15 @@ export default function Incidents() {
       fetchIncidents();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save incident",
+        title: "Fehler",
+        description: error.message || "Vorfall konnte nicht gespeichert werden",
         variant: "destructive",
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this incident?")) return;
+    if (!confirm("Vorfall wirklich löschen?")) return;
 
     try {
       const { error } = await supabase
@@ -383,12 +383,12 @@ export default function Incidents() {
         console.error("❌ Failed to create incident deletion log:", auditLogErr);
       }
 
-      toast({ title: "Success", description: "Incident deleted successfully" });
+      toast({ title: "Gelöscht", description: "Vorfall wurde gelöscht" });
       fetchIncidents();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete incident",
+        title: "Fehler",
+        description: error.message || "Vorfall konnte nicht gelöscht werden",
         variant: "destructive",
       });
     }
