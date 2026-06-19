@@ -1121,6 +1121,18 @@ export default function Incidents() {
                         {viewingIncident.root_cause || "-"}
                       </p>
                     </div>
+                    <div className="flex justify-end pt-2 border-t">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setViewingIncident(null);
+                          navigate(`/measures?incident_id=${viewingIncident.id}&incident_title=${encodeURIComponent(viewingIncident.title)}`);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Korrekturmaßnahme erstellen
+                      </Button>
+                    </div>
                   </div>
                 )}
               </DialogContent>

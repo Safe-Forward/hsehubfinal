@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Plus,
@@ -89,6 +89,7 @@ export default function Measures() {
   const { user, companyId, loading } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   const [measures, setMeasures] = useState<Measure[]>([]);
@@ -98,6 +99,7 @@ export default function Measures() {
   const [filterType, setFilterType] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMeasure, setEditingMeasure] = useState<Measure | null>(null);
+  const [linkedIncidentId, setLinkedIncidentId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -115,6 +117,21 @@ export default function Measures() {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
+
+  // Auto-open form when coming from Incidents page
+  useEffect(() => {
+    const incidentId = searchParams.get("incident_id");
+    const incidentTitle = searchParams.get("incident_title");
+    if (incidentId && incidentTitle) {
+      setLinkedIncidentId(incidentId);
+      setFormData((prev) => ({
+        ...prev,
+        title: `Korrekturmaßnahme: ${decodeURIComponent(incidentTitle)}`,
+        measure_type: "corrective",
+      }));
+      setIsDialogOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (companyId) {
@@ -186,6 +203,7 @@ export default function Measures() {
         due_date: formData.due_date || null,
         completion_date: formData.completion_date || null,
         verification_method: formData.verification_method || null,
+        incident_id: linkedIncidentId || null,
       };
 
       if (editingMeasure) {
@@ -270,6 +288,7 @@ export default function Measures() {
       verification_method: "",
     });
     setEditingMeasure(null);
+    setLinkedIncidentId(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -406,6 +425,11 @@ export default function Measures() {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    {linkedIncidentId && (
+                      <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-md px-3 py-2">
+                        Verknüpft mit Vorfall — wird automatisch zugeordnet
+                      </div>
+                    )}
                     <div>
                       <Label htmlFor="title">
                         {t("measures.measureTitle")} *
@@ -416,7 +440,7 @@ export default function Measures() {
                         onChange={(e) =>
                           setFormData({ ...formData, title: e.target.value })
                         }
-                        placeholder="e.g., Install safety guards on machinery"
+                        placeholder="z.B. Schutzvorrichtungen an Maschinen nachrüsten"
                         required
                       />
                     </div>
