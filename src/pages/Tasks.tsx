@@ -292,27 +292,29 @@ export default function Tasks() {
     }
   };
 
-  // Apply task visibility filtering for all users (including admins)
+  // Admins und company_admin sehen alle Tasks; normale User nur ihre eigenen
+  const isAdmin = userRole === "company_admin" || userRole === "super_admin";
+
+  // Apply task visibility filtering
   const visibleTasks = tasks.filter((task) => {
-    const title = (task.title || "").toLowerCase();
-    const desc = (task.description || "").toLowerCase();
-    const hasAnyMention = title.includes("@") || desc.includes("@");
+    // 1. Direkt zugewiesen → immer sichtbar
+    if (currentEmployeeId && task.assigned_to === currentEmployeeId) return true;
 
-    // Broadcast task: no @ in either field — show to everyone
-    if (!hasAnyMention) return true;
-
-    // Check if this employee is @mentioned (in title or description)
+    // 2. User ist im Titel oder in der Beschreibung @erwähnt
     if (currentEmployeeName) {
       const nameLower = currentEmployeeName.toLowerCase();
+      const title = (task.title || "").toLowerCase();
+      const desc = (task.description || "").toLowerCase();
       if (title.includes(`@${nameLower}`) || desc.includes(`@${nameLower}`)) {
         return true;
       }
     }
 
-    // Directly assigned to this employee
-    if (currentEmployeeId && task.assigned_to === currentEmployeeId) {
-      return true;
-    }
+    // 3. Nicht zugewiesene Tasks → nur für Admins sichtbar
+    if (!task.assigned_to && isAdmin) return true;
+
+    // 4. Admins sehen alle Tasks (z.B. um den Überblick zu behalten)
+    if (isAdmin) return true;
 
     return false;
   });
