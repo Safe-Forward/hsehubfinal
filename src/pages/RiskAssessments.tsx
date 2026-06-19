@@ -2609,7 +2609,14 @@ export default function RiskAssessments() {
                                     }
                                   }}
                                 />
-                                <span>{measure.measure_building_block || "Measure"}</span>
+                                <div>
+                                  <span>{measure.measure_building_block || "Maßnahme"}</span>
+                                  {measure.notes && (
+                                    <p className="text-xs text-muted-foreground mt-0.5 max-w-[160px]">
+                                      {measure.notes}
+                                    </p>
+                                  )}
+                                </div>
                               </label>
                             ))
                           ) : (

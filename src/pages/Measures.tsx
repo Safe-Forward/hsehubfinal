@@ -12,6 +12,7 @@ import {
   Edit,
   Trash2,
   FileDown,
+  ExternalLink,
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -178,7 +179,54 @@ export default function Measures() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setMeasures((data as any) || []);
+
+      // Auch GBU-Inline-Maßnahmen (risk_assessment_measures) laden und mergen
+      const { data: ramData } = await supabase
+        .from("risk_assessment_measures" as any)
+        .select(`
+          *,
+          risk_assessment:risk_assessments!risk_assessment_id(id, title)
+        `)
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false });
+
+      // Status-Mapping: progress_status → measures.status
+      const statusMap: Record<string, string> = {
+        not_started: "planned",
+        pending: "planned",
+        in_progress: "in_progress",
+        blocked: "cancelled",
+        completed: "completed",
+        done: "completed",
+      };
+
+      const mappedRam = ((ramData as any) || []).map((ram: any) => ({
+        // Fake-ID mit Prefix damit kein Konflikt mit measures.id
+        id: `ram_${ram.id}`,
+        _is_ram: true, // Marker: kommt aus risk_assessment_measures
+        _ram_id: ram.id,
+        title: ram.measure_building_block || "GBU-Maßnahme",
+        description: ram.notes || null,
+        measure_type: "preventive" as const,
+        status: statusMap[ram.progress_status] || "planned",
+        responsible_person: ram.responsible_person_name
+          ? { full_name: ram.responsible_person_name }
+          : null,
+        due_date: ram.due_date || null,
+        completion_date: null,
+        verification_method: null,
+        incident_id: null,
+        risk_assessment_id: ram.risk_assessment_id,
+        audit_id: null,
+        company_id: ram.company_id,
+        created_at: ram.created_at,
+        // Join-Daten
+        incident: null,
+        risk_assessment: ram.risk_assessment || null,
+        audit: null,
+      }));
+
+      setMeasures([...(data as any || []), ...mappedRam]);
     } catch (error: any) {
       console.error("Error fetching measures:", error);
       toast({
@@ -809,22 +857,34 @@ export default function Measures() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        {(measure as any)._is_ram ? (
+                          // GBU-Inline-Maßnahmen: nur Link zur GBU-Seite
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEdit(measure)}
+                            onClick={() => navigate("/risk-assessments")}
+                            title="In Risikobewertung bearbeiten"
                           >
-                            <Edit className="w-4 h-4" />
+                            <ExternalLink className="w-4 h-4 text-muted-foreground" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(measure.id)}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </div>
+                        ) : (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(measure)}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(measure.id)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
