@@ -407,7 +407,7 @@ export default function Employees() {
 
       if (errors.length > 0) {
         console.error("Some tasks failed:", errors);
-        toast.error("Some tasks failed to create");
+        toast.error("Einige Aufgaben konnten nicht erstellt werden");
       } else {
         const createdTasks = results.map((r) => r.data).filter(Boolean);
         setEmployeeTasks([...createdTasks, ...employeeTasks]);
@@ -549,7 +549,7 @@ export default function Employees() {
 
       if (errors.length > 0) {
         console.error("Some notes failed:", errors);
-        toast.error("Some notes failed to save");
+        toast.error("Einige Notizen konnten nicht gespeichert werden");
       } else {
         setEmployeeNotes([newNoteObj, ...employeeNotes]);
         setNewNote("");
@@ -588,7 +588,7 @@ export default function Employees() {
       if (error) throw error;
 
       setEmployeeNotes(updatedNotes);
-      toast.success("Note deleted successfully");
+      toast.success("Notiz wurde gelöscht");
 
       // Create audit log
       logAction({
@@ -670,7 +670,7 @@ export default function Employees() {
     }
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${selectedEmployees.size} employee(s)? This action cannot be undone.`
+      `${selectedEmployees.size} Mitarbeiter wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`
     );
 
     if (!confirmed) return;
@@ -786,12 +786,12 @@ export default function Employees() {
 
     const worksheet = XLSX.utils.json_to_sheet(templateRows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "EmployeesImportTemplate");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "MitarbeiterImportVorlage");
     XLSX.writeFile(
       workbook,
       `employees_import_template_${new Date().toISOString().split("T")[0]}.xlsx`
     );
-    toast.success("Import template downloaded");
+    toast.success("Importvorlage heruntergeladen");
   };
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
