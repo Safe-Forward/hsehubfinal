@@ -2772,12 +2772,29 @@ export default function RiskAssessments() {
 
             <DialogFooter>
               <div className="flex justify-between w-full">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsMatrixDialogOpen(false)}
-                >
-                  Schließen
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsMatrixDialogOpen(false)}
+                  >
+                    Schließen
+                  </Button>
+                  {selectedRisk && (
+                    <Button
+                      variant="outline"
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                      onClick={() => {
+                        setIsMatrixDialogOpen(false);
+                        navigate(
+                          `/measures?risk_assessment_id=${selectedRisk.id}&risk_assessment_title=${encodeURIComponent(selectedRisk.title)}`
+                        );
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Maßnahme erstellen
+                    </Button>
+                  )}
+                </div>
                 {selectedRisk?.approval_status === "pending_approval" && canApproveRisk(selectedRisk) && (
                   <div className="flex gap-2">
                     <Button

@@ -100,6 +100,8 @@ export default function Measures() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMeasure, setEditingMeasure] = useState<Measure | null>(null);
   const [linkedIncidentId, setLinkedIncidentId] = useState<string | null>(null);
+  const [linkedRiskAssessmentId, setLinkedRiskAssessmentId] = useState<string | null>(null);
+  const [filterSource, setFilterSource] = useState<string>("all");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -128,6 +130,21 @@ export default function Measures() {
         ...prev,
         title: `Korrekturmaßnahme: ${decodeURIComponent(incidentTitle)}`,
         measure_type: "corrective",
+      }));
+      setIsDialogOpen(true);
+    }
+  }, [searchParams]);
+
+  // Auto-open form when coming from Risk Assessments (GBU) page
+  useEffect(() => {
+    const riskId = searchParams.get("risk_assessment_id");
+    const riskTitle = searchParams.get("risk_assessment_title");
+    if (riskId && riskTitle) {
+      setLinkedRiskAssessmentId(riskId);
+      setFormData((prev) => ({
+        ...prev,
+        title: `Maßnahme: ${decodeURIComponent(riskTitle)}`,
+        measure_type: "preventive",
       }));
       setIsDialogOpen(true);
     }
@@ -209,6 +226,7 @@ export default function Measures() {
         completion_date: formData.completion_date || null,
         verification_method: formData.verification_method || null,
         incident_id: linkedIncidentId || null,
+        risk_assessment_id: linkedRiskAssessmentId || null,
       };
 
       if (editingMeasure) {
@@ -294,6 +312,7 @@ export default function Measures() {
     });
     setEditingMeasure(null);
     setLinkedIncidentId(null);
+    setLinkedRiskAssessmentId(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -339,7 +358,18 @@ export default function Measures() {
       filterStatus === "all" || measure.status === filterStatus;
     const matchesType =
       filterType === "all" || measure.measure_type === filterType;
-    return matchesSearch && matchesStatus && matchesType;
+    const matchesSource = (() => {
+      if (filterSource === "all") return true;
+      if (filterSource === "incident") return !!(measure as any).incident?.title;
+      if (filterSource === "risk_assessment") return !!(measure as any).risk_assessment?.title;
+      if (filterSource === "audit") return !!(measure as any).audit?.title;
+      if (filterSource === "manual")
+        return !(measure as any).incident?.title &&
+               !(measure as any).risk_assessment?.title &&
+               !(measure as any).audit?.title;
+      return true;
+    })();
+    return matchesSearch && matchesStatus && matchesType && matchesSource;
   });
 
   const exportToPDF = () => {
@@ -431,8 +461,13 @@ export default function Measures() {
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     {linkedIncidentId && (
+                      <div className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded-md px-3 py-2">
+                        ⚠ Verknüpft mit Vorfall — wird automatisch zugeordnet
+                      </div>
+                    )}
+                    {linkedRiskAssessmentId && (
                       <div className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-md px-3 py-2">
-                        Verknüpft mit Vorfall — wird automatisch zugeordnet
+                        🛡 Verknüpft mit Gefährdungsbeurteilung (GBU) — wird automatisch zugeordnet
                       </div>
                     )}
                     <div>
@@ -675,6 +710,18 @@ export default function Measures() {
                 <SelectItem value="corrective">Korrigierend</SelectItem>
                 <SelectItem value="preventive">Präventiv</SelectItem>
                 <SelectItem value="improvement">Verbesserung</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterSource} onValueChange={setFilterSource}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Nach Herkunft filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Herkunft</SelectItem>
+                <SelectItem value="incident">⚠ Vorfall</SelectItem>
+                <SelectItem value="risk_assessment">🛡 GBU</SelectItem>
+                <SelectItem value="audit">✓ Audit</SelectItem>
+                <SelectItem value="manual">— Manuell</SelectItem>
               </SelectContent>
             </Select>
           </div>
