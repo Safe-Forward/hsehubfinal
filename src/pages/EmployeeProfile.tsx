@@ -3069,6 +3069,12 @@ p_sender_name: senderName,
             <TabsTrigger value="activity" className="px-4 py-2">
               Activity
             </TabsTrigger>
+            {employee?.user_id === user?.id && (
+              <TabsTrigger value="notifications" className="px-4 py-2 flex items-center gap-1">
+                <Bell className="w-3.5 h-3.5" />
+                Benachrichtigungen
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Overview Tab */}
@@ -4716,60 +4722,6 @@ p_sender_name: senderName,
                   </CardContent>
                 </Card>
 
-                {/* Notification Preferences — nur auf eigenem Profil */}
-                {employee?.user_id === user?.id && (() => {
-                  const categories = [
-                    { key: "task",     label: "Aufgaben-Zuweisung" },
-                    { key: "mention",  label: "@Erwähnungen" },
-                    { key: "measure",  label: "Maßnahmen" },
-                    { key: "audit",    label: "Audits" },
-                    { key: "training", label: "Schulungen" },
-                    { key: "checkup",  label: "Gesundheits-Check-Ups" },
-                  ];
-                  return (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <Bell className="w-4 h-4" />
-                          Benachrichtigungseinstellungen
-                        </CardTitle>
-                        <CardDescription>
-                          Wähle wie du über Ereignisse informiert werden möchtest
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-1">
-                          {/* Header */}
-                          <div className="grid grid-cols-[1fr_auto_auto] gap-4 pb-2 border-b text-xs font-medium text-muted-foreground">
-                            <span>Kategorie</span>
-                            <span className="w-16 text-center">In-App</span>
-                            <span className="w-16 text-center">E-Mail</span>
-                          </div>
-                          {categories.map(({ key, label }) => {
-                            const pref = notifPrefs[key] ?? { in_app_enabled: true, email_enabled: true };
-                            return (
-                              <div key={key} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center py-2 border-b last:border-0">
-                                <span className="text-sm">{label}</span>
-                                <div className="w-16 flex justify-center">
-                                  <Switch
-                                    checked={pref.in_app_enabled}
-                                    onCheckedChange={v => saveNotifPref(key, "in_app_enabled", v)}
-                                  />
-                                </div>
-                                <div className="w-16 flex justify-center">
-                                  <Switch
-                                    checked={pref.email_enabled}
-                                    onCheckedChange={v => saveNotifPref(key, "email_enabled", v)}
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })()}
               </div>
             </div>
           </TabsContent>
@@ -5654,6 +5606,68 @@ p_sender_name: senderName,
                     })}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Benachrichtigungen Tab — nur eigenes Profil */}
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Bell className="w-5 h-5" />
+                  Benachrichtigungseinstellungen
+                </CardTitle>
+                <CardDescription>
+                  Wähle für jede Kategorie, wie du informiert werden möchtest.
+                  Änderungen werden sofort gespeichert.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const categories = [
+                    { key: "task",     label: "Aufgaben-Zuweisung" },
+                    { key: "mention",  label: "@Erwähnungen" },
+                    { key: "measure",  label: "Maßnahmen" },
+                    { key: "audit",    label: "Audits" },
+                    { key: "risk",     label: "GBU-Freigaben" },
+                    { key: "training", label: "Schulungen" },
+                    { key: "checkup",  label: "Gesundheits-Check-Ups" },
+                  ];
+                  return (
+                    <div className="space-y-1">
+                      {/* Header */}
+                      <div className="grid grid-cols-[1fr_auto_auto] gap-4 pb-2 border-b text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        <span>Kategorie</span>
+                        <span className="w-20 text-center">In-App</span>
+                        <span className="w-20 text-center">E-Mail</span>
+                      </div>
+                      {categories.map(({ key, label }) => {
+                        const pref = notifPrefs[key] ?? { in_app_enabled: true, email_enabled: true };
+                        return (
+                          <div
+                            key={key}
+                            className="grid grid-cols-[1fr_auto_auto] gap-4 items-center py-3 border-b last:border-0 hover:bg-muted/30 px-1 rounded transition-colors"
+                          >
+                            <span className="text-sm font-medium">{label}</span>
+                            <div className="w-20 flex justify-center">
+                              <Switch
+                                checked={pref.in_app_enabled}
+                                onCheckedChange={v => saveNotifPref(key, "in_app_enabled", v)}
+                              />
+                            </div>
+                            <div className="w-20 flex justify-center">
+                              <Switch
+                                checked={pref.email_enabled}
+                                onCheckedChange={v => saveNotifPref(key, "email_enabled", v)}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </TabsContent>
