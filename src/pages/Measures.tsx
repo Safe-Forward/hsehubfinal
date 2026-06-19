@@ -280,10 +280,10 @@ export default function Measures() {
         label: string;
       }
     > = {
-      planned: { variant: "secondary", label: "Planned" },
-      in_progress: { variant: "default", label: "In Progress" },
-      completed: { variant: "outline", label: "Completed" },
-      cancelled: { variant: "destructive", label: "Cancelled" },
+      planned: { variant: "secondary", label: "Geplant" },
+      in_progress: { variant: "default", label: "In Bearbeitung" },
+      completed: { variant: "outline", label: "Abgeschlossen" },
+      cancelled: { variant: "destructive", label: "Abgebrochen" },
     };
     const config = variants[status] || variants.planned;
     return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -295,9 +295,14 @@ export default function Measures() {
       corrective: "bg-orange-100 text-orange-800",
       improvement: "bg-green-100 text-green-800",
     };
+    const labels: Record<string, string> = {
+      preventive: "Präventiv",
+      corrective: "Korrigierend",
+      improvement: "Verbesserung",
+    };
     return (
       <Badge className={colors[type] || colors.corrective}>
-        {type.charAt(0).toUpperCase() + type.slice(1)}
+        {labels[type] || type}
       </Badge>
     );
   };
@@ -318,9 +323,9 @@ export default function Measures() {
 
     // Add title
     doc.setFontSize(18);
-    doc.text("Measures & Controls Report", 14, 22);
+    doc.text("Maßnahmen & Kontrollen – Bericht", 14, 22);
     doc.setFontSize(11);
-    doc.text(`Generated on: ${format(new Date(), "PPP")}`, 14, 30);
+    doc.text(`Erstellt am: ${format(new Date(), "dd.MM.yyyy")}`, 14, 30);
 
     // Prepare table data
     const tableData = filteredMeasures.map((measure) => [
@@ -328,14 +333,14 @@ export default function Measures() {
       measure.measure_type.charAt(0).toUpperCase() +
       measure.measure_type.slice(1),
       measure.status.charAt(0).toUpperCase() + measure.status.slice(1),
-      measure.responsible_person?.full_name || "Unassigned",
+      measure.responsible_person?.full_name || "Nicht zugewiesen",
       measure.due_date
-        ? format(new Date(measure.due_date), "MMM dd, yyyy")
-        : "No deadline",
+        ? format(new Date(measure.due_date), "dd.MM.yyyy")
+        : "Kein Fälligkeitsdatum",
     ]);
 
     autoTable(doc, {
-      head: [["Measure Title", "Type", "Status", "Responsible", "Due Date"]],
+      head: [["Maßnahme", "Typ", "Status", "Verantwortlich", "Fälligkeitsdatum"]],
       body: tableData,
       startY: 35,
       styles: { fontSize: 9 },
@@ -345,7 +350,7 @@ export default function Measures() {
     doc.save(`measures_report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
     toast({
       title: "Gespeichert",
-      description: "PDF exported successfully",
+      description: "PDF wurde exportiert",
     });
   };
 
@@ -508,7 +513,7 @@ export default function Measures() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="due_date">Due Date</Label>
+                        <Label htmlFor="due_date">Fälligkeitsdatum</Label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
@@ -540,7 +545,7 @@ export default function Measures() {
                       </div>
 
                       <div>
-                        <Label htmlFor="completion_date">Completion Date</Label>
+                        <Label htmlFor="completion_date">Abschlussdatum</Label>
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button
@@ -573,7 +578,7 @@ export default function Measures() {
                     </div>
 
                     <div>
-                      <Label htmlFor="verification">Verification Method</Label>
+                      <Label htmlFor="verification">Verifizierungsmethode</Label>
                       <Textarea
                         id="verification"
                         value={formData.verification_method}
@@ -583,7 +588,7 @@ export default function Measures() {
                             verification_method: e.target.value,
                           })
                         }
-                        placeholder="How will this measure be verified?"
+                        placeholder="Wie wird diese Maßnahme verifiziert?"
                         rows={2}
                       />
                     </div>
@@ -597,10 +602,10 @@ export default function Measures() {
                           resetForm();
                         }}
                       >
-                        Cancel
+                        Abbrechen
                       </Button>
                       <Button type="submit">
-                        {editingMeasure ? "Update" : "Create"} Measure
+                        {editingMeasure ? "Aktualisieren" : "Erstellen"}
                       </Button>
                     </div>
                   </form>
@@ -614,7 +619,7 @@ export default function Measures() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Search measures..."
+                placeholder="Maßnahmen suchen..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -622,25 +627,25 @@ export default function Measures() {
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Nach Status filtern" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="planned">Planned</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="all">Alle Status</SelectItem>
+                <SelectItem value="planned">Geplant</SelectItem>
+                <SelectItem value="in_progress">In Bearbeitung</SelectItem>
+                <SelectItem value="completed">Abgeschlossen</SelectItem>
+                <SelectItem value="cancelled">Abgebrochen</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterType} onValueChange={setFilterType}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by type" />
+                <SelectValue placeholder="Nach Typ filtern" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="corrective">Corrective</SelectItem>
-                <SelectItem value="preventive">Preventive</SelectItem>
-                <SelectItem value="improvement">Improvement</SelectItem>
+                <SelectItem value="all">Alle Typen</SelectItem>
+                <SelectItem value="corrective">Korrigierend</SelectItem>
+                <SelectItem value="preventive">Präventiv</SelectItem>
+                <SelectItem value="improvement">Verbesserung</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -649,12 +654,12 @@ export default function Measures() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Measure Title</TableHead>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Maßnahme</TableHead>
+                  <TableHead>Typ</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Responsible</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Verantwortlich</TableHead>
+                  <TableHead>Fälligkeitsdatum</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -664,7 +669,7 @@ export default function Measures() {
                       colSpan={6}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      No measures found. Create one to get started.
+                      Keine Maßnahmen gefunden. Erstellen Sie eine, um zu beginnen.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -687,7 +692,7 @@ export default function Measures() {
                       <TableCell>
                         {measure.responsible_person?.full_name || (
                           <span className="text-muted-foreground">
-                            Unassigned
+                            Nicht zugewiesen
                           </span>
                         )}
                       </TableCell>
@@ -695,11 +700,11 @@ export default function Measures() {
                         {measure.due_date ? (
                           <div className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {format(new Date(measure.due_date), "MMM dd, yyyy")}
+                            {format(new Date(measure.due_date), "dd.MM.yyyy")}
                           </div>
                         ) : (
                           <span className="text-muted-foreground">
-                            No deadline
+                            Kein Fälligkeitsdatum
                           </span>
                         )}
                       </TableCell>
