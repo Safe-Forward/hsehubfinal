@@ -834,29 +834,29 @@ export default function Measures() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {(measure as any).incident?.title ? (
+                        {(measure.incident_id || (measure as any).incident?.title) ? (
                           <Badge
                             variant="outline"
                             className="text-xs text-orange-700 border-orange-300 cursor-default gap-1"
-                            title={(measure as any).incident.title}
+                            title={(measure as any).incident?.title || measure.incident_id || ""}
                           >
                             <AlertTriangle className="w-3 h-3" />
                             Vorfall
                           </Badge>
-                        ) : (measure as any).risk_assessment?.title ? (
+                        ) : (measure.risk_assessment_id || (measure as any).risk_assessment?.title) ? (
                           <Badge
                             variant="outline"
                             className="text-xs text-blue-700 border-blue-300 cursor-default gap-1"
-                            title={(measure as any).risk_assessment.title}
+                            title={(measure as any).risk_assessment?.title || "Risikobewertung"}
                           >
                             <ShieldAlert className="w-3 h-3" />
                             Risikobewertung
                           </Badge>
-                        ) : (measure as any).audit?.title ? (
+                        ) : ((measure as any).audit_id || (measure as any).audit?.title) ? (
                           <Badge
                             variant="outline"
                             className="text-xs text-purple-700 border-purple-300 cursor-default gap-1"
-                            title={(measure as any).audit.title}
+                            title={(measure as any).audit?.title || "Audit"}
                           >
                             <ClipboardCheck className="w-3 h-3" />
                             Audit
