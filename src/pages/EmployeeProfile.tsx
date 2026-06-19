@@ -237,6 +237,7 @@ export default function EmployeeProfile() {
     useState(false);
   const [notesMentionSearch, setNotesMentionSearch] = useState("");
   const [teamMembersForMention, setTeamMembersForMention] = useState<any[]>([]);
+  const [mentionedMemberId, setMentionedMemberId] = useState<string | null>(null);
   const [cursorPosition, setCursorPosition] = useState(0);
 
   // Enhanced note visibility state
@@ -2237,29 +2238,52 @@ const handleCreateTask = async () => {
 let finalAssignedTo = id;
 let finalTaskTitle = newTaskTitle;
 
-// Extract full text after @ (up to next @ or end), then prefix-match against
-// all employee names so multi-word names like "Will Baker" are found correctly.
+// Extract full text after @ (up to next @ or end)
 const mentionMatch = newTaskTitle.match(/@(.+?)(?=\s*@|$)/);
 if (mentionMatch && companyId) {
   const rawAfterMention = mentionMatch[1].trim();
 
-  const { data: allEmployees } = await supabase
-    .from("employees")
-    .select("id, full_name")
-    .eq("company_id", companyId);
+  // ── Primary path: stored team_member ID → SECURITY DEFINER RPC ──────────
+  // When the user clicked a name in the dropdown, mentionedMemberId is set.
+  // We use it to find the corresponding employee via user_id, bypassing RLS
+  // (a user with restricted employees-visibility would otherwise fall back
+  // to assigning the task to the profile owner instead of the mentioned person).
+  if (mentionedMemberId) {
+    const selectedMember = teamMembersForMention.find(m => m.id === mentionedMemberId);
+    if (selectedMember?.user_id) {
+      const { data: resolvedId, error: resolveErr } = await supabase.rpc(
+        "get_employee_id_for_mention",
+        { p_user_id: selectedMember.user_id, p_company_id: companyId }
+      );
+      if (!resolveErr && resolvedId) {
+        finalAssignedTo = resolvedId;
+        finalTaskTitle = newTaskTitle
+          .replace(new RegExp(`@${selectedMember.full_name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`, "i"), "")
+          .trim();
+      }
+    }
+  }
 
-  // Longest prefix match wins (handles "Will" vs "Will Baker" ambiguity)
-  const matchedEmployee = (allEmployees || [])
-    .filter(emp =>
-      rawAfterMention.toLowerCase().startsWith(emp.full_name.toLowerCase())
-    )
-    .sort((a, b) => b.full_name.length - a.full_name.length)[0];
+  // ── Fallback: name-based match against employees (typed @mention or no user_id) ──
+  if (finalAssignedTo === id) {
+    const { data: allEmployees } = await supabase
+      .from("employees")
+      .select("id, full_name")
+      .eq("company_id", companyId);
 
-  if (matchedEmployee) {
-    finalAssignedTo = matchedEmployee.id;
-    finalTaskTitle = newTaskTitle
-      .replace(new RegExp(`@${matchedEmployee.full_name}\\s*`, "i"), "")
-      .trim();
+    // Longest prefix match wins (handles "Will" vs "Will Baker" ambiguity)
+    const matchedEmployee = (allEmployees || [])
+      .filter(emp =>
+        rawAfterMention.toLowerCase().startsWith(emp.full_name.toLowerCase())
+      )
+      .sort((a, b) => b.full_name.length - a.full_name.length)[0];
+
+    if (matchedEmployee) {
+      finalAssignedTo = matchedEmployee.id;
+      finalTaskTitle = newTaskTitle
+        .replace(new RegExp(`@${matchedEmployee.full_name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`, "i"), "")
+        .trim();
+    }
   }
 }
 
@@ -2367,7 +2391,8 @@ p_sender_name: senderName,
       setNewTaskTitle("");
       setNewTaskDueDate(undefined);
       setNewTaskPriority("medium");
-      toast.success("Task created");
+      setMentionedMemberId(null);
+      toast.success("Task erstellt");
     } catch (error) {
       console.error("Error creating task:", error);
       toast.error("Failed to create task");
@@ -3969,6 +3994,8 @@ p_sender_name: senderName,
                                           setNewTaskTitle(
                                             `${textBeforeAt}@${emp.full_name} ${textAfterCursor}`
                                           );
+                                          // Store selected team_member ID for RLS-safe employee lookup
+                                          setMentionedMemberId(emp.id);
                                           setShowTaskMentionDropdown(false);
                                         }}
                                       >
