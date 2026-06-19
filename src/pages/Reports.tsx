@@ -266,7 +266,7 @@ export default function Reports() {
 
     toast({
       title: "Layout Reset",
-      description: "Custom reports layout has been reset",
+      description: "Benutzerdefiniertes Berichtslayout wurde zurückgesetzt",
     });
   }, [customReports, toast]);
 
@@ -598,7 +598,7 @@ export default function Reports() {
       console.error("Error fetching report data:", error);
       toast({
         title: "Fehler",
-        description: error.message || "Failed to fetch report data",
+        description: error.message || "Berichtsdaten konnten nicht geladen werden",
         variant: "destructive",
       });
     }
@@ -833,7 +833,7 @@ export default function Reports() {
     if (!hasDetailedPermission('reports', 'export_data')) {
       toast({
         title: "Permission Denied",
-        description: "You do not have permission to export data",
+        description: "Keine Berechtigung zum Exportieren von Daten",
         variant: "destructive",
       });
       return;
@@ -1665,7 +1665,7 @@ export default function Reports() {
       console.error("Error selecting template:", error);
       toast({
         title: "Fehler",
-        description: "Failed to load template data",
+        description: "Vorlagendaten konnten nicht geladen werden",
         variant: "destructive",
       });
     }
@@ -1781,7 +1781,7 @@ export default function Reports() {
     if (!hasDetailedPermission('reports', 'export_data')) {
       toast({
         title: "Permission Denied",
-        description: "You do not have permission to export data",
+        description: "Keine Berechtigung zum Exportieren von Daten",
         variant: "destructive",
       });
       return;
@@ -2556,7 +2556,7 @@ function OverviewSection({
 
     toast({
       title: "Layout Reset",
-      description: "Dashboard layout has been reset to default view",
+      description: "Dashboard-Layout wurde auf die Standardansicht zurückgesetzt",
     });
   }, [buildDefaultUnifiedLayout, toast]);
 
@@ -3570,7 +3570,7 @@ function IncidentsSection({ stats, chartData, incidentTypeData }: { stats: Repor
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_incidents');
-    toast({ title: "Layout Reset", description: "Incidents layout has been reset to default" });
+    toast({ title: "Zurückgesetzt", description: "Vorfälle-Layout wurde zurückgesetzt" });
   }, [toast]);
 
   return (
@@ -3786,7 +3786,7 @@ const resetLayout = useCallback(() => {
     } catch (e) {
       console.error(e);
     }
-    toast({ title: "Layout Reset", description: "Trainings layout has been reset to default" });
+    toast({ title: "Zurückgesetzt", description: "Schulungen-Layout wurde zurückgesetzt" });
   }, [toast]);
 
   return (
@@ -3994,7 +3994,7 @@ function MeasuresSection({ stats, chartData, measuresStatusData }: { stats: Repo
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_measures_v2');
-    toast({ title: "Layout Reset", description: "Measures layout has been reset to default" });
+    toast({ title: "Zurückgesetzt", description: "Maßnahmen-Layout wurde zurückgesetzt" });
   }, [toast]);
 
   return (
@@ -4169,7 +4169,7 @@ function TasksSection({ stats, chartData }: { stats: ReportStats; chartData: any
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_tasks');
-    toast({ title: "Layout Reset", description: "Tasks layout has been reset to default" });
+    toast({ title: "Zurückgesetzt", description: "Aufgaben-Layout wurde zurückgesetzt" });
   }, [toast]);
 
   return (
@@ -4296,7 +4296,7 @@ function CheckupsSection({ stats }: { stats: ReportStats }) {
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_checkups');
-    toast({ title: "Layout Reset", description: "Checkups layout has been reset to default" });
+    toast({ title: "Zurückgesetzt", description: "G-Untersuchungen-Layout wurde zurückgesetzt" });
   }, [toast]);
 
   return (

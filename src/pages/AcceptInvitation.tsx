@@ -110,7 +110,7 @@ export default function AcceptInvitation() {
 
     if (password.length < 6) {
       toast({
-        title: "Password too short",
+        title: "Passwort zu kurz",
         description: "Password must be at least 6 characters long.",
         variant: "destructive",
       });
@@ -148,7 +148,7 @@ export default function AcceptInvitation() {
         // Check if user already exists
         if (authError.message.includes("already registered")) {
           toast({
-            title: "Account already exists",
+            title: "Konto existiert bereits",
             description: "An account with this email already exists. Please try logging in instead.",
             variant: "destructive",
           });
@@ -198,7 +198,7 @@ export default function AcceptInvitation() {
     } catch (err: any) {
       console.error("Error creating account:", err);
       toast({
-        title: "Error creating account",
+        title: "Fehler beim Erstellen",
         description: err.message || "An error occurred. Please try again.",
         variant: "destructive",
       });
