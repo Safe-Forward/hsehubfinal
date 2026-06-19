@@ -129,7 +129,7 @@ export default function Audits() {
       })));
     } catch (err: any) {
       toast({
-        title: "Error loading data",
+        title: "Ladefehler",
         description: err.message,
         variant: "destructive",
       });
@@ -145,7 +145,7 @@ export default function Audits() {
     if (!hasDetailedPermission('audits', 'create_edit')) {
       toast({
         title: "Permission Denied",
-        description: "You do not have permission to create audits",
+        description: "Keine Berechtigung zum Erstellen von Audits",
         variant: "destructive",
       });
       return;
@@ -238,7 +238,7 @@ export default function Audits() {
       fetchData();
     } catch (err: any) {
       toast({
-        title: "Error creating audit",
+        title: "Fehler",
         description: err.message,
         variant: "destructive",
       });
@@ -356,7 +356,7 @@ export default function Audits() {
     if (!hasDetailedPermission('audits', 'create_edit')) {
       toast({
         title: "Permission Denied",
-        description: "You do not have permission to delete audits",
+        description: "Keine Berechtigung zum Löschen von Audits",
         variant: "destructive",
       });
       return;
