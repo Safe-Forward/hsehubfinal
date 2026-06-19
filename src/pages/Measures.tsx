@@ -277,7 +277,27 @@ export default function Measures() {
         risk_assessment_id: linkedRiskAssessmentId || null,
       };
 
-      if (editingMeasure) {
+      if (editingMeasure && (editingMeasure as any)._is_ram) {
+        // GBU-Inline-Maßnahme → zurück in risk_assessment_measures speichern
+        const statusToProgress: Record<string, string> = {
+          planned: "not_started",
+          in_progress: "in_progress",
+          completed: "completed",
+          cancelled: "blocked",
+        };
+        const { error } = await (supabase as any)
+          .from("risk_assessment_measures")
+          .update({
+            measure_building_block: formData.title,
+            notes: formData.description || null,
+            progress_status: statusToProgress[formData.status] || "not_started",
+            due_date: formData.due_date || null,
+          })
+          .eq("id", (editingMeasure as any)._ram_id);
+
+        if (error) throw error;
+        toast({ title: "Gespeichert", description: "GBU-Maßnahme wurde aktualisiert" });
+      } else if (editingMeasure) {
         const { error } = await (supabase as any)
           .from("measures")
           .update(measureData)
@@ -316,11 +336,21 @@ export default function Measures() {
     if (!confirm("Maßnahme wirklich löschen?")) return;
 
     try {
-      const { error } = await supabase
-        .from("measures" as any)
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
+      if (id.startsWith("ram_")) {
+        // GBU-Inline-Maßnahme → aus risk_assessment_measures löschen
+        const ramId = id.replace("ram_", "");
+        const { error } = await (supabase as any)
+          .from("risk_assessment_measures")
+          .delete()
+          .eq("id", ramId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("measures" as any)
+          .delete()
+          .eq("id", id);
+        if (error) throw error;
+      }
       toast({ title: "Gespeichert", description: "Maßnahme wurde gelöscht" });
       fetchMeasures();
     } catch (error: any) {
@@ -812,29 +842,37 @@ export default function Measures() {
                       </TableCell>
                       <TableCell>
                         {(measure as any).incident?.title ? (
-                          <Badge variant="outline" className="text-xs text-orange-700 border-orange-300">
-                            ⚠ {(measure as any).incident.title.length > 25
-                              ? (measure as any).incident.title.substring(0, 25) + "…"
-                              : (measure as any).incident.title}
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-orange-700 border-orange-300 cursor-default"
+                            title={(measure as any).incident.title}
+                          >
+                            ⚠ Vorfall
                           </Badge>
                         ) : (measure as any).risk_assessment?.title ? (
-                          <Badge variant="outline" className="text-xs text-blue-700 border-blue-300">
-                            🛡 {(measure as any).risk_assessment.title.length > 25
-                              ? (measure as any).risk_assessment.title.substring(0, 25) + "…"
-                              : (measure as any).risk_assessment.title}
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-blue-700 border-blue-300 cursor-default"
+                            title={(measure as any).risk_assessment.title}
+                          >
+                            🛡 Risikobewertung
                           </Badge>
                         ) : (measure as any).audit?.title ? (
-                          <Badge variant="outline" className="text-xs text-purple-700 border-purple-300">
-                            ✓ {(measure as any).audit.title.length > 25
-                              ? (measure as any).audit.title.substring(0, 25) + "…"
-                              : (measure as any).audit.title}
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-purple-700 border-purple-300 cursor-default"
+                            title={(measure as any).audit.title}
+                          >
+                            ✓ Audit
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground text-xs">—</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        {getTypeBadge(measure.measure_type)}
+                        {(measure as any)._is_ram
+                          ? <span className="text-muted-foreground text-xs">—</span>
+                          : getTypeBadge(measure.measure_type)}
                       </TableCell>
                       <TableCell>{getStatusBadge(measure.status)}</TableCell>
                       <TableCell>
@@ -857,34 +895,22 @@ export default function Measures() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        {(measure as any)._is_ram ? (
-                          // GBU-Inline-Maßnahmen: nur Link zur GBU-Seite
+                        <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate("/risk-assessments")}
-                            title="In Risikobewertung bearbeiten"
+                            onClick={() => handleEdit(measure)}
                           >
-                            <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                            <Edit className="w-4 h-4" />
                           </Button>
-                        ) : (
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(measure)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(measure.id)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </div>
-                        )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(measure.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
