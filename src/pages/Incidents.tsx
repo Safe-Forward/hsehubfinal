@@ -452,7 +452,7 @@ export default function Incidents() {
       <Badge
         className={`${className} ${clickable ? "cursor-pointer hover:opacity-80" : ""}`}
         onClick={clickable ? () => setFilterSeverity((prev) => (prev === severity ? "all" : severity)) : undefined}
-        title={clickable ? "Click to filter by this severity" : undefined}
+        title={clickable ? "Klicken zum Filtern nach Schweregrad" : undefined}
       >
         <Icon className="w-3 h-3 mr-1" />
         {severity.charAt(0).toUpperCase() + severity.slice(1)}
@@ -472,7 +472,7 @@ export default function Incidents() {
       <Badge
         className={`${colors[type] || colors.other} ${clickable ? "cursor-pointer hover:opacity-80" : ""}`}
         onClick={clickable ? () => setFilterType((prev) => (prev === type ? "all" : type)) : undefined}
-        title={clickable ? "Click to filter by this type" : undefined}
+        title={clickable ? "Klicken zum Filtern nach Typ" : undefined}
       >
         {type.replace("_", " ").charAt(0).toUpperCase() +
           type.replace("_", " ").slice(1)}
@@ -491,7 +491,7 @@ export default function Incidents() {
             ? () => setFilterStatus((prev) => (prev === status ? "all" : status))
             : undefined
         }
-        title={clickable ? "Click to filter by this status" : undefined}
+        title={clickable ? "Klicken zum Filtern nach Status" : undefined}
       >
         {status}
       </Badge>
