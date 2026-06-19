@@ -144,12 +144,15 @@ export default function Measures() {
     if (!companyId) return;
 
     try {
-      const { data: measuresData, error } = await supabase
+      // FK-Constraint measures_incident_id_fkey existiert in der DB (ON DELETE SET NULL)
+      // → direkter Join möglich
+      const { data, error } = await supabase
         .from("measures" as any)
         .select(
           `
           *,
           responsible_person:employees!responsible_person_id(full_name),
+          incident:incidents!incident_id(title),
           risk_assessment:risk_assessments!risk_assessment_id(title),
           audit:audits!audit_id(title)
         `
@@ -158,30 +161,7 @@ export default function Measures() {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-
-      // Fetch incident titles separately (incident_id has no FK constraint)
-      const data = measuresData || [];
-      const incidentIds = [...new Set((data as any[])
-        .map((m: any) => m.incident_id)
-        .filter(Boolean))];
-
-      let incidentMap: Record<string, string> = {};
-      if (incidentIds.length > 0) {
-        const { data: incidents } = await supabase
-          .from("incidents" as any)
-          .select("id, title")
-          .in("id", incidentIds);
-        if (incidents) {
-          incidentMap = Object.fromEntries((incidents as any[]).map((i: any) => [i.id, i.title]));
-        }
-      }
-
-      const enriched = (data as any[]).map((m: any) => ({
-        ...m,
-        incident: m.incident_id ? { title: incidentMap[m.incident_id] } : null,
-      }));
-
-      setMeasures(enriched as any);
+      setMeasures((data as any) || []);
     } catch (error: any) {
       console.error("Error fetching measures:", error);
       toast({
