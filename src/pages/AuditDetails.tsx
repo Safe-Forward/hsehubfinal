@@ -174,7 +174,7 @@ export default function AuditDetails() {
       }
     } catch (err: any) {
       toast({
-        title: "Error loading audit",
+        title: "Fehler beim Laden",
         description: err.message,
         variant: "destructive",
       });
@@ -237,7 +237,7 @@ export default function AuditDetails() {
       if (!sections || sections.length === 0) {
         console.log(`No ISO criteria found for ${auditData.iso_code}`);
         toast({
-          title: "No criteria found",
+          title: "Keine Kriterien gefunden",
           description: `Please import ISO criteria for ${auditData.iso_code} in Settings first.`,
           variant: "destructive",
         });
@@ -351,7 +351,7 @@ export default function AuditDetails() {
       }
       
       toast({
-        title: "Error generating checklist",
+        title: "Fehler",
         description: errorMessage,
         variant: "destructive",
       });
@@ -399,7 +399,7 @@ export default function AuditDetails() {
       });
     } catch (err: any) {
       toast({
-        title: "Error updating item",
+        title: "Fehler",
         description: err.message,
         variant: "destructive",
       });
@@ -455,7 +455,7 @@ export default function AuditDetails() {
     setNotesDialog({ open: false, itemId: null, currentNote: "" });
     
     toast({
-      title: "Note saved",
+      title: "Gespeichert",
       description: "Implementierungsnotiz wurde hinzugefügt",
     });
   };
@@ -496,12 +496,12 @@ export default function AuditDetails() {
       });
       
       toast({
-        title: "All items selected",
+        title: "Alle ausgewählt",
         description: `Updated ${allUpdates.length} checklist items`,
       });
     }).catch(err => {
       toast({
-        title: "Error updating items",
+        title: "Fehler",
         description: err.message,
         variant: "destructive",
       });
@@ -511,7 +511,7 @@ export default function AuditDetails() {
   const handleExportPdf = () => {
     if (!audit || checklistItems.length === 0) {
       toast({
-        title: "No data to export",
+        title: "Keine Daten",
         description: "Keine Checklistenpunkte für dieses Audit vorhanden.",
         variant: "destructive",
       });
@@ -545,15 +545,15 @@ export default function AuditDetails() {
 
         return [
           criteriaLabel,
-          item.implemented ? "Yes" : "No",
-          item.satisfied ? "Yes" : "No",
+          item.implemented ? "Ja" : "Nein",
+          item.satisfied ? "Ja" : "Nein",
           item.notes || "-",
         ];
       });
 
       autoTable(doc, {
         startY: 32,
-        head: [["Criteria", "Implemented", "Satisfied", "Notes"]],
+        head: [["Kriterium", "Umgesetzt", "Erfüllt", "Notizen"]],
         body: rows,
         styles: { fontSize: 8, cellPadding: 2 },
         headStyles: { fillColor: [37, 99, 235] },
@@ -572,7 +572,7 @@ export default function AuditDetails() {
       });
     } catch (error: any) {
       toast({
-        title: "Export failed",
+        title: "Export fehlgeschlagen",
         description: error?.message || "PDF konnte nicht exportiert werden",
         variant: "destructive",
       });
