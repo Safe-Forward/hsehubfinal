@@ -170,7 +170,7 @@ export default function Documents() {
     if (!hasDetailedPermission('documents', 'upload')) {
       toast({
         title: "Permission Denied",
-        description: "You do not have permission to upload documents",
+        description: "Keine Berechtigung zum Hochladen von Dokumenten",
         variant: "destructive",
       });
       return;
@@ -179,7 +179,7 @@ export default function Documents() {
     if (!uploadFile || !companyId || !user) {
       toast({
         title: "Fehler",
-        description: "Please select a file and fill in required fields",
+        description: "Bitte Datei auswählen und Pflichtfelder ausfüllen",
         variant: "destructive",
       });
       return;
@@ -188,7 +188,7 @@ export default function Documents() {
     if (!uploadTitle.trim()) {
       toast({
         title: "Fehler",
-        description: "Please enter a document title",
+        description: "Bitte Dokumententitel eingeben",
         variant: "destructive",
       });
       return;
@@ -320,7 +320,7 @@ export default function Documents() {
     if (!hasDetailedPermission('documents', 'delete')) {
       toast({
         title: "Permission Denied",
-        description: "You do not have permission to delete documents",
+        description: "Keine Berechtigung zum Löschen von Dokumenten",
         variant: "destructive",
       });
       return;
@@ -374,7 +374,7 @@ export default function Documents() {
   };
 
   const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return "Unknown size";
+    if (!bytes) return "Unbekannte Größe";
     const mb = bytes / (1024 * 1024);
     if (mb < 1) {
       return `${(bytes / 1024).toFixed(1)} KB`;
@@ -475,7 +475,7 @@ export default function Documents() {
           >
             <SelectTrigger className="w-[200px]">
               <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filter by category" />
+              <SelectValue placeholder="Nach Kategorie filtern" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
@@ -496,8 +496,8 @@ export default function Documents() {
               <p className="text-lg font-medium mb-2">No documents found</p>
               <p className="text-sm text-muted-foreground mb-4">
                 {searchQuery || categoryFilter !== "all"
-                  ? "Try adjusting your search or filters"
-                  : "Upload your first document to get started"}
+                  ? "Suche oder Filter anpassen"
+                  : "Laden Sie Ihr erstes Dokument hoch, um zu beginnen"}
               </p>
               {!searchQuery && categoryFilter === "all" && hasDetailedPermission('documents', 'upload') && (
                 <Button onClick={() => setShowUploadDialog(true)}>
@@ -538,7 +538,7 @@ export default function Documents() {
                       <span>
                         {doc.uploader?.user_metadata?.full_name ||
                           doc.uploader?.email ||
-                          "Unknown"}
+                          "Unbekannt"}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -632,7 +632,7 @@ export default function Documents() {
                 id="title"
                 value={uploadTitle}
                 onChange={(e) => setUploadTitle(e.target.value)}
-                placeholder="Enter document title"
+                placeholder="Dokumententitel eingeben"
               />
             </div>
 
@@ -642,7 +642,7 @@ export default function Documents() {
                 id="description"
                 value={uploadDescription}
                 onChange={(e) => setUploadDescription(e.target.value)}
-                placeholder="Brief description of the document"
+                placeholder="Kurzbeschreibung des Dokuments"
                 rows={3}
               />
             </div>
