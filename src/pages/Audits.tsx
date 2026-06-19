@@ -154,7 +154,7 @@ export default function Audits() {
     if (!formData.title || !formData.iso_code || !formData.scheduled_date) {
       toast({
         title: "Validation Error",
-        description: "Please fill in all required fields",
+        description: "Bitte alle Pflichtfelder ausfüllen",
         variant: "destructive",
       });
       return;

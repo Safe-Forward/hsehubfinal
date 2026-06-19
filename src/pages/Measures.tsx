@@ -224,7 +224,7 @@ export default function Measures() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this measure?")) return;
+    if (!confirm("Maßnahme wirklich löschen?")) return;
 
     try {
       const { error } = await supabase

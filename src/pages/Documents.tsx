@@ -326,7 +326,7 @@ export default function Documents() {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete "${doc.title}"?`)) {
+    if (!confirm(`Dokument "${doc.title}" wirklich löschen?`)) {
       return;
     }
 

@@ -345,7 +345,7 @@ export default function AuditDetails() {
       console.error("Error generating checklist:", err);
       
       // Provide more detailed error message
-      let errorMessage = err.message || "Failed to generate checklist";
+      let errorMessage = err.message || "Checkliste konnte nicht generiert werden";
       if (err.code === '42501') {
         errorMessage = "Database permission error. Please contact support to fix RLS policies.";
       }
@@ -456,7 +456,7 @@ export default function AuditDetails() {
     
     toast({
       title: "Note saved",
-      description: "Implementation note has been added successfully",
+      description: "Implementierungsnotiz wurde hinzugefügt",
     });
   };
 
@@ -512,7 +512,7 @@ export default function AuditDetails() {
     if (!audit || checklistItems.length === 0) {
       toast({
         title: "No data to export",
-        description: "There are no checklist items available for this audit.",
+        description: "Keine Checklistenpunkte für dieses Audit vorhanden.",
         variant: "destructive",
       });
       return;
@@ -573,7 +573,7 @@ export default function AuditDetails() {
     } catch (error: any) {
       toast({
         title: "Export failed",
-        description: error?.message || "Failed to export PDF",
+        description: error?.message || "PDF konnte nicht exportiert werden",
         variant: "destructive",
       });
     }
@@ -815,7 +815,7 @@ export default function AuditDetails() {
                   console.error("Regeneration error:", err);
                   toast({
                     title: "Fehler",
-                    description: err.message || "Failed to regenerate checklist",
+                    description: err.message || "Checkliste konnte nicht neu generiert werden",
                     variant: "destructive",
                   });
                 }
