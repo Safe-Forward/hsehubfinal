@@ -12,7 +12,9 @@ import {
   Edit,
   Trash2,
   FileDown,
-  ExternalLink,
+  AlertTriangle,
+  ShieldAlert,
+  ClipboardCheck,
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
@@ -364,6 +366,9 @@ export default function Measures() {
 
   const handleEdit = (measure: Measure) => {
     setEditingMeasure(measure);
+    // Bestehende Links wiederherstellen — sonst werden sie beim Speichern auf null gesetzt
+    setLinkedIncidentId(measure.incident_id || null);
+    setLinkedRiskAssessmentId(measure.risk_assessment_id || null);
     setFormData({
       title: measure.title,
       description: measure.description || "",
@@ -779,17 +784,6 @@ export default function Measures() {
                 <SelectItem value="cancelled">Abgebrochen</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Nach Typ filtern" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle Typen</SelectItem>
-                <SelectItem value="corrective">Korrigierend</SelectItem>
-                <SelectItem value="preventive">Präventiv</SelectItem>
-                <SelectItem value="improvement">Verbesserung</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={filterSource} onValueChange={setFilterSource}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Nach Herkunft filtern" />
@@ -810,7 +804,6 @@ export default function Measures() {
                 <TableRow>
                   <TableHead>Maßnahme</TableHead>
                   <TableHead>Herkunft</TableHead>
-                  <TableHead>Typ</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Verantwortlich</TableHead>
                   <TableHead>Fälligkeitsdatum</TableHead>
@@ -821,7 +814,7 @@ export default function Measures() {
                 {filteredMeasures.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={6}
                       className="text-center py-8 text-muted-foreground"
                     >
                       Keine Maßnahmen gefunden. Erstellen Sie eine, um zu beginnen.
@@ -844,35 +837,33 @@ export default function Measures() {
                         {(measure as any).incident?.title ? (
                           <Badge
                             variant="outline"
-                            className="text-xs text-orange-700 border-orange-300 cursor-default"
+                            className="text-xs text-orange-700 border-orange-300 cursor-default gap-1"
                             title={(measure as any).incident.title}
                           >
-                            ⚠ Vorfall
+                            <AlertTriangle className="w-3 h-3" />
+                            Vorfall
                           </Badge>
                         ) : (measure as any).risk_assessment?.title ? (
                           <Badge
                             variant="outline"
-                            className="text-xs text-blue-700 border-blue-300 cursor-default"
+                            className="text-xs text-blue-700 border-blue-300 cursor-default gap-1"
                             title={(measure as any).risk_assessment.title}
                           >
-                            🛡 Risikobewertung
+                            <ShieldAlert className="w-3 h-3" />
+                            Risikobewertung
                           </Badge>
                         ) : (measure as any).audit?.title ? (
                           <Badge
                             variant="outline"
-                            className="text-xs text-purple-700 border-purple-300 cursor-default"
+                            className="text-xs text-purple-700 border-purple-300 cursor-default gap-1"
                             title={(measure as any).audit.title}
                           >
-                            ✓ Audit
+                            <ClipboardCheck className="w-3 h-3" />
+                            Audit
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground text-xs">—</span>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        {(measure as any)._is_ram
-                          ? <span className="text-muted-foreground text-xs">—</span>
-                          : getTypeBadge(measure.measure_type)}
                       </TableCell>
                       <TableCell>{getStatusBadge(measure.status)}</TableCell>
                       <TableCell>
