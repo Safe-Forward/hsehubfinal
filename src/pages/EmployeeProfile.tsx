@@ -2621,7 +2621,7 @@ p_sender_name: senderName,
       return;
     }
 
-    if (!confirm("Are you sure you want to delete this check-up?")) return;
+    if (!confirm("G-Untersuchung wirklich löschen?")) return;
 
     try {
       const { error } = await supabase
@@ -2728,7 +2728,7 @@ p_sender_name: senderName,
 
   // Delete checkup document
   const handleDeleteCheckupDocument = async (documentId: string, filePath: string) => {
-    if (!confirm("Delete this document?")) return;
+    if (!confirm("Dokument wirklich löschen?")) return;
 
     try {
       // Delete from storage
@@ -4575,7 +4575,7 @@ p_sender_name: senderName,
                                           onClick={() =>
                                             handleDeleteNote(note.id)
                                           }
-                                          title="Delete note"
+                                          title="Notiz löschen"
                                         >
                                           <Trash2 className="w-3.5 h-3.5" />
                                         </Button>
@@ -4960,7 +4960,7 @@ p_sender_name: senderName,
                                         size="sm"
                                         onClick={() => handleDeleteCheckupDocument(doc.id, doc.file_path)}
                                         className="h-6 w-6 p-0"
-                                        title="Delete document"
+                                        title="Dokument löschen"
                                       >
                                         <Trash2 className="w-3 h-3 text-red-600" />
                                       </Button>
@@ -5425,7 +5425,7 @@ p_sender_name: senderName,
                               size="sm"
                               className="text-destructive hover:text-destructive"
                               onClick={async () => {
-                                if (!confirm(`Delete ${doc.title}?`)) return;
+                                if (!confirm(`Dokument "${doc.title}" wirklich löschen?`)) return;
 
                                 try {
                                   await supabase.storage
@@ -5455,7 +5455,7 @@ p_sender_name: senderName,
                                   toast.error("Failed to delete document");
                                 }
                               }}
-                              title="Delete document"
+                              title="Dokument löschen"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
