@@ -102,7 +102,7 @@ export default function FileUploadZone({
           onUploadComplete(fileUrl);
           toast({
             title: "Upload Successful",
-            description: "File uploaded successfully",
+            description: "Datei wurde hochgeladen",
           });
           setIsUploading(false);
         } else if (error) {
@@ -111,7 +111,7 @@ export default function FileUploadZone({
           if (error.statusText !== "abort") {
             toast({
               title: "Upload Failed",
-              description: error.message || "Failed to upload file",
+              description: error.message || "Datei konnte nicht hochgeladen werden",
               variant: "destructive",
             });
           }

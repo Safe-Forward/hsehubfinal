@@ -13,7 +13,7 @@ export function RefreshAuthButton() {
     setIsRefreshing(true);
     toast({
       title: "Refreshing...",
-      description: "Reloading your company and role information",
+      description: "Firmen- und Rolleninformationen werden neu geladen",
     });
 
     try {
@@ -52,8 +52,8 @@ export function RefreshAuthButton() {
         });
       } catch (refreshError) {
         toast({
-          title: "Refresh failed",
-          description: "Please try signing out and back in",
+          title: "Fehler",
+          description: "Bitte ab- und erneut anmelden",
           variant: "destructive",
         });
       }

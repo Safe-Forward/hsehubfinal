@@ -116,7 +116,7 @@ export default function NotificationBell() {
       if (isMentioned) {
         taskNotifications.push({
           id: `task-mention-${task.id}`,
-          title: "You were mentioned in a task",
+          title: "Sie wurden in einer Aufgabe erwähnt",
           message: `Task: "${task.title}"`,
           category: "task",
           type: "info",

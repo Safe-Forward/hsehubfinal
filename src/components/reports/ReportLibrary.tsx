@@ -11,42 +11,42 @@ interface ReportLibraryProps {
 
 const REPORT_TEMPLATES = [
   {
-    category: "Employees",
+    category: "Mitarbeiter",
     icon: <Users className="w-5 h-5" />,
     reports: [
       {
-        title: "Employees by Department",
+        title: "Mitarbeiter nach Abteilung",
         metric: "employees",
         groupBy: "department",
         chartType: "bar" as const,
-        description: "View employee distribution across departments",
+        description: "Mitarbeiterverteilung auf Abteilungen",
       },
       {
-        title: "Employees Over Time",
+        title: "Mitarbeiter im Zeitverlauf",
         metric: "employees",
         groupBy: "created_at",
         chartType: "line" as const,
-        description: "Track employee growth trends",
+        description: "Wachstumstrend der Belegschaft",
       },
     ],
   },
   {
-    category: "Incidents",
+    category: "Vorfälle",
     icon: <AlertTriangle className="w-5 h-5" />,
     reports: [
       {
-        title: "Incidents by Status",
+        title: "Vorfälle nach Status",
         metric: "incidents",
         groupBy: "investigation_status",
         chartType: "pie" as const,
-        description: "Overview of incident statuses",
+        description: "Übersicht der Vorfallsstatus",
       },
       {
-        title: "Incidents by Category",
+        title: "Vorfälle nach Kategorie",
         metric: "incidents",
         groupBy: "incident_type",
         chartType: "bar" as const,
-        description: "Breakdown by incident type",
+        description: "Aufschlüsselung nach Vorfallstyp",
       },
     ],
   },
@@ -55,119 +55,119 @@ const REPORT_TEMPLATES = [
     icon: <ClipboardCheck className="w-5 h-5" />,
     reports: [
       {
-        title: "Audits by ISO Code",
+        title: "Audits nach ISO-Norm",
         metric: "audits",
         groupBy: "iso_code",
         chartType: "bar" as const,
-        description: "Distribution of audit standards",
+        description: "Verteilung der Auditnormen",
       },
       {
-        title: "Completion Status",
+        title: "Abschlussstatus",
         metric: "audits",
         groupBy: "status",
         chartType: "pie" as const,
-        description: "Track audit completion rates",
+        description: "Abschlussquote der Audits",
       },
       {
-        title: "Audit Timeline",
+        title: "Audit-Zeitlinie",
         metric: "audits",
         groupBy: "created_at",
         chartType: "line" as const,
-        description: "Audit activity over time",
+        description: "Audit-Aktivität im Zeitverlauf",
       },
     ],
   },
   {
-    category: "Trainings",
+    category: "Schulungen",
     icon: <GraduationCap className="w-5 h-5" />,
     reports: [
       {
-        title: "Training Compliance by Employee",
+        title: "Schulungscompliance je Mitarbeiter",
         metric: "trainings",
         groupBy: "employee_id",
         chartType: "bar" as const,
-        description: "Individual training completion rates",
+        description: "Individuelle Schulungsabschlussquoten",
       },
       {
-        title: "Completed vs Pending",
+        title: "Abgeschlossen vs. Ausstehend",
         metric: "trainings",
         groupBy: "status",
         chartType: "pie" as const,
-        description: "Training status overview",
+        description: "Übersicht der Schulungsstatus",
       },
       {
-        title: "Training Trends",
+        title: "Schulungstrends",
         metric: "trainings",
         groupBy: "created_at",
         chartType: "line" as const,
-        description: "Track training activity over time",
+        description: "Schulungsaktivität im Zeitverlauf",
       },
     ],
   },
   {
-    category: "Risk Assessments",
+    category: "Gefährdungsbeurteilungen",
     icon: <Shield className="w-5 h-5" />,
     reports: [
       {
-        title: "Risks by Level",
+        title: "Risiken nach Stufe",
         metric: "risks",
         groupBy: "risk_level",
         chartType: "pie" as const,
-        description: "Distribution of risk severity",
+        description: "Verteilung nach Risikoschwere",
       },
       {
-        title: "Risks by Department",
+        title: "Risiken nach Abteilung",
         metric: "risks",
         groupBy: "department",
         chartType: "bar" as const,
-        description: "Risk exposure by department",
+        description: "Risikoexposition je Abteilung",
       },
       {
-        title: "Risk Approval Status",
+        title: "GBU-Freigabestatus",
         metric: "risks",
         groupBy: "approval_status",
         chartType: "pie" as const,
-        description: "Track risk approval workflow",
+        description: "Freigabe-Workflow der GBUs",
       },
     ],
   },
   {
-    category: "Measures",
+    category: "Maßnahmen",
     icon: <CheckSquare className="w-5 h-5" />,
     reports: [
       {
-        title: "Measures by Status",
+        title: "Maßnahmen nach Status",
         metric: "measures",
         groupBy: "status",
         chartType: "pie" as const,
-        description: "Safety measure progress overview",
+        description: "Fortschrittsübersicht der Maßnahmen",
       },
       {
-        title: "Measures by Department",
+        title: "Maßnahmen nach Abteilung",
         metric: "measures",
         groupBy: "department",
         chartType: "bar" as const,
-        description: "Measure distribution across departments",
+        description: "Maßnahmenverteilung auf Abteilungen",
       },
     ],
   },
   {
-    category: "Health Checkups",
+    category: "G-Untersuchungen",
     icon: <Activity className="w-5 h-5" />,
     reports: [
       {
-        title: "Checkup Status",
+        title: "Untersuchungsstatus",
         metric: "checkups",
         groupBy: "status",
         chartType: "pie" as const,
-        description: "Health checkup completion rates",
+        description: "Abschlussquote der G-Untersuchungen",
       },
       {
-        title: "Checkups Over Time",
+        title: "Untersuchungen im Zeitverlauf",
         metric: "checkups",
         groupBy: "created_at",
         chartType: "line" as const,
-        description: "Track checkup activity trends",
+        description: "Aktivitätstrends der Untersuchungen",
       },
     ],
   },
@@ -199,13 +199,13 @@ export default function ReportLibrary({
         <div className="sticky top-0 bg-white border-b p-6 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold">Reports Library</h2>
+              <h2 className="text-2xl font-bold">Berichtvorlagen</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Choose a pre-built report template to get started
+                Wählen Sie eine vorgefertigte Berichtvorlage, um zu beginnen
               </p>
             </div>
             <Button variant="ghost" onClick={onClose}>
-              Close
+              Schließen
             </Button>
           </div>
         </div>
@@ -237,7 +237,7 @@ export default function ReportLibrary({
                       <div className="flex items-center gap-2 text-xs">
 
                         <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                          Last 30 days
+                          Letzte 30 Tage
                         </span>
                       </div>
                     </CardContent>
