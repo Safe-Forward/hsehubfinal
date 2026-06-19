@@ -279,15 +279,15 @@ const [newAuditInterval, setNewAuditInterval] = useState("");
     {
       id: "ISO_45001",
       name: "ISO 45001",
-      description: "Occupational Health and Safety",
+      description: "Arbeitssicherheit und Gesundheitsschutz",
     },
     {
       id: "ISO_14001",
       name: "ISO 14001",
-      description: "Environmental Management",
+      description: "Umweltmanagement",
     },
-    { id: "ISO_9001", name: "ISO 9001", description: "Quality Management" },
-    { id: "ISO_50001", name: "ISO 50001", description: "Energy Management" },
+    { id: "ISO_9001", name: "ISO 9001", description: "Qualitätsmanagement" },
+    { id: "ISO_50001", name: "ISO 50001", description: "Energiemanagement" },
   ];
 
   // Predefined criteria for each ISO standard - 7 standard sections for all
@@ -580,7 +580,7 @@ const handleUpdateManager = async (
 
       setApiToken(newToken);
       setShowApiToken(true);
-      toast({ title: "API token generated", description: "Copy and save your new token — it won't be shown again." });
+      toast({ title: "Token generiert", description: "Jetzt kopieren und speichern — er wird nicht erneut angezeigt." });
 
       // Log action
       await supabase.rpc("create_audit_log", {
