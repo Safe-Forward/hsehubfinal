@@ -60,7 +60,7 @@ import {
 } from "@/components/ui/form";
 
 const taskSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Titel ist erforderlich"),
   description: z.string().optional(),
   assigned_to: z.string().optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]),
@@ -157,7 +157,7 @@ export default function Tasks() {
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error loading data",
+        title: "Ladefehler",
         description: message,
         variant: "destructive",
       });
@@ -528,7 +528,7 @@ export default function Tasks() {
                               >
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select employee" />
+                                    <SelectValue placeholder="Mitarbeiter auswählen" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -702,7 +702,7 @@ export default function Tasks() {
                           {task.title}
                         </TableCell>
                         <TableCell>
-                          {task.employees?.full_name || "Unassigned"}
+                          {task.employees?.full_name || "Nicht zugewiesen"}
                         </TableCell>
                         <TableCell>
                           <Badge variant={getPriorityColor(task.priority)}>
