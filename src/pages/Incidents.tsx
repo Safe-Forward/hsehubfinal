@@ -1038,9 +1038,9 @@ export default function Incidents() {
             >
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Incident Details</DialogTitle>
+                  <DialogTitle>Vorfalldetails</DialogTitle>
                   <DialogDescription>
-                    Detailed information for this incident report.
+                    Detaillierte Informationen zu diesem Vorfallbericht.
                   </DialogDescription>
                 </DialogHeader>
 
@@ -1048,27 +1048,27 @@ export default function Incidents() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Title</p>
+                        <p className="text-muted-foreground">Titel</p>
                         <p className="font-medium">{viewingIncident.title}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Incident Number</p>
+                        <p className="text-muted-foreground">Vorfallnummer</p>
                         <p className="font-medium">
                           {viewingIncident.incident_number || "-"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Type</p>
+                        <p className="text-muted-foreground">Typ</p>
                         <div>{getTypeBadge(viewingIncident.incident_type)}</div>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Severity</p>
+                        <p className="text-muted-foreground">Schweregrad</p>
                         <div>{getSeverityBadge(viewingIncident.severity)}</div>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Date</p>
+                        <p className="text-muted-foreground">Datum</p>
                         <p className="font-medium">
-                          {format(new Date(viewingIncident.incident_date), "MMM dd, yyyy")}
+                          {format(new Date(viewingIncident.incident_date), "dd.MM.yyyy")}
                         </p>
                       </div>
                       <div>
@@ -1078,23 +1078,23 @@ export default function Incidents() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Location</p>
+                        <p className="text-muted-foreground">Ort</p>
                         <p className="font-medium">{viewingIncident.location || "-"}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Department</p>
+                        <p className="text-muted-foreground">Abteilung</p>
                         <p className="font-medium">
                           {viewingIncident.department?.name || "-"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Affected Employee</p>
+                        <p className="text-muted-foreground">Betroffene Person</p>
                         <p className="font-medium">
                           {viewingIncident.affected_employee?.full_name || "-"}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Reported By</p>
+                        <p className="text-muted-foreground">Gemeldet von</p>
                         <p className="font-medium">
                           {viewingIncident.reported_by?.full_name || "-"}
                         </p>
@@ -1102,21 +1102,21 @@ export default function Incidents() {
                     </div>
 
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Description</p>
+                      <p className="text-sm text-muted-foreground mb-1">Beschreibung</p>
                       <p className="text-sm border rounded-md p-3 bg-muted/20">
                         {viewingIncident.description || "-"}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Immediate Actions</p>
+                      <p className="text-sm text-muted-foreground mb-1">Sofortmaßnahmen</p>
                       <p className="text-sm border rounded-md p-3 bg-muted/20">
                         {viewingIncident.immediate_actions || "-"}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Root Cause</p>
+                      <p className="text-sm text-muted-foreground mb-1">Ursache</p>
                       <p className="text-sm border rounded-md p-3 bg-muted/20">
                         {viewingIncident.root_cause || "-"}
                       </p>
@@ -1131,10 +1131,10 @@ export default function Incidents() {
           <div className="mb-6 p-4 bg-muted/30 rounded-xl border border-border/50">
             <div className="flex items-center gap-2 mb-4">
               <Filter className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Search & Filters</span>
+              <span className="text-sm font-medium">Suche & Filter</span>
             </div>
             <p className="text-xs text-muted-foreground mb-3">
-              Tip: click a value in the Type, Severity, or Status column to filter quickly.
+              Tipp: Auf einen Wert in den Spalten Typ, Schwere oder Status klicken, um schnell zu filtern.
             </p>
             <div className="flex items-center gap-4">
               <div className="relative flex-1">
@@ -1202,11 +1202,11 @@ export default function Incidents() {
                       className="h-auto p-0 font-semibold"
                       onClick={() => handleSort("title")}
                     >
-                      Title {sortIconFor("title")}
+                      Titel {sortIconFor("title")}
                     </Button>
                   </TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Severity</TableHead>
+                  <TableHead>Typ</TableHead>
+                  <TableHead>Schweregrad</TableHead>
                   <TableHead>
                     <Button
                       type="button"
@@ -1214,11 +1214,11 @@ export default function Incidents() {
                       className="h-auto p-0 font-semibold"
                       onClick={() => handleSort("incident_date")}
                     >
-                      Date {sortIconFor("incident_date")}
+                      Datum {sortIconFor("incident_date")}
                     </Button>
                   </TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1228,10 +1228,10 @@ export default function Incidents() {
                       <div className="flex flex-col items-center justify-center">
                         <AlertTriangle className="w-16 h-16 text-muted-foreground/20 mb-4" />
                         <p className="text-lg font-medium text-muted-foreground mb-1">
-                          No incidents found
+                          Keine Vorfälle gefunden
                         </p>
                         <p className="text-sm text-muted-foreground/60">
-                          Report an incident to get started
+                          Erfassen Sie einen Vorfall, um zu beginnen
                         </p>
                       </div>
                     </TableCell>
@@ -1275,7 +1275,7 @@ export default function Incidents() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setViewingIncident(incident)}
-                            title="View details"
+                            title="Details anzeigen"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
