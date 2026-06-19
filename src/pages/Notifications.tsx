@@ -100,7 +100,7 @@ export default function Notifications() {
             if (isMentioned) {
                 taskNotifications.push({
                     id: `task-mention-${task.id}`,
-                    title: "You were mentioned in a task",
+                    title: "Sie wurden in einer Aufgabe erwähnt",
                     message: `Task: "${task.title}"`,
                     category: "task",
                     type: "info",
@@ -145,7 +145,7 @@ export default function Notifications() {
             setNotifications(merged);
         } catch (error) {
             console.error("Error fetching notifications:", error);
-            toast.error("Failed to load notifications");
+            toast.error("Benachrichtigungen konnten nicht geladen werden");
         } finally {
             setLoading(false);
         }
@@ -187,7 +187,7 @@ export default function Notifications() {
             if (error) throw error;
 
             setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-            toast.success("All notifications marked as read");
+            toast.success("Alle Benachrichtigungen als gelesen markiert");
         } catch (error) {
             console.error("Error marking all as read:", error);
         }
@@ -197,7 +197,7 @@ export default function Notifications() {
         // Synthetic task-mention notifications — just remove from UI
         if (id.startsWith("task-mention-")) {
             setNotifications((prev) => prev.filter((n) => n.id !== id));
-            toast.success("Notification dismissed");
+            toast.success("Benachrichtigung ausgeblendet");
             return;
         }
         try {
@@ -209,10 +209,10 @@ export default function Notifications() {
             if (error) throw error;
 
             setNotifications((prev) => prev.filter((n) => n.id !== id));
-            toast.success("Notification deleted");
+            toast.success("Benachrichtigung gelöscht");
         } catch (error) {
             console.error("Error deleting notification:", error);
-            toast.error("Failed to delete notification");
+            toast.error("Benachrichtigung konnte nicht gelöscht werden");
         }
     };
 
@@ -335,7 +335,7 @@ export default function Notifications() {
                                                                 markAsRead(notification.id);
                                                             }}
                                                             className="h-8 w-8 p-0"
-                                                            title="Mark as read"
+                                                            title="Als gelesen markieren"
                                                         >
                                                             <Check className="h-4 w-4" />
                                                         </Button>
@@ -348,7 +348,7 @@ export default function Notifications() {
                                                             deleteNotification(notification.id);
                                                         }}
                                                         className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                                        title="Delete notification"
+                                                        title="Benachrichtigung löschen"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </Button>
