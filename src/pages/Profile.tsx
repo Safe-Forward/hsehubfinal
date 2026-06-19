@@ -22,9 +22,9 @@ import { useToast } from "@/hooks/use-toast";
 const NOTIF_CATEGORIES = [
   { key: "task", label: "Tasks & Mentions in Tasks" },
   { key: "mention", label: "Mentions in Notes" },
-  { key: "training", label: "Training" },
+  { key: "training", label: "Schulungen" },
   { key: "audit", label: "Audits" },
-  { key: "measure", label: "Measures" },
+  { key: "measure", label: "Maßnahmen" },
   { key: "risk", label: "Risk Assessments" },
   { key: "checkup", label: "Health Check-Ups" },
 ];
@@ -73,7 +73,7 @@ export default function Profile() {
           console.error("Error fetching profile:", error);
           toast({
             title: "Fehler",
-            description: "Failed to load profile data",
+            description: "Profildaten konnten nicht geladen werden",
             variant: "destructive",
           });
           return;
@@ -200,7 +200,7 @@ export default function Profile() {
       console.error("Error updating notification preference:", error);
       toast({
         title: "Fehler",
-        description: "Failed to update notification preference",
+        description: "Benachrichtigungseinstellung konnte nicht gespeichert werden",
         variant: "destructive",
       });
       // Revert optimistic update on failure
@@ -225,7 +225,7 @@ export default function Profile() {
         console.error("Error updating profile:", error);
         toast({
           title: "Fehler",
-          description: "Failed to update profile",
+          description: "Profil konnte nicht aktualisiert werden",
           variant: "destructive",
         });
         return;
@@ -240,7 +240,7 @@ export default function Profile() {
       console.error("Unexpected error updating profile:", error);
       toast({
         title: "Fehler",
-        description: "An unexpected error occurred",
+        description: "Ein unerwarteter Fehler ist aufgetreten",
         variant: "destructive",
       });
     } finally {
