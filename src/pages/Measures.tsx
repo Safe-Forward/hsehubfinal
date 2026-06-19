@@ -149,7 +149,10 @@ export default function Measures() {
         .select(
           `
           *,
-          responsible_person:employees!responsible_person_id(full_name)
+          responsible_person:employees!responsible_person_id(full_name),
+          incident:incidents!incident_id(title),
+          risk_assessment:risk_assessments!risk_assessment_id(title),
+          audit:audits!audit_id(title)
         `
         )
         .eq("company_id", companyId)
@@ -679,6 +682,7 @@ export default function Measures() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Maßnahme</TableHead>
+                  <TableHead>Herkunft</TableHead>
                   <TableHead>Typ</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Verantwortlich</TableHead>
@@ -690,7 +694,7 @@ export default function Measures() {
                 {filteredMeasures.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="text-center py-8 text-muted-foreground"
                     >
                       Keine Maßnahmen gefunden. Erstellen Sie eine, um zu beginnen.
@@ -708,6 +712,29 @@ export default function Measures() {
                             </div>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {(measure as any).incident?.title ? (
+                          <Badge variant="outline" className="text-xs text-orange-700 border-orange-300">
+                            ⚠ {(measure as any).incident.title.length > 25
+                              ? (measure as any).incident.title.substring(0, 25) + "…"
+                              : (measure as any).incident.title}
+                          </Badge>
+                        ) : (measure as any).risk_assessment?.title ? (
+                          <Badge variant="outline" className="text-xs text-blue-700 border-blue-300">
+                            🛡 {(measure as any).risk_assessment.title.length > 25
+                              ? (measure as any).risk_assessment.title.substring(0, 25) + "…"
+                              : (measure as any).risk_assessment.title}
+                          </Badge>
+                        ) : (measure as any).audit?.title ? (
+                          <Badge variant="outline" className="text-xs text-purple-700 border-purple-300">
+                            ✓ {(measure as any).audit.title.length > 25
+                              ? (measure as any).audit.title.substring(0, 25) + "…"
+                              : (measure as any).audit.title}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {getTypeBadge(measure.measure_type)}
