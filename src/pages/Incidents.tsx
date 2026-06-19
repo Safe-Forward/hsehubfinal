@@ -13,10 +13,13 @@ import {
   Trash2,
   Eye,
   Filter,
+  FileText,
   Calendar as CalendarIcon,
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -572,6 +575,76 @@ export default function Incidents() {
     );
   };
 
+  const exportIncidentPDF = (incident: Incident) => {
+    const doc = new jsPDF();
+
+    const typeLabels: Record<string, string> = {
+      injury: "Verletzung",
+      near_miss: "Beinahe-Unfall",
+      property_damage: "Sachschaden",
+      environmental: "Umweltvorfall",
+      other: "Sonstiges",
+    };
+    const severityLabels: Record<string, string> = {
+      minor: "Gering",
+      moderate: "Mäßig",
+      serious: "Schwer",
+      critical: "Kritisch",
+      fatal: "Fatal",
+    };
+    const statusLabels: Record<string, string> = {
+      open: "Offen",
+      in_progress: "In Bearbeitung",
+      closed: "Abgeschlossen",
+    };
+
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Vorfallbericht", 14, 22);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100);
+    doc.text(`Erstellt am: ${format(new Date(), "dd.MM.yyyy")}`, 14, 30);
+    if (incident.incident_number) {
+      doc.text(`Vorfallsnr.: ${incident.incident_number}`, 14, 36);
+    }
+    doc.setTextColor(0);
+
+    // Detail-Tabelle (2 Spalten: Label | Wert)
+    const rows: [string, string][] = [
+      ["Titel", incident.title],
+      ["Datum", format(new Date(incident.incident_date), "dd.MM.yyyy")],
+      ["Typ", typeLabels[incident.incident_type] || incident.incident_type],
+      ["Schweregrad", severityLabels[incident.severity] || incident.severity],
+      ["Status", statusLabels[incident.investigation_status] || incident.investigation_status],
+      ["Ort", incident.location || "–"],
+      ["Abteilung", incident.department?.name || "–"],
+      ["Betroffene Person", incident.affected_employee?.full_name || "–"],
+      ["Gemeldet von", incident.reported_by?.full_name || "–"],
+      ["Beschreibung", incident.description || "–"],
+      ["Sofortmaßnahmen", incident.immediate_actions || "–"],
+      ["Ursache / Root Cause", incident.root_cause || "–"],
+    ];
+
+    autoTable(doc, {
+      head: [["Bezeichnung", "Details"]],
+      body: rows,
+      startY: incident.incident_number ? 42 : 36,
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
+      columnStyles: {
+        0: { fontStyle: "bold", cellWidth: 52 },
+        1: { cellWidth: "auto" },
+      },
+    });
+
+    const filename = `vorfall_${incident.incident_number || incident.id.slice(0, 8)}_${format(new Date(), "yyyy-MM-dd")}.pdf`;
+    doc.save(filename);
+    toast({ title: "Gespeichert", description: "PDF wurde exportiert" });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -1121,7 +1194,15 @@ export default function Incidents() {
                         {viewingIncident.root_cause || "-"}
                       </p>
                     </div>
-                    <div className="flex justify-end pt-2 border-t">
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => exportIncidentPDF(viewingIncident)}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        PDF exportieren
+                      </Button>
                       <Button
                         size="sm"
                         onClick={() => {
