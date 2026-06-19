@@ -1399,7 +1399,7 @@ export default function Invoices() {
       setBillingEmailDialogOpen(false);
     } catch (err: unknown) {
       toast({
-        title: "Failed to save billing email",
+        title: "Fehler",
         description: err instanceof Error ? err.message : "Please try again.",
         variant: "destructive",
       });
@@ -1503,7 +1503,7 @@ export default function Invoices() {
       window.location.href = urlWithRef.toString();
     } catch (err: unknown) {
       toast({
-        title: "Checkout unavailable",
+        title: "Checkout nicht verfügbar",
         description: err instanceof Error ? err.message : "Please try again later.",
         variant: "destructive",
       });
@@ -1605,7 +1605,7 @@ export default function Invoices() {
       fetchData(true); // refresh to pick up last_sent_at
     } catch (err: unknown) {
       toast({
-        title: "Failed to send invoice",
+        title: "Fehler",
         description: err instanceof Error ? err.message : "Please try again.",
         variant: "destructive",
       });
