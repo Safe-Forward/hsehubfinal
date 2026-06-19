@@ -226,12 +226,12 @@ export function TeamTab({
                                       `${member.first_name} ${member.last_name}`
                                     );
                                     toast({
-                                      title: "Success",
+                                      title: "Gespeichert",
                                       description: "Invitation email sent successfully",
                                     });
                                   } catch (err: any) {
                                     toast({
-                                      title: "Error",
+                                      title: "Fehler",
                                       description: err.message || "Failed to send invitation",
                                       variant: "destructive",
                                     });
@@ -261,12 +261,12 @@ export function TeamTab({
                                       currentUserName
                                     );
                                     toast({
-                                      title: "Success",
+                                      title: "Gespeichert",
                                       description: "Notification email sent successfully",
                                     });
                                   } catch (err: any) {
                                     toast({
-                                      title: "Error",
+                                      title: "Fehler",
                                       description: err.message || "Failed to send notification",
                                       variant: "destructive",
                                     });
@@ -294,13 +294,13 @@ export function TeamTab({
                                     if (error) throw error;
 
                                     toast({
-                                      title: "Success",
+                                      title: "Gespeichert",
                                       description: "Team member removed successfully",
                                     });
                                     fetchTeamMembers();
                                   } catch (err: any) {
                                     toast({
-                                      title: "Error",
+                                      title: "Fehler",
                                       description: err.message,
                                       variant: "destructive",
                                     });

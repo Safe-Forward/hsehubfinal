@@ -324,7 +324,7 @@ export default function Employees() {
       setEmployeeTasks(data || []);
     } catch (error) {
       console.error("Error fetching tasks:", error);
-      toast.error("Failed to load tasks");
+      toast.error("Aufgaben konnten nicht geladen werden");
     }
   };
 
@@ -352,7 +352,7 @@ export default function Employees() {
       setEmployeeNotes(parsedNotes);
     } catch (error) {
       console.error("Error fetching notes:", error);
-      toast.error("Failed to load notes");
+      toast.error("Notizen konnten nicht geladen werden");
     }
   };
 
@@ -378,7 +378,7 @@ export default function Employees() {
       );
 
       if (mentionedEmployees.length === 0) {
-        toast.error("Please mention at least one employee using @");
+        toast.error("Bitte mindestens einen Mitarbeiter mit @ erwähnen");
         return;
       }
 
@@ -431,7 +431,7 @@ export default function Employees() {
       }
     } catch (error) {
       console.error("Error creating task:", error);
-      toast.error("Failed to create task");
+      toast.error("Aufgabe konnte nicht erstellt werden");
     }
   };
 
@@ -462,7 +462,7 @@ export default function Employees() {
       });
     } catch (error) {
       console.error("Error updating task:", error);
-      toast.error("Failed to update task");
+      toast.error("Aufgabe konnte nicht aktualisiert werden");
     }
   };
 
@@ -488,7 +488,7 @@ export default function Employees() {
       );
 
       if (mentionedEmployees.length === 0) {
-        toast.error("Please mention at least one employee using @");
+        toast.error("Bitte mindestens einen Mitarbeiter mit @ erwähnen");
         return;
       }
 
@@ -569,7 +569,7 @@ export default function Employees() {
       }
     } catch (error) {
       console.error("Error saving note:", error);
-      toast.error("Failed to save note");
+      toast.error("Notiz konnte nicht gespeichert werden");
     }
   };
 
@@ -600,7 +600,7 @@ export default function Employees() {
       });
     } catch (error) {
       console.error("Error deleting note:", error);
-      toast.error("Failed to delete note");
+      toast.error("Notiz konnte nicht gelöscht werden");
     }
   };
 
@@ -1400,7 +1400,7 @@ export default function Employees() {
                               }
                             } catch (error) {
                               console.error("Error creating job role:", error);
-                              toast.error("Failed to create job role");
+                              toast.error("Stellenbezeichnung konnte nicht erstellt werden");
                             }
                           }}
                         />
@@ -1452,7 +1452,7 @@ export default function Employees() {
                                 "Error creating department:",
                                 error
                               );
-                              toast.error("Failed to create department");
+                              toast.error("Abteilung konnte nicht erstellt werden");
                             }
                           }}
                         />
