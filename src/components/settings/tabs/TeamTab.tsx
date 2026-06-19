@@ -227,12 +227,12 @@ export function TeamTab({
                                     );
                                     toast({
                                       title: "Gespeichert",
-                                      description: "Invitation email sent successfully",
+                                      description: "Einladungs-E-Mail wurde gesendet",
                                     });
                                   } catch (err: any) {
                                     toast({
                                       title: "Fehler",
-                                      description: err.message || "Failed to send invitation",
+                                      description: err.message || "Einladung konnte nicht gesendet werden",
                                       variant: "destructive",
                                     });
                                   }
@@ -262,12 +262,12 @@ export function TeamTab({
                                     );
                                     toast({
                                       title: "Gespeichert",
-                                      description: "Notification email sent successfully",
+                                      description: "Benachrichtigungs-E-Mail wurde gesendet",
                                     });
                                   } catch (err: any) {
                                     toast({
                                       title: "Fehler",
-                                      description: err.message || "Failed to send notification",
+                                      description: err.message || "Benachrichtigung konnte nicht gesendet werden",
                                       variant: "destructive",
                                     });
                                   }
@@ -295,7 +295,7 @@ export function TeamTab({
 
                                     toast({
                                       title: "Gespeichert",
-                                      description: "Team member removed successfully",
+                                      description: "Teammitglied wurde entfernt",
                                     });
                                     fetchTeamMembers();
                                   } catch (err: any) {
