@@ -1114,6 +1114,7 @@ export default function Dashboard() {
                             {(task as any).profile_employee ? (
                               <div className="flex items-center gap-1">
                                 <Users className="w-3 h-3" />
+                                <span className="text-muted-foreground/70">Profil:</span>
                                 <Link
                                   to={`/employees/${
                                     (task as any).employee_profile_id ||
@@ -1124,12 +1125,7 @@ export default function Dashboard() {
                                   {(task as any).profile_employee.full_name}
                                 </Link>
                               </div>
-                            ) : (
-                              <div className="flex items-center gap-1">
-                                <Users className="w-3 h-3" />
-                                <span>{t("dashboard.unassigned")}</span>
-                              </div>
-                            )}
+                            ) : null}
 
                             {task.due_date && (
                               <div className="flex items-center gap-1">

@@ -8,6 +8,7 @@ import {
   LogOut,
   MessageSquare,
   CheckCircle,
+  ClipboardList,
   BarChart,
   User,
   Receipt,
@@ -214,6 +215,13 @@ export default function MainLayout({ children }: Props) {
                 <Link to="/incidents" className={getLinkClasses("/incidents")}>
                   <AlertTriangle className="w-4 h-4" />
                   <span>{t("nav.incidents")}</span>
+                </Link>
+              )}
+
+              {hasPermission("riskAssessments") && (
+                <Link to="/measures" className={getLinkClasses("/measures")}>
+                  <ClipboardList className="w-4 h-4" />
+                  <span>Maßnahmen</span>
                 </Link>
               )}
 
