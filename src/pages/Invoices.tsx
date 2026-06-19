@@ -1167,7 +1167,7 @@ export default function Invoices() {
         const msg = err instanceof Error ? err.message : "Failed to load billing data.";
         setError(msg);
         if (!silent) {
-          toast({ title: "Error loading billing data", description: msg, variant: "destructive" });
+          toast({ title: "Ladefehler", description: msg, variant: "destructive" });
         }
       } finally {
         setLoading(false);
@@ -1284,7 +1284,7 @@ export default function Invoices() {
       setSearchParams({}, { replace: true });
     } else if (checkoutStatus === "cancelled" || checkoutStatus === "canceled" || checkoutStatus === "failed") {
       clearPendingCheckout();
-      toast({ title: "Checkout cancelled", description: "No changes were made.", variant: "destructive" });
+      toast({ title: "Abgebrochen", description: "Es wurden keine Änderungen vorgenommen.", variant: "destructive" });
       setSearchParams({}, { replace: true });
     }
   }, [fetchData, searchParams, setSearchParams, toast]);
@@ -1309,7 +1309,7 @@ export default function Invoices() {
     if (company.subscription_status === "active" && subscriptionChanged) {
       clearPendingCheckout();
       toast({
-        title: "Payment successful",
+        title: "Zahlung erfolgreich",
         description: `${PLAN_LABELS[company.subscription_tier]} ${pending.interval === "yearly" ? "yearly" : "monthly"} plan activated.`,
       });
       fetchData(true);
@@ -1319,7 +1319,7 @@ export default function Invoices() {
     if (hasTimedOut && !subscriptionChanged) {
       clearPendingCheckout();
       toast({
-        title: "Payment not completed",
+        title: "Zahlung nicht abgeschlossen",
         description: "No successful Stripe payment was detected. Please try again.",
         variant: "destructive",
       });
@@ -1362,7 +1362,7 @@ export default function Invoices() {
         setStripeUnavailable(true);
       } else {
         toast({
-          title: "Billing portal unavailable",
+          title: "Rechnungsportal nicht verfügbar",
           description: msg || "Please try again later.",
           variant: "destructive",
         });
@@ -1395,7 +1395,7 @@ export default function Invoices() {
         companyIdOverride: companyId,
         details: { new_email: billingEmailInput },
       });
-      toast({ title: "Billing email saved", description: `Invoices will be sent to ${billingEmailInput}` });
+      toast({ title: "Gespeichert", description: `Rechnungen werden an ${billingEmailInput} gesendet` });
       setBillingEmailDialogOpen(false);
     } catch (err: unknown) {
       toast({

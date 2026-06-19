@@ -451,7 +451,7 @@ export default function RiskAssessments() {
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Error loading data",
+        title: "Ladefehler",
         description: message,
         variant: "destructive",
       });
@@ -528,7 +528,7 @@ export default function RiskAssessments() {
   const onSubmit = async () => {
     if (!companyId) {
       toast({
-        title: "No company found",
+        title: "Keine Firma gefunden",
         description:
           "You need to set up a company before creating assessments.",
         variant: "destructive",
@@ -1612,7 +1612,7 @@ export default function RiskAssessments() {
                                     ).map((f) => f.name);
                                     setUploadedDocuments(files);
                                     toast({
-                                      title: "Files selected",
+                                      title: "Dateien ausgewählt",
                                       description: `${files.length} file(s) selected`,
                                     });
                                   }
