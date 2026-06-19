@@ -89,6 +89,7 @@ import {
 CheckCircle,
   Bell,
   Award,
+  UserCheck,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -4172,9 +4173,19 @@ p_sender_name: senderName,
                                         {task.title}
                                       </span>
                                       {task.assigned_to !== id && (task as any).assigned_employee && (
-                                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                                          → Zugewiesen an: {(task as any).assigned_employee.full_name}
-                                        </p>
+                                        <div
+                                          className="flex items-center gap-1 mt-1 cursor-pointer group w-fit"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(`/employees/${task.assigned_to}`);
+                                          }}
+                                          title={`Zum Profil von ${(task as any).assigned_employee.full_name}`}
+                                        >
+                                          <UserCheck className="w-3 h-3 text-blue-500 shrink-0" />
+                                          <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium group-hover:underline">
+                                            {(task as any).assigned_employee.full_name}
+                                          </span>
+                                        </div>
                                       )}
                                       <div className="flex flex-wrap items-center gap-1 mt-1">
                                         {task.due_date && (
