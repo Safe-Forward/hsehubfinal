@@ -2001,9 +2001,23 @@ export default function RiskAssessments() {
                               )}
                             </div>
                           )}
-                          {risk.approval_status === "rejected" && risk.rejection_comment && (
-                            <div className="text-xs text-red-600 dark:text-red-400 mt-1 max-w-[150px]" title={risk.rejection_comment}>
-                              <span className="truncate block">↳ {risk.rejection_comment}</span>
+                          {risk.approval_status === "rejected" && (
+                            <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                              {risk.rejected_by && (
+                                <span className="font-medium block">
+                                  {teamMembersMap[risk.rejected_by] || risk.rejected_by}
+                                  {risk.rejected_at && (
+                                    <span className="text-muted-foreground ml-1">
+                                      {new Date(risk.rejected_at).toLocaleDateString("de-DE")}
+                                    </span>
+                                  )}
+                                </span>
+                              )}
+                              {risk.rejection_comment && (
+                                <span className="truncate block max-w-[150px]" title={risk.rejection_comment}>
+                                  ↳ {risk.rejection_comment}
+                                </span>
+                              )}
                             </div>
                           )}
                         </TableCell>

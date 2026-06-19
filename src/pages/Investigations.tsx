@@ -447,7 +447,7 @@ export default function Investigations() {
     investigationData: any
   ) => {
     if (!investigationData.assigned_to_id || !companyId) {
-      throw new Error("Please select an employee to create a health checkup.");
+      throw new Error("Bitte wählen Sie einen Mitarbeiter aus, um eine G-Untersuchung anzulegen.");
     }
 
     const gInvestigation = gInvestigations.find(
@@ -537,8 +537,8 @@ export default function Investigations() {
           } catch (syncError: any) {
             console.error("Failed to sync to health checkups:", syncError);
             toast({
-              title: "Warning",
-              description: "Investigation updated but failed to sync checkup: " + (syncError.message || "Unknown error"),
+              title: "Hinweis",
+              description: "Untersuchung aktualisiert, Synchronisierung fehlgeschlagen: " + (syncError.message || "Unbekannter Fehler"),
               variant: "destructive",
             });
           }
@@ -585,8 +585,8 @@ export default function Investigations() {
           } catch (syncError: any) {
             console.error("Failed to sync to health checkups:", syncError);
             toast({
-              title: "Warning",
-              description: "Investigation created but failed to sync checkup: " + (syncError.message || "Unknown error"),
+              title: "Hinweis",
+              description: "Untersuchung erstellt, Synchronisierung fehlgeschlagen: " + (syncError.message || "Unbekannter Fehler"),
               variant: "destructive",
             });
           }
@@ -673,7 +673,7 @@ export default function Investigations() {
     if (selectedInvestigations.size === 0) return;
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${selectedInvestigations.size} investigation(s)? This action cannot be undone.`
+      `${selectedInvestigations.size} Untersuchung(en) wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`
     );
 
     if (!confirmed) return;
@@ -688,20 +688,19 @@ export default function Investigations() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: `Successfully deleted ${selectedInvestigations.size} investigation(s)`,
+        title: "Gelöscht",
+        description: `${selectedInvestigations.size} Untersuchung(en) wurden gelöscht`,
       });
       setSelectedInvestigations(new Set());
       fetchInvestigations();
     } catch (error: any) {
       console.error("Error deleting investigations:", error);
 
-      // Show detailed error message
-      const errorMessage = error?.message || error?.details || error?.hint || "Failed to delete investigations";
-      const errorDetails = error?.code ? ` (Error code: ${error.code})` : "";
+      const errorMessage = error?.message || error?.details || error?.hint || "Untersuchungen konnten nicht gelöscht werden";
+      const errorDetails = error?.code ? ` (Fehlercode: ${error.code})` : "";
 
       toast({
-        title: "Error",
+        title: "Fehler",
         description: `${errorMessage}${errorDetails}`,
         variant: "destructive",
       });
@@ -734,7 +733,7 @@ export default function Investigations() {
     if (selectedCheckups.size === 0) return;
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete ${selectedCheckups.size} checkup(s)? This action cannot be undone.`
+      `${selectedCheckups.size} G-Untersuchung(en) wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`
     );
 
     if (!confirmed) return;
@@ -749,19 +748,19 @@ export default function Investigations() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: `Successfully deleted ${selectedCheckups.size} checkup(s)`,
+        title: "Gelöscht",
+        description: `${selectedCheckups.size} G-Untersuchung(en) wurden gelöscht`,
       });
       setSelectedCheckups(new Set());
       fetchHealthCheckups();
     } catch (error: any) {
       console.error("Error deleting checkups:", error);
 
-      const errorMessage = error?.message || error?.details || error?.hint || "Failed to delete checkups";
-      const errorDetails = error?.code ? ` (Error code: ${error.code})` : "";
+      const errorMessage = error?.message || error?.details || error?.hint || "G-Untersuchungen konnten nicht gelöscht werden";
+      const errorDetails = error?.code ? ` (Fehlercode: ${error.code})` : "";
 
       toast({
-        title: "Error",
+        title: "Fehler",
         description: `${errorMessage}${errorDetails}`,
         variant: "destructive",
       });
@@ -795,7 +794,7 @@ export default function Investigations() {
               setFilterCheckUpType((prev) => (prev === status ? "all" : status))
             : undefined
         }
-        title={clickable ? "Click to filter by this status" : undefined}
+        title={clickable ? "Klicken zum Filtern nach Status" : undefined}
       >
         {t(config.labelKey)}
       </Badge>
@@ -816,16 +815,16 @@ export default function Investigations() {
     const filterValue = getCheckupStatusFilterValue(status, completionDate);
 
     let className = "";
-    let label = "Open";
+    let label = "Offen";
     let variant: "outline" | "default" = "outline";
 
     if (filterValue === "completed") {
       className = "bg-green-500";
-      label = "Done";
+      label = "Erledigt";
       variant = "default";
     } else if (filterValue === "planned") {
       className = "bg-blue-500";
-      label = "Planned";
+      label = "Geplant";
       variant = "default";
     }
 
@@ -841,7 +840,7 @@ export default function Investigations() {
               )
             : undefined
         }
-        title={clickable ? "Click to filter by this status" : undefined}
+        title={clickable ? "Klicken zum Filtern nach Status" : undefined}
       >
         {label}
       </Badge>
@@ -862,7 +861,7 @@ export default function Investigations() {
               )
             : undefined
         }
-        title={clickable ? "Click to filter by this department" : undefined}
+        title={clickable ? "Klicken zum Filtern nach Abteilung" : undefined}
       >
         {department}
       </Badge>
@@ -880,7 +879,7 @@ export default function Investigations() {
             ? () => setFilterGroup((prev) => (prev === group ? "all" : group))
             : undefined
         }
-        title={clickable ? "Click to filter by this group" : undefined}
+        title={clickable ? "Klicken zum Filtern nach Gruppe" : undefined}
       >
         {group}
       </Badge>
@@ -1246,7 +1245,7 @@ export default function Investigations() {
     if (!hasExportData) {
       toast({
         title: t("common.error"),
-        description: "No data to export in the current view",
+        description: "Keine Daten in der aktuellen Ansicht für den Export vorhanden",
         variant: "destructive",
       });
       return;
@@ -1275,7 +1274,7 @@ export default function Investigations() {
           item.employee.exposure_groups?.name || "—",
           item.investigationNames || "—",
           item.checkups
-            .map((c: any) => (c.status === "done" ? "Done" : c.status === "planned" ? "Planned" : "Open"))
+            .map((c: any) => (c.status === "done" ? "Erledigt" : c.status === "planned" ? "Geplant" : "Offen"))
             .join(", "),
         ];
       });
@@ -1306,7 +1305,7 @@ export default function Investigations() {
           : "—",
         checkup.employee?.departments?.name || "—",
         checkup.employee?.exposure_groups?.name || "—",
-        checkup.status === "done" ? "Done" : checkup.status === "planned" ? "Planned" : "Open",
+        checkup.status === "done" ? "Erledigt" : checkup.status === "planned" ? "Geplant" : "Offen",
       ]);
 
       autoTable(doc, {
@@ -1314,8 +1313,8 @@ export default function Investigations() {
           [
             t("common.employee"),
             t("investigations.gCode"),
-            "Due Date",
-            "Appointment Date",
+            "Fälligkeitsdatum",
+            "Untersuchungsdatum",
             t("common.department"),
             t("common.group"),
             t("common.status"),
@@ -1336,7 +1335,7 @@ export default function Investigations() {
         checkup.appointment_date
           ? format(new Date(checkup.appointment_date), "dd.MM.yyyy")
           : "—",
-        checkup.status === "done" ? "Done" : checkup.status === "planned" ? "Planned" : "Open",
+        checkup.status === "done" ? "Erledigt" : checkup.status === "planned" ? "Geplant" : "Offen",
         checkup.notes || "—",
       ]);
 
@@ -1344,13 +1343,13 @@ export default function Investigations() {
         head: [
           [
             t("common.employee"),
-            "Employee Number",
-            "Investigation Name",
+            "Personalnummer",
+            "Untersuchungsart",
             t("common.department"),
             t("common.group"),
-            "Appointment Date",
+            "Untersuchungsdatum",
             t("common.status"),
-            "Notes",
+            "Notizen",
           ],
         ],
         body: tableData,
@@ -1447,7 +1446,7 @@ export default function Investigations() {
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select G-Investigation" />
+                              <SelectValue placeholder="G-Untersuchung auswählen" />
                             </SelectTrigger>
                             <SelectContent>
                               {gInvestigations.map((inv) => (
@@ -1975,7 +1974,7 @@ export default function Investigations() {
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleDateHeaderTap("due_date")}
                       >
-                        Due Date {sortIcon(dateHeaderKey === "due_date", dateHeaderDirection)}
+                        Fälligkeitsdatum {sortIcon(dateHeaderKey === "due_date", dateHeaderDirection)}
                       </Button>
                     </TableHead>
                     <TableHead>
@@ -1985,7 +1984,7 @@ export default function Investigations() {
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleDateHeaderTap("appointment_date")}
                       >
-                        Appointment Date {sortIcon(dateHeaderKey === "appointment_date", dateHeaderDirection)}
+                        Untersuchungsdatum {sortIcon(dateHeaderKey === "appointment_date", dateHeaderDirection)}
                       </Button>
                     </TableHead>
                     <TableHead>{t("common.department")}</TableHead>
@@ -2090,7 +2089,7 @@ export default function Investigations() {
                         className="h-auto p-0 font-semibold whitespace-nowrap"
                         onClick={() => handleCheckupHeaderTap("employee_number")}
                       >
-                        Employee Number {sortIcon(checkupHeaderKey === "employee_number", checkupHeaderDirection)}
+                        Personalnummer {sortIcon(checkupHeaderKey === "employee_number", checkupHeaderDirection)}
                       </Button>
                     </TableHead>
                     <TableHead className="w-64">
@@ -2100,7 +2099,7 @@ export default function Investigations() {
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleCheckupHeaderTap("investigation_name")}
                       >
-                        Investigation Name {sortIcon(checkupHeaderKey === "investigation_name", checkupHeaderDirection)}
+                        Untersuchungsart {sortIcon(checkupHeaderKey === "investigation_name", checkupHeaderDirection)}
                       </Button>
                     </TableHead>
                     <TableHead className="w-32">{t("common.department")}</TableHead>
@@ -2112,7 +2111,7 @@ export default function Investigations() {
                         className="h-auto p-0 font-semibold whitespace-nowrap"
                         onClick={() => handleCheckupHeaderTap("appointment_date")}
                       >
-                        Appointment Date {sortIcon(checkupHeaderKey === "appointment_date", checkupHeaderDirection)}
+                        Untersuchungsdatum {sortIcon(checkupHeaderKey === "appointment_date", checkupHeaderDirection)}
                       </Button>
                     </TableHead>
                     <TableHead className="w-28">{t("common.status")}</TableHead>
@@ -2123,7 +2122,7 @@ export default function Investigations() {
                         className="h-auto p-0 font-semibold"
                         onClick={() => handleCheckupHeaderTap("notes")}
                       >
-                        Notes {sortIcon(checkupHeaderKey === "notes", checkupHeaderDirection)}
+                        Notizen {sortIcon(checkupHeaderKey === "notes", checkupHeaderDirection)}
                       </Button>
                     </TableHead>
                     <TableHead className="w-28 text-right">

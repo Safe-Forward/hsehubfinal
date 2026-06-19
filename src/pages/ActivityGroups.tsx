@@ -115,8 +115,8 @@ export default function ActivityGroups() {
     } catch (error: any) {
       console.error("Error fetching activity groups:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch activity groups",
+        title: "Fehler",
+        description: error.message || "Tätigkeitsgruppen konnten nicht geladen werden",
         variant: "destructive",
       });
     }
@@ -137,8 +137,8 @@ export default function ActivityGroups() {
     } catch (error: any) {
       console.error("Error fetching exposure groups:", error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to fetch exposure groups",
+        title: "Fehler",
+        description: error.message || "Expositionsgruppen konnten nicht geladen werden",
         variant: "destructive",
       });
     }
@@ -172,8 +172,8 @@ export default function ActivityGroups() {
 
         if (error) throw error;
         toast({
-          title: "Success",
-          description: "Activity group updated successfully",
+          title: "Gespeichert",
+          description: "Tätigkeitsgruppe wurde aktualisiert",
         });
       } else {
         // Create new
@@ -187,8 +187,8 @@ export default function ActivityGroups() {
 
         if (error) throw error;
         toast({
-          title: "Success",
-          description: "Activity group created successfully",
+          title: "Erstellt",
+          description: "Tätigkeitsgruppe wurde erstellt",
         });
       }
 
@@ -197,8 +197,8 @@ export default function ActivityGroups() {
       fetchActivityGroups();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save activity group",
+        title: "Fehler",
+        description: error.message || "Tätigkeitsgruppe konnte nicht gespeichert werden",
         variant: "destructive",
       });
     }
@@ -227,8 +227,8 @@ export default function ActivityGroups() {
 
         if (error) throw error;
         toast({
-          title: "Success",
-          description: "Exposure group updated successfully",
+          title: "Gespeichert",
+          description: "Expositionsgruppe wurde aktualisiert",
         });
       } else {
         // Create new
@@ -241,8 +241,8 @@ export default function ActivityGroups() {
 
         if (error) throw error;
         toast({
-          title: "Success",
-          description: "Exposure group created successfully",
+          title: "Erstellt",
+          description: "Expositionsgruppe wurde erstellt",
         });
       }
 
@@ -251,15 +251,15 @@ export default function ActivityGroups() {
       fetchExposureGroups();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to save exposure group",
+        title: "Fehler",
+        description: error.message || "Expositionsgruppe konnte nicht gespeichert werden",
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteActivity = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this activity group?"))
+    if (!confirm("Tätigkeitsgruppe wirklich löschen?"))
       return;
 
     try {
@@ -269,21 +269,21 @@ export default function ActivityGroups() {
         .eq("id", id);
       if (error) throw error;
       toast({
-        title: "Success",
-        description: "Activity group deleted successfully",
+        title: "Gelöscht",
+        description: "Tätigkeitsgruppe wurde gelöscht",
       });
       fetchActivityGroups();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete activity group",
+        title: "Fehler",
+        description: error.message || "Tätigkeitsgruppe konnte nicht gelöscht werden",
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteExposure = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this exposure group?"))
+    if (!confirm("Expositionsgruppe wirklich löschen?"))
       return;
 
     try {
@@ -293,14 +293,14 @@ export default function ActivityGroups() {
         .eq("id", id);
       if (error) throw error;
       toast({
-        title: "Success",
-        description: "Exposure group deleted successfully",
+        title: "Gelöscht",
+        description: "Expositionsgruppe wurde gelöscht",
       });
       fetchExposureGroups();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete exposure group",
+        title: "Fehler",
+        description: error.message || "Expositionsgruppe konnte nicht gelöscht werden",
         variant: "destructive",
       });
     }
@@ -363,15 +363,14 @@ export default function ActivityGroups() {
             className="h-9 sm:h-10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Zurück
           </Button>
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold">
-              Activity & Exposure Groups
+              Tätigkeits- &amp; Expositionsgruppen
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Manage work activities and exposure factors for automated risk
-              assignment
+              Tätigkeiten und Expositionsfaktoren für die automatische Risikozuweisung verwalten
             </p>
           </div>
         </div>
@@ -380,10 +379,10 @@ export default function ActivityGroups() {
       <Tabs defaultValue="activities" className="space-y-4 sm:space-y-6">
         <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:inline-grid">
           <TabsTrigger value="activities" className="text-xs sm:text-sm">
-            Activity Groups (Tätigkeiten)
+            Tätigkeitsgruppen
           </TabsTrigger>
           <TabsTrigger value="exposures" className="text-xs sm:text-sm">
-            Exposure Groups
+            Expositionsgruppen
           </TabsTrigger>
         </TabsList>
 
@@ -393,11 +392,10 @@ export default function ActivityGroups() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Activity Groups</CardTitle>
+                  <CardTitle>Tätigkeitsgruppen</CardTitle>
                   <CardDescription>
-                    Define work activities that employees perform. Link
-                    activities to risks and training requirements for
-                    automation.
+                    Definieren Sie Arbeitstätigkeiten der Mitarbeiter. Verknüpfen Sie
+                    Tätigkeiten mit Risiken und Schulungsanforderungen für die Automatisierung.
                   </CardDescription>
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -407,36 +405,35 @@ export default function ActivityGroups() {
                       className="w-full sm:w-auto text-sm"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Activity Group
+                      Tätigkeitsgruppe hinzufügen
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>
                         {editingItem
-                          ? "Edit Activity Group"
-                          : "Create Activity Group"}
+                          ? "Tätigkeitsgruppe bearbeiten"
+                          : "Tätigkeitsgruppe erstellen"}
                       </DialogTitle>
                       <DialogDescription>
-                        Define a work activity with associated hazards and
-                        required PPE
+                        Tätigkeit mit zugehörigen Gefährdungen und erforderlicher PSA definieren
                       </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmitActivity} className="space-y-4">
                       <div>
-                        <Label htmlFor="name">Activity Name *</Label>
+                        <Label htmlFor="name">Name der Tätigkeit *</Label>
                         <Input
                           id="name"
                           value={formData.name}
                           onChange={(e) =>
                             setFormData({ ...formData, name: e.target.value })
                           }
-                          placeholder="e.g., Welding Operations, Chemical Handling"
+                          placeholder="z.B. Schweißarbeiten, Chemikalienhandhabung"
                           required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description">Beschreibung</Label>
                         <Textarea
                           id="description"
                           value={formData.description}
@@ -446,12 +443,12 @@ export default function ActivityGroups() {
                               description: e.target.value,
                             })
                           }
-                          placeholder="Detailed description of the activity"
+                          placeholder="Ausführliche Beschreibung der Tätigkeit"
                           rows={3}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="hazards">Associated Hazards</Label>
+                        <Label htmlFor="hazards">Zugehörige Gefährdungen</Label>
                         <Textarea
                           id="hazards"
                           value={formData.hazards}
@@ -461,15 +458,15 @@ export default function ActivityGroups() {
                               hazards: e.target.value,
                             })
                           }
-                          placeholder="Enter hazards separated by commas (e.g., Burns, UV exposure, Fumes)"
+                          placeholder="Gefährdungen kommagetrennt eingeben (z.B. Verbrennungen, UV-Strahlung, Dämpfe)"
                           rows={2}
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Separate multiple hazards with commas
+                          Mehrere Gefährdungen mit Komma trennen
                         </p>
                       </div>
                       <div>
-                        <Label htmlFor="ppe">Required PPE</Label>
+                        <Label htmlFor="ppe">Erforderliche PSA</Label>
                         <Textarea
                           id="ppe"
                           value={formData.required_ppe}
@@ -479,11 +476,11 @@ export default function ActivityGroups() {
                               required_ppe: e.target.value,
                             })
                           }
-                          placeholder="Enter required PPE separated by commas (e.g., Welding helmet, Gloves, Safety goggles)"
+                          placeholder="PSA kommagetrennt eingeben (z.B. Schweißerhelm, Handschuhe, Schutzbrille)"
                           rows={2}
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Separate multiple PPE items with commas
+                          Mehrere PSA-Elemente mit Komma trennen
                         </p>
                       </div>
                       <div className="flex justify-end gap-2">
@@ -495,10 +492,10 @@ export default function ActivityGroups() {
                             resetForm();
                           }}
                         >
-                          Cancel
+                          Abbrechen
                         </Button>
                         <Button type="submit">
-                          {editingItem ? "Update" : "Create"} Activity Group
+                          {editingItem ? "Aktualisieren" : "Erstellen"}
                         </Button>
                       </div>
                     </form>
@@ -511,7 +508,7 @@ export default function ActivityGroups() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
-                    placeholder="Search activity groups..."
+                    placeholder="Tätigkeitsgruppen suchen..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -523,11 +520,11 @@ export default function ActivityGroups() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Activity Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Hazards</TableHead>
-                      <TableHead>Required PPE</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>Tätigkeitsbezeichnung</TableHead>
+                      <TableHead>Beschreibung</TableHead>
+                      <TableHead>Gefährdungen</TableHead>
+                      <TableHead>Erforderliche PSA</TableHead>
+                      <TableHead className="text-right">Aktionen</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -537,7 +534,7 @@ export default function ActivityGroups() {
                           colSpan={5}
                           className="text-center py-8 text-muted-foreground"
                         >
-                          No activity groups found. Create one to get started.
+                          Keine Tätigkeitsgruppen vorhanden. Erstellen Sie eine, um zu beginnen.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -566,13 +563,13 @@ export default function ActivityGroups() {
                                   ))
                               ) : (
                                 <span className="text-muted-foreground text-sm">
-                                  None
+                                  —
                                 </span>
                               )}
                               {activity.hazards &&
                                 activity.hazards.length > 2 && (
                                   <Badge variant="outline" className="text-xs">
-                                    +{activity.hazards.length - 2} more
+                                    +{activity.hazards.length - 2} weitere
                                   </Badge>
                                 )}
                             </div>
@@ -594,13 +591,13 @@ export default function ActivityGroups() {
                                   ))
                               ) : (
                                 <span className="text-muted-foreground text-sm">
-                                  None
+                                  —
                                 </span>
                               )}
                               {activity.required_ppe &&
                                 activity.required_ppe.length > 2 && (
                                   <Badge variant="outline" className="text-xs">
-                                    +{activity.required_ppe.length - 2} more
+                                    +{activity.required_ppe.length - 2} weitere
                                   </Badge>
                                 )}
                             </div>
@@ -641,10 +638,10 @@ export default function ActivityGroups() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Exposure Groups</CardTitle>
+                  <CardTitle>Expositionsgruppen</CardTitle>
                   <CardDescription>
-                    Define exposure factors (noise, chemicals, biological
-                    agents) that employees may encounter
+                    Definieren Sie Expositionsfaktoren (Lärm, Chemikalien, biologische
+                    Stoffe), denen Mitarbeiter ausgesetzt sein können
                   </CardDescription>
                 </div>
                 <Dialog
@@ -654,24 +651,23 @@ export default function ActivityGroups() {
                   <DialogTrigger asChild>
                     <Button onClick={resetExposureForm}>
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Exposure Group
+                      Expositionsgruppe hinzufügen
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>
                         {editingItem
-                          ? "Edit Exposure Group"
-                          : "Create Exposure Group"}
+                          ? "Expositionsgruppe bearbeiten"
+                          : "Expositionsgruppe erstellen"}
                       </DialogTitle>
                       <DialogDescription>
-                        Define exposure factors for health monitoring and risk
-                        assessment
+                        Expositionsfaktoren für Gesundheitsüberwachung und Risikobewertung definieren
                       </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmitExposure} className="space-y-4">
                       <div>
-                        <Label htmlFor="exp-name">Exposure Group Name *</Label>
+                        <Label htmlFor="exp-name">Name der Expositionsgruppe *</Label>
                         <Input
                           id="exp-name"
                           value={exposureFormData.name}
@@ -681,12 +677,12 @@ export default function ActivityGroups() {
                               name: e.target.value,
                             })
                           }
-                          placeholder="e.g., High Noise Exposure, Chemical Handlers"
+                          placeholder="z.B. Hohe Lärmbelastung, Chemikalienhandhabung"
                           required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="exp-description">Description</Label>
+                        <Label htmlFor="exp-description">Beschreibung</Label>
                         <Textarea
                           id="exp-description"
                           value={exposureFormData.description}
@@ -696,12 +692,12 @@ export default function ActivityGroups() {
                               description: e.target.value,
                             })
                           }
-                          placeholder="Detailed description of the exposure factors"
+                          placeholder="Ausführliche Beschreibung der Expositionsfaktoren"
                           rows={3}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="factors">Exposure Factors</Label>
+                        <Label htmlFor="factors">Expositionsfaktoren</Label>
                         <Textarea
                           id="factors"
                           value={exposureFormData.exposure_factors}
@@ -711,11 +707,11 @@ export default function ActivityGroups() {
                               exposure_factors: e.target.value,
                             })
                           }
-                          placeholder="Enter exposure factors separated by commas (e.g., Noise >85dB, Solvents, Dust)"
+                          placeholder="Faktoren kommagetrennt eingeben (z.B. Lärm >85dB, Lösungsmittel, Staub)"
                           rows={2}
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Separate multiple factors with commas
+                          Mehrere Faktoren mit Komma trennen
                         </p>
                       </div>
                       <div className="flex justify-end gap-2">
@@ -727,10 +723,10 @@ export default function ActivityGroups() {
                             resetExposureForm();
                           }}
                         >
-                          Cancel
+                          Abbrechen
                         </Button>
                         <Button type="submit">
-                          {editingItem ? "Update" : "Create"} Exposure Group
+                          {editingItem ? "Aktualisieren" : "Erstellen"}
                         </Button>
                       </div>
                     </form>
@@ -743,7 +739,7 @@ export default function ActivityGroups() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <Input
-                    placeholder="Search exposure groups..."
+                    placeholder="Expositionsgruppen suchen..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -755,10 +751,10 @@ export default function ActivityGroups() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Exposure Group Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Exposure Factors</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>Expositionsgruppe</TableHead>
+                      <TableHead>Beschreibung</TableHead>
+                      <TableHead>Expositionsfaktoren</TableHead>
+                      <TableHead className="text-right">Aktionen</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -768,7 +764,7 @@ export default function ActivityGroups() {
                           colSpan={4}
                           className="text-center py-8 text-muted-foreground"
                         >
-                          No exposure groups found. Create one to get started.
+                          Keine Expositionsgruppen vorhanden. Erstellen Sie eine, um zu beginnen.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -797,13 +793,13 @@ export default function ActivityGroups() {
                                   ))
                               ) : (
                                 <span className="text-muted-foreground text-sm">
-                                  None
+                                  —
                                 </span>
                               )}
                               {exposure.exposure_factors &&
                                 exposure.exposure_factors.length > 3 && (
                                   <Badge variant="outline" className="text-xs">
-                                    +{exposure.exposure_factors.length - 3} more
+                                    +{exposure.exposure_factors.length - 3} weitere
                                   </Badge>
                                 )}
                             </div>
