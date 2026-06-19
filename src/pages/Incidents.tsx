@@ -9,6 +9,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Activity,
+  CheckCircle,
   Edit,
   Trash2,
   Eye,
@@ -86,7 +87,9 @@ interface Incident {
   root_cause: string | null;
   immediate_actions: string | null;
   investigation_status: string;
+  investigation_completed_date: string | null;
   created_at: string;
+  updated_at: string;
   affected_employee?: { full_name: string };
   reported_by?: { full_name: string };
   department?: { name: string };
@@ -392,6 +395,53 @@ export default function Incidents() {
       toast({
         title: "Fehler",
         description: error.message || "Vorfall konnte nicht gelöscht werden",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusChange = async (incident: Incident, newStatus: string) => {
+    try {
+      const updateData: any = {
+        investigation_status: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+      if (newStatus === "closed") {
+        updateData.investigation_completed_date = new Date().toISOString().split("T")[0];
+      } else {
+        updateData.investigation_completed_date = null;
+      }
+
+      const { error } = await supabase
+        .from("incidents" as any)
+        .update(updateData)
+        .eq("id", incident.id);
+
+      if (error) throw error;
+
+      // Lokalen State direkt updaten
+      setIncidents((prev) =>
+        prev.map((i) =>
+          i.id === incident.id ? { ...i, ...updateData } : i
+        )
+      );
+      if (viewingIncident?.id === incident.id) {
+        setViewingIncident((prev) => prev ? { ...prev, ...updateData } : null);
+      }
+
+      const statusLabels: Record<string, string> = {
+        open: "Offen",
+        in_progress: "In Bearbeitung",
+        closed: "Abgeschlossen",
+      };
+      toast({
+        title: "Status geändert",
+        description: `Vorfall ist jetzt: ${statusLabels[newStatus] || newStatus}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Fehler",
+        description: error.message || "Status konnte nicht geändert werden",
         variant: "destructive",
       });
     }
@@ -1194,6 +1244,61 @@ export default function Incidents() {
                         {viewingIncident.root_cause || "-"}
                       </p>
                     </div>
+                    {/* Workflow-Status-Buttons */}
+                    <div className="flex flex-wrap items-center gap-2 p-3 bg-muted/30 rounded-lg border">
+                      <span className="text-xs text-muted-foreground font-medium mr-1">Workflow:</span>
+                      {viewingIncident.investigation_status === "open" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                          onClick={() => handleStatusChange(viewingIncident, "in_progress")}
+                        >
+                          <Activity className="w-3.5 h-3.5 mr-1.5" />
+                          Untersuchung starten
+                        </Button>
+                      )}
+                      {viewingIncident.investigation_status === "in_progress" && (
+                        <>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => handleStatusChange(viewingIncident, "closed")}
+                          >
+                            <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                            Abschließen
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(viewingIncident, "open")}
+                          >
+                            Zurück zu Offen
+                          </Button>
+                        </>
+                      )}
+                      {viewingIncident.investigation_status === "closed" && (
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Abgeschlossen
+                            {viewingIncident.investigation_completed_date && (
+                              <span className="text-muted-foreground">
+                                am {format(new Date(viewingIncident.investigation_completed_date), "dd.MM.yyyy")}
+                              </span>
+                            )}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleStatusChange(viewingIncident, "open")}
+                          >
+                            Wieder öffnen
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex justify-between items-center pt-2 border-t">
                       <Button
                         size="sm"
