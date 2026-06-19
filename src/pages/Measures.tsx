@@ -505,7 +505,7 @@ export default function Measures() {
                             description: e.target.value,
                           })
                         }
-                        placeholder="Detailed description of the measure"
+                        placeholder="Ausführliche Beschreibung der Maßnahme"
                         rows={3}
                       />
                     </div>
@@ -522,7 +522,7 @@ export default function Measures() {
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select responsible person" />
+                          <SelectValue placeholder="Verantwortliche Person auswählen" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
