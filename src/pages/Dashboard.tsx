@@ -357,17 +357,25 @@ export default function Dashboard() {
       const upcomingCheckups = await fetchUpcomingCheckups();
       const trainingCompletionRate = await fetchTrainingCompletionRate();
 
-      // Fetch overdue measures older than 30 days for critical warnings
+      // Fetch overdue measures older than 30 days for critical warnings (measures + RAM)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
-      const { count: oldOverdueCount } = await supabase
-        .from("measures")
-        .select("id", { count: "exact", head: true })
-        .eq("company_id", companyId)
-        .neq("status", "completed")
-        .lt("due_date", thirtyDaysAgoStr);
-      setOldOverdueMeasures(oldOverdueCount || 0);
+      const [{ count: oldOverdueCount }, { count: oldOverdueRamCount }] = await Promise.all([
+        supabase
+          .from("measures")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .neq("status", "completed")
+          .lt("due_date", thirtyDaysAgoStr),
+        (supabase as any)
+          .from("risk_assessment_measures")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .not("progress_status", "in", "(completed,done)")
+          .lt("due_date", thirtyDaysAgoStr),
+      ]);
+      setOldOverdueMeasures((oldOverdueCount || 0) + (oldOverdueRamCount || 0));
 
       // Overdue checkups count for context
       const today = new Date().toISOString().split("T")[0];
@@ -645,22 +653,42 @@ export default function Dashboard() {
 
     try {
       const today = new Date().toISOString().split("T")[0];
+      // RAM completed statuses: progress_status IN ('completed', 'done')
+      const RAM_COMPLETED = ["completed", "done"];
 
-      const [openRes, overdueRes] = await Promise.all([
+      const [openRes, overdueRes, ramOpenRes, ramOverdueRes] = await Promise.all([
+        // measures table — open
         supabase
           .from("measures")
           .select("id", { count: "exact", head: true })
           .eq("company_id", companyId)
           .neq("status", "completed"),
+        // measures table — overdue
         supabase
           .from("measures")
           .select("id", { count: "exact", head: true })
           .eq("company_id", companyId)
           .neq("status", "completed")
           .lt("due_date", today),
+        // risk_assessment_measures — open (progress_status not completed/done)
+        (supabase as any)
+          .from("risk_assessment_measures")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .not("progress_status", "in", `(${RAM_COMPLETED.join(",")})`),
+        // risk_assessment_measures — overdue
+        (supabase as any)
+          .from("risk_assessment_measures")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .not("progress_status", "in", `(${RAM_COMPLETED.join(",")})`)
+          .lt("due_date", today),
       ]);
 
-      return { open: openRes.count || 0, overdue: overdueRes.count || 0 };
+      return {
+        open: (openRes.count || 0) + (ramOpenRes.count || 0),
+        overdue: (overdueRes.count || 0) + (ramOverdueRes.count || 0),
+      };
     } catch (error) {
       console.error("Error fetching measures stats:", error);
       return { open: 0, overdue: 0 };
