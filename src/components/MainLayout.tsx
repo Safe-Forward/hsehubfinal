@@ -57,12 +57,24 @@ export default function MainLayout({ children }: Props) {
   const fetchOpenMeasures = useCallback(async () => {
     if (!companyId) return;
     try {
-      const { count } = await supabase
-        .from("measures")
-        .select("id", { count: "exact", head: true })
-        .eq("company_id", companyId)
-        .neq("status", "completed");
-      setOpenMeasuresCount(count || 0);
+      const today = new Date().toISOString().split("T")[0];
+      const [{ count: measuresCount }, { count: ramCount }] = await Promise.all([
+        // measures table — überfällig
+        supabase
+          .from("measures")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .neq("status", "completed")
+          .lt("due_date", today),
+        // risk_assessment_measures — überfällig
+        (supabase as any)
+          .from("risk_assessment_measures")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .not("progress_status", "in", "(completed,done)")
+          .lt("due_date", today),
+      ]);
+      setOpenMeasuresCount((measuresCount || 0) + (ramCount || 0));
     } catch {
       // silently ignore
     }
@@ -273,7 +285,7 @@ export default function MainLayout({ children }: Props) {
                   <ClipboardList className="w-4 h-4" />
                   <span>Maßnahmen</span>
                   {showMeasuresBadge && openMeasuresCount > 0 && (
-                    <span className="ml-auto flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-purple-600 text-white text-[10px] font-bold leading-none">
+                    <span className="ml-auto flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold leading-none">
                       {openMeasuresCount > 99 ? "99+" : openMeasuresCount}
                     </span>
                   )}
