@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useParams } from "react-router-dom";
@@ -18,7 +18,20 @@ import {
   BarChart3,
   SortAsc,
   SortDesc,
+  UserCheck,
+  UserX,
+  ShieldCheck,
 } from "lucide-react";
+import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import LessonCard from "@/components/training/LessonCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +72,8 @@ import jsPDF from "jspdf";
 const courseSchema = z.object({
   name: z.string().min(1, "Kursname ist erforderlich"),
   description: z.string().optional(),
+  is_mandatory: z.boolean().default(false),
+  renewal_months: z.number().optional(),
 });
 
 type CourseFormData = z.infer<typeof courseSchema>;
@@ -68,6 +83,8 @@ interface Course {
   name: string;
   description: string | null;
   created_at: string;
+  is_mandatory: boolean;
+  renewal_months: number | null;
 }
 
 interface Lesson {
@@ -95,6 +112,8 @@ interface EmployeeProgress {
   certificate_number?: string;
   issued_at?: string;
   percent: number;
+  participation_status: "registered" | "completed" | "absent" | null;
+  participation_completion_date?: string | null;
 }
 
 const COURSE_COLORS = [
@@ -138,10 +157,11 @@ export default function Training() {
   const [progressSort, setProgressSort] = useState<"name" | "percent">("name");
   const [progressSortDir, setProgressSortDir] = useState<"asc" | "desc">("asc");
   const [loadingProgress, setLoadingProgress] = useState(false);
+  const [updatingParticipation, setUpdatingParticipation] = useState<string | null>(null);
 
   const courseForm = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "", description: "", is_mandatory: false, renewal_months: undefined },
   });
 
   useEffect(() => {
@@ -266,6 +286,17 @@ export default function Training() {
       const certByEmp: Record<string, any> = {};
       (certData || []).forEach((c: any) => { certByEmp[c.employee_id] = c; });
 
+      // Fetch training_participations for manual attendance tracking
+      const { data: partData } = await (supabase as any)
+        .from("training_participations")
+        .select("employee_id, status, completion_date")
+        .eq("course_id", courseId)
+        .eq("company_id", companyId)
+        .in("employee_id", empIds);
+
+      const partByEmp: Record<string, any> = {};
+      (partData || []).forEach((p: any) => { partByEmp[p.employee_id] = p; });
+
       const result: EmployeeProgress[] = filteredEmpData.map((emp: any) => {
         const completed = Math.min(progressByEmp[emp.id] || 0, totalLessons);
         const pct = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
@@ -278,6 +309,8 @@ export default function Training() {
           certificate_number: certByEmp[emp.id]?.certificate_number,
           issued_at: certByEmp[emp.id]?.issued_at,
           percent: pct,
+          participation_status: partByEmp[emp.id]?.status || null,
+          participation_completion_date: partByEmp[emp.id]?.completion_date || null,
         };
       });
 
@@ -343,6 +376,96 @@ export default function Training() {
 
   const downloadCertificateForEmployee = (employeeName: string, courseName: string, cert: any) => {
     generatePDF(employeeName, courseName, cert);
+  };
+
+  const updateParticipation = async (
+    employeeId: string,
+    status: "registered" | "completed" | "absent"
+  ) => {
+    if (!companyId || !selectedCourse) return;
+    setUpdatingParticipation(employeeId);
+    try {
+      const payload: any = {
+        company_id: companyId,
+        course_id: selectedCourse.id,
+        employee_id: employeeId,
+        status,
+        completion_date: status === "completed" ? new Date().toISOString().split("T")[0] : null,
+        marked_by: user?.id || null,
+        updated_at: new Date().toISOString(),
+      };
+      await (supabase as any)
+        .from("training_participations")
+        .upsert(payload, { onConflict: "course_id,employee_id" });
+
+      // Update local state immediately
+      setEmployeeProgress((prev) =>
+        prev.map((ep) =>
+          ep.employee_id === employeeId
+            ? { ...ep, participation_status: status, participation_completion_date: status === "completed" ? new Date().toISOString().split("T")[0] : null }
+            : ep
+        )
+      );
+      toast({ title: "Aktualisiert", description: `Teilnahmestatus wurde auf "${status === "completed" ? "Abgeschlossen" : status === "absent" ? "Abwesend" : "Registriert"}" gesetzt` });
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err.message, variant: "destructive" });
+    } finally {
+      setUpdatingParticipation(null);
+    }
+  };
+
+  const issueCertificateAdmin = async (employeeId: string, employeeName: string) => {
+    if (!companyId || !selectedCourse) return;
+    setUpdatingParticipation(employeeId);
+    try {
+      // Check if certificate already exists
+      const { data: existing } = await (supabase as any)
+        .from("course_certificates")
+        .select("id")
+        .eq("course_id", selectedCourse.id)
+        .eq("employee_id", employeeId)
+        .maybeSingle();
+
+      if (existing) {
+        toast({ title: "Bereits vorhanden", description: "Für diesen Mitarbeiter existiert bereits ein Zertifikat" });
+        return;
+      }
+
+      const certNumber = `HSE-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      const { data: newCert, error } = await (supabase as any)
+        .from("course_certificates")
+        .insert({
+          company_id: companyId,
+          course_id: selectedCourse.id,
+          employee_id: employeeId,
+          certificate_number: certNumber,
+          issued_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Also set participation to completed
+      await updateParticipation(employeeId, "completed");
+
+      // Update local progress state with new cert
+      setEmployeeProgress((prev) =>
+        prev.map((ep) =>
+          ep.employee_id === employeeId
+            ? { ...ep, has_certificate: true, certificate_number: certNumber, issued_at: newCert.issued_at }
+            : ep
+        )
+      );
+
+      // Auto-download the cert
+      generatePDF(employeeName, selectedCourse.name, newCert);
+      toast({ title: "Zertifikat ausgestellt", description: `Zertifikat für ${employeeName} wurde erstellt und heruntergeladen` });
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err.message, variant: "destructive" });
+    } finally {
+      setUpdatingParticipation(null);
+    }
   };
 
   const fetchCourses = async () => {
@@ -451,7 +574,13 @@ export default function Training() {
   const onCourseSubmit = async (data: CourseFormData) => {
     if (!companyId) return;
     try {
-      const { error } = await supabase.from("courses").insert([{ company_id: companyId, name: data.name, description: data.description || null }]);
+      const { error } = await supabase.from("courses").insert([{
+        company_id: companyId,
+        name: data.name,
+        description: data.description || null,
+        is_mandatory: data.is_mandatory ?? false,
+        renewal_months: data.renewal_months || null,
+      }]);
       if (error) throw error;
       toast({ title: "Erfolgreich", description: "Kurs wurde erstellt" });
       setIsCourseDialogOpen(false);
@@ -508,6 +637,34 @@ export default function Training() {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
     }
   };
+
+  // Realtime-Sync für Training-Seite (ohne Loading-Spinner)
+  const silentRefetch = useCallback(async () => {
+    if (!companyId) return;
+    try {
+      if (isAdmin) {
+        const { data } = await supabase.from("courses").select("*").eq("company_id", companyId).order("created_at", { ascending: false });
+        if (data) setCourses(data);
+        await fetchCourseAccess();
+      } else {
+        if (!user?.id) return;
+        const { data: emp } = await supabase.from("employees").select("id").eq("user_id", user.id).single();
+        if (!emp) return;
+        const { data: access } = await (supabase as any).from("course_employee_access").select("course_id").eq("employee_id", emp.id);
+        const ids = (access || []).map((a: any) => a.course_id);
+        if (ids.length > 0) {
+          const { data } = await supabase.from("courses").select("*").in("id", ids).order("created_at", { ascending: false });
+          if (data) setCourses(data);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [companyId, isAdmin, user]);
+
+  useRealtimeRefetch(
+    ["courses", "course_lesson_progress", "training_participations", "course_certificates"],
+    companyId,
+    silentRefetch
+  );
 
   const filteredCourses = courses.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
@@ -754,38 +911,89 @@ export default function Training() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {filteredProgress.map((ep) => (
-                      <div key={ep.employee_id} className="flex items-center gap-4 p-4 rounded-xl border hover:bg-muted/30 transition-colors">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0">
-                          {ep.full_name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-medium text-sm">{ep.full_name}</span>
-                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                              {ep.has_certificate && (
-                                <Badge
-                                  className="bg-amber-100 text-amber-700 border-amber-200 text-xs cursor-pointer hover:bg-amber-200 transition-colors"
-                                  onClick={() => downloadCertificateForEmployee(
-                                    ep.full_name,
-                                    selectedCourse.name,
-                                    { certificate_number: ep.certificate_number, issued_at: ep.issued_at }
+                    {filteredProgress.map((ep) => {
+                      const isUpdating = updatingParticipation === ep.employee_id;
+                      return (
+                        <div key={ep.employee_id} className="p-4 rounded-xl border hover:bg-muted/30 transition-colors space-y-3">
+                          {/* Row 1: Name + E-Learning Progress */}
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0">
+                              {ep.full_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-sm">{ep.full_name}</span>
+                                  {ep.participation_status === "completed" && (
+                                    <Badge className="bg-green-100 text-green-700 border-green-200 text-xs"><UserCheck className="w-3 h-3 mr-1" />Teilgenommen</Badge>
                                   )}
-                                >
-                                  <Download className="w-3 h-3 mr-1" />Zertifikat
-                                </Badge>
+                                  {ep.participation_status === "absent" && (
+                                    <Badge className="bg-red-100 text-red-700 border-red-200 text-xs"><UserX className="w-3 h-3 mr-1" />Abwesend</Badge>
+                                  )}
+                                  {ep.participation_status === "registered" && (
+                                    <Badge variant="outline" className="text-xs"><Clock className="w-3 h-3 mr-1" />Registriert</Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                                  {ep.has_certificate && (
+                                    <Badge
+                                      className="bg-amber-100 text-amber-700 border-amber-200 text-xs cursor-pointer hover:bg-amber-200 transition-colors"
+                                      onClick={() => downloadCertificateForEmployee(
+                                        ep.full_name,
+                                        selectedCourse.name,
+                                        { certificate_number: ep.certificate_number, issued_at: ep.issued_at }
+                                      )}
+                                    >
+                                      <Download className="w-3 h-3 mr-1" />Zertifikat
+                                    </Badge>
+                                  )}
+                                  <span className="text-xs text-muted-foreground">{ep.completed_lessons}/{ep.total_lessons} Lektionen</span>
+                                  <span className={`text-sm font-bold w-12 text-right ${ep.percent === 100 ? "text-green-600" : "text-primary"}`}>{ep.percent}%</span>
+                                </div>
+                              </div>
+                              <Progress value={ep.percent} className={`h-2 ${ep.percent === 100 ? "[&>div]:bg-green-500" : ""}`} />
+                              {ep.has_certificate && ep.issued_at && (
+                                <p className="text-xs text-muted-foreground mt-1">Zertifikat ausgestellt am {new Date(ep.issued_at).toLocaleDateString("de-DE")}</p>
                               )}
-                              <span className="text-xs text-muted-foreground">{ep.completed_lessons}/{ep.total_lessons} Lektionen</span>
-                              <span className={`text-sm font-bold w-12 text-right ${ep.percent === 100 ? "text-green-600" : "text-primary"}`}>{ep.percent}%</span>
                             </div>
                           </div>
-                          <Progress value={ep.percent} className={`h-2 ${ep.percent === 100 ? "[&>div]:bg-green-500" : ""}`} />
-                          {ep.has_certificate && ep.issued_at && (
-                            <p className="text-xs text-muted-foreground mt-1">Zertifikat ausgestellt am {new Date(ep.issued_at).toLocaleDateString("de-DE")}</p>
-                          )}
+
+                          {/* Row 2: Teilnahme-Aktionen */}
+                          <div className="flex items-center gap-2 pt-1 border-t border-dashed">
+                            <span className="text-xs text-muted-foreground mr-1">Präsenz-Schulung:</span>
+                            <Button
+                              size="sm"
+                              variant={ep.participation_status === "completed" ? "default" : "outline"}
+                              className={`h-7 text-xs gap-1 ${ep.participation_status === "completed" ? "bg-green-600 hover:bg-green-700" : "hover:bg-green-50 hover:border-green-400 hover:text-green-700"}`}
+                              disabled={isUpdating}
+                              onClick={() => updateParticipation(ep.employee_id, "completed")}
+                            >
+                              <UserCheck className="w-3 h-3" />Teilgenommen
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={ep.participation_status === "absent" ? "default" : "outline"}
+                              className={`h-7 text-xs gap-1 ${ep.participation_status === "absent" ? "bg-red-600 hover:bg-red-700" : "hover:bg-red-50 hover:border-red-400 hover:text-red-700"}`}
+                              disabled={isUpdating}
+                              onClick={() => updateParticipation(ep.employee_id, "absent")}
+                            >
+                              <UserX className="w-3 h-3" />Abwesend
+                            </Button>
+                            {!ep.has_certificate && ep.participation_status === "completed" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs gap-1 ml-auto border-amber-400 text-amber-700 hover:bg-amber-50"
+                                disabled={isUpdating}
+                                onClick={() => issueCertificateAdmin(ep.employee_id, ep.full_name)}
+                              >
+                                <Award className="w-3 h-3" />Zertifikat ausstellen
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -921,6 +1129,39 @@ export default function Training() {
                         <FormField control={courseForm.control} name="description" render={({ field }) => (
                           <FormItem><FormLabel>Beschreibung (optional)</FormLabel><FormControl><Textarea placeholder="Kurze Beschreibung..." {...field} rows={3} /></FormControl><FormMessage /></FormItem>
                         )} />
+                        <FormField control={courseForm.control} name="is_mandatory" render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center gap-3 p-3 rounded-lg border bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                id="is_mandatory"
+                              />
+                              <div>
+                                <Label htmlFor="is_mandatory" className="font-medium text-amber-800 dark:text-amber-200 cursor-pointer">Pflichtschulung</Label>
+                                <p className="text-xs text-amber-700 dark:text-amber-400">Mitarbeiter müssen diese Schulung absolvieren</p>
+                              </div>
+                            </div>
+                          </FormItem>
+                        )} />
+                        {courseForm.watch("is_mandatory") && (
+                          <FormField control={courseForm.control} name="renewal_months" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Wiederholungsintervall (optional)</FormLabel>
+                              <Select onValueChange={(v) => field.onChange(v ? Number(v) : undefined)} value={field.value ? String(field.value) : ""}>
+                                <SelectTrigger><SelectValue placeholder="Kein Ablaufdatum" /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="6">Alle 6 Monate</SelectItem>
+                                  <SelectItem value="12">Jährlich (12 Monate)</SelectItem>
+                                  <SelectItem value="24">Alle 2 Jahre</SelectItem>
+                                  <SelectItem value="36">Alle 3 Jahre</SelectItem>
+                                  <SelectItem value="60">Alle 5 Jahre</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                        )}
                         <div className="flex justify-end gap-2 pt-2">
                           <Button type="button" variant="outline" onClick={() => setIsCourseDialogOpen(false)}>Abbrechen</Button>
                           <Button type="submit">Kurs erstellen</Button>
@@ -975,6 +1216,11 @@ export default function Training() {
                         ) : (
                           <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 flex items-center gap-1">
                             <Award className="w-3 h-3 text-white" /><span className="text-white text-xs font-medium">Zertifikat</span>
+                          </div>
+                        )}
+                        {course.is_mandatory && (
+                          <div className="absolute top-3 left-3 bg-red-500/90 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3 text-white" /><span className="text-white text-xs font-medium">Pflicht</span>
                           </div>
                         )}
                       </div>

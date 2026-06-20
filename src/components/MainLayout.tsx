@@ -55,6 +55,9 @@ export default function MainLayout({ children }: Props) {
   const [showMeasuresBadge, setShowMeasuresBadge] = useState(false);
   const [openMeasuresCount, setOpenMeasuresCount] = useState(0);
 
+  // Sidebar Training-Badge: Pflichtschulungen ohne Abschluss
+  const [incompleteTrainingCount, setIncompleteTrainingCount] = useState(0);
+
   const fetchOpenMeasures = useCallback(async () => {
     if (!companyId) return;
     try {
@@ -109,6 +112,81 @@ export default function MainLayout({ children }: Props) {
       fetchOpenMeasures();
     }
   }, [showMeasuresBadge, companyId, fetchOpenMeasures]);
+
+  const fetchIncompleteTrainings = useCallback(async () => {
+    if (!companyId) return;
+    try {
+      // 1. Get all mandatory courses for this company
+      const { data: mandatoryCourses } = await (supabase as any)
+        .from("courses")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("is_mandatory", true);
+
+      if (!mandatoryCourses || mandatoryCourses.length === 0) {
+        setIncompleteTrainingCount(0);
+        return;
+      }
+      const mandatoryIds = mandatoryCourses.map((c: any) => c.id);
+
+      // 2. Get all assignments for those courses
+      const { data: accessData } = await (supabase as any)
+        .from("course_employee_access")
+        .select("employee_id, course_id")
+        .eq("company_id", companyId)
+        .in("course_id", mandatoryIds);
+
+      if (!accessData || accessData.length === 0) {
+        setIncompleteTrainingCount(0);
+        return;
+      }
+
+      // 3. Get all completions (certificates + completed participations)
+      const [{ data: certs }, { data: parts }] = await Promise.all([
+        (supabase as any)
+          .from("course_certificates")
+          .select("employee_id, course_id")
+          .eq("company_id", companyId)
+          .in("course_id", mandatoryIds),
+        (supabase as any)
+          .from("training_participations")
+          .select("employee_id, course_id")
+          .eq("company_id", companyId)
+          .eq("status", "completed")
+          .in("course_id", mandatoryIds),
+      ]);
+
+      const completedKeys = new Set([
+        ...(certs || []).map((c: any) => `${c.employee_id}:${c.course_id}`),
+        ...(parts || []).map((p: any) => `${p.employee_id}:${p.course_id}`),
+      ]);
+
+      // Count unique employees with at least one incomplete mandatory course
+      const incompleteEmployees = new Set(
+        accessData.filter(
+          (a: any) => !completedKeys.has(`${a.employee_id}:${a.course_id}`)
+        ).map((a: any) => a.employee_id)
+      );
+
+      setIncompleteTrainingCount(incompleteEmployees.size);
+    } catch {
+      // silently ignore
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    if (companyId && (userRole === "company_admin" || userRole === "super_admin")) {
+      fetchIncompleteTrainings();
+    }
+  }, [companyId, userRole, fetchIncompleteTrainings]);
+
+  useRealtimeRefetch(
+    companyId && (userRole === "company_admin" || userRole === "super_admin")
+      ? ["courses", "course_employee_access", "course_certificates", "training_participations"]
+      : [],
+    companyId && (userRole === "company_admin" || userRole === "super_admin") ? companyId : null,
+    fetchIncompleteTrainings
+  );
 
   // Echtzeit-Sync für Badge: Polling + Realtime (8s Interval als Fallback)
   useRealtimeRefetch(
@@ -266,6 +344,11 @@ export default function MainLayout({ children }: Props) {
                 <Link to="/training" className={getLinkClasses("/training")}>
                   <CheckCircle className="w-4 h-4" />
                   <span>{t("nav.trainings")}</span>
+                  {incompleteTrainingCount > 0 && (
+                    <span className="ml-auto flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                      {incompleteTrainingCount > 99 ? "99+" : incompleteTrainingCount}
+                    </span>
+                  )}
                 </Link>
               )}
 
