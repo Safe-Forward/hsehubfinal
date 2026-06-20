@@ -18,8 +18,6 @@ import {
   BarChart3,
   SortAsc,
   SortDesc,
-  UserCheck,
-  UserX,
   ShieldCheck,
 } from "lucide-react";
 import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
@@ -707,7 +705,7 @@ export default function Training() {
           )}
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">{selectedEmployeeIds.size} von {employees.length} Nutzern</p>
+          <p className="text-sm text-muted-foreground">{Array.from(selectedEmployeeIds).filter(id => employees.some(e => e.id === id)).length} von {employees.length} Nutzern</p>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => { setIsAccessDialogOpen(false); setManagingAccessCourse(null); setSelectedEmployeeIds(new Set()); }}>Abbrechen</Button>
             <Button onClick={saveCourseAccess} disabled={savingAccess}>{savingAccess ? "Wird gespeichert..." : "Speichern"}</Button>
@@ -911,89 +909,45 @@ export default function Training() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {filteredProgress.map((ep) => {
-                      const isUpdating = updatingParticipation === ep.employee_id;
-                      return (
-                        <div key={ep.employee_id} className="p-4 rounded-xl border hover:bg-muted/30 transition-colors space-y-3">
-                          {/* Row 1: Name + E-Learning Progress */}
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0">
-                              {ep.full_name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-1.5">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-sm">{ep.full_name}</span>
-                                  {ep.participation_status === "completed" && (
-                                    <Badge className="bg-green-100 text-green-700 border-green-200 text-xs"><UserCheck className="w-3 h-3 mr-1" />Teilgenommen</Badge>
-                                  )}
-                                  {ep.participation_status === "absent" && (
-                                    <Badge className="bg-red-100 text-red-700 border-red-200 text-xs"><UserX className="w-3 h-3 mr-1" />Abwesend</Badge>
-                                  )}
-                                  {ep.participation_status === "registered" && (
-                                    <Badge variant="outline" className="text-xs"><Clock className="w-3 h-3 mr-1" />Registriert</Badge>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                                  {ep.has_certificate && (
-                                    <Badge
-                                      className="bg-amber-100 text-amber-700 border-amber-200 text-xs cursor-pointer hover:bg-amber-200 transition-colors"
-                                      onClick={() => downloadCertificateForEmployee(
-                                        ep.full_name,
-                                        selectedCourse.name,
-                                        { certificate_number: ep.certificate_number, issued_at: ep.issued_at }
-                                      )}
-                                    >
-                                      <Download className="w-3 h-3 mr-1" />Zertifikat
-                                    </Badge>
-                                  )}
-                                  <span className="text-xs text-muted-foreground">{ep.completed_lessons}/{ep.total_lessons} Lektionen</span>
-                                  <span className={`text-sm font-bold w-12 text-right ${ep.percent === 100 ? "text-green-600" : "text-primary"}`}>{ep.percent}%</span>
-                                </div>
-                              </div>
-                              <Progress value={ep.percent} className={`h-2 ${ep.percent === 100 ? "[&>div]:bg-green-500" : ""}`} />
-                              {ep.has_certificate && ep.issued_at && (
-                                <p className="text-xs text-muted-foreground mt-1">Zertifikat ausgestellt am {new Date(ep.issued_at).toLocaleDateString("de-DE")}</p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Row 2: Teilnahme-Aktionen */}
-                          <div className="flex items-center gap-2 pt-1 border-t border-dashed">
-                            <span className="text-xs text-muted-foreground mr-1">Präsenz-Schulung:</span>
-                            <Button
-                              size="sm"
-                              variant={ep.participation_status === "completed" ? "default" : "outline"}
-                              className={`h-7 text-xs gap-1 ${ep.participation_status === "completed" ? "bg-green-600 hover:bg-green-700" : "hover:bg-green-50 hover:border-green-400 hover:text-green-700"}`}
-                              disabled={isUpdating}
-                              onClick={() => updateParticipation(ep.employee_id, "completed")}
-                            >
-                              <UserCheck className="w-3 h-3" />Teilgenommen
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={ep.participation_status === "absent" ? "default" : "outline"}
-                              className={`h-7 text-xs gap-1 ${ep.participation_status === "absent" ? "bg-red-600 hover:bg-red-700" : "hover:bg-red-50 hover:border-red-400 hover:text-red-700"}`}
-                              disabled={isUpdating}
-                              onClick={() => updateParticipation(ep.employee_id, "absent")}
-                            >
-                              <UserX className="w-3 h-3" />Abwesend
-                            </Button>
-                            {!ep.has_certificate && ep.participation_status === "completed" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-7 text-xs gap-1 ml-auto border-amber-400 text-amber-700 hover:bg-amber-50"
-                                disabled={isUpdating}
-                                onClick={() => issueCertificateAdmin(ep.employee_id, ep.full_name)}
-                              >
-                                <Award className="w-3 h-3" />Zertifikat ausstellen
-                              </Button>
-                            )}
-                          </div>
+                    {filteredProgress.map((ep) => (
+                      <div key={ep.employee_id} className="flex items-center gap-4 p-4 rounded-xl border hover:bg-muted/30 transition-colors">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-bold flex-shrink-0">
+                          {ep.full_name.charAt(0).toUpperCase()}
                         </div>
-                      );
-                    })}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="font-medium text-sm">{ep.full_name}</span>
+                            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                              {ep.has_certificate ? (
+                                <Badge
+                                  className="bg-amber-100 text-amber-700 border-amber-200 text-xs cursor-pointer hover:bg-amber-200 transition-colors"
+                                  onClick={() => downloadCertificateForEmployee(
+                                    ep.full_name,
+                                    selectedCourse.name,
+                                    { certificate_number: ep.certificate_number, issued_at: ep.issued_at }
+                                  )}
+                                >
+                                  <Download className="w-3 h-3 mr-1" />Zertifikat
+                                </Badge>
+                              ) : ep.percent === 100 ? (
+                                <Badge
+                                  className="bg-green-100 text-green-700 border-green-200 text-xs cursor-pointer hover:bg-green-200 transition-colors"
+                                  onClick={() => issueCertificateAdmin(ep.employee_id, ep.full_name)}
+                                >
+                                  <Award className="w-3 h-3 mr-1" />Zertifikat ausstellen
+                                </Badge>
+                              ) : null}
+                              <span className="text-xs text-muted-foreground">{ep.completed_lessons}/{ep.total_lessons} Lektionen</span>
+                              <span className={`text-sm font-bold w-12 text-right ${ep.percent === 100 ? "text-green-600" : "text-primary"}`}>{ep.percent}%</span>
+                            </div>
+                          </div>
+                          <Progress value={ep.percent} className={`h-2 ${ep.percent === 100 ? "[&>div]:bg-green-500" : ""}`} />
+                          {ep.has_certificate && ep.issued_at && (
+                            <p className="text-xs text-muted-foreground mt-1">Zertifikat ausgestellt am {new Date(ep.issued_at).toLocaleDateString("de-DE")}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </CardContent>
