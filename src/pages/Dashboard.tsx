@@ -70,12 +70,28 @@ const ALL_KPI_IDS = [
   "recentIncidents",
   "recentHazards",
   "openMeasures",
+  "overdueMeasures",
   "upcomingCheckups",
   "trainingCompletionRate",
   "auditComplianceRate",
 ];
 
-const DEFAULT_KPI_IDS = [...ALL_KPI_IDS];
+// Virtual widgets — appear in "Kacheln anpassen" but render no KPI card
+const SIDEBAR_WIDGET_IDS = ["sidebarMeasuresBadge"];
+
+const sidebarWidgetLabels: Record<string, string> = {
+  sidebarMeasuresBadge: "Maßnahmen-Badge (Sidebar)",
+};
+
+const DEFAULT_KPI_IDS = [
+  "employees",
+  "overdueObligations",
+  "recentIncidents",
+  "recentHazards",
+  "upcomingCheckups",
+  "trainingCompletionRate",
+  "auditComplianceRate",
+];
 
 export default function Dashboard() {
   const { user, userRole, companyId, companyName, loading, signOut } =
@@ -121,7 +137,8 @@ export default function Dashboard() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setVisibleKpis(parsed.filter((id: string) => ALL_KPI_IDS.includes(id)));
+          const allValidIds = [...ALL_KPI_IDS, ...SIDEBAR_WIDGET_IDS];
+          setVisibleKpis(parsed.filter((id: string) => allValidIds.includes(id)));
         }
       }
     } catch (e) {
@@ -135,6 +152,8 @@ export default function Dashboard() {
         ? prev.filter((k) => k !== id)
         : [...prev, id];
       localStorage.setItem("hse_dashboard_visible_kpis", JSON.stringify(updated));
+      // Notify same-tab listeners (storage event only fires cross-tab)
+      window.dispatchEvent(new CustomEvent("hse_kpi_prefs_changed"));
       return updated;
     });
   };
@@ -817,6 +836,12 @@ export default function Dashboard() {
       icon: ListTodo,
       gradient: "from-purple-500 via-purple-600 to-purple-700",
     },
+    overdueMeasures: {
+      title: "Überfällige Maßnahmen",
+      value: stats.overdueMeasures,
+      icon: AlertTriangle,
+      gradient: "from-rose-500 via-rose-600 to-red-700",
+    },
     upcomingCheckups: {
       title: "Anstehende Untersuchungen (30 Tage)",
       value: stats.upcomingCheckups,
@@ -844,6 +869,7 @@ export default function Dashboard() {
     recentIncidents: `${t("dashboard.last7Days")}: ${t("dashboard.incidents")}`,
     recentHazards: `${t("dashboard.last7Days")}: ${t("dashboard.hazards")}`,
     openMeasures: "Offene Maßnahmen",
+    overdueMeasures: "Überfällige Maßnahmen",
     upcomingCheckups: "Anstehende Untersuchungen (30 Tage)",
     trainingCompletionRate: "Schulungsabschlussquote",
     auditComplianceRate: "Audit Compliance-Rate",
@@ -903,6 +929,23 @@ export default function Dashboard() {
                   </label>
                 ))}
               </div>
+              <div className="border-t border-border mt-3 pt-3">
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Sidebar</p>
+                <div className="space-y-2">
+                  {SIDEBAR_WIDGET_IDS.map((id) => (
+                    <label
+                      key={id}
+                      className="flex items-center gap-2 text-sm cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={visibleKpis.includes(id)}
+                        onCheckedChange={() => toggleKpiVisibility(id)}
+                      />
+                      {sidebarWidgetLabels[id]}
+                    </label>
+                  ))}
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
         </div>
@@ -915,7 +958,7 @@ export default function Dashboard() {
               Kacheln hinzuzufügen.
             </div>
           ) : (
-            visibleKpis.map((id) => {
+            visibleKpis.filter((id) => !SIDEBAR_WIDGET_IDS.includes(id)).map((id) => {
               const config = kpiConfig[id];
               if (!config) return null;
               const Icon = config.icon;

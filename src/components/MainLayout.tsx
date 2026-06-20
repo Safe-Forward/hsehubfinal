@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Shield,
@@ -37,17 +37,67 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import NotificationBell from "@/components/NotificationBell";
+import { supabase } from "@/integrations/supabase/client";
 
 type Props = {
   children: ReactNode;
 };
 
 export default function MainLayout({ children }: Props) {
-  const { userRole, signOut, companyName } = useAuth();
+  const { userRole, signOut, companyName, companyId } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { hasPermission, loading: permissionsLoading, roleName, permissions } = usePermissions();
   const location = useLocation();
   const [darkMode, setDarkMode] = useState(false);
+
+  // Sidebar Maßnahmen-Badge (optional widget, driven by hse_dashboard_visible_kpis)
+  const [showMeasuresBadge, setShowMeasuresBadge] = useState(false);
+  const [openMeasuresCount, setOpenMeasuresCount] = useState(0);
+
+  const fetchOpenMeasures = useCallback(async () => {
+    if (!companyId) return;
+    try {
+      const { count } = await supabase
+        .from("measures")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", companyId)
+        .neq("status", "completed");
+      setOpenMeasuresCount(count || 0);
+    } catch {
+      // silently ignore
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    const checkBadgeSetting = () => {
+      try {
+        const stored = localStorage.getItem("hse_dashboard_visible_kpis");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setShowMeasuresBadge(Array.isArray(parsed) && parsed.includes("sidebarMeasuresBadge"));
+        } else {
+          setShowMeasuresBadge(false);
+        }
+      } catch {
+        setShowMeasuresBadge(false);
+      }
+    };
+    checkBadgeSetting();
+    window.addEventListener("storage", checkBadgeSetting);
+    window.addEventListener("hse_kpi_prefs_changed", checkBadgeSetting);
+    return () => {
+      window.removeEventListener("storage", checkBadgeSetting);
+      window.removeEventListener("hse_kpi_prefs_changed", checkBadgeSetting);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showMeasuresBadge && companyId) {
+      fetchOpenMeasures();
+      const interval = window.setInterval(fetchOpenMeasures, 60000);
+      return () => window.clearInterval(interval);
+    }
+  }, [showMeasuresBadge, companyId, fetchOpenMeasures]);
 
   // Log permissions state in dev for debugging
   useEffect(() => {
@@ -222,6 +272,11 @@ export default function MainLayout({ children }: Props) {
                 <Link to="/measures" className={getLinkClasses("/measures")}>
                   <ClipboardList className="w-4 h-4" />
                   <span>Maßnahmen</span>
+                  {showMeasuresBadge && openMeasuresCount > 0 && (
+                    <span className="ml-auto flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-purple-600 text-white text-[10px] font-bold leading-none">
+                      {openMeasuresCount > 99 ? "99+" : openMeasuresCount}
+                    </span>
+                  )}
                 </Link>
               )}
 
