@@ -88,6 +88,7 @@ const DEFAULT_KPI_IDS = [
   "overdueObligations",
   "recentIncidents",
   "recentHazards",
+  "overdueMeasures",
   "upcomingCheckups",
   "trainingCompletionRate",
   "auditComplianceRate",
