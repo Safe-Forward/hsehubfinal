@@ -133,6 +133,8 @@ export default function Incidents() {
   const [sortKey, setSortKey] = useState<IncidentSortKey>("incident_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
+  const [statusHistory, setStatusHistory] = useState<any[]>([]);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -171,6 +173,15 @@ export default function Incidents() {
       fetchDepartments();
     }
   }, [companyId]);
+
+  const fetchStatusHistory = async (incidentId: string) => {
+    const { data } = await supabase
+      .from("incident_status_history" as any)
+      .select("*")
+      .eq("incident_id", incidentId)
+      .order("changed_at", { ascending: false });
+    setStatusHistory(data || []);
+  };
 
   const fetchIncidents = async () => {
     if (!companyId) return;
@@ -423,6 +434,15 @@ export default function Incidents() {
 
       if (error) throw error;
 
+      // Statuswechsel in History schreiben
+      await supabase.from("incident_status_history" as any).insert({
+        incident_id: incident.id,
+        old_status: incident.investigation_status,
+        new_status: newStatus,
+        changed_by: user?.id,
+        company_id: companyId,
+      });
+
       // Lokalen State direkt updaten
       setIncidents((prev) =>
         prev.map((i) =>
@@ -553,6 +573,19 @@ export default function Incidents() {
         {status}
       </Badge>
     );
+  };
+
+  const getEscalationLevel = (incident: any): { level: number; label: string; color: string } | null => {
+    if (incident.investigation_status === "closed") return null;
+    if (!incident.incident_date) return null;
+
+    const refDate = incident.incident_date;
+    const daysPast = Math.floor((Date.now() - new Date(refDate).getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysPast <= 0) return null;
+    if (daysPast <= 7)  return { level: 1, label: `${daysPast}T überfällig`, color: "bg-yellow-100 text-yellow-800 border-yellow-200" };
+    if (daysPast <= 30) return { level: 2, label: `${daysPast}T überfällig`, color: "bg-orange-100 text-orange-800 border-orange-200" };
+    return { level: 3, label: `${daysPast}T überfällig`, color: "bg-red-100 text-red-800 border-red-200" };
   };
 
   const filteredIncidents = incidents.filter((incident) => {
@@ -1160,7 +1193,7 @@ export default function Incidents() {
             <Dialog
               open={Boolean(viewingIncident)}
               onOpenChange={(open) => {
-                if (!open) setViewingIncident(null);
+                if (!open) { setViewingIncident(null); setStatusHistory([]); }
               }}
             >
               <DialogContent className="max-w-2xl">
@@ -1200,8 +1233,11 @@ export default function Incidents() {
                       </div>
                       <div>
                         <p className="text-muted-foreground">Status</p>
-                        <div>
+                        <div className="flex items-center gap-2 flex-wrap">
                           {getStatusBadge(viewingIncident.investigation_status)}
+                          {(() => { const esc = getEscalationLevel(viewingIncident); return esc ? (
+                            <span className={`text-xs px-2 py-1 rounded border font-medium ${esc.color}`}>{esc.label}</span>
+                          ) : null; })()}
                         </div>
                       </div>
                       <div>
@@ -1302,6 +1338,27 @@ export default function Incidents() {
                         </div>
                       )}
                     </div>
+
+                    {statusHistory.length > 0 && (
+                      <div className="border-t pt-4 mt-4">
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Statushistorie</h4>
+                        <div className="space-y-2">
+                          {statusHistory.map((entry: any) => (
+                            <div key={entry.id} className="flex items-center gap-3 text-sm">
+                              <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                              <span className="text-muted-foreground text-xs">
+                                {new Date(entry.changed_at).toLocaleString("de-DE")}
+                              </span>
+                              <span>
+                                <span className="text-muted-foreground">{entry.old_status || "–"}</span>
+                                {" → "}
+                                <span className="font-medium">{entry.new_status}</span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex justify-between items-center pt-2 border-t">
                       <Button
@@ -1447,7 +1504,12 @@ export default function Incidents() {
 
                       <TableCell>
                         <div>
-                          <div className="font-medium">{incident.title}</div>
+                          <div className="font-medium flex items-center gap-2">
+                            {incident.title}
+                            {(() => { const esc = getEscalationLevel(incident); return esc ? (
+                              <span className={`text-xs px-1.5 py-0.5 rounded border font-medium ${esc.color}`}>{esc.label}</span>
+                            ) : null; })()}
+                          </div>
                           {incident.affected_employee && (
                             <div className="text-sm text-muted-foreground">
                               {t("incidents.affected")}:{" "}
@@ -1476,7 +1538,7 @@ export default function Incidents() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setViewingIncident(incident)}
+                            onClick={() => { setViewingIncident(incident); fetchStatusHistory(incident.id); }}
                             title="Details anzeigen"
                           >
                             <Eye className="w-4 h-4" />
