@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const POLL_INTERVAL_MS = 8000; // 8-Sekunden-Polling als Fallback
+const POLL_INTERVAL_MS = 30000; // 30s Fallback — Supabase Realtime ist primär
 
 /**
  * Zwei-Schichten-Sync:
