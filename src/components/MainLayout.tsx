@@ -38,6 +38,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import NotificationBell from "@/components/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
 
 type Props = {
   children: ReactNode;
@@ -106,10 +107,15 @@ export default function MainLayout({ children }: Props) {
   useEffect(() => {
     if (showMeasuresBadge && companyId) {
       fetchOpenMeasures();
-      const interval = window.setInterval(fetchOpenMeasures, 60000);
-      return () => window.clearInterval(interval);
     }
   }, [showMeasuresBadge, companyId, fetchOpenMeasures]);
+
+  // Echtzeit-Sync für Badge: Polling + Realtime (8s Interval als Fallback)
+  useRealtimeRefetch(
+    showMeasuresBadge ? ["measures", "risk_assessment_measures"] : [],
+    showMeasuresBadge ? companyId : null,
+    fetchOpenMeasures
+  );
 
   // Log permissions state in dev for debugging
   useEffect(() => {

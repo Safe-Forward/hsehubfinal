@@ -1,12 +1,15 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const POLL_INTERVAL_MS = 8000; // 8-Sekunden-Polling als Fallback
+
 /**
- * Subscribes to Supabase Realtime for one or more tables and calls `onRefetch`
- * whenever any row in those tables changes (INSERT / UPDATE / DELETE).
+ * Zwei-Schichten-Sync:
+ * 1. Supabase postgres_changes (Echtzeit) — funktioniert sobald Realtime
+ *    für die Tabellen im Supabase-Dashboard aktiviert ist.
+ * 2. Polling alle 8 Sekunden — greift sofort, unabhängig von Realtime-Config.
  *
- * The `onRefetch` callback is held in a ref so callers don't need to wrap it
- * in useCallback — the subscription is only recreated when `companyId` changes.
+ * onRefetch wird in einem Ref gehalten — kein useCallback beim Aufrufer nötig.
  */
 export function useRealtimeRefetch(
   tables: string[],
@@ -19,6 +22,7 @@ export function useRealtimeRefetch(
   useEffect(() => {
     if (!companyId) return;
 
+    // ── Layer 1: Supabase Realtime (postgres_changes) ──────────────────────
     const channelName = `realtime-${tables.join("-")}-${companyId}`;
     const channel = supabase.channel(channelName);
 
@@ -35,10 +39,21 @@ export function useRealtimeRefetch(
       );
     });
 
-    channel.subscribe();
+    channel.subscribe((status: string) => {
+      // Log nur im Dev-Modus
+      if (import.meta.env.DEV) {
+        console.log(`[Realtime] ${channelName}: ${status}`);
+      }
+    });
+
+    // ── Layer 2: Polling-Fallback ───────────────────────────────────────────
+    const pollInterval = window.setInterval(() => {
+      refetchRef.current();
+    }, POLL_INTERVAL_MS);
 
     return () => {
       supabase.removeChannel(channel);
+      window.clearInterval(pollInterval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, tables.join(",")]);
