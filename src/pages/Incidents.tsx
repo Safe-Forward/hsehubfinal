@@ -1340,16 +1340,19 @@ export default function Incidents() {
                     </div>
 
                     {statusHistory.length > 0 && (
-                      <div className="border-t pt-4 mt-4">
-                        <h4 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">Statushistorie</h4>
-                        <div className="space-y-2">
-                          {statusHistory.map((entry: any) => (
-                            <div key={entry.id} className="flex items-center gap-3 text-sm">
-                              <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
-                              <span className="text-muted-foreground text-xs">
-                                {new Date(entry.changed_at).toLocaleString("de-DE")}
+                      <div className="border-t pt-3 mt-3">
+                        <h4 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+                          Statushistorie
+                          <span className="ml-2 font-normal normal-case">({statusHistory.length})</span>
+                        </h4>
+                        <div className="space-y-1.5 max-h-[130px] overflow-y-auto pr-1">
+                          {statusHistory.slice(0, 10).map((entry: any) => (
+                            <div key={entry.id} className="flex items-center gap-2 text-xs">
+                              <div className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
+                              <span className="text-muted-foreground tabular-nums flex-shrink-0">
+                                {new Date(entry.changed_at).toLocaleString("de-DE", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" })}
                               </span>
-                              <span>
+                              <span className="truncate">
                                 <span className="text-muted-foreground">{entry.old_status || "–"}</span>
                                 {" → "}
                                 <span className="font-medium">{entry.new_status}</span>
