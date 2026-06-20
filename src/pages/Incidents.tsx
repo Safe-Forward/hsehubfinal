@@ -19,8 +19,6 @@ import {
   Calendar as CalendarIcon,
   ArrowUp,
   ArrowDown,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -135,8 +133,7 @@ export default function Incidents() {
   const [sortKey, setSortKey] = useState<IncidentSortKey>("incident_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  const [statusHistory, setStatusHistory] = useState<any[]>([]);
-  const [statusHistoryOpen, setStatusHistoryOpen] = useState(false);
+  const [statusHistory, setStatusHistory] = useState<any[]>([]); // kept for audit trail, not displayed
 
   const [formData, setFormData] = useState({
     title: "",
@@ -1196,7 +1193,7 @@ export default function Incidents() {
             <Dialog
               open={Boolean(viewingIncident)}
               onOpenChange={(open) => {
-                if (!open) { setViewingIncident(null); setStatusHistory([]); setStatusHistoryOpen(false); }
+                if (!open) { setViewingIncident(null); setStatusHistory([]); }
               }}
             >
               <DialogContent className="max-w-2xl">
@@ -1342,37 +1339,6 @@ export default function Incidents() {
                       )}
                     </div>
 
-                    {statusHistory.length > 0 && (
-                      <div className="border-t mt-3">
-                        <button
-                          type="button"
-                          onClick={() => setStatusHistoryOpen(o => !o)}
-                          className="w-full flex items-center justify-between py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors cursor-pointer"
-                        >
-                          <span>Statushistorie <span className="font-normal normal-case">({statusHistory.length})</span></span>
-                          {statusHistoryOpen
-                            ? <ChevronUp className="w-4 h-4" />
-                            : <ChevronDown className="w-4 h-4" />}
-                        </button>
-                        {statusHistoryOpen && (
-                          <div className="overflow-y-auto max-h-[180px] cursor-default pb-2 space-y-1.5 pr-1" style={{ scrollbarWidth: "thin" }}>
-                            {statusHistory.map((entry: any) => (
-                              <div key={entry.id} className="flex items-center gap-2 text-xs">
-                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
-                                <span className="text-muted-foreground tabular-nums flex-shrink-0">
-                                  {new Date(entry.changed_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                                </span>
-                                <span>
-                                  <span className="text-muted-foreground">{entry.old_status || "–"}</span>
-                                  {" → "}
-                                  <span className="font-medium">{entry.new_status}</span>
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
 
                     <div className="flex justify-between items-center pt-2 border-t">
                       <Button
