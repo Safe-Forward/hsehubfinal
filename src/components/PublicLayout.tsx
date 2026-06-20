@@ -16,20 +16,7 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl blur opacity-25"></div>
-                <img
-                  src="/logo.png"
-                  alt="SafetyHub Logo"
-                  className="h-12 w-12 relative z-10"
-                />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                  SafetyHub
-                </h1>
-                <p className="text-xs text-gray-600">HSE Management Platform</p>
-              </div>
+              <img src="/logo-full.svg" alt="Safe-Forward" className="h-8" />
             </div>
             <div className="hidden md:flex items-center gap-8 text-sm font-medium">
               <a
@@ -84,19 +71,7 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
           <div className="mb-12">
             <div>
               <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={() => navigate("/")}>
-                <img
-                  src="/logo.png"
-                  alt="SafetyHub Logo"
-                  className="h-12 w-12"
-                />
-                <div>
-                  <p className="text-lg font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                    SafetyHub
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    HSE Management Platform
-                  </p>
-                </div>
+                <img src="/logo-full.svg" alt="Safe-Forward" className="h-8" />
               </div>
               <p className="text-gray-600 mb-4 leading-relaxed max-w-md">
                 Wir unterstützen Unternehmen dabei, durch innovative Lösungen für das 
@@ -107,7 +82,7 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t">
             <p className="text-sm text-gray-600">
-              © 2025 SafetyHub. All rights reserved.
+              © 2025 Safe-Forward. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm text-gray-600">
               <a

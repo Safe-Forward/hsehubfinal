@@ -73,18 +73,8 @@ export default function Auth() {
         </div>
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl blur opacity-25"></div>
-              <img
-                src="/logo.png"
-                alt="SafetyHub Logo"
-                className="h-16 w-16 relative z-10"
-              />
-            </div>
+            <img src="/logo-full.svg" alt="Safe-Forward" className="h-12" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-            <span>SafetyHub</span>
-          </h1>
           <p className="text-muted-foreground mt-2"><span>HSE Management Platform</span></p>
         </div>
 

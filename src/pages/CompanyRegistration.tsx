@@ -297,7 +297,7 @@ export default function CompanyRegistration() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
             <img
-              src="/logo.png"
+              src="/logo-icon.svg"
               alt="Safe-Forward Logo"
               className="h-12 w-12 relative z-10"
             />

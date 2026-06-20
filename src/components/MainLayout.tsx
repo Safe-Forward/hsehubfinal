@@ -164,17 +164,7 @@ export default function MainLayout({ children }: Props) {
       <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen sticky top-0">
         <div className="p-4 border-b border-gray-200 dark:border-gray-800">
           <Link to={userRole === "super_admin" ? "/super-admin/dashboard" : "/dashboard"} className="flex items-center gap-2">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-green-600 rounded-xl blur opacity-25"></div>
-              <img
-                src="/logo.png"
-                alt="SafetyHub Logo"
-                className="h-8 w-8 relative z-10"
-              />
-            </div>
-            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-              Safety hub
-            </span>
+            <img src="/logo-full.svg" alt="Safe-Forward" className="h-8 relative z-10" />
           </Link>
         </div>
 
