@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuditLog } from "@/hooks/useAuditLog";
@@ -42,6 +42,7 @@ import {
   UserPlus,
   Zap,
   XCircle,
+  GripVertical,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
@@ -129,6 +130,15 @@ export default function Dashboard() {
   const [visibleKpis, setVisibleKpis] = useState<string[]>(DEFAULT_KPI_IDS);
   const [kpiSettingsOpen, setKpiSettingsOpen] = useState(false);
 
+  // Drag-to-reorder for KPI cards
+  const draggedKpiRef = useRef<string | null>(null);
+  const [dragOverKpiId, setDragOverKpiId] = useState<string | null>(null);
+
+  // Drag-to-reorder for bottom widgets
+  const [sectionOrder, setSectionOrder] = useState<string[]>(["investigations", "tasks"]);
+  const draggedSectionRef = useRef<string | null>(null);
+  const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
+
   // Overdue measures older than 30 days (for critical warnings)
   const [oldOverdueMeasures, setOldOverdueMeasures] = useState(0);
 
@@ -144,6 +154,17 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error("Error loading KPI preferences:", e);
+    }
+    try {
+      const storedSections = localStorage.getItem("hse_dashboard_section_order");
+      if (storedSections) {
+        const parsed = JSON.parse(storedSections);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSectionOrder(parsed.filter((id: string) => ["investigations", "tasks"].includes(id)));
+        }
+      }
+    } catch (e) {
+      console.error("Error loading section order:", e);
     }
   }, []);
 
@@ -991,11 +1012,36 @@ export default function Dashboard() {
               const config = kpiConfig[id];
               if (!config) return null;
               const Icon = config.icon;
+              const isDragOver = dragOverKpiId === id;
               return (
                 <Card
                   key={id}
-                  className={`border-0 shadow-xl bg-gradient-to-br ${config.gradient} text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate`}
+                  draggable
+                  onDragStart={() => { draggedKpiRef.current = id; }}
+                  onDragOver={(e) => { e.preventDefault(); setDragOverKpiId(id); }}
+                  onDragLeave={() => setDragOverKpiId(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const from = draggedKpiRef.current;
+                    if (!from || from === id) { setDragOverKpiId(null); return; }
+                    const newOrder = [...visibleKpis];
+                    const fromIdx = newOrder.indexOf(from);
+                    const toIdx = newOrder.indexOf(id);
+                    newOrder.splice(fromIdx, 1);
+                    newOrder.splice(toIdx, 0, from);
+                    setVisibleKpis(newOrder);
+                    localStorage.setItem("hse_dashboard_visible_kpis", JSON.stringify(newOrder));
+                    window.dispatchEvent(new CustomEvent("hse_kpi_prefs_changed"));
+                    draggedKpiRef.current = null;
+                    setDragOverKpiId(null);
+                  }}
+                  onDragEnd={() => { draggedKpiRef.current = null; setDragOverKpiId(null); }}
+                  className={`border-0 shadow-xl bg-gradient-to-br ${config.gradient} text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate cursor-grab active:cursor-grabbing ${isDragOver ? "ring-2 ring-white/70 scale-[1.02]" : ""}`}
                 >
+                  {/* Drag handle indicator */}
+                  <div className="absolute top-2 left-2 z-20 opacity-0 group-hover:opacity-60 transition-opacity">
+                    <GripVertical className="w-4 h-4 text-white" />
+                  </div>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-300"></div>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                     <CardTitle className="text-xs sm:text-sm font-semibold text-white/90 tracking-wide leading-tight">
@@ -1023,13 +1069,38 @@ export default function Dashboard() {
 
         {/* ── Dashboard Widgets ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {/* Investigation Statistics Chart */}
-          <Card className="border-0 shadow-sm">
+          {sectionOrder.map((sectionId) => sectionId === "investigations" ? (
+          /* Investigation Statistics Chart */
+          <div
+            key="investigations"
+            draggable
+            onDragStart={() => { draggedSectionRef.current = "investigations"; }}
+            onDragOver={(e) => { e.preventDefault(); setDragOverSectionId("investigations"); }}
+            onDragLeave={() => setDragOverSectionId(null)}
+            onDrop={(e) => {
+              e.preventDefault();
+              const from = draggedSectionRef.current;
+              if (!from || from === "investigations") { setDragOverSectionId(null); return; }
+              const newOrder = sectionOrder[0] === from
+                ? ["investigations", from]
+                : [from, "investigations"];
+              setSectionOrder(newOrder);
+              localStorage.setItem("hse_dashboard_section_order", JSON.stringify(newOrder));
+              draggedSectionRef.current = null;
+              setDragOverSectionId(null);
+            }}
+            onDragEnd={() => { draggedSectionRef.current = null; setDragOverSectionId(null); }}
+            className={`transition-all duration-200 ${dragOverSectionId === "investigations" ? "ring-2 ring-primary/50 rounded-xl" : ""}`}
+          >
+          <Card className="border-0 shadow-sm h-full">
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2">
-                <ListTodo className="w-5 h-5" />
-                {t("dashboard.investigationsByStatus")}
-              </CardTitle>
+              <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing">
+                <GripVertical className="w-4 h-4 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+                <CardTitle className="flex items-center gap-2">
+                  <ListTodo className="w-5 h-5" />
+                  {t("dashboard.investigationsByStatus")}
+                </CardTitle>
+              </div>
               <CardDescription>
                 {t("dashboard.investigationStatusOverview")}
               </CardDescription>
@@ -1099,16 +1170,41 @@ export default function Dashboard() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Task Overview */}
-          <Card className="border-0 shadow-sm">
+          </div>
+          ) : (
+          /* Task Overview */
+          <div
+            key="tasks"
+            draggable
+            onDragStart={() => { draggedSectionRef.current = "tasks"; }}
+            onDragOver={(e) => { e.preventDefault(); setDragOverSectionId("tasks"); }}
+            onDragLeave={() => setDragOverSectionId(null)}
+            onDrop={(e) => {
+              e.preventDefault();
+              const from = draggedSectionRef.current;
+              if (!from || from === "tasks") { setDragOverSectionId(null); return; }
+              const newOrder = sectionOrder[0] === from
+                ? ["tasks", from]
+                : [from, "tasks"];
+              setSectionOrder(newOrder);
+              localStorage.setItem("hse_dashboard_section_order", JSON.stringify(newOrder));
+              draggedSectionRef.current = null;
+              setDragOverSectionId(null);
+            }}
+            onDragEnd={() => { draggedSectionRef.current = null; setDragOverSectionId(null); }}
+            className={`transition-all duration-200 ${dragOverSectionId === "tasks" ? "ring-2 ring-primary/50 rounded-xl" : ""}`}
+          >
+          <Card className="border-0 shadow-sm h-full">
             <CardHeader className="pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <ListTodo className="w-5 h-5" />
-                    {t("dashboard.taskOverview")}
-                  </CardTitle>
+                  <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing mb-1">
+                    <GripVertical className="w-4 h-4 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+                    <CardTitle className="flex items-center gap-2">
+                      <ListTodo className="w-5 h-5" />
+                      {t("dashboard.taskOverview")}
+                    </CardTitle>
+                  </div>
                   <CardDescription>
                     {taskStatusFilter === "upcoming"
                       ? t("dashboard.upcomingTasks")
@@ -1243,6 +1339,8 @@ export default function Dashboard() {
               </ScrollArea>
             </CardContent>
           </Card>
+          </div>
+          ))}
         </div>
       </>
     </div>
