@@ -287,6 +287,7 @@ export default function Dashboard() {
       "employees",
       "training_records",
       "measures",
+      "risk_assessment_measures",
       "health_checkups",
       "incidents",
       "risk_assessments",

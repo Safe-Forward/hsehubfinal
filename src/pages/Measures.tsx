@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
 import {
   ArrowLeft,
   Plus,
@@ -159,6 +160,9 @@ export default function Measures() {
       fetchEmployees();
     }
   }, [companyId]);
+
+  // Echtzeit-Sync: measures + GBU-Maßnahmen
+  useRealtimeRefetch(["measures", "risk_assessment_measures"], companyId, fetchMeasures);
 
   const fetchMeasures = async () => {
     if (!companyId) return;

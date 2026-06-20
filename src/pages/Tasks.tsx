@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
 import { ArrowLeft, Plus, Search, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -110,6 +111,9 @@ export default function Tasks() {
       fetchData();
     }
   }, [user, loading, navigate, companyId]);
+
+  // Echtzeit-Sync: Aufgaben
+  useRealtimeRefetch(["tasks"], companyId, fetchData);
 
   const fetchEmployeeId = async () => {
     if (!user?.email || !companyId) return;

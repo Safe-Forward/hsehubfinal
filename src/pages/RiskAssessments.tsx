@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
 import {
   ArrowLeft,
   Plus,
@@ -281,6 +282,9 @@ export default function RiskAssessments() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, navigate, companyId]);
+
+  // Echtzeit-Sync: Risikobewertungen + GBU-Maßnahmen
+  useRealtimeRefetch(["risk_assessments", "risk_assessment_measures"], companyId, () => fetchData(false));
 
   useEffect(() => {
     if (!companyId) return;
