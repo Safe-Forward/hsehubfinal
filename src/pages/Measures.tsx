@@ -161,9 +161,6 @@ export default function Measures() {
     }
   }, [companyId]);
 
-  // Echtzeit-Sync: measures + GBU-Maßnahmen
-  useRealtimeRefetch(["measures", "risk_assessment_measures"], companyId, fetchMeasures);
-
   const fetchMeasures = async () => {
     if (!companyId) return;
 
@@ -242,6 +239,9 @@ export default function Measures() {
       });
     }
   };
+
+  // Echtzeit-Sync: measures + GBU-Maßnahmen
+  useRealtimeRefetch(["measures", "risk_assessment_measures"], companyId, fetchMeasures);
 
   const fetchEmployees = async () => {
     if (!companyId) return;

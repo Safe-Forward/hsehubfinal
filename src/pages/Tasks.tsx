@@ -112,9 +112,6 @@ export default function Tasks() {
     }
   }, [user, loading, navigate, companyId]);
 
-  // Echtzeit-Sync: Aufgaben
-  useRealtimeRefetch(["tasks"], companyId, fetchData);
-
   const fetchEmployeeId = async () => {
     if (!user?.email || !companyId) return;
 
@@ -169,6 +166,9 @@ export default function Tasks() {
       setLoadingData(false);
     }
   };
+
+  // Echtzeit-Sync: Aufgaben
+  useRealtimeRefetch(["tasks"], companyId, fetchData);
 
   const onSubmit = async (data: TaskFormData) => {
     if (!companyId) return;

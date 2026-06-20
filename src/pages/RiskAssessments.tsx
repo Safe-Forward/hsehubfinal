@@ -283,9 +283,6 @@ export default function RiskAssessments() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, navigate, companyId]);
 
-  // Echtzeit-Sync: Risikobewertungen + GBU-Maßnahmen
-  useRealtimeRefetch(["risk_assessments", "risk_assessment_measures"], companyId, () => fetchData(false));
-
   useEffect(() => {
     if (!companyId) return;
 
@@ -463,6 +460,9 @@ export default function RiskAssessments() {
       setLoadingData(false);
     }
   };
+
+  // Echtzeit-Sync: Risikobewertungen + GBU-Maßnahmen
+  useRealtimeRefetch(["risk_assessments", "risk_assessment_measures"], companyId, () => fetchData(false));
 
   const handleExportPDF = () => {
     try {

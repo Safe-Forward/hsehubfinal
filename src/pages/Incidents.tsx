@@ -172,9 +172,6 @@ export default function Incidents() {
     }
   }, [companyId]);
 
-  // Echtzeit-Sync: Vorfälle
-  useRealtimeRefetch(["incidents"], companyId, fetchIncidents);
-
   const fetchIncidents = async () => {
     if (!companyId) return;
 
@@ -203,6 +200,9 @@ export default function Incidents() {
       });
     }
   };
+
+  // Echtzeit-Sync: Vorfälle
+  useRealtimeRefetch(["incidents"], companyId, fetchIncidents);
 
   const fetchEmployees = async () => {
     if (!companyId) return;
