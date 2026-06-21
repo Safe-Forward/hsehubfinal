@@ -3517,7 +3517,7 @@ const handleUpdateManager = async (
                   teamMemberForm={teamMemberForm}
                   setTeamMemberForm={setTeamMemberForm}
                   isAddingTeamMember={isAddingTeamMember}
-                  roles={roles}
+                  customRoleNames={customRolesData.map((r) => r.role_name)}
                   handleAddTeamMember={handleAddTeamMember}
                   handleChangeTeamMemberRole={handleChangeTeamMemberRole}
                   fetchTeamMembers={fetchTeamMembers}

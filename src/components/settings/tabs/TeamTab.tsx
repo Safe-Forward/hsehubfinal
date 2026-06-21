@@ -46,7 +46,7 @@ interface TeamTabProps {
   teamMemberForm: TeamMemberForm;
   setTeamMemberForm: React.Dispatch<React.SetStateAction<TeamMemberForm>>;
   isAddingTeamMember: boolean;
-  roles: Record<string, any>;
+  customRoleNames: string[];
   handleAddTeamMember: () => void;
   handleChangeTeamMemberRole: (memberId: string, memberName: string, oldRole: string, newRole: string) => void;
   fetchTeamMembers: () => void;
@@ -57,7 +57,7 @@ export function TeamTab({
   teamMemberForm,
   setTeamMemberForm,
   isAddingTeamMember,
-  roles,
+  customRoleNames,
   handleAddTeamMember,
   handleChangeTeamMemberRole,
   fetchTeamMembers,
@@ -137,11 +137,17 @@ export function TeamTab({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.keys(roles).map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
+                  {customRoleNames.length === 0 ? (
+                    <SelectItem value="_empty" disabled>
+                      Keine Rollen definiert
                     </SelectItem>
-                  ))}
+                  ) : (
+                    customRoleNames.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {role}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -203,11 +209,17 @@ export function TeamTab({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.keys(roles).map((role) => (
-                              <SelectItem key={role} value={role}>
-                                {role}
+                            {customRoleNames.length === 0 ? (
+                              <SelectItem value="_empty" disabled>
+                                Keine Rollen definiert
                               </SelectItem>
-                            ))}
+                            ) : (
+                              customRoleNames.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {role}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       </TableCell>
