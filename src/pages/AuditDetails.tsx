@@ -257,9 +257,9 @@ export default function AuditDetails() {
         console.log(`Filtered to ${filteredSections.length} sections from ${sections.length} total`);
         console.log("Filtered section numbers:", filteredSections.map((s: any) => s.section_number));
       } else {
-        // If NO criteria are selected, show NOTHING (not all sections)
-        filteredSections = [];
-        console.log("No criteria selection found, showing no sections");
+        // Keine Auswahl → alle Sektionen nehmen (sinnvolles Default-Verhalten)
+        filteredSections = sections;
+        console.log("No criteria selection found, using all sections as default");
       }
 
       // Check for existing checklist items to prevent duplicates
