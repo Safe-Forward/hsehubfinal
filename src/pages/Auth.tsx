@@ -124,6 +124,16 @@ export default function Auth() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 <span>{isLoading ? "Signing in..." : "Sign In"}</span>
               </Button>
+              <div className="text-center">
+                <Button
+                  type="button"
+                  variant="link"
+                  className="text-sm text-muted-foreground hover:text-primary p-0 h-auto"
+                  onClick={() => navigate("/forgot-password")}
+                >
+                  Passwort vergessen?
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>

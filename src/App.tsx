@@ -48,6 +48,8 @@ import NotFound from "./pages/NotFound";
 import PublicNotes from "./pages/PublicNotes";
 import Notifications from "./pages/Notifications";
 import AcceptInvitation from "./pages/AcceptInvitation";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import MainLayout from "./components/MainLayout";
@@ -66,6 +68,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/register" element={<CompanyRegistration />} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
