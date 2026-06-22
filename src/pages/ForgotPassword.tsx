@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+// supabase import kept for potential future use
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,12 +26,14 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Nutzt Edge Function → Brevo (nicht Supabase-eigenes Mail-System)
+      const { error } = await supabase.functions.invoke("send-password-reset-email", {
+        body: { email },
       });
 
       if (error) throw error;
 
+      // Immer Success zeigen (verhindert User-Enumeration)
       setSent(true);
     } catch (err: unknown) {
       const e = err as { message?: string } | Error | null;
