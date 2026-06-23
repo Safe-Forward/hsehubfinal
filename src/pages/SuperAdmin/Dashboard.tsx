@@ -260,9 +260,7 @@ export default function SuperAdminDashboard() {
       const tierPrices: Record<string, number> = {
         basic: 149,
         standard: 249,
-        professional: 299,
         premium: 349,
-        enterprise: 499,
       };
 
       const totalRevenue =
@@ -308,7 +306,7 @@ export default function SuperAdminDashboard() {
       
       const { data: companies } = await query;
 
-      const distribution: Record<string, number> = { basic: 0, standard: 0, professional: 0, premium: 0, enterprise: 0 };
+      const distribution: Record<string, number> = { basic: 0, standard: 0, premium: 0 };
       companies?.forEach(c => {
         distribution[c.subscription_tier] = (distribution[c.subscription_tier] || 0) + 1;
       });
@@ -316,9 +314,7 @@ export default function SuperAdminDashboard() {
       setTierDistribution([
         { name: "Basic", value: distribution.basic, color: "#3B82F6" },
         { name: "Standard", value: distribution.standard, color: "#8B5CF6" },
-        { name: "Professional", value: distribution.professional, color: "#14B8A6" },
         { name: "Premium", value: distribution.premium, color: "#F59E0B" },
-        { name: "Enterprise", value: distribution.enterprise, color: "#475569" },
       ]);
     } catch (error) {
       console.error("Error fetching tier distribution:", error);

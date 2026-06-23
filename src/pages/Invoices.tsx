@@ -1342,23 +1342,26 @@ export default function Invoices() {
         },
       });
 
-      const { data, error } = await supabase.functions.invoke("stripe-billing-portal", {
-        body: { return_url: window.location.href },
+      // stripe-billing-portal was never deployed - this always 404'd. The
+      // portal session logic now lives in manage-billing (already secured
+      // with the same admin-only check this action needs).
+      const { data, error } = await supabase.functions.invoke("manage-billing", {
+        body: { action: "create_customer_portal", return_url: window.location.href },
       });
 
-      // Handle Stripe not configured (503) gracefully
-      if (data?.error === "stripe_not_configured") {
+      // Handle Stripe not configured / no customer yet gracefully
+      if (data?.error === "Stripe not configured" || data?.error === "No Stripe customer ID found") {
         setStripeUnavailable(true);
         setBillingLoading(false);
         return;
       }
 
-      if (error || !data?.url) throw new Error(error?.message ?? "Failed to open billing portal");
+      if (error || !data?.url) throw new Error(error?.message ?? data?.error ?? "Failed to open billing portal");
       window.location.href = data.url;
     } catch (err: unknown) {
       // Check if this is a non-2xx response that contains our friendly error
       const msg = err instanceof Error ? err.message : "";
-      if (msg.includes("stripe_not_configured") || msg.includes("503") || msg.includes("non-2xx")) {
+      if (msg.includes("not configured") || msg.includes("No Stripe customer") || msg.includes("503") || msg.includes("non-2xx")) {
         setStripeUnavailable(true);
       } else {
         toast({

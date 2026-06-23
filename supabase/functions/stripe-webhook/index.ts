@@ -11,18 +11,22 @@ declare const Deno: any;
 type PlanTier = "basic" | "standard" | "premium";
 type BillingInterval = "month" | "year";
 
+// These previously pointed at the legacy "Package S/M/L" Stripe products
+// (29.99/79.99/149 EUR/month, not the 149/249/349 EUR actually advertised).
+// Now point at the real "Paket S/M/L HSE Basic/Pro/Enterprise" links - see
+// src/lib/constants.ts STRIPE_PAYMENT_LINKS, which must stay in sync with this.
 const PAYMENT_LINK_URLS: Record<PlanTier, { monthly: string; yearly: string }> = {
   basic: {
-    monthly: Deno.env.get("STRIPE_PAYMENT_LINK_BASIC_MONTHLY_URL") ?? "https://buy.stripe.com/cNi4gy9vEenj9jxgWNeME03",
-    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_BASIC_YEARLY_URL") ?? "https://buy.stripe.com/28E14m6jsdjf2V9fSJeME04",
+    monthly: Deno.env.get("STRIPE_PAYMENT_LINK_BASIC_MONTHLY_URL") ?? "https://buy.stripe.com/eVq6oG37ga732V921TeME0c",
+    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_BASIC_YEARLY_URL") ?? "https://buy.stripe.com/cNi3cu37gbb70N1dKBeME0f",
   },
   standard: {
-    monthly: Deno.env.get("STRIPE_PAYMENT_LINK_STANDARD_MONTHLY_URL") ?? "https://buy.stripe.com/00w00idLU0wt53hdKBeME05",
-    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_STANDARD_YEARLY_URL") ?? "https://buy.stripe.com/14A14m37g2EBeDRdKBeME06",
+    monthly: Deno.env.get("STRIPE_PAYMENT_LINK_STANDARD_MONTHLY_URL") ?? "https://buy.stripe.com/bJe7sKcHQ2EB0N18qheME0d",
+    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_STANDARD_YEARLY_URL") ?? "https://buy.stripe.com/eVqeVc0Z8a738ft7mdeME0g",
   },
   premium: {
-    monthly: Deno.env.get("STRIPE_PAYMENT_LINK_PREMIUM_MONTHLY_URL") ?? "https://buy.stripe.com/9B628q6js2EB9jxaypeME07",
-    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_PREMIUM_YEARLY_URL") ?? "https://buy.stripe.com/cNibJ00Z81AxgLZ0XPeME08",
+    monthly: Deno.env.get("STRIPE_PAYMENT_LINK_PREMIUM_MONTHLY_URL") ?? "https://buy.stripe.com/eVqeVccHQ1Ax9jxbCteME0e",
+    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_PREMIUM_YEARLY_URL") ?? "https://buy.stripe.com/8x2fZg37gbb70N1fSJeME0h",
   },
 };
 

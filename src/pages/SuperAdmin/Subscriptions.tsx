@@ -53,7 +53,7 @@ import {
 interface SubscriptionPackage {
   id: string;
   name: string;
-  tier: "basic" | "standard" | "professional" | "premium" | "enterprise";
+  tier: "basic" | "standard" | "premium";
   price_monthly: number;
   price_yearly: number;
   max_employees: number;
@@ -66,47 +66,31 @@ interface SubscriptionPackage {
 
 const defaultFeatures = {
   basic: [
-    "Dashboard",
-    "Employee Management (5 users)",
-    "Document Management (5GB)",
-    "Basic Reports",
-    "Task Management",
-    "Email Support",
+    "Dashboard (Prüfungen, Termine, Dokumente)",
+    "Mitarbeiterverwaltung (Stammdaten, Dateien)",
+    "Untersuchungsmanagement (G-Untersuchungen, Termine, Planung)",
+    "Dokumentenverwaltung (PDF, Bilder) (5 GB Speicherplatz)",
+    "Standardberichte (CSV-/PDF-Export)",
+    "Aufgabenliste",
+    "Rollen und Berechtigungen (Arzt, Administrator, Unternehmen, Mitarbeiter)",
   ],
   standard: [
-    "Everything in Basic",
-    "Employee Management (10 users)",
-    "Document Management (20GB)",
-    "Risk Assessments",
-    "Incident Reporting",
-    "Advanced Reports",
-    "API Access (Limited)",
-    "Priority Email Support",
-  ],
-  professional: [
-    "Everything in Standard",
-    "Employee Management (25 users)",
-    "Document Management (50GB)",
-    "Training Management",
-    "Audit Management",
-    "Full API Access",
-    "Priority Phone Support",
+    "Alle Funktionen aus den Paketen Basic und Pro",
+    "Meldungen zu Vorfällen und Beinaheunfällen",
+    "Risikobewertungen (GBU-Modul)",
+    "Aktionsverfolgung",
+    "Partnerintegrationen über API-Token (z. B. Labor / Arzt / Dienstleister)",
   ],
   premium: [
-    "Everything in Professional",
-    "Unlimited Users",
-    "Document Management (100GB)",
-    "Custom Workflows",
-    "Phone Support",
-    "Dedicated Account Manager",
-  ],
-  enterprise: [
-    "Everything in Premium",
-    "Unlimited Users",
-    "Unlimited Storage",
-    "Custom Integrations",
-    "SLA-backed Support",
-    "Dedicated Onboarding",
+    "Alle Funktionen von Basic + Pro + Enterprise",
+    "Schulungsmanagement",
+    "Kurse (bis zu 20 Kurse)",
+    "Fortschrittsüberwachung",
+    "Zertifikate (PDF)",
+    "Audit Management",
+    "Mehrere Standorte / Unternehmen verwalten",
+    "Standortübergreifende Berichte",
+    "Prioritäts-Support",
   ],
 };
 
@@ -121,7 +105,7 @@ export default function Subscriptions() {
   const [editingPackage, setEditingPackage] = useState<SubscriptionPackage | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    tier: "basic" as "basic" | "standard" | "professional" | "premium" | "enterprise",
+    tier: "basic" as "basic" | "standard" | "premium",
     price_monthly: 0,
     price_yearly: 0,
     max_employees: 10,
@@ -207,9 +191,7 @@ export default function Subscriptions() {
       const tierPrices: Record<string, number> = {
         basic: 149,
         standard: 249,
-        professional: 299,
         premium: 349,
-        enterprise: 499,
       };
 
       const monthlyRevenue = activeCompanies?.reduce((sum, company) => {
@@ -318,7 +300,7 @@ export default function Subscriptions() {
     });
   };
 
-  const handleTierChange = (tier: "basic" | "standard" | "professional" | "premium" | "enterprise") => {
+  const handleTierChange = (tier: "basic" | "standard" | "premium") => {
     setFormData({
       ...formData,
       tier,
@@ -330,9 +312,7 @@ export default function Subscriptions() {
     const colors: Record<string, string> = {
       basic: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
       standard: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-      professional: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
       premium: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-      enterprise: "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
     };
     return colors[tier] || "";
   };
@@ -500,9 +480,7 @@ export default function Subscriptions() {
                   <SelectContent>
                     <SelectItem value="basic">Basic</SelectItem>
                     <SelectItem value="standard">Standard</SelectItem>
-                    <SelectItem value="professional">Professional</SelectItem>
                     <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

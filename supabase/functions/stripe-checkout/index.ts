@@ -11,10 +11,26 @@ function normalizeInterval(interval: string | null | undefined): "monthly" | "ye
   return interval === "yearly" || interval === "year" ? "yearly" : "monthly";
 }
 
-function getPriceId(tier: string, interval: "monthly" | "yearly"): string {
+// The real price IDs live in subscription_packages (same table stripe-webhook
+// reads to resolve tier from price_id), not in edge function secrets - this
+// keeps both directions of the integration pointed at one source of truth.
+async function getPriceId(
+  supabase: ReturnType<typeof createClient>,
+  tier: string,
+  interval: "monthly" | "yearly"
+): Promise<string> {
+  const { data } = await supabase
+    .from("subscription_packages")
+    .select("stripe_price_id_monthly, stripe_price_id_yearly")
+    .eq("tier", tier)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  const fromDb = interval === "yearly" ? data?.stripe_price_id_yearly : data?.stripe_price_id_monthly;
+  if (fromDb) return fromDb;
+
   const upperTier = tier.toUpperCase();
   const intervalSuffix = interval === "yearly" ? "YEARLY" : "MONTHLY";
-
   const intervalSpecific = Deno.env.get(`STRIPE_PRICE_${upperTier}_${intervalSuffix}`) ?? "";
   const legacy = Deno.env.get(`STRIPE_PRICE_${upperTier}`) ?? "";
 
@@ -54,7 +70,7 @@ serve(async (req) => {
     const successUrl: string = body.success_url ?? `${siteUrl}/invoices?checkout=success`;
     const cancelUrl: string = body.cancel_url ?? `${siteUrl}/invoices?checkout=cancelled`;
 
-    const priceId = getPriceId(tier, interval);
+    const priceId = await getPriceId(supabase, tier, interval);
     if (!priceId) {
       return new Response(
         JSON.stringify({
@@ -68,16 +84,37 @@ serve(async (req) => {
     }
 
     // 3. Load company
-    const { data: profile } = await supabase
-      .from("user_company_roles")
-      .select("company_id")
+    // user_company_roles does not exist - this always failed before. The
+    // correct table (matching manage-billing's resolveUserCompanyId) is
+    // user_roles, which can hold multiple rows per user across companies.
+    const { data: roleRows } = await supabase
+      .from("user_roles")
+      .select("company_id, created_at")
       .eq("user_id", user.id)
-      .single();
+      .order("created_at", { ascending: true })
+      .limit(10);
 
-    const companyId = profile?.company_id;
+    const companyId = (roleRows ?? []).find((row) => row?.company_id)?.company_id ?? null;
     if (!companyId) {
       return new Response(JSON.stringify({ error: "No company found" }), {
         status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Starting a paid subscription is an admin action, same as manage-billing.
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("company_id", companyId)
+      .in("role", ["company_admin", "super_admin"])
+      .limit(1)
+      .maybeSingle();
+
+    if (!adminRole) {
+      return new Response(JSON.stringify({ error: "Forbidden: requires company admin" }), {
+        status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

@@ -253,6 +253,32 @@ export default function CompanyRegistration() {
         );
       }
 
+      // selectedAddOns was tracked in the UI but never sent anywhere before -
+      // the customer's add-on choices just vanished. Persist them now, while
+      // the session is still authenticated (signOut happens right after).
+      const newCompanyId = (registrationResult as any).company_id;
+      if (newCompanyId && selectedAddOns.length > 0) {
+        const { data: addonDefs } = await supabase
+          .from("addon_definitions")
+          .select("id, code, price_monthly, price_one_time, billing_type")
+          .in("code", selectedAddOns);
+
+        if (addonDefs && addonDefs.length > 0) {
+          await supabase.from("company_addons").insert(
+            addonDefs.map((addon) => ({
+              company_id: newCompanyId,
+              addon_id: addon.id,
+              status: "active",
+              quantity: 1,
+              price_paid: addon.billing_type === "one_time" ? addon.price_one_time : addon.price_monthly,
+              billing_cycle: addon.billing_type === "one_time" ? null : "monthly",
+              start_date: new Date().toISOString(),
+              created_by: sessionData.user.id,
+            }))
+          );
+        }
+      }
+
       toast({
         title: "Erfolgreich!",
         description: "Ihr Unternehmen wurde erstellt! Bitte warten Sie, während wir alles einrichten...",

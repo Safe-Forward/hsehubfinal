@@ -43,7 +43,7 @@ interface Company {
   name: string;
   email: string;
   phone: string | null;
-  subscription_tier: "basic" | "standard" | "professional" | "premium" | "enterprise";
+  subscription_tier: "basic" | "standard" | "premium";
   subscription_status: "active" | "inactive" | "cancelled" | "trial";
   max_employees: number;
   created_at: string;
@@ -370,9 +370,7 @@ export default function SuperAdminCompanies() {
                   <SelectContent>
                     <SelectItem value="basic">Basic</SelectItem>
                     <SelectItem value="standard">Standard</SelectItem>
-                    <SelectItem value="professional">Professional</SelectItem>
                     <SelectItem value="premium">Premium</SelectItem>
-                    <SelectItem value="enterprise">Enterprise</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
