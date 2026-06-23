@@ -225,6 +225,11 @@ export default function Documents() {
         file_size: uploadFile.size,
         mime_type: uploadFile.type,
         is_public: uploadIsPublic,
+        // Ohne dies bleibt allowed_roles NULL, und die RLS-Regel behandelt
+        // "allowed_roles IS NULL" als "für alle sichtbar" — die Checkbox oben
+        // hätte dann nie eine einschränkende Wirkung. Leeres Array = nur
+        // Ersteller + Admins sehen es (Rollen-Auswahl ist noch kein UI-Feature).
+        allowed_roles: uploadIsPublic ? null : [],
         expiry_date: uploadExpiryDate || null,
         uploaded_by: user.id,
       };

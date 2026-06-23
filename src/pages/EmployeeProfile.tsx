@@ -2691,11 +2691,18 @@ p_sender_name: senderName,
 
       if (uploadError) throw uploadError;
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("documents").getPublicUrl(filePath);
+      // Signed URL statt public URL — der "documents"-Bucket ist privat, eine
+      // getPublicUrl()-Adresse würde dort nie funktionieren (404/403). Gleiches
+      // Muster wie bei Note-Attachments oben (1 Jahr Gültigkeit).
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from("documents")
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365);
 
-      await handleUpdateCheckup(checkupId, { certificate_url: publicUrl });
+      if (signedUrlError || !signedUrlData) {
+        throw new Error("Failed to get certificate URL");
+      }
+
+      await handleUpdateCheckup(checkupId, { certificate_url: signedUrlData.signedUrl });
 
       toast.success("Certificate uploaded successfully");
     } catch (error: any) {
