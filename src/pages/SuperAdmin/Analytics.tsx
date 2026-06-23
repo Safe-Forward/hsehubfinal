@@ -376,7 +376,9 @@ export default function Analytics() {
       const tierPrices: Record<string, number> = {
         basic: 149,
         standard: 249,
+        professional: 299,
         premium: 349,
+        enterprise: 499,
       };
 
       const totalMRR =
@@ -683,11 +685,15 @@ export default function Analytics() {
                   <TableCell>
                     <Badge
                       className={
-                        company.subscription_tier === "premium"
-                          ? "bg-amber-100 text-amber-800"
-                          : company.subscription_tier === "standard"
-                            ? "bg-purple-100 text-purple-800"
-                            : "bg-blue-100 text-blue-800"
+                        company.subscription_tier === "enterprise"
+                          ? "bg-slate-200 text-slate-800"
+                          : company.subscription_tier === "premium"
+                            ? "bg-amber-100 text-amber-800"
+                            : company.subscription_tier === "professional"
+                              ? "bg-teal-100 text-teal-800"
+                              : company.subscription_tier === "standard"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-blue-100 text-blue-800"
                       }
                     >
                       {company.subscription_tier}

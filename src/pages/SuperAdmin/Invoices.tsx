@@ -297,6 +297,9 @@ export default function SuperAdminInvoices() {
       if (selected.subscription_tier === "standard") {
         price = 249.00;
         tierName = "Standard";
+      } else if (selected.subscription_tier === "professional") {
+        price = 299.00;
+        tierName = "Professional";
       } else if (selected.subscription_tier === "premium") {
         price = 349.00;
         tierName = "Premium";

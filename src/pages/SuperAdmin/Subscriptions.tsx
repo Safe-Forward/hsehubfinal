@@ -53,7 +53,7 @@ import {
 interface SubscriptionPackage {
   id: string;
   name: string;
-  tier: "basic" | "standard" | "premium";
+  tier: "basic" | "standard" | "professional" | "premium" | "enterprise";
   price_monthly: number;
   price_yearly: number;
   max_employees: number;
@@ -83,16 +83,30 @@ const defaultFeatures = {
     "API Access (Limited)",
     "Priority Email Support",
   ],
-  premium: [
+  professional: [
     "Everything in Standard",
-    "Unlimited Users",
-    "Document Management (100GB)",
+    "Employee Management (25 users)",
+    "Document Management (50GB)",
     "Training Management",
     "Audit Management",
-    "Custom Workflows",
     "Full API Access",
+    "Priority Phone Support",
+  ],
+  premium: [
+    "Everything in Professional",
+    "Unlimited Users",
+    "Document Management (100GB)",
+    "Custom Workflows",
     "Phone Support",
     "Dedicated Account Manager",
+  ],
+  enterprise: [
+    "Everything in Premium",
+    "Unlimited Users",
+    "Unlimited Storage",
+    "Custom Integrations",
+    "SLA-backed Support",
+    "Dedicated Onboarding",
   ],
 };
 
@@ -107,7 +121,7 @@ export default function Subscriptions() {
   const [editingPackage, setEditingPackage] = useState<SubscriptionPackage | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    tier: "basic" as "basic" | "standard" | "premium",
+    tier: "basic" as "basic" | "standard" | "professional" | "premium" | "enterprise",
     price_monthly: 0,
     price_yearly: 0,
     max_employees: 10,
@@ -193,7 +207,9 @@ export default function Subscriptions() {
       const tierPrices: Record<string, number> = {
         basic: 149,
         standard: 249,
+        professional: 299,
         premium: 349,
+        enterprise: 499,
       };
 
       const monthlyRevenue = activeCompanies?.reduce((sum, company) => {
@@ -302,7 +318,7 @@ export default function Subscriptions() {
     });
   };
 
-  const handleTierChange = (tier: "basic" | "standard" | "premium") => {
+  const handleTierChange = (tier: "basic" | "standard" | "professional" | "premium" | "enterprise") => {
     setFormData({
       ...formData,
       tier,
@@ -314,7 +330,9 @@ export default function Subscriptions() {
     const colors: Record<string, string> = {
       basic: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
       standard: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      professional: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
       premium: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+      enterprise: "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200",
     };
     return colors[tier] || "";
   };
@@ -482,7 +500,9 @@ export default function Subscriptions() {
                   <SelectContent>
                     <SelectItem value="basic">Basic</SelectItem>
                     <SelectItem value="standard">Standard</SelectItem>
+                    <SelectItem value="professional">Professional</SelectItem>
                     <SelectItem value="premium">Premium</SelectItem>
+                    <SelectItem value="enterprise">Enterprise</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

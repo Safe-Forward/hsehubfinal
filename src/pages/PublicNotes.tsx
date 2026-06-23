@@ -27,101 +27,23 @@ export default function PublicNotes() {
       }
 
       try {
-        // Validate token
-        const { data: tokenData, error: tokenError } = await supabase
-          .from("member_invitation_tokens")
-          .select("team_member_id, expires_at, used_at")
-          .eq("token", token)
-          .single();
-
-        if (tokenError || !tokenData) {
-          setError("Invalid or expired link");
-          setLoading(false);
-          return;
-        }
-
-        // Check if token is expired
-        if (new Date(tokenData.expires_at) < new Date()) {
-          setError("This link has expired. Please request a new invitation.");
-          setLoading(false);
-          return;
-        }
-
-        // Get member info
-        const { data: member, error: memberError } = await supabase
-          .from("team_members")
-          .select("first_name, last_name")
-          .eq("id", tokenData.team_member_id)
-          .single();
-
-        if (memberError || !member) {
-          setError("Could not find member information");
-          setLoading(false);
-          return;
-        }
-
-        const fullName = `${member.first_name} ${member.last_name}`;
-        setMemberName(fullName);
-
-        // Fetch notes where member is @mentioned
-        // This requires parsing employee_profile.notes field
-        const { data: employees, error: employeesError } = await supabase
-          .from("employee_profile")
-          .select("notes, employee:team_members(first_name, last_name)")
-          .not("notes", "is", null);
-
-        if (employeesError) {
-          console.error("Error fetching notes:", employeesError);
-          setNotes([]);
-          setLoading(false);
-          return;
-        }
-
-        // Filter notes containing @mention of this member
-        const mentionedNotes: Note[] = [];
-        
-        employees?.forEach((emp: any) => {
-          try {
-            const parsedNotes = JSON.parse(emp.notes);
-            if (Array.isArray(parsedNotes)) {
-              parsedNotes.forEach((note: any) => {
-                if (
-                  note.content &&
-                  (note.content.includes(`@${fullName}`) ||
-                    note.content.includes(`@${member.first_name}`) ||
-                    note.content.includes(`@${member.last_name}`))
-                ) {
-                  mentionedNotes.push({
-                    content: note.content,
-                    timestamp: note.timestamp || note.date || new Date().toISOString(),
-                    employee: emp.employee
-                      ? `${emp.employee.first_name} ${emp.employee.last_name}`
-                      : "Unknown",
-                  });
-                }
-              });
-            }
-          } catch (e) {
-            console.error("Error parsing notes:", e);
-          }
+        // The actual lookup runs server-side (service role) so it can be
+        // scoped to the token holder's company - an anonymous visitor's
+        // Supabase session has no auth.uid(), so RLS would otherwise block
+        // every row anyway.
+        const { data, error } = await supabase.functions.invoke("get-public-notes", {
+          body: { token },
         });
 
-        // Sort by timestamp (newest first)
-        mentionedNotes.sort(
-          (a, b) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-
-        setNotes(mentionedNotes);
-        setLoading(false);
-
-        // Mark token as used (first time)
-        if (!tokenData.used_at) {
-          await supabase
-            .from("member_invitation_tokens")
-            .update({ used_at: new Date().toISOString() })
-            .eq("token", token);
+        if (error || data?.error) {
+          setError(data?.error || "Invalid or expired link");
+          setLoading(false);
+          return;
         }
+
+        setMemberName(data.memberName || "");
+        setNotes(data.notes || []);
+        setLoading(false);
       } catch (err) {
         console.error("Error loading notes:", err);
         setError("An error occurred while loading your notes");

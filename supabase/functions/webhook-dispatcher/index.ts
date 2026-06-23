@@ -14,15 +14,27 @@ serve(async (req) => {
   }
 
   try {
+    // Initialize Supabase Client with Service Role to bypass RLS and read external_systems
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
     // Auth check for the edge function itself (prevent public access).
     // Previously this only checked that the header was present, so anyone who
     // found the function URL could POST an arbitrary company_id/payload and
     // make it fire real webhooks to that company's external systems. The DB
-    // trigger sends a dedicated shared secret (WEBHOOK_DISPATCH_SECRET), not
-    // the anon/service key, so we compare against that exact value here.
+    // trigger (dispatch_webhook_event) sends a dedicated shared secret read
+    // from system_config.webhook_dispatch_secret, not the anon/service key,
+    // so we compare against that same DB-stored value here.
     const authHeader = req.headers.get("Authorization");
-    const expectedSecret = Deno.env.get("WEBHOOK_DISPATCH_SECRET");
-    if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+    const { data: secretRow } = await supabaseAdmin
+      .from("system_config")
+      .select("value")
+      .eq("key", "webhook_dispatch_secret")
+      .maybeSingle();
+
+    if (!secretRow?.value || authHeader !== `Bearer ${secretRow.value}`) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
@@ -32,12 +44,6 @@ serve(async (req) => {
     if (!company_id) {
       return new Response(JSON.stringify({ error: "Missing company_id in payload" }), { status: 400, headers: corsHeaders });
     }
-
-    // Initialize Supabase Client with Service Role to bypass RLS and read external_systems
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
 
     // Fetch active webhooks for this company
     const { data: systems, error: systemsError } = await supabaseAdmin
