@@ -95,6 +95,24 @@ export default function Measures() {
   const { hasDetailedPermission } = usePermissions();
   const canManageMeasures = hasDetailedPermission("measures", "create_edit");
   const canDeleteMeasures = hasDetailedPermission("measures", "delete");
+  const [departmentManagers, setDepartmentManagers] = useState<any[]>([]);
+
+  // Abteilung einer Maßnahme über die verknüpfte GBU/Vorfall/Audit auflösen —
+  // Maßnahmen selbst haben keine eigene department_id.
+  const getMeasureDepartmentId = (measure: any): string | null =>
+    measure?.risk_assessment?.department_id ||
+    measure?.incident?.department_id ||
+    measure?.audit?.department_id ||
+    null;
+
+  // Firmenweite Berechtigung (Admin/Sicherheitsbeauftragter) ODER disziplinarischer
+  // Leiter der Abteilung, der diese Maßnahme zugeordnet ist.
+  const canManageMeasure = (measure: any): boolean => {
+    if (canManageMeasures) return true;
+    const deptId = getMeasureDepartmentId(measure);
+    if (!deptId) return false;
+    return departmentManagers.some((dm) => dm.department_id === deptId && dm.manager_user_id === user?.id);
+  };
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -162,6 +180,14 @@ export default function Measures() {
     if (companyId) {
       fetchMeasures();
       fetchEmployees();
+      (async () => {
+        const { data } = await (supabase as any)
+          .from("department_managers")
+          .select("department_id, manager_user_id")
+          .eq("company_id", companyId)
+          .eq("manager_type", "disciplinary");
+        setDepartmentManagers(data || []);
+      })();
     }
   }, [companyId]);
 
@@ -177,9 +203,9 @@ export default function Measures() {
           `
           *,
           responsible_person:employees!responsible_person_id(full_name),
-          incident:incidents!incident_id(title),
-          risk_assessment:risk_assessments!risk_assessment_id(title),
-          audit:audits!audit_id(title)
+          incident:incidents!incident_id(title, department_id),
+          risk_assessment:risk_assessments!risk_assessment_id(title, department_id),
+          audit:audits!audit_id(title, department_id)
         `
         )
         .eq("company_id", companyId)
@@ -192,7 +218,7 @@ export default function Measures() {
         .from("risk_assessment_measures" as any)
         .select(`
           *,
-          risk_assessment:risk_assessments!risk_assessment_id(id, title)
+          risk_assessment:risk_assessments!risk_assessment_id(id, title, department_id)
         `)
         .eq("company_id", companyId)
         .order("created_at", { ascending: false });
@@ -897,7 +923,7 @@ export default function Measures() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {canManageMeasures && (
+                          {canManageMeasure(measure) && (
                           <Button
                             variant="ghost"
                             size="sm"
