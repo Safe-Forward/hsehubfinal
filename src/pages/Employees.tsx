@@ -98,7 +98,7 @@ interface Employee {
 export default function Employees() {
   const { companyId, userRole, loading, user } = useAuth();
   const { t } = useLanguage();
-  const { hasDetailedPermission } = usePermissions();
+  const { hasDetailedPermission, loading: permissionsLoading } = usePermissions();
   const { logAction } = useAuditLog();
   const navigate = useNavigate();
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -172,13 +172,13 @@ export default function Employees() {
       return;
     }
 
-    if (companyId) {
+    if (companyId && !permissionsLoading) {
       fetchEmployees();
       fetchDepartments();
       fetchJobRoles();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, loading, user, navigate]);
+  }, [companyId, loading, user, navigate, permissionsLoading]);
 
   const fetchDepartments = async () => {
     if (!companyId) return;
@@ -206,7 +206,8 @@ export default function Employees() {
 
   const fetchEmployees = async () => {
     if (!companyId) return;
-    const { data, error } = await supabase
+
+    let query = supabase
       .from("employees")
       .select(
         `
@@ -218,6 +219,26 @@ export default function Employees() {
       )
       .eq("company_id", companyId)
       .order("created_at", { ascending: false });
+
+    // Rollen mit view_own_department (statt view_all) sehen nur ihre eigene Abteilung,
+    // z.B. Abteilungsleiter. Ohne eigenes Mitarbeiterprofil/Abteilung gibt es keine Treffer.
+    if (!hasDetailedPermission("employees", "view_all") && hasDetailedPermission("employees", "view_own_department")) {
+      const { data: ownEmployee } = await supabase
+        .from("employees")
+        .select("department_id")
+        .eq("company_id", companyId)
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (ownEmployee?.department_id) {
+        query = query.eq("department_id", ownEmployee.department_id);
+      } else {
+        setEmployees([]);
+        return;
+      }
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       toast.error(t("employees.loadError"));
@@ -231,7 +252,7 @@ export default function Employees() {
     e.preventDefault();
 
     // Check permission before allowing create
-    if (!hasDetailedPermission('employees', 'create')) {
+    if (!hasDetailedPermission('employees', 'manage')) {
       toast.error(t("employees.noCreatePermission") || "You do not have permission to create employees");
       return;
     }
@@ -1276,7 +1297,7 @@ export default function Employees() {
                     {isDeleting ? "Deleting..." : `Delete (${selectedEmployees.size})`}
                   </Button>
                 )}
-                {hasDetailedPermission('employees', 'create') && (
+                {hasDetailedPermission('employees', 'manage') && (
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button>

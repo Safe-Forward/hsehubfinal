@@ -171,7 +171,7 @@ export default function EmployeeProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { companyId, user } = useAuth();
-  const { hasPermission, hasDetailedPermission } = usePermissions();
+  const { hasPermission, hasDetailedPermission, loading: permissionsLoading } = usePermissions();
   const { logAction } = useAuditLog();
 
   const [employee, setEmployee] = useState<EmployeeData | null>(null);
@@ -343,7 +343,7 @@ export default function EmployeeProfile() {
   const { t } = useLanguage();
 
   useEffect(() => {
-    if (id && companyId) {
+    if (id && companyId && !permissionsLoading) {
       fetchEmployeeData();
       fetchDropdownData();
       fetchHealthCheckups();
@@ -361,7 +361,7 @@ fetchProfileFields();
       fetchNotifPrefs();
       fetchEmployeeCourses();
     }
-  }, [id, companyId]);
+  }, [id, companyId, permissionsLoading]);
 
   const fetchEmployeeData = async () => {
     try {
@@ -379,6 +379,23 @@ fetchProfileFields();
         .single();
 
       if (error) throw error;
+
+      // Rollen mit view_own_department (statt view_all) dürfen nur Profile der
+      // eigenen Abteilung öffnen — verhindert Umgehung der Listen-Filterung per Direkt-URL.
+      if (!hasDetailedPermission("employees", "view_all") && hasDetailedPermission("employees", "view_own_department")) {
+        const { data: ownEmployee } = await supabase
+          .from("employees")
+          .select("department_id")
+          .eq("company_id", companyId)
+          .eq("user_id", user?.id)
+          .maybeSingle();
+
+        if (!ownEmployee?.department_id || ownEmployee.department_id !== (data as any)?.department_id) {
+          toast.error("Kein Zugriff auf dieses Mitarbeiterprofil");
+          navigate("/employees");
+          return;
+        }
+      }
 
       setEmployee(data as any);
       setFormData(data as any);
