@@ -1,3 +1,5 @@
+import { Suspense, lazy } from "react";
+import { Loader2 } from "lucide-react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,44 +11,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import Employees from "./pages/Employees";
-import EmployeeProfile from "./pages/EmployeeProfile";
-import ActivityGroups from "./pages/ActivityGroups";
-import RiskAssessments from "./pages/RiskAssessments";
-import Measures from "./pages/Measures";
-import Audits from "./pages/Audits";
-import AuditDetails from "./pages/AuditDetails";
-import Tasks from "./pages/Tasks";
-import Training from "./pages/Training";
-import LessonEditor from "./pages/LessonEditor";
-import LessonViewer from "./pages/LessonViewer";
-import Incidents from "./pages/Incidents";
-import Investigations from "./pages/Investigations";
-import Settings from "./pages/Settings";
-import Profile from "./pages/Profile";
-import Invoices from "./pages/Invoices";
-import SetupCompany from "./pages/SetupCompany";
-import Messages from "./pages/Messages";
-import Documents from "./pages/Documents";
-import Reports from "./pages/Reports";
 import CompanyRegistration from "./pages/CompanyRegistration";
-import SuperAdminDashboard from "./pages/SuperAdmin/Dashboard";
-import SuperAdminCompanies from "./pages/SuperAdmin/Companies";
-import SuperAdminSubscriptions from "./pages/SuperAdmin/Subscriptions";
-import SuperAdminInvoices from "./pages/SuperAdmin/Invoices";
-import SuperAdminAddons from "./pages/SuperAdmin/Addons";
-import SuperAdminAnalytics from "./pages/SuperAdmin/Analytics";
-import SuperAdminPinVerification from "./pages/SuperAdmin/PinVerification";
-import SuperAdminCompanyDetail from "./pages/SuperAdmin/CompanyDetail";
-import SuperAdminUsers from "./pages/SuperAdmin/Users";
-import SuperAdminSystemLogs from "./pages/SuperAdmin/SystemLogs";
-import SuperAdminSecurity from "./pages/SuperAdmin/Security";
-import SuperAdminAdminActions from "./pages/SuperAdmin/AdminActions";
-import SuperAdminSupport from "./pages/SuperAdmin/Support";
 import AuthDebug from "./pages/AuthDebug";
 import NotFound from "./pages/NotFound";
-import PublicNotes from "./pages/PublicNotes";
-import Notifications from "./pages/Notifications";
 import AcceptInvitation from "./pages/AcceptInvitation";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -54,6 +21,51 @@ import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import MainLayout from "./components/MainLayout";
 import SuperAdminRoute from "./components/SuperAdminRoute";
+
+// Lazily loaded routes: less-frequently visited / heavier pages.
+// Keeping these out of the main bundle shrinks the critical first-load path.
+const Employees = lazy(() => import("./pages/Employees"));
+const EmployeeProfile = lazy(() => import("./pages/EmployeeProfile"));
+const ActivityGroups = lazy(() => import("./pages/ActivityGroups"));
+const RiskAssessments = lazy(() => import("./pages/RiskAssessments"));
+const Measures = lazy(() => import("./pages/Measures"));
+const Audits = lazy(() => import("./pages/Audits"));
+const AuditDetails = lazy(() => import("./pages/AuditDetails"));
+const Tasks = lazy(() => import("./pages/Tasks"));
+const Training = lazy(() => import("./pages/Training"));
+const LessonEditor = lazy(() => import("./pages/LessonEditor"));
+const LessonViewer = lazy(() => import("./pages/LessonViewer"));
+const Incidents = lazy(() => import("./pages/Incidents"));
+const Investigations = lazy(() => import("./pages/Investigations"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Invoices = lazy(() => import("./pages/Invoices"));
+const SetupCompany = lazy(() => import("./pages/SetupCompany"));
+const Messages = lazy(() => import("./pages/Messages"));
+const Documents = lazy(() => import("./pages/Documents"));
+const Reports = lazy(() => import("./pages/Reports"));
+const PublicNotes = lazy(() => import("./pages/PublicNotes"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+
+const SuperAdminDashboard = lazy(() => import("./pages/SuperAdmin/Dashboard"));
+const SuperAdminCompanies = lazy(() => import("./pages/SuperAdmin/Companies"));
+const SuperAdminSubscriptions = lazy(() => import("./pages/SuperAdmin/Subscriptions"));
+const SuperAdminInvoices = lazy(() => import("./pages/SuperAdmin/Invoices"));
+const SuperAdminAddons = lazy(() => import("./pages/SuperAdmin/Addons"));
+const SuperAdminAnalytics = lazy(() => import("./pages/SuperAdmin/Analytics"));
+const SuperAdminPinVerification = lazy(() => import("./pages/SuperAdmin/PinVerification"));
+const SuperAdminCompanyDetail = lazy(() => import("./pages/SuperAdmin/CompanyDetail"));
+const SuperAdminUsers = lazy(() => import("./pages/SuperAdmin/Users"));
+const SuperAdminSystemLogs = lazy(() => import("./pages/SuperAdmin/SystemLogs"));
+const SuperAdminSecurity = lazy(() => import("./pages/SuperAdmin/Security"));
+const SuperAdminAdminActions = lazy(() => import("./pages/SuperAdmin/AdminActions"));
+const SuperAdminSupport = lazy(() => import("./pages/SuperAdmin/Support"));
+
+const PageLoadingFallback = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <Loader2 className="w-8 h-8 animate-spin" />
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -65,6 +77,7 @@ const App = () => (
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
+            <Suspense fallback={<PageLoadingFallback />}>
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -446,6 +459,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </Suspense>
           </AuthProvider>
         </LanguageProvider>
       </BrowserRouter>
