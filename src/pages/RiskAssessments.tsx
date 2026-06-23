@@ -218,6 +218,8 @@ export default function RiskAssessments() {
   const [rejectionComment, setRejectionComment] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [departmentManagers, setDepartmentManagers] = useState<any[]>([]);
+  const [approvalWorkflows, setApprovalWorkflows] = useState<any[]>([]);
+  const [myEmployeeId, setMyEmployeeId] = useState<string | null>(null);
   const [teamMembersMap, setTeamMembersMap] = useState<Record<string, string>>({});
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
   const [loadingData, setLoadingData] = useState(false);
@@ -336,6 +338,8 @@ export default function RiskAssessments() {
         riskCategoriesRes,
         measureBuildingBlocksRes,
         deptManagersRes,
+        approvalWorkflowsRes,
+        myEmployeeRes,
       ] = await Promise.all([
         supabase
           .from("risk_assessments")
@@ -379,7 +383,16 @@ export default function RiskAssessments() {
           .select("department_id, manager_user_id")
           .eq("company_id", companyId)
           .eq("manager_type", "disciplinary"),
-
+        (supabase as any)
+          .from("approval_workflows")
+          .select("department_id, approver_id")
+          .eq("company_id", companyId),
+        supabase
+          .from("employees")
+          .select("id")
+          .eq("company_id", companyId)
+          .eq("user_id", user?.id)
+          .maybeSingle(),
       ]);
 
       if (risksRes.error) throw risksRes.error;
@@ -410,6 +423,8 @@ export default function RiskAssessments() {
       setDepartments(departmentsRes.data || []);
       setExposureGroups(exposureGroupsRes.data || []);
       setDepartmentManagers(deptManagersRes?.data || []);
+      setApprovalWorkflows(approvalWorkflowsRes?.data || []);
+      setMyEmployeeId(myEmployeeRes?.data?.id || null);
 
       // Build user_id → full name map for approver display
       const membersMap: Record<string, string> = {};
@@ -909,6 +924,14 @@ export default function RiskAssessments() {
 
   const canApproveRisk = (risk: any): boolean => {
     const deptId = risk?.department_id;
+
+    // Explizit konfigurierter Genehmigungsworkflow (Settings → Konfiguration →
+    // Genehmigungsprozess) übersteuert die Abteilungsleiter-Zuweisung, falls gesetzt.
+    if (deptId && myEmployeeId) {
+      const workflow = approvalWorkflows.find((w) => w.department_id === deptId);
+      if (workflow) return workflow.approver_id === myEmployeeId;
+    }
+
     // No department on GBU → only admin / Rollen mit approve-Berechtigung
     if (!deptId) return isAdmin || canApprovePermission;
     const deptManagers = departmentManagers.filter(dm => dm.department_id === deptId);
