@@ -119,7 +119,7 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
         supabase.from("locations").select("*").eq("company_id", companyId),
         supabase.from("departments").select("*").eq("company_id", companyId),
         supabase.from("exposure_groups").select("*").eq("company_id", companyId),
-        supabase.from("employees").select("id, full_name").eq("company_id", companyId).order("full_name"),
+        supabase.from("employees").select("id, full_name, user_id").eq("company_id", companyId).order("full_name"),
       ]);
 
       setLocations(locs.data || []);
@@ -664,11 +664,18 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                               <SelectValue placeholder={t("settings.selectApprover")} />
                             </SelectTrigger>
                             <SelectContent>
-                              {employees.map((emp) => (
-                                <SelectItem key={emp.id} value={emp.id}>
-                                  {emp.full_name}
-                                </SelectItem>
-                              ))}
+                              {teamMembers
+                                .map((tm) => ({
+                                  tm,
+                                  employeeId: employees.find((e: any) => e.user_id === tm.user_id)?.id,
+                                }))
+                                .filter((x) => x.employeeId)
+                                .map(({ tm, employeeId }) => (
+                                  <SelectItem key={employeeId} value={employeeId}>
+                                    {tm.first_name} {tm.last_name}
+                                    <span className="text-muted-foreground ml-1 text-xs">· {tm.role}</span>
+                                  </SelectItem>
+                                ))}
                             </SelectContent>
                           </Select>
                         </TableCell>
