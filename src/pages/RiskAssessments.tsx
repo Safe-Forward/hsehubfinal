@@ -921,6 +921,7 @@ export default function RiskAssessments() {
   const canManageRisk = hasDetailedPermission("risk_assessments", "create_edit");
   const canDeleteRisk = hasDetailedPermission("risk_assessments", "delete");
   const canApprovePermission = hasDetailedPermission("risk_assessments", "approve");
+  const canManageMeasures = hasDetailedPermission("measures", "create_edit");
 
   const canApproveRisk = (risk: any): boolean => {
     const deptId = risk?.department_id;
@@ -938,6 +939,17 @@ export default function RiskAssessments() {
     // No manager assigned for this department → fallback to admin
     if (deptManagers.length === 0) return isAdmin || canApprovePermission;
     // Check if current user is the department manager
+    return !!user?.id && deptManagers.some(dm => dm.manager_user_id === user?.id);
+  };
+
+  // Maßnahme für eine GBU erstellen: firmenweite Berechtigung (Admin/Sicherheitsbeauftragter)
+  // ODER man ist der disziplinarische Leiter der Abteilung dieser GBU — nicht einfach
+  // "jede Abteilungsleiter-Rolle darf überall Maßnahmen anlegen".
+  const canCreateMeasureForRisk = (risk: any): boolean => {
+    if (isAdmin || canManageMeasures) return true;
+    const deptId = risk?.department_id;
+    if (!deptId) return false;
+    const deptManagers = departmentManagers.filter(dm => dm.department_id === deptId);
     return !!user?.id && deptManagers.some(dm => dm.manager_user_id === user?.id);
   };
 
@@ -2821,7 +2833,7 @@ export default function RiskAssessments() {
                   >
                     Schließen
                   </Button>
-                  {selectedRisk && hasDetailedPermission("measures", "create_edit") && (
+                  {selectedRisk && canCreateMeasureForRisk(selectedRisk) && (
                     <Button
                       variant="outline"
                       className="text-blue-600 border-blue-300 hover:bg-blue-50"

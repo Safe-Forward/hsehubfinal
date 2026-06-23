@@ -119,6 +119,16 @@ export default function Incidents() {
   const { hasDetailedPermission } = usePermissions();
   const canManageIncidents = hasDetailedPermission("incidents", "create_edit");
   const canDeleteIncidents = hasDetailedPermission("incidents", "delete");
+  const canManageMeasures = hasDetailedPermission("measures", "create_edit");
+
+  // Firmenweite Berechtigung (Admin/Sicherheitsbeauftragter) ODER man ist der
+  // disziplinarische Leiter der Abteilung dieses Vorfalls.
+  const canCreateMeasureForIncident = (incident: any): boolean => {
+    if (canManageMeasures) return true;
+    const deptId = incident?.department_id;
+    if (!deptId) return false;
+    return departmentManagers.some((dm) => dm.department_id === deptId && dm.manager_user_id === user?.id);
+  };
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -175,6 +185,7 @@ export default function Incidents() {
       fetchIncidents();
       fetchEmployees();
       fetchDepartments();
+      fetchDepartmentManagers();
     }
   }, [companyId]);
 
@@ -218,6 +229,19 @@ export default function Incidents() {
 
   // Echtzeit-Sync: Vorfälle
   useRealtimeRefetch(["incidents"], companyId, fetchIncidents);
+
+  // Für Abteilungs-Scoping bei "Korrekturmaßnahme erstellen": disziplinarische
+  // Abteilungsleiter dürfen das auch ohne firmenweite measures-Berechtigung.
+  const [departmentManagers, setDepartmentManagers] = useState<any[]>([]);
+  const fetchDepartmentManagers = async () => {
+    if (!companyId) return;
+    const { data } = await (supabase as any)
+      .from("department_managers")
+      .select("department_id, manager_user_id")
+      .eq("company_id", companyId)
+      .eq("manager_type", "disciplinary");
+    setDepartmentManagers(data || []);
+  };
 
   const fetchEmployees = async () => {
     if (!companyId) return;
@@ -1355,7 +1379,7 @@ export default function Incidents() {
                         <FileText className="w-4 h-4 mr-2" />
                         PDF exportieren
                       </Button>
-                      {hasDetailedPermission("measures", "create_edit") && (
+                      {canCreateMeasureForIncident(viewingIncident) && (
                       <Button
                         size="sm"
                         onClick={() => {
