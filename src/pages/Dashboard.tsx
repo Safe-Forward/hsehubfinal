@@ -276,9 +276,8 @@ export default function Dashboard() {
     if (companyId && userRole !== "super_admin") {
       fetchStats();
       fetchInvestigationStats();
-      fetchTasks();
     }
-  }, [companyId, userRole, taskStatusFilter]);
+  }, [companyId, userRole]);
 
   useEffect(() => {
     if (!companyId || userRole === "super_admin") return;
@@ -327,7 +326,7 @@ export default function Dashboard() {
     if (companyId && userRole !== "super_admin" && currentEmployeeName !== null) {
       fetchTasks();
     }
-  }, [companyId, userRole, currentEmployeeId, currentEmployeeName]);
+  }, [companyId, userRole, currentEmployeeId, currentEmployeeName, taskStatusFilter]);
 
   const fetchStats = async () => {
     if (!companyId) return;

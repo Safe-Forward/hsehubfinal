@@ -331,20 +331,28 @@ export default function Documents() {
     }
 
     try {
-      // Delete from storage
+      // DB-Eintrag zuerst löschen (mit .select() um stilles RLS-Scheitern zu erkennen —
+      // .delete() ohne Treffer wirft sonst keinen Fehler). Storage danach: schlägt das
+      // fehl, bleibt nur eine verwaiste Datei übrig (unkritisch) statt eines Phantom-
+      // DB-Eintrags, der auf eine bereits gelöschte Datei zeigt.
+      const { data: deletedRows, error: dbError } = await supabase
+        .from("documents")
+        .delete()
+        .eq("id", doc.id)
+        .select("id");
+
+      if (dbError) throw dbError;
+      if (!deletedRows || deletedRows.length === 0) {
+        throw new Error("Löschen wurde abgelehnt (keine Berechtigung?)");
+      }
+
       const { error: storageError } = await supabase.storage
         .from("documents")
         .remove([doc.file_path]);
 
-      if (storageError) throw storageError;
-
-      // Delete from database
-      const { error: dbError } = await supabase
-        .from("documents")
-        .delete()
-        .eq("id", doc.id);
-
-      if (dbError) throw dbError;
+      if (storageError) {
+        console.error("Storage-Datei konnte nicht gelöscht werden (DB-Eintrag wurde entfernt):", storageError);
+      }
 
       toast({
         title: "Gespeichert",
@@ -394,10 +402,14 @@ export default function Documents() {
     return matchesSearch && matchesCategory;
   });
 
+  // Auf Mitternacht normalisiert, sonst gilt ein heute ablaufendes Dokument je nach
+  // Zeitzone/Uhrzeit fälschlich schon als abgelaufen.
   const isExpiringSoon = (expiryDate: string | null) => {
     if (!expiryDate) return false;
     const date = new Date(expiryDate);
+    date.setHours(0, 0, 0, 0);
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const daysUntilExpiry = Math.ceil(
       (date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
     );
@@ -406,7 +418,11 @@ export default function Documents() {
 
   const isExpired = (expiryDate: string | null) => {
     if (!expiryDate) return false;
-    return new Date(expiryDate) < new Date();
+    const date = new Date(expiryDate);
+    date.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
   };
 
   if (loading) {

@@ -495,24 +495,20 @@ fetchProfileFields();
     if (!companyId || !id) return;
 
     try {
-      // Fetch documents tagged with employee ID or name
+      // Serverseitiger Filter auf tags-Array (gesetzt beim Upload, siehe weiter unten:
+      // tags: [id, employee_number]) — vorher wurden ALLE Firmendokumente geladen und
+      // client-seitig per description-Substring-Suche gefiltert (brüchig + Datenleck).
+      const tagsToMatch = [id, employee?.employee_number].filter(Boolean) as string[];
       const { data, error } = await supabase
         .from("documents")
         .select("*")
         .eq("company_id", companyId)
+        .overlaps("tags", tagsToMatch)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Filter documents that have employee ID in tags or description
-      const employeeDocuments = (data || []).filter(
-        (doc: any) =>
-          doc.tags?.includes(id) ||
-          doc.tags?.includes(employee?.employee_number) ||
-          doc.description?.includes(id)
-      );
-
-      setDocuments(employeeDocuments as EmployeeDocument[]);
+      setDocuments((data || []) as EmployeeDocument[]);
     } catch (error) {
       console.error("Error fetching documents:", error);
       setDocuments([]);
@@ -4768,8 +4764,12 @@ p_sender_name: senderName,
                   <div className="space-y-4">
                     {healthCheckups.map((checkup) => {
                       // Calculate if checkup is overdue (applies to both 'open' and 'planned')
+                      // Auf Mitternacht normalisiert, sonst gilt ein heute fälliger Termin je
+                      // nach Zeitzone/Uhrzeit fälschlich schon als überfällig.
                       const today = new Date();
+                      today.setHours(0, 0, 0, 0);
                       const dueDate = checkup.due_date ? new Date(checkup.due_date) : null;
+                      if (dueDate) dueDate.setHours(0, 0, 0, 0);
                       const isOverdue = dueDate && today > dueDate && (checkup.status === 'open' || checkup.status === 'planned');
 
                       return (

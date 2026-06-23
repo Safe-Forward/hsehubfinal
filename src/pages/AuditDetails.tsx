@@ -745,9 +745,10 @@ export default function AuditDetails() {
                     ) || [];
                     console.log(`Using ${filteredSections.length} selected sections from ${sections?.length || 0} total`);
                   } else {
-                    // If NO criteria are selected, show NOTHING (not all sections)
-                    filteredSections = [];
-                    console.log("No criteria selection found, showing no sections");
+                    // Keine Auswahl → alle Sektionen nehmen (sinnvolles Default-Verhalten,
+                    // analog zu generateChecklistItems in Audits.tsx/AuditDetails.tsx)
+                    filteredSections = sections || [];
+                    console.log("No criteria selection found, using all sections as default");
                   }
 
                   
