@@ -400,7 +400,6 @@ export default function Subscriptions() {
                 <TableHead>Package</TableHead>
                 <TableHead>Tier</TableHead>
                 <TableHead>Monthly Price</TableHead>
-                <TableHead>Yearly Price</TableHead>
                 <TableHead>Max Employees</TableHead>
                 <TableHead>Features</TableHead>
                 <TableHead>Status</TableHead>
@@ -417,7 +416,6 @@ export default function Subscriptions() {
                     </Badge>
                   </TableCell>
                   <TableCell>€{pkg.price_monthly}/mo</TableCell>
-                  <TableCell>€{pkg.price_yearly}/yr</TableCell>
                   <TableCell>{pkg.max_employees}</TableCell>
                   <TableCell>
                     <span className="text-muted-foreground">
@@ -486,7 +484,7 @@ export default function Subscriptions() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="price_monthly">Monthly Price (€)</Label>
                 <Input
@@ -494,15 +492,6 @@ export default function Subscriptions() {
                   type="number"
                   value={formData.price_monthly}
                   onChange={(e) => setFormData({ ...formData, price_monthly: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="price_yearly">Yearly Price (€)</Label>
-                <Input
-                  id="price_yearly"
-                  type="number"
-                  value={formData.price_yearly}
-                  onChange={(e) => setFormData({ ...formData, price_yearly: parseFloat(e.target.value) || 0 })}
                 />
               </div>
               <div className="space-y-2">
@@ -516,25 +505,14 @@ export default function Subscriptions() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="stripe_monthly">Stripe Price ID (Monthly)</Label>
-                <Input
-                  id="stripe_monthly"
-                  value={formData.stripe_price_id_monthly}
-                  onChange={(e) => setFormData({ ...formData, stripe_price_id_monthly: e.target.value })}
-                  placeholder="price_xxxxx"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="stripe_yearly">Stripe Price ID (Yearly)</Label>
-                <Input
-                  id="stripe_yearly"
-                  value={formData.stripe_price_id_yearly}
-                  onChange={(e) => setFormData({ ...formData, stripe_price_id_yearly: e.target.value })}
-                  placeholder="price_xxxxx"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="stripe_monthly">Stripe Price ID (Monthly)</Label>
+              <Input
+                id="stripe_monthly"
+                value={formData.stripe_price_id_monthly}
+                onChange={(e) => setFormData({ ...formData, stripe_price_id_monthly: e.target.value })}
+                placeholder="price_xxxxx"
+              />
             </div>
 
             <div className="flex items-center space-x-2">

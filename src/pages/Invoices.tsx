@@ -399,9 +399,8 @@ function SubscriptionCard({
   const isTrialing = status === "trial";
   const isCancelled = status === "cancelled";
   const isInactive = status === "inactive";
-  const [selectedInterval, setSelectedInterval] = useState<BillingInterval>(
-    company.subscription_billing_interval === "year" ? "yearly" : "monthly"
-  );
+  // Only monthly billing exists - there is no yearly plan to offer.
+  const selectedInterval: BillingInterval = "monthly";
 
   const trialEnd = company.trial_ends_at ? new Date(company.trial_ends_at) : null;
   const daysUntilTrialEnd = trialEnd
@@ -520,25 +519,6 @@ function SubscriptionCard({
         </div>
         {(isTrialing || isCancelled || isInactive) && (
           <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                size="sm"
-                variant={selectedInterval === "monthly" ? "default" : "outline"}
-                onClick={() => setSelectedInterval("monthly")}
-                disabled={billingLoading}
-              >
-                Monthly
-              </Button>
-              <Button
-                size="sm"
-                variant={selectedInterval === "yearly" ? "default" : "outline"}
-                onClick={() => setSelectedInterval("yearly")}
-                disabled={billingLoading}
-              >
-                Yearly
-              </Button>
-            </div>
-
             <div className="grid gap-2">
               {(["basic", "standard", "premium"] as const).map((targetTier) => (
                 <Button
@@ -554,7 +534,7 @@ function SubscriptionCard({
                   ) : (
                     <Zap className="w-3.5 h-3.5 mr-1.5" />
                   )}
-                  {`Choose ${PLAN_LABELS[targetTier]} (${selectedInterval === "yearly" ? "Yearly" : "Monthly"})`}
+                  {`Choose ${PLAN_LABELS[targetTier]}`}
                 </Button>
               ))}
             </div>
@@ -1310,7 +1290,7 @@ export default function Invoices() {
       clearPendingCheckout();
       toast({
         title: "Zahlung erfolgreich",
-        description: `${PLAN_LABELS[company.subscription_tier]} ${pending.interval === "yearly" ? "yearly" : "monthly"} plan activated.`,
+        description: `${PLAN_LABELS[company.subscription_tier]} plan activated.`,
       });
       fetchData(true);
       return;
@@ -1468,8 +1448,8 @@ export default function Invoices() {
       
       const planLinks = STRIPE_PAYMENT_LINKS[tier as keyof typeof STRIPE_PAYMENT_LINKS];
       if (!planLinks) throw new Error(`Invalid plan tier: ${tier}`);
-      
-      const paymentLink = interval === "yearly" ? planLinks.yearly : planLinks.monthly;
+
+      const paymentLink = planLinks.monthly;
       const urlWithRef = new URL(paymentLink);
       urlWithRef.searchParams.set("client_reference_id", companyId);
 
@@ -1493,7 +1473,7 @@ export default function Invoices() {
         action: "start_checkout",
         targetType: "subscription",
         targetId: `${tier}:${interval}`,
-        targetName: `${PLAN_LABELS[tier]} ${interval === "yearly" ? "Yearly" : "Monthly"}`,
+        targetName: PLAN_LABELS[tier],
         companyIdOverride: companyId,
         details: {
           tier,

@@ -15,18 +15,16 @@ type BillingInterval = "month" | "year";
 // (29.99/79.99/149 EUR/month, not the 149/249/349 EUR actually advertised).
 // Now point at the real "Paket S/M/L HSE Basic/Pro/Enterprise" links - see
 // src/lib/constants.ts STRIPE_PAYMENT_LINKS, which must stay in sync with this.
-const PAYMENT_LINK_URLS: Record<PlanTier, { monthly: string; yearly: string }> = {
+// There is no yearly plan - HSE Hub only offers monthly billing.
+const PAYMENT_LINK_URLS: Record<PlanTier, { monthly: string }> = {
   basic: {
     monthly: Deno.env.get("STRIPE_PAYMENT_LINK_BASIC_MONTHLY_URL") ?? "https://buy.stripe.com/eVq6oG37ga732V921TeME0c",
-    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_BASIC_YEARLY_URL") ?? "https://buy.stripe.com/cNi3cu37gbb70N1dKBeME0f",
   },
   standard: {
     monthly: Deno.env.get("STRIPE_PAYMENT_LINK_STANDARD_MONTHLY_URL") ?? "https://buy.stripe.com/bJe7sKcHQ2EB0N18qheME0d",
-    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_STANDARD_YEARLY_URL") ?? "https://buy.stripe.com/eVqeVc0Z8a738ft7mdeME0g",
   },
   premium: {
     monthly: Deno.env.get("STRIPE_PAYMENT_LINK_PREMIUM_MONTHLY_URL") ?? "https://buy.stripe.com/eVqeVccHQ1Ax9jxbCteME0e",
-    yearly: Deno.env.get("STRIPE_PAYMENT_LINK_PREMIUM_YEARLY_URL") ?? "https://buy.stripe.com/8x2fZg37gbb70N1fSJeME0h",
   },
 };
 
@@ -94,13 +92,10 @@ function resolvePlanFromPaymentLinkUrl(url: string | null | undefined) {
 
   for (const [tier, links] of Object.entries(PAYMENT_LINK_URLS) as Array<[
     PlanTier,
-    { monthly: string; yearly: string }
+    { monthly: string }
   ]>) {
     if (normalizeUrl(links.monthly) === normalized) {
       return { tier, interval: "month" as BillingInterval };
-    }
-    if (normalizeUrl(links.yearly) === normalized) {
-      return { tier, interval: "year" as BillingInterval };
     }
   }
 
