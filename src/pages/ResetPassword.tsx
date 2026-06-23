@@ -26,17 +26,26 @@ export default function ResetPassword() {
 
   useEffect(() => {
     // Supabase setzt die Session automatisch wenn der User über den
-    // Reset-Link kommt (hash enthält access_token + type=recovery)
+    // Reset-Link kommt (hash enthält access_token + type=recovery).
+    //
+    // Der alte Fallback hat JEDE bestehende Session als gültig akzeptiert -
+    // dadurch konnte jeder, der bereits eingeloggt ist (oder kurzen Zugriff
+    // auf ein entsperrtes Gerät hat), einfach /reset-password aufrufen und
+    // das Passwort ohne Eingabe des alten Passworts ändern. Gültig ist nur
+    // ein echter Recovery-Link, erkennbar an type=recovery im URL-Hash.
+    const isRecoveryLink = window.location.hash.includes("type=recovery");
+
     supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setValidSession(true);
       }
     });
 
-    // Fallback: prüfe ob bereits eine Session existiert
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setValidSession(true);
-    });
+    if (isRecoveryLink) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) setValidSession(true);
+      });
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,8 +56,8 @@ export default function ResetPassword() {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Das Passwort muss mindestens 6 Zeichen lang sein");
+    if (password.length < 8) {
+      toast.error("Das Passwort muss mindestens 8 Zeichen lang sein");
       return;
     }
 
@@ -135,7 +144,7 @@ export default function ResetPassword() {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Mindestens 6 Zeichen"
+                      placeholder="Mindestens 8 Zeichen"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required

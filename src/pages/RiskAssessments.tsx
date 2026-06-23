@@ -2706,15 +2706,19 @@ export default function RiskAssessments() {
                                     return;
                                   }
 
-                                  // Update all measures for this risk (or just the first one? The logic updates only the first one)
-                                  // The original logic updated the first measure found.
-                                  const measureToUpdate = selectedRisk.measures[0];
-                                  if (measureToUpdate.id) {
+                                  // This is a bulk action button (separate from the per-measure
+                                  // checkboxes above), so it must set the status on every measure
+                                  // for this risk - not just measures[0].
+                                  const measureIds = selectedRisk.measures
+                                    .map((m) => m.id)
+                                    .filter((id): id is string => !!id);
+
+                                  if (measureIds.length > 0) {
 
                                     // Optimistic update
                                     if (selectedRisk) {
                                       const updatedMeasures = selectedRisk.measures?.map((m) =>
-                                        m.id === measureToUpdate.id
+                                        measureIds.includes(m.id)
                                           ? { ...m, progress_status: dbStatus }
                                           : m
                                       ) || [];
@@ -2727,7 +2731,7 @@ export default function RiskAssessments() {
                                     const { error } = await supabase
                                       .from("risk_assessment_measures")
                                       .update({ progress_status: dbStatus })
-                                      .eq("id", measureToUpdate.id);
+                                      .in("id", measureIds);
 
                                     if (error) {
                                       toast({

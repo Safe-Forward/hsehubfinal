@@ -1803,12 +1803,15 @@ const handleUpdateManager = async (
           for (let i = 0; i < subsection.questions.length; i++) {
             const { error: questionError } = await supabase
               .from("iso_criteria_questions")
-              .upsert({
-                subsection_id: subsectionData.id,
-                question_text: subsection.questions[i],
-                question_text_en: subsection.questions[i], // Store English text in question_text_en
-                sort_order: i + 1,
-              });
+              .upsert(
+                {
+                  subsection_id: subsectionData.id,
+                  question_text: subsection.questions[i],
+                  question_text_en: subsection.questions[i], // Store English text in question_text_en
+                  sort_order: i + 1,
+                },
+                { onConflict: "subsection_id,sort_order" }
+              );
 
             if (questionError) throw questionError;
           }
@@ -2445,55 +2448,6 @@ const handleUpdateManager = async (
     "audits",
     "settings",
   ] as const;
-
-  const togglePermission = async (roleName: string, permission: string) => {
-    const newPermissions = {
-      ...roles[roleName],
-      [permission]:
-        !roles[roleName][permission as keyof (typeof roles)[typeof roleName]],
-    };
-
-    setRoles((prev) => ({
-      ...prev,
-      [roleName]: newPermissions,
-    }));
-
-    // Auto-save to database
-    try {
-      if (!companyId) return;
-
-      const { error } = await (supabase as any).from("custom_roles").upsert(
-        {
-          company_id: companyId,
-          role_name: roleName,
-          permissions: newPermissions,
-          is_predefined: [
-            "Admin",
-            "Line Manager",
-            "HSE Manager",
-            "Doctor",
-            "Employee",
-            "User",
-          ].includes(roleName),
-        },
-        { onConflict: "company_id,role_name" }
-      );
-
-      if (error) throw error;
-
-      toast({
-        title: "Gespeichert",
-        description: "Berechtigung wurde aktualisiert",
-      });
-    } catch (error) {
-      console.error("Error updating permission:", error);
-      toast({
-        title: "Fehler",
-        description: "Berechtigung konnte nicht aktualisiert werden",
-        variant: "destructive",
-      });
-    }
-  };
 
   const addCustomRole = async () => {
     if (!customRoleName.trim()) {

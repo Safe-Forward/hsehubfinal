@@ -179,7 +179,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (data?.success) {
       console.log("[AuthContext] Company context loaded via RPC", data);
-      const role = (data.role as UserRole) ?? "company_admin";
+      // Fail-safe, not fail-open: a missing role must NOT silently grant
+      // company_admin. The table-based fallback below already defaults to
+      // null for this same case - keep both paths consistent.
+      const role = (data.role as UserRole) ?? null;
       setUserRole(role);
       setCompanyId(data.company_id ?? null);
 

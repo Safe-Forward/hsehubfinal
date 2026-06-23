@@ -607,8 +607,14 @@ export default function Incidents() {
     if (incident.investigation_status === "closed") return null;
     if (!incident.incident_date) return null;
 
-    const refDate = incident.incident_date;
-    const daysPast = Math.floor((Date.now() - new Date(refDate).getTime()) / (1000 * 60 * 60 * 24));
+    // Normalize both sides to local midnight - otherwise Date.now() (current
+    // time-of-day) vs. a date-only incident_date (UTC midnight) shifts
+    // daysPast by 1 depending on timezone/time of day.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const incidentDay = new Date(incident.incident_date);
+    incidentDay.setHours(0, 0, 0, 0);
+    const daysPast = Math.floor((today.getTime() - incidentDay.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysPast <= 0) return null;
     if (daysPast <= 7)  return { level: 1, label: `${daysPast}T überfällig`, color: "bg-yellow-100 text-yellow-800 border-yellow-200" };

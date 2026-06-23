@@ -108,10 +108,10 @@ export default function AcceptInvitation() {
     
     if (!memberData || !tokenData || !token) return;
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       toast({
         title: "Passwort zu kurz",
-        description: "Password must be at least 6 characters long.",
+        description: "Password must be at least 8 characters long.",
         variant: "destructive",
       });
       return;
@@ -417,7 +417,7 @@ export default function AcceptInvitation() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={6}
+                    minLength={8}
                     className="pr-10 bg-white border-gray-200 focus:border-primary h-11"
                   />
                   <span 

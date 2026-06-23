@@ -283,7 +283,10 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
           for (let i = 0; i < subsection.questions.length; i++) {
             const { error: questionError } = await supabase
               .from("iso_criteria_questions")
-              .upsert({ subsection_id: subsectionData.id, question_text: subsection.questions[i], question_text_en: subsection.questions[i], sort_order: i + 1 });
+              .upsert(
+                { subsection_id: subsectionData.id, question_text: subsection.questions[i], question_text_en: subsection.questions[i], sort_order: i + 1 },
+                { onConflict: "subsection_id,sort_order" }
+              );
             if (questionError) throw questionError;
           }
         }

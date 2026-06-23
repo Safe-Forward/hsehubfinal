@@ -941,7 +941,7 @@ export default function CompanyDetail() {
                                                 </p>
                                             )}
                                         </>
-                                    ) : company.subscription_status === "canceled" ? (
+                                    ) : company.subscription_status === "cancelled" ? (
                                         <>
                                             <p className="text-xl font-bold text-red-600 dark:text-red-400">Canceled</p>
                                             <p className="text-sm text-red-600 dark:text-red-400">

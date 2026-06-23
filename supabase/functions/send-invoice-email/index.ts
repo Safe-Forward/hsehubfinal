@@ -240,6 +240,23 @@ serve(async (req) => {
       });
     }
 
+    // Ohne diese Prüfung konnte jeder eingeloggte User die Rechnung JEDER
+    // Firma per invoice_id abrufen und an eine beliebige recipient_email senden.
+    const { data: callerRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("company_id", invoice.company_id)
+      .in("role", ["company_admin", "super_admin"])
+      .limit(1)
+      .maybeSingle();
+
+    if (!callerRole) {
+      return new Response(JSON.stringify({ error: "Forbidden: requires company admin for this invoice's company" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: company } = await supabase
       .from("companies")
       .select("name, email, billing_email")

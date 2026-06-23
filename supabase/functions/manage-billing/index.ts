@@ -25,6 +25,23 @@ async function resolveUserCompanyId(supabase: ReturnType<typeof createClient>, u
   return rows.find((row) => row?.company_id)?.company_id ?? null;
 }
 
+// Billing ist eine Admin-Funktion — prüft, ob der User für diese Firma
+// company_admin/super_admin ist. Ohne diese Prüfung konnte jeder Mitarbeiter
+// mit Firmenzugehörigkeit das Abo kündigen oder die Billing-Email ändern.
+async function userIsCompanyAdmin(supabase: ReturnType<typeof createClient>, userId: string, companyId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("company_id", companyId)
+    .in("role", ["company_admin", "super_admin"])
+    .limit(1)
+    .maybeSingle();
+
+  if (error) return false;
+  return !!data;
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -70,6 +87,15 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Company not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Billing-Verwaltung ist Admin-Sache — jeder andere Mitarbeiter wird hier abgewiesen.
+    const isAdmin = await userIsCompanyAdmin(supabase, user.id, companyId);
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: requires company admin" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

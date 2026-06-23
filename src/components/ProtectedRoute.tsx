@@ -23,6 +23,14 @@ export default function ProtectedRoute({
 
   const loading = authLoading || permissionsLoading;
 
+  // super_admin outranks every other role, so a route requiring
+  // "company_admin" or "employee" must still admit a super_admin.
+  const satisfiesRequiredRole = (role: typeof userRole, required: typeof requiredRole) => {
+    if (!required) return true;
+    if (role === "super_admin") return true;
+    return role === required;
+  };
+
   useEffect(() => {
     if (loading) return;
 
@@ -37,7 +45,7 @@ export default function ProtectedRoute({
 
     // Check role requirement first
     if (requiredRole) {
-      if (userRole !== requiredRole) {
+      if (!satisfiesRequiredRole(userRole, requiredRole)) {
         toast({
           title: "Access Denied",
           description: `This page requires ${requiredRole.replace('_', ' ')} role.`,
@@ -94,7 +102,7 @@ export default function ProtectedRoute({
 
   
   // Check role requirement
-  if (requiredRole && userRole !== requiredRole) {
+  if (!satisfiesRequiredRole(userRole, requiredRole)) {
     return null;
   }
   

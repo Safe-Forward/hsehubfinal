@@ -162,10 +162,27 @@ export default function OrgChartTab() {
     const map = new Map<string, TreeNode>();
     members.forEach((m) => map.set(m.id, { ...m, children: [] }));
 
+    // Walks up a member's manager chain to check whether `potentialAncestorId`
+    // appears in it. Guards against bad data (e.g. A manages B and B manages
+    // A) which would otherwise make OrgTree's render recursion below loop forever.
+    const isAncestor = (potentialAncestorId: string, memberId: string): boolean => {
+      const visited = new Set<string>();
+      let current = map.get(memberId)?.line_manager_id ?? null;
+      while (current && !visited.has(current)) {
+        if (current === potentialAncestorId) return true;
+        visited.add(current);
+        current = map.get(current)?.line_manager_id ?? null;
+      }
+      return false;
+    };
+
     const roots: TreeNode[] = [];
     map.forEach((node) => {
-      if (node.line_manager_id && map.has(node.line_manager_id)) {
-        map.get(node.line_manager_id)!.children.push(node);
+      const managerId = node.line_manager_id;
+      const wouldCreateCycle =
+        managerId === node.id || (managerId && isAncestor(node.id, managerId));
+      if (managerId && map.has(managerId) && !wouldCreateCycle) {
+        map.get(managerId)!.children.push(node);
       } else {
         roots.push(node);
       }

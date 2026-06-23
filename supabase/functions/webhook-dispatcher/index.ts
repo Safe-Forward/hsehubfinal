@@ -14,11 +14,16 @@ serve(async (req) => {
   }
 
   try {
-    // Basic auth check for the edge function itself (prevent public access)
-    // The DB trigger should send the ANON or SERVICE key in Authorization header
+    // Auth check for the edge function itself (prevent public access).
+    // Previously this only checked that the header was present, so anyone who
+    // found the function URL could POST an arbitrary company_id/payload and
+    // make it fire real webhooks to that company's external systems. The DB
+    // trigger sends a dedicated shared secret (WEBHOOK_DISPATCH_SECRET), not
+    // the anon/service key, so we compare against that exact value here.
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing Authorization header" }), { status: 401, headers: corsHeaders });
+    const expectedSecret = Deno.env.get("WEBHOOK_DISPATCH_SECRET");
+    if (!expectedSecret || authHeader !== `Bearer ${expectedSecret}`) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
     }
 
     const payload = await req.json();
