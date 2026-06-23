@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -133,6 +134,8 @@ type CheckupHeaderKey =
 
 export default function Investigations() {
   const { user, loading, companyId } = useAuth();
+  const { hasDetailedPermission } = usePermissions();
+  const canManageInvestigations = hasDetailedPermission("investigations", "create_edit");
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -1401,13 +1404,15 @@ export default function Investigations() {
                 <FileDown className="w-4 h-4 mr-2" />
                 {t("investigations.exportPDF")}
               </Button>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog open={isDialogOpen && canManageInvestigations} onOpenChange={setIsDialogOpen}>
+                {canManageInvestigations && (
                 <DialogTrigger asChild>
                   <Button onClick={resetForm}>
                     <Plus className="w-4 h-4 mr-2" />
                     {t("investigations.newInvestigation")}
                   </Button>
                 </DialogTrigger>
+                )}
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>

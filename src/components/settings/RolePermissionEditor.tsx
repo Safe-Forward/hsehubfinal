@@ -31,6 +31,12 @@ import {
   Check,
   X,
   Bell,
+  GraduationCap,
+  AlertTriangle,
+  Siren,
+  Wrench,
+  Stethoscope,
+  Lock,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -63,7 +69,12 @@ const CATEGORY_ICONS: Record<PermissionCategory, React.ReactNode> = {
   standard: <Users className="w-4 h-4" />,
   employees: <Users className="w-4 h-4" />,
   health_examinations: <Heart className="w-4 h-4" />,
+  investigations: <Stethoscope className="w-4 h-4" />,
   documents: <FileText className="w-4 h-4" />,
+  trainings: <GraduationCap className="w-4 h-4" />,
+  risk_assessments: <AlertTriangle className="w-4 h-4" />,
+  incidents: <Siren className="w-4 h-4" />,
+  measures: <Wrench className="w-4 h-4" />,
   audits: <ClipboardList className="w-4 h-4" />,
   reports: <BarChart3 className="w-4 h-4" />,
   settings: <Settings className="w-4 h-4" />,
@@ -148,9 +159,13 @@ export function RolePermissionEditor({
     return count;
   };
 
+  const isAdminFixed = (role: CustomRole | null): boolean =>
+    role?.role_name === "Admin";
+
   const renderPermissionCategory = (category: PermissionCategory) => {
     if (!selectedRole) return null;
 
+    const adminFixed = isAdminFixed(selectedRole);
     const detailed = selectedRole.detailed_permissions || DEFAULT_DETAILED_PERMISSIONS;
     const categoryPerms = detailed[category] || {};
     const permissionKeys = Object.keys(PERMISSION_DEFINITIONS[category] || {});
@@ -180,11 +195,11 @@ export function RolePermissionEditor({
               </div>
               <Switch
                 id={`${category}-${key}`}
-                checked={(categoryPerms as Record<string, boolean>)[key] === true}
+                checked={adminFixed ? true : (categoryPerms as Record<string, boolean>)[key] === true}
                 onCheckedChange={(checked) =>
                   onUpdatePermission(selectedRole.role_name, category, key, checked)
                 }
-                disabled={isLoading}
+                disabled={isLoading || adminFixed}
               />
             </div>
           ))}
@@ -270,6 +285,12 @@ export function RolePermissionEditor({
                         {language === "de" ? "Vordefiniert" : "Predefined"}
                       </Badge>
                     )}
+                    {isAdminFixed(selectedRole) && (
+                      <Badge variant="default" className="gap-1">
+                        <Lock className="w-3 h-3" />
+                        {language === "de" ? "Alle Rechte fix" : "All permissions fixed"}
+                      </Badge>
+                    )}
                   </div>
                   {isEditingDescription ? (
                     <div className="flex items-center gap-2 mt-2">
@@ -331,15 +352,18 @@ export function RolePermissionEditor({
             </CardHeader>
             <CardContent className="pt-0">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="mb-4">
+                <TabsList className="mb-4 flex-wrap h-auto">
                   <TabsTrigger value="general">
                     {language === "de" ? "Allgemein" : "General"}
                   </TabsTrigger>
-                  <TabsTrigger value="workflow">
-                    {language === "de" ? "Workflow" : "Workflow"}
+                  <TabsTrigger value="health">
+                    {language === "de" ? "Gesundheit" : "Health"}
                   </TabsTrigger>
-                  <TabsTrigger value="features">
-                    {language === "de" ? "Funktionen" : "Features"}
+                  <TabsTrigger value="operations">
+                    {language === "de" ? "Betrieb" : "Operations"}
+                  </TabsTrigger>
+                  <TabsTrigger value="workflow">
+                    {language === "de" ? "Audits & Berichte" : "Audits & Reports"}
                   </TabsTrigger>
                   <TabsTrigger value="company">
                     {language === "de" ? "Unternehmen" : "Company"}
@@ -376,24 +400,49 @@ export function RolePermissionEditor({
                     {renderPermissionCategory("employees")}
                   </TabsContent>
 
-                  <TabsContent value="workflow" className="mt-0 space-y-6">
-                    {/* Health Examinations */}
+                  <TabsContent value="health" className="mt-0 space-y-6">
+                    {/* Health Examinations (employee profile) */}
                     {renderPermissionCategory("health_examinations")}
 
                     <Separator />
 
-                    {/* Audits */}
-                    {renderPermissionCategory("audits")}
+                    {/* Investigations (G-Untersuchungen) */}
+                    {renderPermissionCategory("investigations")}
                   </TabsContent>
 
-                  <TabsContent value="features" className="mt-0 space-y-6">
-                    {/* Documents */}
-                    {renderPermissionCategory("documents")}
+                  <TabsContent value="operations" className="mt-0 space-y-6">
+                    {/* Trainings */}
+                    {renderPermissionCategory("trainings")}
+
+                    <Separator />
+
+                    {/* Risk Assessments */}
+                    {renderPermissionCategory("risk_assessments")}
+
+                    <Separator />
+
+                    {/* Incidents */}
+                    {renderPermissionCategory("incidents")}
+
+                    <Separator />
+
+                    {/* Measures */}
+                    {renderPermissionCategory("measures")}
+                  </TabsContent>
+
+                  <TabsContent value="workflow" className="mt-0 space-y-6">
+                    {/* Audits */}
+                    {renderPermissionCategory("audits")}
 
                     <Separator />
 
                     {/* Reports */}
                     {renderPermissionCategory("reports")}
+
+                    <Separator />
+
+                    {/* Documents */}
+                    {renderPermissionCategory("documents")}
                   </TabsContent>
 
                   <TabsContent value="company" className="mt-0 space-y-6">

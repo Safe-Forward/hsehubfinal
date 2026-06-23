@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
@@ -115,6 +116,9 @@ type IncidentSortKey =
 
 export default function Incidents() {
   const { user, companyId, loading } = useAuth();
+  const { hasDetailedPermission } = usePermissions();
+  const canManageIncidents = hasDetailedPermission("incidents", "create_edit");
+  const canDeleteIncidents = hasDetailedPermission("incidents", "delete");
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -848,13 +852,15 @@ export default function Incidents() {
                 <CardDescription><span>{t("incidents.reportsDesc")}</span></CardDescription>
               </div>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen && canManageIncidents} onOpenChange={setIsDialogOpen}>
+              {canManageIncidents && (
               <DialogTrigger asChild>
                 <Button onClick={resetForm}>
                   <Plus className="w-4 h-4 mr-2" />
                   {t("incidents.reportIncident")}
                 </Button>
               </DialogTrigger>
+              )}
               <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>
@@ -1349,6 +1355,7 @@ export default function Incidents() {
                         <FileText className="w-4 h-4 mr-2" />
                         PDF exportieren
                       </Button>
+                      {hasDetailedPermission("measures", "create_edit") && (
                       <Button
                         size="sm"
                         onClick={() => {
@@ -1359,6 +1366,7 @@ export default function Incidents() {
                         <Plus className="w-4 h-4 mr-2" />
                         Korrekturmaßnahme erstellen
                       </Button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1523,6 +1531,7 @@ export default function Incidents() {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
+                          {canManageIncidents && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1530,6 +1539,8 @@ export default function Incidents() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
+                          )}
+                          {canDeleteIncidents && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1537,6 +1548,7 @@ export default function Incidents() {
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

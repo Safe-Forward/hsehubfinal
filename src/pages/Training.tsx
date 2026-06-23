@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -129,8 +130,13 @@ export default function Training() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { hasDetailedPermission } = usePermissions();
 
-  const isAdmin = userRole === "company_admin" || userRole === "super_admin";
+  // Admin-Ansicht (Kursverwaltung) statt Lernansicht: company_admin/super_admin
+  // haben über hasDetailedPermission automatisch alle Rechte; zusätzlich jede
+  // Rolle mit trainings.manage Berechtigung.
+  const isAdmin = hasDetailedPermission("trainings", "manage");
+  const canDeleteTraining = hasDetailedPermission("trainings", "delete");
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -1204,7 +1210,9 @@ export default function Training() {
                           {isAdmin && (
                             <div className="flex items-center gap-1">
                               <button onClick={(e) => { e.stopPropagation(); openAccessDialog(course); }} className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary hover:text-white text-primary transition-all"><Users className="w-4 h-4" /></button>
-                              <button onClick={(e) => onCourseDelete(course.id, course.name, e)} className="p-1.5 rounded-lg bg-destructive/10 hover:bg-destructive hover:text-white text-destructive transition-all"><Trash2 className="w-4 h-4" /></button>
+                              {canDeleteTraining && (
+                                <button onClick={(e) => onCourseDelete(course.id, course.name, e)} className="p-1.5 rounded-lg bg-destructive/10 hover:bg-destructive hover:text-white text-destructive transition-all"><Trash2 className="w-4 h-4" /></button>
+                              )}
                             </div>
                           )}
                         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
@@ -91,6 +92,9 @@ interface Employee {
 
 export default function Measures() {
   const { user, companyId, loading } = useAuth();
+  const { hasDetailedPermission } = usePermissions();
+  const canManageMeasures = hasDetailedPermission("measures", "create_edit");
+  const canDeleteMeasures = hasDetailedPermission("measures", "delete");
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -530,13 +534,15 @@ export default function Measures() {
                 <FileDown className="w-4 h-4 mr-2" />
                 {t("measures.exportPDF")}
               </Button>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <Dialog open={isDialogOpen && canManageMeasures} onOpenChange={setIsDialogOpen}>
+                {canManageMeasures && (
                 <DialogTrigger asChild>
                   <Button onClick={resetForm}>
                     <Plus className="w-4 h-4 mr-2" />
                     {t("measures.new")}
                   </Button>
                 </DialogTrigger>
+                )}
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
@@ -891,6 +897,7 @@ export default function Measures() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {canManageMeasures && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -898,6 +905,8 @@ export default function Measures() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
+                          )}
+                          {canDeleteMeasures && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -905,6 +914,7 @@ export default function Measures() {
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

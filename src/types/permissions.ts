@@ -51,11 +51,50 @@ export interface SettingsPermissions {
   subscription_billing: boolean;
 }
 
+export interface InvestigationPermissions {
+  view: boolean;
+  create_edit: boolean;
+  delete: boolean;
+}
+
+export interface TrainingPermissions {
+  view: boolean;
+  manage: boolean;
+  issue_certificates: boolean;
+  delete: boolean;
+}
+
+export interface RiskAssessmentPermissions {
+  view: boolean;
+  create_edit: boolean;
+  approve: boolean;
+  delete: boolean;
+}
+
+export interface IncidentPermissions {
+  view: boolean;
+  create_edit: boolean;
+  assign: boolean;
+  delete: boolean;
+}
+
+export interface MeasurePermissions {
+  view: boolean;
+  create_edit: boolean;
+  close: boolean;
+  delete: boolean;
+}
+
 export interface DetailedPermissions {
   standard: StandardPermissions;
   employees: EmployeePermissions;
   health_examinations: HealthExaminationPermissions;
+  investigations: InvestigationPermissions;
   documents: DocumentPermissions;
+  trainings: TrainingPermissions;
+  risk_assessments: RiskAssessmentPermissions;
+  incidents: IncidentPermissions;
+  measures: MeasurePermissions;
   audits: AuditPermissions;
   reports: ReportPermissions;
   settings: SettingsPermissions;
@@ -97,11 +136,41 @@ export const PERMISSION_CATEGORIES: Record<PermissionCategory, { label: string; 
     description: 'Medical examination records and evaluations',
     descriptionDe: 'Medizinische Untersuchungsaufzeichnungen und Bewertungen'
   },
+  investigations: {
+    label: 'Investigations',
+    labelDe: 'Untersuchungen',
+    description: 'G-Untersuchungen management',
+    descriptionDe: 'G-Untersuchungen verwalten'
+  },
   documents: {
     label: 'Documents',
     labelDe: 'Dokumente',
     description: 'Document management and sharing',
     descriptionDe: 'Dokumentenverwaltung und -freigabe'
+  },
+  trainings: {
+    label: 'Trainings',
+    labelDe: 'Schulungen',
+    description: 'Training courses and certificates',
+    descriptionDe: 'Schulungskurse und Zertifikate'
+  },
+  risk_assessments: {
+    label: 'Risk Assessments',
+    labelDe: 'Risikobewertungen',
+    description: 'GBU / risk assessments and approval',
+    descriptionDe: 'Gefährdungsbeurteilungen und Freigabe'
+  },
+  incidents: {
+    label: 'Incidents',
+    labelDe: 'Vorfälle',
+    description: 'Incident reporting and assignment',
+    descriptionDe: 'Vorfallmeldung und Zuweisung'
+  },
+  measures: {
+    label: 'Measures',
+    labelDe: 'Maßnahmen',
+    description: 'Corrective and preventive measures',
+    descriptionDe: 'Korrektur- und Präventivmaßnahmen'
   },
   audits: {
     label: 'Audits',
@@ -209,6 +278,26 @@ export const PERMISSION_DEFINITIONS: Record<PermissionCategory, Record<string, {
       descriptionDe: 'Untersuchungsaufzeichnungen dauerhaft löschen'
     }
   },
+  investigations: {
+    view: {
+      label: 'View investigations',
+      labelDe: 'Untersuchungen anzeigen',
+      description: 'Access to view G-Untersuchungen',
+      descriptionDe: 'Zugriff auf G-Untersuchungen'
+    },
+    create_edit: {
+      label: 'Create & edit investigations',
+      labelDe: 'Untersuchungen erstellen & bearbeiten',
+      description: 'Create and modify investigation records',
+      descriptionDe: 'Untersuchungen erstellen und bearbeiten'
+    },
+    delete: {
+      label: 'Delete investigations',
+      labelDe: 'Untersuchungen löschen',
+      description: 'Permanently delete investigation records',
+      descriptionDe: 'Untersuchungen dauerhaft löschen'
+    }
+  },
   documents: {
     view: {
       label: 'View documents',
@@ -233,6 +322,110 @@ export const PERMISSION_DEFINITIONS: Record<PermissionCategory, Record<string, {
       labelDe: 'Dokumente löschen',
       description: 'Permanently delete documents',
       descriptionDe: 'Dokumente dauerhaft löschen'
+    }
+  },
+  trainings: {
+    view: {
+      label: 'View trainings',
+      labelDe: 'Schulungen anzeigen',
+      description: 'Access to view training courses',
+      descriptionDe: 'Zugriff auf Schulungskurse'
+    },
+    manage: {
+      label: 'Create & manage courses',
+      labelDe: 'Kurse erstellen & verwalten',
+      description: 'Create, edit and assign training courses',
+      descriptionDe: 'Schulungskurse erstellen, bearbeiten und zuweisen'
+    },
+    issue_certificates: {
+      label: 'Issue certificates',
+      labelDe: 'Zertifikate ausstellen',
+      description: 'Issue completion certificates to employees',
+      descriptionDe: 'Abschlusszertifikate an Mitarbeiter ausstellen'
+    },
+    delete: {
+      label: 'Delete trainings',
+      labelDe: 'Schulungen löschen',
+      description: 'Permanently delete training courses',
+      descriptionDe: 'Schulungskurse dauerhaft löschen'
+    }
+  },
+  risk_assessments: {
+    view: {
+      label: 'View risk assessments',
+      labelDe: 'Risikobewertungen anzeigen',
+      description: 'Access to view GBU / risk assessments',
+      descriptionDe: 'Zugriff auf Gefährdungsbeurteilungen'
+    },
+    create_edit: {
+      label: 'Create & edit risk assessments',
+      labelDe: 'Risikobewertungen erstellen & bearbeiten',
+      description: 'Create and modify risk assessments',
+      descriptionDe: 'Gefährdungsbeurteilungen erstellen und bearbeiten'
+    },
+    approve: {
+      label: 'Approve risk assessments',
+      labelDe: 'Risikobewertungen freigeben',
+      description: 'Approve or reject submitted risk assessments',
+      descriptionDe: 'Eingereichte Gefährdungsbeurteilungen freigeben oder ablehnen'
+    },
+    delete: {
+      label: 'Delete risk assessments',
+      labelDe: 'Risikobewertungen löschen',
+      description: 'Permanently delete risk assessments',
+      descriptionDe: 'Gefährdungsbeurteilungen dauerhaft löschen'
+    }
+  },
+  incidents: {
+    view: {
+      label: 'View incidents',
+      labelDe: 'Vorfälle anzeigen',
+      description: 'Access to view incident reports',
+      descriptionDe: 'Zugriff auf Vorfallmeldungen'
+    },
+    create_edit: {
+      label: 'Create & edit incidents',
+      labelDe: 'Vorfälle erstellen & bearbeiten',
+      description: 'Create and modify incident reports',
+      descriptionDe: 'Vorfallmeldungen erstellen und bearbeiten'
+    },
+    assign: {
+      label: 'Assign incidents',
+      labelDe: 'Vorfälle zuweisen',
+      description: 'Assign incidents to team members',
+      descriptionDe: 'Vorfälle an Teammitglieder zuweisen'
+    },
+    delete: {
+      label: 'Delete incidents',
+      labelDe: 'Vorfälle löschen',
+      description: 'Permanently delete incident reports',
+      descriptionDe: 'Vorfallmeldungen dauerhaft löschen'
+    }
+  },
+  measures: {
+    view: {
+      label: 'View measures',
+      labelDe: 'Maßnahmen anzeigen',
+      description: 'Access to view measures',
+      descriptionDe: 'Zugriff auf Maßnahmen'
+    },
+    create_edit: {
+      label: 'Create & edit measures',
+      labelDe: 'Maßnahmen erstellen & bearbeiten',
+      description: 'Create and modify measures',
+      descriptionDe: 'Maßnahmen erstellen und bearbeiten'
+    },
+    close: {
+      label: 'Close measures',
+      labelDe: 'Maßnahmen abschließen',
+      description: 'Mark measures as completed',
+      descriptionDe: 'Maßnahmen als erledigt markieren'
+    },
+    delete: {
+      label: 'Delete measures',
+      labelDe: 'Maßnahmen löschen',
+      description: 'Permanently delete measures',
+      descriptionDe: 'Maßnahmen dauerhaft löschen'
     }
   },
   audits: {
@@ -336,10 +529,39 @@ export const DEFAULT_DETAILED_PERMISSIONS: DetailedPermissions = {
     medical_evaluations: false,
     delete: false
   },
+  investigations: {
+    view: false,
+    create_edit: false,
+    delete: false
+  },
   documents: {
     view: false,
     upload: false,
     edit: false,
+    delete: false
+  },
+  trainings: {
+    view: false,
+    manage: false,
+    issue_certificates: false,
+    delete: false
+  },
+  risk_assessments: {
+    view: false,
+    create_edit: false,
+    approve: false,
+    delete: false
+  },
+  incidents: {
+    view: false,
+    create_edit: false,
+    assign: false,
+    delete: false
+  },
+  measures: {
+    view: false,
+    create_edit: false,
+    close: false,
     delete: false
   },
   audits: {
@@ -383,10 +605,39 @@ export const ADMIN_DETAILED_PERMISSIONS: DetailedPermissions = {
     medical_evaluations: true,
     delete: true
   },
+  investigations: {
+    view: true,
+    create_edit: true,
+    delete: true
+  },
   documents: {
     view: true,
     upload: true,
     edit: true,
+    delete: true
+  },
+  trainings: {
+    view: true,
+    manage: true,
+    issue_certificates: true,
+    delete: true
+  },
+  risk_assessments: {
+    view: true,
+    create_edit: true,
+    approve: true,
+    delete: true
+  },
+  incidents: {
+    view: true,
+    create_edit: true,
+    assign: true,
+    delete: true
+  },
+  measures: {
+    view: true,
+    create_edit: true,
+    close: true,
     delete: true
   },
   audits: {

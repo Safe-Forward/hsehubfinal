@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
@@ -197,6 +198,7 @@ const printStyles = `
 
 export default function RiskAssessments() {
   const { user, loading, companyId, userRole } = useAuth();
+  const { hasDetailedPermission } = usePermissions();
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -901,14 +903,17 @@ export default function RiskAssessments() {
   };
 
   const isAdmin = userRole === "company_admin" || userRole === "super_admin";
+  const canManageRisk = hasDetailedPermission("risk_assessments", "create_edit");
+  const canDeleteRisk = hasDetailedPermission("risk_assessments", "delete");
+  const canApprovePermission = hasDetailedPermission("risk_assessments", "approve");
 
   const canApproveRisk = (risk: any): boolean => {
     const deptId = risk?.department_id;
-    // No department on GBU → only admin
-    if (!deptId) return isAdmin;
+    // No department on GBU → only admin / Rollen mit approve-Berechtigung
+    if (!deptId) return isAdmin || canApprovePermission;
     const deptManagers = departmentManagers.filter(dm => dm.department_id === deptId);
     // No manager assigned for this department → fallback to admin
-    if (deptManagers.length === 0) return isAdmin;
+    if (deptManagers.length === 0) return isAdmin || canApprovePermission;
     // Check if current user is the department manager
     return !!user?.id && deptManagers.some(dm => dm.manager_user_id === user?.id);
   };
@@ -982,7 +987,8 @@ export default function RiskAssessments() {
                   <FileDown className="w-4 h-4 mr-2" />
                   {language === "de" ? "PDF Export" : "Export PDF"}
                 </Button>
-                <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingRiskId(null); resetForm(); } }}>
+                <Dialog open={isDialogOpen && canManageRisk} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingRiskId(null); resetForm(); } }}>
+                  {canManageRisk && (
                   <DialogTrigger asChild>
                     <Button className="whitespace-nowrap">
                       <Plus className="w-4 h-4 mr-2" />
@@ -991,6 +997,7 @@ export default function RiskAssessments() {
                         : "New Risk Assessment"}
                     </Button>
                   </DialogTrigger>
+                  )}
                   <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editingRiskId ? "GBU bearbeiten" : t("risks.new")}</DialogTitle>
@@ -2148,11 +2155,12 @@ export default function RiskAssessments() {
                                 Überarbeiten
                               </Button>
                             )}
-                            {risk.approval_status !== "approved" && (
+                            {risk.approval_status !== "approved" && canManageRisk && (
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => loadRiskForEdit(risk)}>
                                 <Pencil className="w-4 h-4" />
                               </Button>
                             )}
+                          {canDeleteRisk && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -2209,6 +2217,7 @@ export default function RiskAssessments() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
+                          )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -2790,7 +2799,7 @@ export default function RiskAssessments() {
                   >
                     Schließen
                   </Button>
-                  {selectedRisk && (
+                  {selectedRisk && hasDetailedPermission("measures", "create_edit") && (
                     <Button
                       variant="outline"
                       className="text-blue-600 border-blue-300 hover:bg-blue-50"
