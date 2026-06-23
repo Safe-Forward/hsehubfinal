@@ -425,12 +425,14 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2"><span>→</span> Jedes Teammitglied hat genau <strong className="text-foreground">einen direkten Vorgesetzten</strong>.</li>
               <li className="flex items-start gap-2"><span>→</span> Klare Hierarchie von oben nach unten — einfach und eindeutig.</li>
+              <li className="flex items-start gap-2"><span>→</span> Dieser Vorgesetzte erhält automatisch <strong className="text-foreground">Einsicht in die Mitarbeiterakte</strong> (bei Rollen mit "Eigene Abteilung anzeigen").</li>
               <li className="flex items-start gap-2"><span>→</span> Rollen wie <strong className="text-foreground">Arzt, HSE Manager</strong> usw. sind davon unabhängig und werden separat vergeben.</li>
             </ul>
           ) : (
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2"><span>→</span> Jedes Mitglied hat einen <strong className="text-foreground">disziplinarischen Vorgesetzten</strong> (Linie) und optional einen <strong className="text-foreground">fachlichen Vorgesetzten</strong> (Funktion).</li>
               <li className="flex items-start gap-2"><span>→</span> Ermöglicht Projekt- und Funktionsverantwortung parallel zur Linienhierarchie.</li>
+              <li className="flex items-start gap-2"><span>→</span> Nur der <strong className="text-foreground">disziplinarische</strong> Vorgesetzte erhält automatisch Einsicht in die Mitarbeiterakte — der fachliche Vorgesetzte (noch) nicht.</li>
               <li className="flex items-start gap-2"><span>→</span> Rollen wie <strong className="text-foreground">Arzt, HSE Manager</strong> usw. sind davon unabhängig und werden separat vergeben.</li>
             </ul>
           )}
