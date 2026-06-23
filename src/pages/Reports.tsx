@@ -26,6 +26,7 @@ import {
   Lock,
   Unlock,
   Settings2,
+  Building2,
 } from "lucide-react";
 import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import "react-grid-layout/css/styles.css";
@@ -107,6 +108,7 @@ interface ReportStats {
   completedAudits: number;
   completedTasks: number;
   completedMeasures: number;
+  completedCheckUps: number;
   openIncidents: number;
   trainingCompliance: number;
 }
@@ -162,6 +164,8 @@ export default function Reports() {
   const [reportName, setReportName] = useState("Monthly Safety Report");
   const [visibility, setVisibility] = useState("only-me");
   const [dateRange, setDateRange] = useState("last-30-days");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showAddReportDialog, setShowAddReportDialog] = useState(false);
 
@@ -177,6 +181,7 @@ export default function Reports() {
     completedAudits: 0,
     completedTasks: 0,
     completedMeasures: 0,
+    completedCheckUps: 0,
     openIncidents: 0,
     trainingCompliance: 0,
   });
@@ -189,6 +194,7 @@ export default function Reports() {
   const [riskLevelData, setRiskLevelData] = useState<any[]>([]);
   const [incidentTypeData, setIncidentTypeData] = useState<any[]>([]);
   const [measuresStatusData, setMeasuresStatusData] = useState<any[]>([]);
+  const [checkUpsStatusData, setCheckUpsStatusData] = useState<any[]>([]);
 
   // Analytics & Report Builder State
   const [customReports, setCustomReports] = useState<ReportConfig[]>([]);
@@ -295,12 +301,58 @@ export default function Reports() {
   }, [companyId]);
 
   useEffect(() => {
+    if (!companyId) return;
+    supabase
+      .from("departments")
+      .select("id, name")
+      .eq("company_id", companyId)
+      .order("name")
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Error fetching departments:", error);
+          return;
+        }
+        setDepartments(data || []);
+      });
+  }, [companyId]);
+
+  useEffect(() => {
     if (companyId) {
       fetchReportData();
       fetchChartData();
       fetchSectionChartData();
     }
-  }, [companyId, dateRange]);
+  }, [companyId, dateRange, departmentFilter]);
+
+  // Löst die gewählte Abteilung in Mitarbeiter-IDs / GBU-IDs auf — für Tabellen
+  // ohne eigene department_id-Spalte (measures, health_checkups, tasks, training).
+  // Rückgabewert null bedeutet "kein Filter" (Abteilung = "all").
+  const resolveDepartmentScope = useCallback(async (): Promise<{
+    employeeIds: string[] | null;
+    riskAssessmentIds: string[] | null;
+  }> => {
+    if (!companyId || departmentFilter === "all") {
+      return { employeeIds: null, riskAssessmentIds: null };
+    }
+
+    const [employeesRes, risksRes] = await Promise.all([
+      supabase
+        .from("employees")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("department_id", departmentFilter),
+      supabase
+        .from("risk_assessments")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("department_id", departmentFilter),
+    ]);
+
+    return {
+      employeeIds: (employeesRes.data || []).map((e: any) => e.id),
+      riskAssessmentIds: (risksRes.data || []).map((r: any) => r.id),
+    };
+  }, [companyId, departmentFilter]);
 
   const getDateRangeBounds = useCallback((range: string) => {
     const endDate = new Date();
@@ -446,6 +498,15 @@ export default function Reports() {
       const inRange = (query: any, column: string) =>
         query.gte(column, startIso).lte(column, endIso);
 
+      const { employeeIds, riskAssessmentIds } = await resolveDepartmentScope();
+      const deptActive = departmentFilter !== "all";
+      // Leere Auswahl darf nicht ".in([])" werden (matched sonst alles) → Sentinel-ID die nie existiert
+      const empScope = employeeIds && employeeIds.length > 0 ? employeeIds : ["00000000-0000-0000-0000-000000000000"];
+      const riskScope = riskAssessmentIds && riskAssessmentIds.length > 0 ? riskAssessmentIds : ["00000000-0000-0000-0000-000000000000"];
+      const withDept = (query: any) => (deptActive ? query.eq("department_id", departmentFilter) : query);
+      const withEmpScope = (query: any, column: string) => (deptActive ? query.in(column, empScope) : query);
+      const withRiskScope = (query: any) => (deptActive ? query.in("risk_assessment_id", riskScope) : query);
+
       // Fetch counts from all HSE modules:
       // - Measures: Corrective/preventive actions from risks, audits, and incidents
       // - Audits: Compliance checks and inspections (ISO standards)
@@ -464,118 +525,146 @@ export default function Reports() {
         completedTasksRes,
         completedMeasuresRes,
         completedRiskMeasuresRes,
+        completedCheckUpsRes,
         openIncidentsRes,
-        trainingRes,
       ] = await Promise.all([
-        supabase
-          .from("employees")
-          .select("id", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
-        supabase
-          .from("risk_assessments")
-          .select("id", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("assessment_date", startIso)
-          .lte("assessment_date", endIso),
-        supabase
-          .from("audits")
-          .select("id", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
-        supabase
-          .from("tasks")
-          .select("id", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
-        supabase
-          .from("incidents" as any)
-          .select("id", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("incident_date", startIso)
-          .lte("incident_date", endIso),
-        supabase
-          .from("measures" as any)
-          .select("id", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
-        supabase
-          .from("risk_assessment_measures")
-          .select("id", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
+        withDept(
+          supabase
+            .from("employees")
+            .select("id", { count: "exact", head: true })
+            .eq("company_id", companyId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso)
+        ),
+        withDept(
+          supabase
+            .from("risk_assessments")
+            .select("id", { count: "exact", head: true })
+            .eq("company_id", companyId)
+            .gte("assessment_date", startIso)
+            .lte("assessment_date", endIso)
+        ),
+        withDept(
+          supabase
+            .from("audits")
+            .select("id", { count: "exact", head: true })
+            .eq("company_id", companyId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso)
+        ),
+        withEmpScope(
+          supabase
+            .from("tasks")
+            .select("id", { count: "exact", head: true })
+            .eq("company_id", companyId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso),
+          "employee_profile_id"
+        ),
+        withDept(
+          supabase
+            .from("incidents" as any)
+            .select("id", { count: "exact", head: true })
+            .eq("company_id", companyId)
+            .gte("incident_date", startIso)
+            .lte("incident_date", endIso)
+        ),
+        withEmpScope(
+          supabase
+            .from("measures" as any)
+            .select("id", { count: "exact", head: true })
+            .eq("company_id", companyId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso),
+          "responsible_person_id"
+        ),
+        withRiskScope(
+          supabase
+            .from("risk_assessment_measures")
+            .select("id", { count: "exact", head: true })
+            .eq("company_id", companyId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso)
+        ),
         supabase
           .from("courses")
           .select("id", { count: "exact", head: true })
           .eq("company_id", companyId)
           .gte("created_at", startIso)
           .lte("created_at", endIso),
-        supabase
-          .from("health_checkups")
-          .select("id", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
-        inRange(
+        withEmpScope(
           supabase
-            .from("audits")
+            .from("health_checkups")
             .select("id", { count: "exact", head: true })
             .eq("company_id", companyId)
-            .eq("status", "completed"),
+            .gte("created_at", startIso)
+            .lte("created_at", endIso),
+          "employee_id"
+        ),
+        inRange(
+          withDept(
+            supabase
+              .from("audits")
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("status", "completed")
+          ),
           "created_at"
         ),
         inRange(
-          supabase
-            .from("tasks")
-            .select("id", { count: "exact", head: true })
-            .eq("company_id", companyId)
-            .eq("status", "completed"),
+          withEmpScope(
+            supabase
+              .from("tasks")
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("status", "completed"),
+            "employee_profile_id"
+          ),
           "created_at"
         ),
         inRange(
-          supabase
-            .from("measures" as any)
-            .select("id", { count: "exact", head: true })
-            .eq("company_id", companyId)
-            .eq("status", "completed"),
+          withEmpScope(
+            supabase
+              .from("measures" as any)
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("status", "completed"),
+            "responsible_person_id"
+          ),
           "created_at"
         ),
         inRange(
-          supabase
-            .from("risk_assessment_measures")
-            .select("id", { count: "exact", head: true })
-            .eq("company_id", companyId)
-            .eq("progress_status", "completed"),
+          withRiskScope(
+            supabase
+              .from("risk_assessment_measures")
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("progress_status", "completed")
+          ),
           "created_at"
         ),
         inRange(
-          supabase
-            .from("incidents" as any)
-            .select("id", { count: "exact", head: true })
-            .eq("company_id", companyId)
-            .eq("investigation_status", "open"),
+          withEmpScope(
+            supabase
+              .from("health_checkups")
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("status", "done"),
+            "employee_id"
+          ),
+          "created_at"
+        ),
+        inRange(
+          withDept(
+            supabase
+              .from("incidents" as any)
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("investigation_status", "open")
+          ),
           "incident_date"
         ),
-        supabase
-          .from("training_records")
-          .select("*")
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
       ]);
-
-      const totalTraining = trainingRes.data?.length || 0;
-      const completedTraining =
-        trainingRes.data?.filter((t) => t.status === "completed").length || 0;
-      const trainingComplianceRate =
-        totalTraining > 0
-          ? Math.round((completedTraining / totalTraining) * 100)
-          : 0;
 
       setStats({
         totalEmployees: employeesRes.count || 0,
@@ -589,11 +678,16 @@ export default function Reports() {
         completedAudits: completedAuditsRes.count || 0,
         completedTasks: completedTasksRes.count || 0,
         completedMeasures: (completedMeasuresRes.count || 0) + (completedRiskMeasuresRes.count || 0),
+        completedCheckUps: completedCheckUpsRes.count || 0,
         openIncidents: openIncidentsRes.count || 0,
-        trainingCompliance: trainingComplianceRate,
+        trainingCompliance: 0,
       });
 
-      await fetchTrainingMatrix(startIso, endIso);
+      const trainingMatrixData = await fetchTrainingMatrix(startIso, endIso, employeeIds);
+      const totalRequired = trainingMatrixData.reduce((sum, t) => sum + t.total_required, 0);
+      const totalCompleted = trainingMatrixData.reduce((sum, t) => sum + t.completed, 0);
+      const aggregateCompliance = totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0;
+      setStats((prev) => ({ ...prev, trainingCompliance: aggregateCompliance }));
     } catch (error: any) {
       console.error("Error fetching report data:", error);
       toast({
@@ -604,49 +698,105 @@ export default function Reports() {
     }
   };
 
-  const fetchTrainingMatrix = async (startIso: string, endIso: string) => {
-    if (!companyId) return;
+  const fetchTrainingMatrix = async (startIso: string, endIso: string, deptEmployeeIds: string[] | null = null) => {
+    if (!companyId) return [];
 
     try {
-      const { data: employees, error: empError } = await supabase
+      // Echte Trainingsdaten: course_employee_access (Zuweisung) + training_participations
+      // (Status) + courses (Wiederholungsintervall). Vier Queries statt einer pro Mitarbeiter.
+      let employeesQuery = supabase
         .from("employees")
         .select("id, full_name")
         .eq("company_id", companyId)
         .eq("is_active", true);
+      if (deptEmployeeIds !== null) {
+        employeesQuery = employeesQuery.in(
+          "id",
+          deptEmployeeIds.length > 0 ? deptEmployeeIds : ["00000000-0000-0000-0000-000000000000"]
+        );
+      }
 
-      if (empError) throw empError;
-
-      const matrix: TrainingStatus[] = [];
-      for (const emp of employees || []) {
-        const { data: trainings, error: trainError } = await supabase
-          .from("training_records")
-          .select("*")
-          .eq("employee_id", emp.id)
+      const [employeesRes, accessRes, coursesRes, participationsRes] = await Promise.all([
+        employeesQuery,
+        supabase
+          .from("course_employee_access")
+          .select("employee_id, course_id, created_at")
+          .eq("company_id", companyId)
           .gte("created_at", startIso)
-          .lte("created_at", endIso);
+          .lte("created_at", endIso),
+        supabase
+          .from("courses")
+          .select("id, renewal_months")
+          .eq("company_id", companyId),
+        supabase
+          .from("training_participations")
+          .select("employee_id, course_id, status, completion_date")
+          .eq("company_id", companyId),
+      ]);
 
-        if (trainError) throw trainError;
+      if (employeesRes.error) throw employeesRes.error;
+      if (accessRes.error) throw accessRes.error;
+      if (coursesRes.error) throw coursesRes.error;
+      if (participationsRes.error) throw participationsRes.error;
 
-        const total = trainings?.length || 0;
-        const completed =
-          trainings?.filter((t) => t.status === "completed").length || 0;
-        const expired =
-          trainings?.filter((t) => t.status === "expired").length || 0;
-        const compliance =
-          total > 0 ? Math.round((completed / total) * 100) : 0;
+      const renewalByCourse = new Map<string, number | null>(
+        (coursesRes.data || []).map((c: any) => [c.id, c.renewal_months])
+      );
 
-        matrix.push({
+      const participationByKey = new Map<string, { status: string; completion_date: string | null }>();
+      (participationsRes.data || []).forEach((p: any) => {
+        participationByKey.set(`${p.employee_id}|${p.course_id}`, {
+          status: p.status,
+          completion_date: p.completion_date,
+        });
+      });
+
+      const courseIdsByEmployee = new Map<string, string[]>();
+      (accessRes.data || []).forEach((a: any) => {
+        const list = courseIdsByEmployee.get(a.employee_id) || [];
+        list.push(a.course_id);
+        courseIdsByEmployee.set(a.employee_id, list);
+      });
+
+      const now = new Date();
+      const matrix: TrainingStatus[] = (employeesRes.data || []).map((emp: any) => {
+        const courseIds = courseIdsByEmployee.get(emp.id) || [];
+        let completed = 0;
+        let expired = 0;
+
+        courseIds.forEach((courseId) => {
+          const participation = participationByKey.get(`${emp.id}|${courseId}`);
+          if (participation?.status !== "completed") return;
+
+          const renewalMonths = renewalByCourse.get(courseId);
+          if (renewalMonths && participation.completion_date) {
+            const expiryDate = new Date(participation.completion_date);
+            expiryDate.setMonth(expiryDate.getMonth() + renewalMonths);
+            if (expiryDate < now) {
+              expired++;
+              return;
+            }
+          }
+          completed++;
+        });
+
+        const total = courseIds.length;
+        const compliance = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        return {
           employee_name: emp.full_name,
           total_required: total,
           completed,
           expired,
           compliance_rate: compliance,
-        });
-      }
+        };
+      });
 
       setTrainingMatrix(matrix);
+      return matrix;
     } catch (error: any) {
       console.error("Error fetching training matrix:", error);
+      return [];
     }
   };
 
@@ -706,26 +856,39 @@ export default function Reports() {
         }
       }
 
+      const { employeeIds } = await resolveDepartmentScope();
+      const deptActive = departmentFilter !== "all";
+      const empScope = employeeIds && employeeIds.length > 0 ? employeeIds : ["00000000-0000-0000-0000-000000000000"];
+
       const chartDataPromises = buckets.map(async (bucket) => {
+        let incidentsQuery = supabase
+          .from("incidents")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .gte("incident_date", bucket.startDate.toISOString())
+          .lte("incident_date", bucket.endDate.toISOString());
+        if (deptActive) incidentsQuery = incidentsQuery.eq("department_id", departmentFilter);
+
+        let trainingsQuery = supabase
+          .from("course_employee_access")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .gte("created_at", bucket.startDate.toISOString())
+          .lte("created_at", bucket.endDate.toISOString());
+        if (deptActive) trainingsQuery = trainingsQuery.in("employee_id", empScope);
+
+        let tasksQuery = supabase
+          .from("tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", companyId)
+          .gte("created_at", bucket.startDate.toISOString())
+          .lte("created_at", bucket.endDate.toISOString());
+        if (deptActive) tasksQuery = tasksQuery.in("employee_profile_id", empScope);
+
         const [incidentsRes, trainingsRes, tasksRes] = await Promise.all([
-          supabase
-            .from("incidents")
-            .select("id", { count: "exact", head: true })
-            .eq("company_id", companyId)
-            .gte("incident_date", bucket.startDate.toISOString())
-            .lte("incident_date", bucket.endDate.toISOString()),
-          supabase
-            .from("training_records")
-            .select("id", { count: "exact", head: true })
-            .eq("company_id", companyId)
-            .gte("created_at", bucket.startDate.toISOString())
-            .lte("created_at", bucket.endDate.toISOString()),
-          supabase
-            .from("tasks")
-            .select("id", { count: "exact", head: true })
-            .eq("company_id", companyId)
-            .gte("created_at", bucket.startDate.toISOString())
-            .lte("created_at", bucket.endDate.toISOString()),
+          incidentsQuery,
+          trainingsQuery,
+          tasksQuery,
         ]);
 
         return {
@@ -750,13 +913,23 @@ export default function Reports() {
     const { startIso, endIso } = getDateRangeBounds(dateRange);
 
     try {
+      const { employeeIds, riskAssessmentIds } = await resolveDepartmentScope();
+      const deptActive = departmentFilter !== "all";
+      const empScope = employeeIds && employeeIds.length > 0 ? employeeIds : ["00000000-0000-0000-0000-000000000000"];
+      const riskScope = riskAssessmentIds && riskAssessmentIds.length > 0 ? riskAssessmentIds : ["00000000-0000-0000-0000-000000000000"];
+      const withDept = (query: any) => (deptActive ? query.eq("department_id", departmentFilter) : query);
+      const withEmpScope = (query: any, column: string) => (deptActive ? query.in(column, empScope) : query);
+      const withRiskScope = (query: any) => (deptActive ? query.in("risk_assessment_id", riskScope) : query);
+
       // Audit status distribution
-      const { data: auditData } = await supabase
-        .from("audits")
-        .select("status")
-        .eq("company_id", companyId)
-        .gte("created_at", startIso)
-        .lte("created_at", endIso);
+      const { data: auditData } = await withDept(
+        supabase
+          .from("audits")
+          .select("status")
+          .eq("company_id", companyId)
+          .gte("created_at", startIso)
+          .lte("created_at", endIso)
+      );
 
       const auditGrouped: Record<string, number> = {};
       (auditData || []).forEach((a: any) => {
@@ -766,12 +939,14 @@ export default function Reports() {
       setAuditStatusData(Object.entries(auditGrouped).map(([name, value]) => ({ name, value })));
 
       // Risk level distribution
-      const { data: riskData } = await supabase
-        .from("risk_assessments")
-        .select("risk_level")
-        .eq("company_id", companyId)
-        .gte("assessment_date", startIso)
-        .lte("assessment_date", endIso);
+      const { data: riskData } = await withDept(
+        supabase
+          .from("risk_assessments")
+          .select("risk_level")
+          .eq("company_id", companyId)
+          .gte("assessment_date", startIso)
+          .lte("assessment_date", endIso)
+      );
 
       const riskGrouped: Record<string, number> = {};
       (riskData || []).forEach((r: any) => {
@@ -781,12 +956,14 @@ export default function Reports() {
       setRiskLevelData(Object.entries(riskGrouped).map(([name, value]) => ({ name, value })));
 
       // Incident type distribution
-      const { data: incidentData } = await supabase
-        .from("incidents")
-        .select("incident_type")
-        .eq("company_id", companyId)
-        .gte("incident_date", startIso)
-        .lte("incident_date", endIso);
+      const { data: incidentData } = await withDept(
+        supabase
+          .from("incidents")
+          .select("incident_type")
+          .eq("company_id", companyId)
+          .gte("incident_date", startIso)
+          .lte("incident_date", endIso)
+      );
 
       const incidentGrouped: Record<string, number> = {};
       (incidentData || []).forEach((i: any) => {
@@ -797,18 +974,23 @@ export default function Reports() {
 
       // Measures status distribution (combine both tables)
       const [measuresRes, riskMeasuresRes] = await Promise.all([
-        supabase
-          .from("measures" as any)
-          .select("status")
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
-        supabase
-          .from("risk_assessment_measures")
-          .select("progress_status")
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
+        withEmpScope(
+          supabase
+            .from("measures" as any)
+            .select("status")
+            .eq("company_id", companyId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso),
+          "responsible_person_id"
+        ),
+        withRiskScope(
+          supabase
+            .from("risk_assessment_measures")
+            .select("progress_status")
+            .eq("company_id", companyId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso)
+        ),
       ]);
 
       const measuresGrouped: Record<string, number> = {};
@@ -823,6 +1005,24 @@ export default function Reports() {
         measuresGrouped[key] = (measuresGrouped[key] || 0) + 1;
       });
       setMeasuresStatusData(Object.entries(measuresGrouped).map(([name, value]) => ({ name, value })));
+
+      // Health check-up status distribution
+      const { data: checkUpData } = await withEmpScope(
+        supabase
+          .from("health_checkups")
+          .select("status")
+          .eq("company_id", companyId)
+          .gte("created_at", startIso)
+          .lte("created_at", endIso),
+        "employee_id"
+      );
+
+      const checkUpGrouped: Record<string, number> = {};
+      (checkUpData || []).forEach((c: any) => {
+        const key = c.status || "unknown";
+        checkUpGrouped[key] = (checkUpGrouped[key] || 0) + 1;
+      });
+      setCheckUpsStatusData(Object.entries(checkUpGrouped).map(([name, value]) => ({ name, value })));
     } catch (error) {
       console.error("Error fetching section chart data:", error);
     }
@@ -1073,6 +1273,7 @@ export default function Reports() {
         head: [["Metric", "Value"]],
         body: [
           ["Total Health Check-ups", stats.totalCheckUps],
+          ["Completed", stats.completedCheckUps],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [13, 148, 136], textColor: 255, fontStyle: "bold" },
@@ -1395,11 +1596,11 @@ export default function Reports() {
           break;
         case "trainings":
           {
-            // Query training_records table
+            // Echte Trainingsdaten aus training_participations (nicht das leere training_records)
             if (groupBy === "employee_id") {
               // Training Compliance by Employee
               const { data, error } = await supabase
-                .from("training_records")
+                .from("training_participations")
                 .select("employee_id, employees(full_name), status")
                 .eq("company_id", companyId)
                 .gte("created_at", startDate)
@@ -1431,7 +1632,7 @@ export default function Reports() {
             } else if (groupBy === "status") {
               // Training by status
               const { data, error } = await supabase
-                .from("training_records")
+                .from("training_participations")
                 .select("status")
                 .eq("company_id", companyId)
                 .gte("created_at", startDate)
@@ -1452,7 +1653,7 @@ export default function Reports() {
             } else if (groupBy === "created_at") {
               // Training trends over time
               const { data, error } = await supabase
-                .from("training_records")
+                .from("training_participations")
                 .select("created_at")
                 .eq("company_id", companyId)
                 .gte("created_at", startDate)
@@ -1967,6 +2168,21 @@ export default function Reports() {
             </div>
 
             <div className="flex items-center gap-3">
+              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+                <SelectTrigger className="w-44">
+                  <Building2 className="w-4 h-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Abteilungen</SelectItem>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
                 <SelectTrigger className="w-40">
                   <Calendar className="w-4 h-4 mr-2" />
@@ -2050,7 +2266,7 @@ export default function Reports() {
             <TasksSection stats={stats} chartData={chartData} />
           )}
           {activeSection === "checkups" && (
-            <CheckupsSection stats={stats} />
+            <CheckupsSection stats={stats} checkUpsStatusData={checkUpsStatusData} />
           )}
 
           {activeSection !== "overview" && sectionCustomReports.length > 0 && (
@@ -3708,6 +3924,16 @@ function TrainingsSection({
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
+  const [matrixPage, setMatrixPage] = useState(1);
+  const matrixPageSize = 10;
+  const matrixPageCount = Math.max(1, Math.ceil(trainingMatrix.length / matrixPageSize));
+  const paginatedMatrix = trainingMatrix.slice(
+    (matrixPage - 1) * matrixPageSize,
+    matrixPage * matrixPageSize
+  );
+  useEffect(() => {
+    if (matrixPage > matrixPageCount) setMatrixPage(1);
+  }, [matrixPageCount, matrixPage]);
   const defaultLayout = {
     lg: [
       { i: "training-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
@@ -3867,7 +4093,7 @@ const resetLayout = useCallback(() => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  trainingMatrix.map((item, idx) => (
+                  paginatedMatrix.map((item, idx) => (
                     <TableRow key={idx} className="hover:bg-muted/30">
                       <TableCell className="font-medium">{item.employee_name}</TableCell>
                       <TableCell>{item.total_required}</TableCell>
@@ -3903,6 +4129,31 @@ const resetLayout = useCallback(() => {
               </TableBody>
             </Table>
           </div>
+          {trainingMatrix.length > matrixPageSize && (
+            <div className="flex items-center justify-between pt-4">
+              <span className="text-sm text-muted-foreground">
+                Seite {matrixPage} von {matrixPageCount} ({trainingMatrix.length} Mitarbeiter)
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={matrixPage <= 1}
+                  onClick={() => setMatrixPage((p) => Math.max(1, p - 1))}
+                >
+                  Zurück
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={matrixPage >= matrixPageCount}
+                  onClick={() => setMatrixPage((p) => Math.min(matrixPageCount, p + 1))}
+                >
+                  Weiter
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -4226,16 +4477,28 @@ function TasksSection({ stats, chartData }: { stats: ReportStats; chartData: any
   );
 }
 
-function CheckupsSection({ stats }: { stats: ReportStats }) {
+function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportStats; checkUpsStatusData: any[] }) {
   const { toast } = useToast();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
   const defaultLayout = {
-    lg: [{ i: "checkups-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false }],
-    md: [{ i: "checkups-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false }],
-    sm: [{ i: "checkups-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false }],
+    lg: [
+      { i: "checkups-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "checkups-completed", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "checkups-status-chart", x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3, static: false },
+    ],
+    md: [
+      { i: "checkups-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
+      { i: "checkups-completed", x: 5, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
+      { i: "checkups-status-chart", x: 0, y: 2, w: 10, h: 4, minW: 4, minH: 3, static: false },
+    ],
+    sm: [
+      { i: "checkups-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "checkups-completed", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "checkups-status-chart", x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3, static: false },
+    ],
   };
 
   useEffect(() => {
@@ -4338,6 +4601,45 @@ function CheckupsSection({ stats }: { stats: ReportStats }) {
             icon={<Stethoscope className="w-5 h-5" />}
             color="bg-teal-50 text-teal-600"
           />
+        </div>
+        <div key="checkups-completed">
+          <DraggableCard
+            title="Completed"
+            subtitle="Done check-ups"
+            value={stats.completedCheckUps}
+            icon={<CheckCircle className="w-5 h-5" />}
+            color="bg-green-50 text-green-600"
+          />
+        </div>
+        <div key="checkups-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
+          <Card className="dashboard-grid-card border shadow-sm h-full group">
+            <div className="drag-handle border-b flex items-center px-3 py-1">
+              <GripVertical className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <CardHeader className="py-3 pb-2">
+              <CardTitle className="text-base">Check-up Status Distribution</CardTitle>
+              <CardDescription>Health check-ups grouped by current status</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 pb-4 pt-0">
+              {checkUpsStatusData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                  No data for selected date range
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={checkUpsStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="40%" outerRadius="75%">
+                      {checkUpsStatusData.map((entry, index) => (
+                        <Cell key={`checkup-cell-${index}`} fill={getStatusColor(entry.name, index)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </ResponsiveGridLayout>
     </div>
