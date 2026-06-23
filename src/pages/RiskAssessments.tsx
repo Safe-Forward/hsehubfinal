@@ -2164,7 +2164,6 @@ export default function RiskAssessments() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0"
                             onClick={async () => {
                               if (confirm(
                                 language === "de"
