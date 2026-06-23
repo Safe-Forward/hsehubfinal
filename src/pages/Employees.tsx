@@ -207,7 +207,10 @@ export default function Employees() {
   const fetchEmployees = async () => {
     if (!companyId) return;
 
-    let query = supabase
+    // Sichtbarkeit wird serverseitig per RLS (user_can_view_employee) durchgesetzt:
+    // berücksichtigt department_managers (inkl. Subtree) und employee_managers.
+    // Kein zusätzlicher Client-Filter nötig — der würde das Modell nur verfälschen.
+    const { data, error } = await supabase
       .from("employees")
       .select(
         `
@@ -219,26 +222,6 @@ export default function Employees() {
       )
       .eq("company_id", companyId)
       .order("created_at", { ascending: false });
-
-    // Rollen mit view_own_department (statt view_all) sehen nur ihre eigene Abteilung,
-    // z.B. Abteilungsleiter. Ohne eigenes Mitarbeiterprofil/Abteilung gibt es keine Treffer.
-    if (!hasDetailedPermission("employees", "view_all") && hasDetailedPermission("employees", "view_own_department")) {
-      const { data: ownEmployee } = await supabase
-        .from("employees")
-        .select("department_id")
-        .eq("company_id", companyId)
-        .eq("user_id", user?.id)
-        .maybeSingle();
-
-      if (ownEmployee?.department_id) {
-        query = query.eq("department_id", ownEmployee.department_id);
-      } else {
-        setEmployees([]);
-        return;
-      }
-    }
-
-    const { data, error } = await query;
 
     if (error) {
       toast.error(t("employees.loadError"));

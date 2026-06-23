@@ -446,10 +446,26 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                             onValueChange={async (val) => {
                               const userId = val === "__none__" ? null : val;
                               if (userId) {
+                                // manager_employee_id wird von der RLS-Funktion user_can_view_employee
+                                // genutzt (Mitarbeitersichtbarkeit) — manager_user_id vom GBU-Freigabe-Flow.
+                                // Beide müssen gesetzt sein, sonst sieht der Abteilungsleiter niemanden.
+                                const { data: managerEmployee } = await supabase
+                                  .from("employees")
+                                  .select("id")
+                                  .eq("company_id", companyId)
+                                  .eq("user_id", userId)
+                                  .maybeSingle();
+
                                 const { error: upsertErr } = await (supabase as any)
                                   .from("department_managers")
                                   .upsert(
-                                    { department_id: dept.id, manager_user_id: userId, company_id: companyId, manager_type: "disciplinary" },
+                                    {
+                                      department_id: dept.id,
+                                      manager_user_id: userId,
+                                      manager_employee_id: managerEmployee?.id || null,
+                                      company_id: companyId,
+                                      manager_type: "disciplinary",
+                                    },
                                     { onConflict: "department_id,company_id,manager_type" }
                                   );
                                 if (upsertErr) {

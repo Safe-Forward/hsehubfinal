@@ -380,23 +380,8 @@ fetchProfileFields();
 
       if (error) throw error;
 
-      // Rollen mit view_own_department (statt view_all) dürfen nur Profile der
-      // eigenen Abteilung öffnen — verhindert Umgehung der Listen-Filterung per Direkt-URL.
-      if (!hasDetailedPermission("employees", "view_all") && hasDetailedPermission("employees", "view_own_department")) {
-        const { data: ownEmployee } = await supabase
-          .from("employees")
-          .select("department_id")
-          .eq("company_id", companyId)
-          .eq("user_id", user?.id)
-          .maybeSingle();
-
-        if (!ownEmployee?.department_id || ownEmployee.department_id !== (data as any)?.department_id) {
-          toast.error("Kein Zugriff auf dieses Mitarbeiterprofil");
-          navigate("/employees");
-          return;
-        }
-      }
-
+      // Sichtbarkeit wird serverseitig per RLS (user_can_view_employee) durchgesetzt —
+      // berücksichtigt department_managers (inkl. Subtree) und employee_managers.
       setEmployee(data as any);
       setFormData(data as any);
       // Don't load raw notes into textarea, leave it empty for new notes
