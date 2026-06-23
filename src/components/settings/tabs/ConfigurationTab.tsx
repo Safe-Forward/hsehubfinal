@@ -87,7 +87,9 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
   const [exposureGroups, setExposureGroups] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [orgType, setOrgType] = useState<"linie" | "matrix">("linie");
   const [deptManagers, setDeptManagers] = useState<Record<string, string>>({});
+  const [deptManagersFunctional, setDeptManagersFunctional] = useState<Record<string, string>>({});
   const [deptManagerSearch, setDeptManagerSearch] = useState<Record<string, string>>({});
   const [approvalWorkflows, setApprovalWorkflows] = useState<any[]>([]);
 
@@ -125,16 +127,30 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
       setExposureGroups(exposure.data || []);
       setEmployees(emps.data || []);
 
-      // Load department managers
+      // Load org type (Linie vs. Matrix) — bestimmt ob ein zweiter, fachlicher Leiter pro Abteilung möglich ist
+      const { data: settingsData } = await (supabase as any)
+        .from("company_settings")
+        .select("org_type")
+        .eq("company_id", companyId)
+        .maybeSingle();
+      if (settingsData?.org_type) setOrgType(settingsData.org_type as "linie" | "matrix");
+
+      // Load department managers (disziplinarisch + fachlich)
       const { data: dmData } = await (supabase as any)
         .from("department_managers")
-        .select("department_id, manager_user_id")
+        .select("department_id, manager_user_id, manager_type")
         .eq("company_id", companyId)
-        .eq("manager_type", "disciplinary");
+        .in("manager_type", ["disciplinary", "functional"]);
       if (dmData) {
         const dmMap: Record<string, string> = {};
-        dmData.forEach((dm: any) => { if (dm.manager_user_id) dmMap[dm.department_id] = dm.manager_user_id; });
+        const dmFunctionalMap: Record<string, string> = {};
+        dmData.forEach((dm: any) => {
+          if (!dm.manager_user_id) return;
+          if (dm.manager_type === "disciplinary") dmMap[dm.department_id] = dm.manager_user_id;
+          if (dm.manager_type === "functional") dmFunctionalMap[dm.department_id] = dm.manager_user_id;
+        });
         setDeptManagers(dmMap);
+        setDeptManagersFunctional(dmFunctionalMap);
       }
 
       // Load team members for manager assignment
@@ -231,6 +247,57 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
     }
+  };
+
+  const saveDeptManager = async (
+    deptId: string,
+    managerType: "disciplinary" | "functional",
+    userId: string | null
+  ) => {
+    const setMap = managerType === "disciplinary" ? setDeptManagers : setDeptManagersFunctional;
+    if (userId) {
+      // manager_employee_id wird von der RLS-Funktion user_can_view_employee genutzt
+      // (Mitarbeitersichtbarkeit) — manager_user_id vom GBU-Freigabe-Flow. Beide müssen
+      // gesetzt sein, sonst sieht der Abteilungsleiter niemanden.
+      const { data: managerEmployee } = await supabase
+        .from("employees")
+        .select("id")
+        .eq("company_id", companyId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const { error: upsertErr } = await (supabase as any)
+        .from("department_managers")
+        .upsert(
+          {
+            department_id: deptId,
+            manager_user_id: userId,
+            manager_employee_id: managerEmployee?.id || null,
+            company_id: companyId,
+            manager_type: managerType,
+          },
+          { onConflict: "department_id,company_id,manager_type" }
+        );
+      if (upsertErr) {
+        toast({ title: "Fehler beim Speichern", description: upsertErr.message, variant: "destructive" });
+        return;
+      }
+      setMap((prev) => ({ ...prev, [deptId]: userId }));
+    } else {
+      const { error: delErr } = await (supabase as any)
+        .from("department_managers")
+        .delete()
+        .eq("department_id", deptId)
+        .eq("company_id", companyId)
+        .eq("manager_type", managerType);
+      if (delErr) {
+        toast({ title: "Fehler beim Löschen", description: delErr.message, variant: "destructive" });
+        return;
+      }
+      setMap((prev) => { const n = { ...prev }; delete n[deptId]; return n; });
+    }
+    setDeptManagerSearch((prev) => ({ ...prev, [deptId]: "" }));
+    toast({ title: "Gespeichert", description: "Abteilungsleiter aktualisiert" });
   };
 
   const saveApprovalWorkflow = async (departmentId: string, approverId: string) => {
@@ -425,76 +492,32 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Abteilungsleiter</TableHead>
+                    <TableHead>{orgType === "matrix" ? "Leiter (disziplinarisch)" : "Abteilungsleiter"}</TableHead>
+                    {orgType === "matrix" && <TableHead>Leiter (fachlich)</TableHead>}
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {departments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={orgType === "matrix" ? 4 : 3} className="text-center py-8 text-muted-foreground">
                         No departments found. Add your first department above.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    departments.map((dept) => (
-                      <TableRow key={dept.id}>
-                        <TableCell className="font-medium">{dept.name}</TableCell>
-                        <TableCell>
+                    departments.map((dept) => {
+                      const renderManagerSelect = (managerType: "disciplinary" | "functional") => {
+                        const map = managerType === "disciplinary" ? deptManagers : deptManagersFunctional;
+                        return (
                           <Select
-                            value={deptManagers[dept.id] || "__none__"}
-                            onValueChange={async (val) => {
-                              const userId = val === "__none__" ? null : val;
-                              if (userId) {
-                                // manager_employee_id wird von der RLS-Funktion user_can_view_employee
-                                // genutzt (Mitarbeitersichtbarkeit) — manager_user_id vom GBU-Freigabe-Flow.
-                                // Beide müssen gesetzt sein, sonst sieht der Abteilungsleiter niemanden.
-                                const { data: managerEmployee } = await supabase
-                                  .from("employees")
-                                  .select("id")
-                                  .eq("company_id", companyId)
-                                  .eq("user_id", userId)
-                                  .maybeSingle();
-
-                                const { error: upsertErr } = await (supabase as any)
-                                  .from("department_managers")
-                                  .upsert(
-                                    {
-                                      department_id: dept.id,
-                                      manager_user_id: userId,
-                                      manager_employee_id: managerEmployee?.id || null,
-                                      company_id: companyId,
-                                      manager_type: "disciplinary",
-                                    },
-                                    { onConflict: "department_id,company_id,manager_type" }
-                                  );
-                                if (upsertErr) {
-                                  toast({ title: "Fehler beim Speichern", description: upsertErr.message, variant: "destructive" });
-                                  return;
-                                }
-                                setDeptManagers(prev => ({ ...prev, [dept.id]: userId }));
-                              } else {
-                                const { error: delErr } = await (supabase as any)
-                                  .from("department_managers")
-                                  .delete()
-                                  .eq("department_id", dept.id)
-                                  .eq("company_id", companyId)
-                                  .eq("manager_type", "disciplinary");
-                                if (delErr) {
-                                  toast({ title: "Fehler beim Löschen", description: delErr.message, variant: "destructive" });
-                                  return;
-                                }
-                                setDeptManagers(prev => { const n = { ...prev }; delete n[dept.id]; return n; });
-                              }
-                              setDeptManagerSearch(prev => ({ ...prev, [dept.id]: "" }));
-                              toast({ title: "Gespeichert", description: "Abteilungsleiter aktualisiert" });
-                            }}
+                            value={map[dept.id] || "__none__"}
+                            onValueChange={(val) => saveDeptManager(dept.id, managerType, val === "__none__" ? null : val)}
                           >
                             <SelectTrigger className="w-[220px] h-8 text-xs">
                               <SelectValue placeholder="— Kein Leiter —">
-                                {deptManagers[dept.id]
+                                {map[dept.id]
                                   ? (() => {
-                                      const m = teamMembers.find(tm => tm.user_id === deptManagers[dept.id]);
+                                      const m = teamMembers.find(tm => tm.user_id === map[dept.id]);
                                       return m ? `${m.first_name} ${m.last_name}` : "Unbekannt";
                                     })()
                                   : "— Kein Leiter —"}
@@ -526,7 +549,13 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                                 ))}
                             </SelectContent>
                           </Select>
-                        </TableCell>
+                        );
+                      };
+                      return (
+                      <TableRow key={dept.id}>
+                        <TableCell className="font-medium">{dept.name}</TableCell>
+                        <TableCell>{renderManagerSelect("disciplinary")}</TableCell>
+                        {orgType === "matrix" && <TableCell>{renderManagerSelect("functional")}</TableCell>}
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
@@ -552,7 +581,8 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

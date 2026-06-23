@@ -38,13 +38,22 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
   const { toast } = useToast();
 
   const [orgType, setOrgType] = useState<"linie" | "matrix">("linie");
-  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<{
+    teamMemberId: string;
+    employeeId: string | null;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    disciplinaryManagerId: string | null;
+    functionalManagerId: string | null;
+  }[]>([]);
   const [managerSaving, setManagerSaving] = useState(false);
 
   useEffect(() => {
     if (companyId) {
       fetchOrgType();
-      fetchTeamMembers();
+      fetchMembers();
     }
   }, [companyId]);
 
@@ -62,18 +71,64 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
     }
   };
 
-  const fetchTeamMembers = async () => {
+  // Vorgesetzte werden über employee_managers (employee_id, manager_employee_id,
+  // manager_type) zugewiesen — das ist die Tabelle, die die RLS-Funktion
+  // user_can_view_employee tatsächlich prüft. team_members hat eigene
+  // line_manager_id/functional_manager_id Spalten, die aber von nichts im
+  // System ausgewertet werden — deshalb hier nicht mehr verwendet.
+  const fetchMembers = async () => {
     if (!companyId) return;
     try {
-      const { data, error } = await supabase
-        .from("team_members")
-        .select("*")
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setTeamMembers(data || []);
+      const [teamRes, employeesRes, managersRes] = await Promise.all([
+        supabase
+          .from("team_members")
+          .select("id, user_id, first_name, last_name, email, role")
+          .eq("company_id", companyId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("employees")
+          .select("id, user_id, full_name")
+          .eq("company_id", companyId),
+        (supabase as any)
+          .from("employee_managers")
+          .select("employee_id, manager_employee_id, manager_type")
+          .eq("company_id", companyId),
+      ]);
+
+      if (teamRes.error) throw teamRes.error;
+      if (employeesRes.error) throw employeesRes.error;
+      if (managersRes.error) throw managersRes.error;
+
+      const employeeByUserId = new Map<string, string>(
+        (employeesRes.data || []).filter((e: any) => e.user_id).map((e: any) => [e.user_id, e.id])
+      );
+
+      const managersByEmployee = new Map<string, { disciplinary?: string; functional?: string }>();
+      (managersRes.data || []).forEach((m: any) => {
+        const entry = managersByEmployee.get(m.employee_id) || {};
+        if (m.manager_type === "disciplinary") entry.disciplinary = m.manager_employee_id;
+        if (m.manager_type === "functional") entry.functional = m.manager_employee_id;
+        managersByEmployee.set(m.employee_id, entry);
+      });
+
+      const merged = (teamRes.data || []).map((tm: any) => {
+        const employeeId = tm.user_id ? employeeByUserId.get(tm.user_id) || null : null;
+        const managers = employeeId ? managersByEmployee.get(employeeId) : undefined;
+        return {
+          teamMemberId: tm.id,
+          employeeId,
+          firstName: tm.first_name,
+          lastName: tm.last_name,
+          email: tm.email,
+          role: tm.role,
+          disciplinaryManagerId: managers?.disciplinary || null,
+          functionalManagerId: managers?.functional || null,
+        };
+      });
+
+      setMembers(merged);
     } catch (err) {
-      console.error("Error fetching team members:", err);
+      console.error("Error fetching members:", err);
     }
   };
 
@@ -93,19 +148,41 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
   };
 
   const handleUpdateManager = async (
-    memberId: string,
-    field: "line_manager_id" | "functional_manager_id",
-    value: string | null
+    employeeId: string,
+    managerType: "disciplinary" | "functional",
+    managerEmployeeId: string | null
   ) => {
     setManagerSaving(true);
     try {
-      const { error } = await supabase
-        .from("team_members")
-        .update({ [field]: value || null })
-        .eq("id", memberId);
-      if (error) throw error;
-      setTeamMembers((prev) =>
-        prev.map((m) => (m.id === memberId ? { ...m, [field]: value || null } : m))
+      if (managerEmployeeId) {
+        const { error } = await (supabase as any)
+          .from("employee_managers")
+          .upsert(
+            { employee_id: employeeId, manager_employee_id: managerEmployeeId, manager_type: managerType, company_id: companyId },
+            { onConflict: "employee_id,company_id,manager_type" }
+          );
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any)
+          .from("employee_managers")
+          .delete()
+          .eq("employee_id", employeeId)
+          .eq("company_id", companyId)
+          .eq("manager_type", managerType);
+        if (error) throw error;
+      }
+
+      setMembers((prev) =>
+        prev.map((m) =>
+          m.employeeId === employeeId
+            ? {
+                ...m,
+                ...(managerType === "disciplinary"
+                  ? { disciplinaryManagerId: managerEmployeeId }
+                  : { functionalManagerId: managerEmployeeId }),
+              }
+            : m
+        )
       );
       toast({ title: "Gespeichert" });
     } catch (err: any) {
@@ -233,7 +310,7 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {teamMembers.length === 0 ? (
+          {members.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">
               Keine Teammitglieder vorhanden. Füge zuerst Mitglieder unter{" "}
               <button className="underline" onClick={() => onNavigateToTab?.("team")}>
@@ -257,12 +334,28 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {teamMembers.map((member) => {
-                    const others = teamMembers.filter((m) => m.id !== member.id);
+                  {members.map((member) => {
+                    const others = members.filter((m) => m.employeeId && m.employeeId !== member.employeeId);
+                    if (!member.employeeId) {
+                      return (
+                        <TableRow key={member.teamMemberId}>
+                          <TableCell className="font-medium">
+                            <div>{member.firstName} {member.lastName}</div>
+                            <div className="text-xs text-muted-foreground">{member.email}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{member.role}</Badge>
+                          </TableCell>
+                          <TableCell colSpan={orgType === "matrix" ? 2 : 1} className="text-xs text-muted-foreground">
+                            Kein Mitarbeiterprofil verknüpft — Vorgesetzte können erst nach Verknüpfung zugewiesen werden
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
                     return (
-                      <TableRow key={member.id}>
+                      <TableRow key={member.teamMemberId}>
                         <TableCell className="font-medium">
-                          <div>{member.first_name} {member.last_name}</div>
+                          <div>{member.firstName} {member.lastName}</div>
                           <div className="text-xs text-muted-foreground">{member.email}</div>
                         </TableCell>
                         <TableCell>
@@ -270,9 +363,9 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
                         </TableCell>
                         <TableCell>
                           <Select
-                            value={member.line_manager_id || "__none__"}
+                            value={member.disciplinaryManagerId || "__none__"}
                             onValueChange={(val) =>
-                              handleUpdateManager(member.id, "line_manager_id", val === "__none__" ? null : val)
+                              handleUpdateManager(member.employeeId!, "disciplinary", val === "__none__" ? null : val)
                             }
                             disabled={managerSaving}
                           >
@@ -282,9 +375,8 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
                             <SelectContent>
                               <SelectItem value="__none__">— Kein Vorgesetzter —</SelectItem>
                               {others.map((o) => (
-                                <SelectItem key={o.id} value={o.id}>
-                                  {o.first_name} {o.last_name}
-                                  {(o.role === "Admin" || o.role === "Line Manager" || o.role === "HSE Manager") ? " ★" : ""}
+                                <SelectItem key={o.employeeId!} value={o.employeeId!}>
+                                  {o.firstName} {o.lastName}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -293,9 +385,9 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
                         {orgType === "matrix" && (
                           <TableCell>
                             <Select
-                              value={member.functional_manager_id || "__none__"}
+                              value={member.functionalManagerId || "__none__"}
                               onValueChange={(val) =>
-                                handleUpdateManager(member.id, "functional_manager_id", val === "__none__" ? null : val)
+                                handleUpdateManager(member.employeeId!, "functional", val === "__none__" ? null : val)
                               }
                               disabled={managerSaving}
                             >
@@ -305,9 +397,8 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
                               <SelectContent>
                                 <SelectItem value="__none__">— Kein Vorgesetzter —</SelectItem>
                                 {others.map((o) => (
-                                  <SelectItem key={o.id} value={o.id}>
-                                    {o.first_name} {o.last_name}
-                                    {(o.role === "Admin" || o.role === "Line Manager" || o.role === "HSE Manager") ? " ★" : ""}
+                                  <SelectItem key={o.employeeId!} value={o.employeeId!}>
+                                    {o.firstName} {o.lastName}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
