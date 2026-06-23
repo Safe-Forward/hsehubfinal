@@ -4781,8 +4781,8 @@ p_sender_name: senderName,
                           {/* Investigation Name */}
                           <h3 className="font-semibold text-base">
                             {(() => {
-                              // Check if investigation_name looks like a UUID (contains hyphens and is long)
-                              const isUUID = checkup.investigation_name?.includes('-') && checkup.investigation_name?.length > 30;
+                              // Check if investigation_name is actually a UUID (echtes UUID-Format, nicht nur "enthält Bindestrich")
+                              const isUUID = !!checkup.investigation_name && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(checkup.investigation_name);
 
                               // If it's a UUID or empty, look up from gInvestigations using investigation_id
                               if (!checkup.investigation_name || isUUID) {
