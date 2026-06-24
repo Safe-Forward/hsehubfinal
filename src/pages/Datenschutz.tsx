@@ -237,12 +237,12 @@ const Datenschutz = () => {
                 <SectionHeading id="email-versand" number="6" title="E-Mail-Versand (Brevo)" />
                 <p>Für den Versand transaktionaler E-Mails (Registrierungsbestätigung, Passwort-Reset, Team-Einladungen, Aufgaben- und Fristen-Benachrichtigungen) setzen wir Brevo ein. Dabei werden Name, E-Mail-Adresse und der jeweilige E-Mail-Inhalt an Brevo übermittelt.</p>
                 <ProviderBox
-                  name="Brevo SAS"
-                  address="7 Rue de Madrid, 75008 Paris, Frankreich"
-                  country="Frankreich (EU)"
+                  name="Brevo GmbH"
+                  address="Köpenicker Str. 126, 10179 Berlin, Deutschland"
+                  country="Deutschland"
                   privacyUrl="https://www.brevo.com/legal/privacypolicy/"
-                  safeguard="Art. 6 Abs. 1 lit. b/f DSGVO; Verarbeitung innerhalb der EU"
-                  note="Es besteht ein Auftragsverarbeitungsvertrag mit Brevo (https://www.brevo.com/legal/termsofuse/)."
+                  safeguard="Art. 6 Abs. 1 lit. b/f DSGVO; Verarbeitung innerhalb Deutschlands/der EU"
+                  note="Brevo GmbH ist eine Tochtergesellschaft der Sendinblue SAS (Paris, Frankreich). Es besteht ein Auftragsverarbeitungsvertrag mit Brevo (https://www.brevo.com/legal/termsofuse/)."
                 />
               </section>
 
@@ -379,7 +379,7 @@ const Datenschutz = () => {
                         { provider: "HubSpot", country: "USA", guarantee: "EU-SCC" },
                         { provider: "Stripe", country: "Irland (EU)", guarantee: "Innerhalb EU" },
                         { provider: "Hostinger", country: "Zypern (EU)", guarantee: "Innerhalb EU" },
-                        { provider: "Brevo", country: "Frankreich (EU)", guarantee: "Innerhalb EU" },
+                        { provider: "Brevo", country: "Deutschland", guarantee: "Innerhalb Deutschlands" },
                       ].map((row, i) => (
                         <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                           <td className="p-3 border border-gray-200 font-medium">{row.provider}</td>
