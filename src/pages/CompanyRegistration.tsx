@@ -213,24 +213,22 @@ export default function CompanyRegistration() {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Benutzererstellung fehlgeschlagen");
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const { data: sessionData, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: data.adminEmail,
-          password: data.password,
-        });
-
-      if (signInError) throw signInError;
-      if (!sessionData.user) throw new Error("Sitzung konnte nicht erstellt werden");
-
+      // register_company takes user_id as a plain parameter (it's
+      // SECURITY DEFINER, not auth.uid()-based) and is callable by anon -
+      // it never needed an active session. Previously this called
+      // signInWithPassword first, which always failed with "Email not
+      // confirmed" whenever the project requires email confirmation
+      // (it does here), so registration could never actually complete -
+      // it died before register_company ever ran. Add-on selection is now
+      // handled inside register_company itself, so it works regardless of
+      // confirmation status too.
       const selectedPlan = subscriptionPlans.find((p) => p.tier === selectedTier)!;
 
       const { data: registrationResult, error: registrationError } = await (
         supabase as any
       ).rpc("register_company", {
         registration_data: {
-          user_id: sessionData.user.id,
+          user_id: authData.user.id,
           company_name: data.companyName,
           company_email: data.companyEmail,
           company_phone: data.companyPhone || "",
@@ -239,6 +237,7 @@ export default function CompanyRegistration() {
           max_employees: selectedPlan.maxEmployees,
           admin_email: data.adminEmail,
           admin_name: data.adminName,
+          selected_addon_codes: selectedAddOns,
         },
       } as any);
 
@@ -253,32 +252,6 @@ export default function CompanyRegistration() {
         );
       }
 
-      // selectedAddOns was tracked in the UI but never sent anywhere before -
-      // the customer's add-on choices just vanished. Persist them now, while
-      // the session is still authenticated (signOut happens right after).
-      const newCompanyId = (registrationResult as any).company_id;
-      if (newCompanyId && selectedAddOns.length > 0) {
-        const { data: addonDefs } = await supabase
-          .from("addon_definitions")
-          .select("id, code, price_monthly, price_one_time, billing_type")
-          .in("code", selectedAddOns);
-
-        if (addonDefs && addonDefs.length > 0) {
-          await supabase.from("company_addons").insert(
-            addonDefs.map((addon) => ({
-              company_id: newCompanyId,
-              addon_id: addon.id,
-              status: "active",
-              quantity: 1,
-              price_paid: addon.billing_type === "one_time" ? addon.price_one_time : addon.price_monthly,
-              billing_cycle: addon.billing_type === "one_time" ? null : "monthly",
-              start_date: new Date().toISOString(),
-              created_by: sessionData.user.id,
-            }))
-          );
-        }
-      }
-
       toast({
         title: "Erfolgreich!",
         description: "Ihr Unternehmen wurde erstellt! Bitte warten Sie, während wir alles einrichten...",
@@ -289,7 +262,7 @@ export default function CompanyRegistration() {
 
       toast({
         title: "Fast geschafft!",
-        description: "Bitte melden Sie sich erneut an, um auf Ihr neues Unternehmens-Dashboard zuzugreifen.",
+        description: "Bitte bestätigen Sie ggf. Ihre E-Mail-Adresse über den Link, den wir Ihnen gesendet haben, und melden Sie sich anschließend an, um auf Ihr neues Unternehmens-Dashboard zuzugreifen.",
       });
 
       setTimeout(() => {
