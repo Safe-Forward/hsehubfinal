@@ -22,6 +22,8 @@ import Datenschutz from "./pages/Datenschutz";
 import MainLayout from "./components/MainLayout";
 import SuperAdminRoute from "./components/SuperAdminRoute";
 import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
+import { CookieConsentProvider } from "./contexts/CookieConsentContext";
+import { CookieConsentBanner } from "./components/CookieConsentBanner";
 
 // Lazily loaded routes: less-frequently visited / heavier pages.
 // Keeping these out of the main bundle shrinks the critical first-load path.
@@ -76,7 +78,9 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <LanguageProvider>
+        <CookieConsentProvider>
+          <CookieConsentBanner />
+          <LanguageProvider>
           <AuthProvider>
             <GlobalErrorBoundary>
             <Suspense fallback={<PageLoadingFallback />}>
@@ -464,7 +468,8 @@ const App = () => (
             </Suspense>
             </GlobalErrorBoundary>
           </AuthProvider>
-        </LanguageProvider>
+          </LanguageProvider>
+        </CookieConsentProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { useCookieConsent } from "@/contexts/CookieConsentContext";
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -8,6 +9,7 @@ interface PublicLayoutProps {
 
 const PublicLayout = ({ children }: PublicLayoutProps) => {
   const navigate = useNavigate();
+  const { openSettings } = useCookieConsent();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 font-sans">
@@ -97,6 +99,12 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
               >
                 Datenschutzerklärung
               </a>
+              <button
+                onClick={openSettings}
+                className="hover:text-blue-600 transition-colors"
+              >
+                Cookie-Einstellungen
+              </button>
             </div>
           </div>
         </div>
