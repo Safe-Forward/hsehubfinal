@@ -10,6 +10,7 @@ import PublicLayout from "@/components/PublicLayout";
 //   ✅ GitHub (Quellcode)
 //   ✅ Supabase (Datenbank)
 //   ✅ Stripe (Zahlungen)
+//   ✅ Brevo (E-Mail-Versand)
 //
 // ANBIETER VORBEREITET (auskommentiert – aktivieren wenn live):
 //   🔲 Google Analytics 4
@@ -27,14 +28,15 @@ const TOC_SECTIONS = [
   { id: "erhobene-daten", number: "3", title: "Erhobene Daten & Zwecke" },
   { id: "hosting", number: "4", title: "Hosting & Infrastruktur" },
   { id: "datenbank", number: "5", title: "Datenbank & Speicherung" },
-  { id: "zahlungen", number: "6", title: "Zahlungsabwicklung (Stripe)" },
-  { id: "code", number: "7", title: "Quellcodeverwaltung (GitHub)" },
-  { id: "cookies", number: "8", title: "Cookies & Tracking" },
-  { id: "analyse", number: "9", title: "Analyse-Tools" },
-  { id: "auftragsverarbeitung", number: "10", title: "Auftragsverarbeitung (AVV)" },
-  { id: "drittlaender", number: "11", title: "Drittlandübermittlungen" },
-  { id: "rechte", number: "12", title: "Ihre Rechte" },
-  { id: "sicherheit", number: "13", title: "Datensicherheit" },
+  { id: "email-versand", number: "6", title: "E-Mail-Versand (Brevo)" },
+  { id: "zahlungen", number: "7", title: "Zahlungsabwicklung (Stripe)" },
+  { id: "code", number: "8", title: "Quellcodeverwaltung (GitHub)" },
+  { id: "cookies", number: "9", title: "Cookies & Tracking" },
+  { id: "analyse", number: "10", title: "Analyse-Tools" },
+  { id: "auftragsverarbeitung", number: "11", title: "Auftragsverarbeitung (AVV)" },
+  { id: "drittlaender", number: "12", title: "Drittlandübermittlungen" },
+  { id: "rechte", number: "13", title: "Ihre Rechte" },
+  { id: "sicherheit", number: "14", title: "Datensicherheit" },
 ];
 
 const SectionHeading = ({ id, number, title, color = "blue" }: { id: string; number: string; title: string; color?: "blue" | "green" }) => (
@@ -232,7 +234,20 @@ const Datenschutz = () => {
               </section>
 
               <section>
-                <SectionHeading id="zahlungen" number="6" title="Zahlungsabwicklung (Stripe)" color="green" />
+                <SectionHeading id="email-versand" number="6" title="E-Mail-Versand (Brevo)" />
+                <p>Für den Versand transaktionaler E-Mails (Registrierungsbestätigung, Passwort-Reset, Team-Einladungen, Aufgaben- und Fristen-Benachrichtigungen) setzen wir Brevo ein. Dabei werden Name, E-Mail-Adresse und der jeweilige E-Mail-Inhalt an Brevo übermittelt.</p>
+                <ProviderBox
+                  name="Brevo SAS"
+                  address="7 Rue de Madrid, 75008 Paris, Frankreich"
+                  country="Frankreich (EU)"
+                  privacyUrl="https://www.brevo.com/legal/privacypolicy/"
+                  safeguard="Art. 6 Abs. 1 lit. b/f DSGVO; Verarbeitung innerhalb der EU"
+                  note="Es besteht ein Auftragsverarbeitungsvertrag mit Brevo (https://www.brevo.com/legal/termsofuse/)."
+                />
+              </section>
+
+              <section>
+                <SectionHeading id="zahlungen" number="7" title="Zahlungsabwicklung (Stripe)" color="green" />
                 <p>Für Zahlungen verwenden wir Stripe. Zahlungsdaten werden direkt an Stripe übermittelt. Wir speichern keine vollständigen Zahlungsmitteldaten.</p>
                 <ProviderBox
                   name="Stripe Payments Europe, Ltd."
@@ -245,7 +260,7 @@ const Datenschutz = () => {
               </section>
 
               <section>
-                <SectionHeading id="code" number="7" title="Quellcodeverwaltung (GitHub)" color="green" />
+                <SectionHeading id="code" number="8" title="Quellcodeverwaltung (GitHub)" color="green" />
                 <p>Der Quellcode wird in einem privaten Repository auf GitHub verwaltet. Produktionsdaten der Nutzer werden nicht auf GitHub gespeichert.</p>
                 <ProviderBox
                   name="GitHub, Inc. (Microsoft Corporation)"
@@ -258,7 +273,7 @@ const Datenschutz = () => {
               </section>
 
               <section>
-                <SectionHeading id="cookies" number="8" title="Cookies & lokale Speicherung" />
+                <SectionHeading id="cookies" number="9" title="Cookies & lokale Speicherung" />
                 <p>Diese Website verwendet Cookies und vergleichbare Technologien.</p>
                 <SubHeading>8.1 Technisch notwendige Cookies</SubHeading>
                 <p className="text-sm mb-3">Diese Cookies sind für den sicheren Betrieb unerlässlich und erfordern keine Einwilligung (§ 25 Abs. 2 TDDDG):</p>
@@ -293,7 +308,7 @@ const Datenschutz = () => {
               </section>
 
               <section>
-                <SectionHeading id="analyse" number="9" title="Analyse-Tools & Marketing" color="green" />
+                <SectionHeading id="analyse" number="10" title="Analyse-Tools & Marketing" color="green" />
                 <SubHeading>9.1 Google Analytics 4</SubHeading>
                 <p>Mit Ihrer Einwilligung setzen wir Google Analytics 4 (GA4) ein. GA4 verwendet Cookies, um Nutzerverhalten zu analysieren (Seitenaufrufe, Verweildauer, Absprungrate). IP-Adressen werden vor der Übertragung an Google anonymisiert.</p>
                 <ProviderBox
@@ -330,7 +345,7 @@ const Datenschutz = () => {
               </section>
 
               <section>
-                <SectionHeading id="auftragsverarbeitung" number="10" title="Auftragsverarbeitung (Art. 28 DSGVO)" />
+                <SectionHeading id="auftragsverarbeitung" number="11" title="Auftragsverarbeitung (Art. 28 DSGVO)" />
                 <p>Da der HSE Hub Daten der Mitarbeiter unserer Kunden verarbeitet, agieren wir als <strong>Auftragsverarbeiter</strong>. Mit jedem Kunden wird ein AVV abgeschlossen, der regelt:</p>
                 <ul className="list-disc pl-6 mt-4 space-y-2 text-sm">
                   <li>Gegenstand, Dauer und Zweck der Verarbeitung</li>
@@ -343,7 +358,7 @@ const Datenschutz = () => {
               </section>
 
               <section>
-                <SectionHeading id="drittlaender" number="11" title="Drittlandübermittlungen (Art. 44 ff. DSGVO)" color="green" />
+                <SectionHeading id="drittlaender" number="12" title="Drittlandübermittlungen (Art. 44 ff. DSGVO)" color="green" />
                 <p className="mb-4">Soweit Daten in Drittländer übermittelt werden, erfolgt dies auf Grundlage geeigneter Garantien gemäß Art. 46 DSGVO:</p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm border-collapse">
@@ -364,6 +379,7 @@ const Datenschutz = () => {
                         { provider: "HubSpot", country: "USA", guarantee: "EU-SCC" },
                         { provider: "Stripe", country: "Irland (EU)", guarantee: "Innerhalb EU" },
                         { provider: "Hostinger", country: "Zypern (EU)", guarantee: "Innerhalb EU" },
+                        { provider: "Brevo", country: "Frankreich (EU)", guarantee: "Innerhalb EU" },
                       ].map((row, i) => (
                         <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                           <td className="p-3 border border-gray-200 font-medium">{row.provider}</td>
@@ -378,7 +394,7 @@ const Datenschutz = () => {
               </section>
 
               <section>
-                <SectionHeading id="rechte" number="12" title="Ihre Rechte als betroffene Person" />
+                <SectionHeading id="rechte" number="13" title="Ihre Rechte als betroffene Person" />
                 <p className="mb-6">
                   Zur Geltendmachung Ihrer Rechte wenden Sie sich an: <a href="mailto:info@tech-forward.de" className="text-blue-600 hover:underline">info@tech-forward.de</a>. Wir antworten innerhalb von 30 Tagen (Art. 12 Abs. 3 DSGVO).
                 </p>
@@ -395,7 +411,7 @@ const Datenschutz = () => {
               </section>
 
               <section>
-                <SectionHeading id="sicherheit" number="13" title="Datensicherheit (Art. 32 DSGVO)" color="green" />
+                <SectionHeading id="sicherheit" number="14" title="Datensicherheit (Art. 32 DSGVO)" color="green" />
                 <p className="mb-4">Wir setzen technische und organisatorische Maßnahmen ein:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
