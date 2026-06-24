@@ -78,7 +78,6 @@ import {
 } from "@/components/ui/popover";
 import { RefreshAuthButton } from "@/components/RefreshAuthButton";
 import { useAuditLog } from "@/hooks/useAuditLog";
-import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -739,11 +738,11 @@ export default function Employees() {
     return null;
   };
 
-  const convertImportedDate = (raw: unknown): string | null => {
+  const convertImportedDate = (raw: unknown, xlsx: typeof import("xlsx")): string | null => {
     if (!raw) return null;
 
     if (typeof raw === "number" && Number.isFinite(raw)) {
-      const parsed = XLSX.SSF.parse_date_code(raw);
+      const parsed = xlsx.SSF.parse_date_code(raw);
       if (!parsed) return null;
       const yyyy = String(parsed.y).padStart(4, "0");
       const mm = String(parsed.m).padStart(2, "0");
@@ -776,7 +775,8 @@ export default function Employees() {
     return null;
   };
 
-  const handleDownloadImportTemplate = () => {
+  const handleDownloadImportTemplate = async () => {
+    const XLSX = await import("xlsx");
     const templateRows = [
       {
         employee_number: "2600125",
@@ -819,6 +819,7 @@ export default function Employees() {
     setImportErrors([]);
     setLastImportReport(null);
     try {
+      const XLSX = await import("xlsx");
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -894,7 +895,7 @@ export default function Employees() {
           "Einstellungsdatum",
           "Start Date",
         ]);
-        const hireDate = convertImportedDate(hireDateRaw);
+        const hireDate = convertImportedDate(hireDateRaw, XLSX);
 
         if (hireDateRaw && !hireDate) {
           rowErrors.push(`Row ${rowNumber}: invalid hire_date (${hireDateRaw})`);
@@ -1012,9 +1013,10 @@ export default function Employees() {
   };
 
   // Export handlers
-  const handleExportXLSX = () => {
+  const handleExportXLSX = async () => {
     setIsExporting(true);
     try {
+      const XLSX = await import("xlsx");
       const exportData = filteredEmployees.map(emp => ({
         'Employee Number': emp.employee_number,
         'First Name': emp.full_name.split(' ')[0],
@@ -1040,9 +1042,10 @@ export default function Employees() {
     }
   };
 
-  const handleExportCSV = () => {
+  const handleExportCSV = async () => {
     setIsExporting(true);
     try {
+      const XLSX = await import("xlsx");
       const exportData = filteredEmployees.map(emp => ({
         'Employee Number': emp.employee_number,
         'First Name': emp.full_name.split(' ')[0],

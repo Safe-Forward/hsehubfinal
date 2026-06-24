@@ -10,7 +10,6 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
 import CompanyRegistration from "./pages/CompanyRegistration";
 import AuthDebug from "./pages/AuthDebug";
 import NotFound from "./pages/NotFound";
@@ -28,6 +27,7 @@ import { CookieConsentBanner } from "./components/CookieConsentBanner";
 
 // Lazily loaded routes: less-frequently visited / heavier pages.
 // Keeping these out of the main bundle shrinks the critical first-load path.
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Employees = lazy(() => import("./pages/Employees"));
 const EmployeeProfile = lazy(() => import("./pages/EmployeeProfile"));
 const ActivityGroups = lazy(() => import("./pages/ActivityGroups"));
