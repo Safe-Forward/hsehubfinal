@@ -38,6 +38,7 @@ import {
 import { Combobox } from "@/components/ui/combobox";
 import { Progress } from "@/components/ui/progress";
 import jsPDF from "jspdf";
+import { exportEmployeeData } from "@/lib/employeeDataExport";
 import {
   Table,
   TableBody,
@@ -3036,6 +3037,16 @@ p_sender_name: senderName,
             </div>
           </div>
           <div className="flex items-center gap-4">
+            {hasDetailedPermission("employees", "manage") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportEmployeeData(employee.id)}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Daten exportieren (DSGVO)
+              </Button>
+            )}
             <div className="flex items-center gap-2">
               <Label htmlFor="active-toggle" className="text-sm font-medium">
                 {employee.is_active

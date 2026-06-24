@@ -105,6 +105,7 @@ import { ProfileFieldsTab } from "@/components/settings/tabs/ProfileFieldsTab";
 import { CatalogsTab } from "@/components/settings/tabs/CatalogsTab";
 import { IntervalsTab } from "@/components/settings/tabs/IntervalsTab";
 import { InvoicesBillingTab } from "@/components/settings/tabs/InvoicesBillingTab";
+import { DangerZoneTab } from "@/components/settings/tabs/DangerZoneTab";
 import {
   CustomRole,
   PermissionCategory,
@@ -151,7 +152,7 @@ const PREDEFINED_MEASURE_BUILDING_BLOCKS = [
 ];
 
 export default function Settings() {
-  const { user, loading, companyId, userRole } = useAuth();
+  const { user, loading, companyId, userRole, companyName } = useAuth();
   const { t, language } = useLanguage();
   const { hasDetailedPermission } = usePermissions();
   const navigate = useNavigate();
@@ -3456,6 +3457,24 @@ const handleUpdateManager = async (
                       </div>
                     </div>
                   </button>
+
+                  {userRole === "company_admin" && (
+                    <button
+                      onClick={() => setActiveTab("danger-zone")}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "danger-zone"
+                        ? "bg-destructive text-destructive-foreground"
+                        : "hover:bg-destructive/10 text-destructive"
+                        }`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <div className="text-left">
+                        <div>Gefahrenzone</div>
+                        <div className="text-xs opacity-80">
+                          Konto löschen
+                        </div>
+                      </div>
+                    </button>
+                  )}
                 </nav>
               </CardContent>
             </Card>
@@ -3565,6 +3584,13 @@ const handleUpdateManager = async (
                   submitTicket={submitTicket}
                 />
               </TabsContent>
+
+              {/* Tab 10: Danger Zone (company_admin only) */}
+              {userRole === "company_admin" && (
+                <TabsContent value="danger-zone">
+                  <DangerZoneTab companyName={companyName || ""} />
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         </div>
