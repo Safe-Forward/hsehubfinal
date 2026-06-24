@@ -18,6 +18,7 @@ import { Check, Loader2, Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { AVV_VERSION } from "@/pages/AVV";
 
 const registrationSchema = z
   .object({
@@ -167,6 +168,7 @@ export default function CompanyRegistration() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [agreedToAvv, setAgreedToAvv] = useState(false);
 
   const {
     register,
@@ -196,6 +198,14 @@ export default function CompanyRegistration() {
   };
 
   const onSubmit = async (data: RegistrationForm) => {
+    if (!agreedToAvv) {
+      toast({
+        title: "Bestätigung erforderlich",
+        description: "Bitte akzeptieren Sie die Datenschutzerklärung und den Auftragsverarbeitungsvertrag (AVV).",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoading(true);
     try {
       await supabase.auth.signOut();
@@ -238,6 +248,8 @@ export default function CompanyRegistration() {
           admin_email: data.adminEmail,
           admin_name: data.adminName,
           selected_addon_codes: selectedAddOns,
+          avv_accepted: agreedToAvv,
+          avv_version: AVV_VERSION,
         },
       } as any);
 
@@ -509,8 +521,28 @@ export default function CompanyRegistration() {
                     </div>
                   </div>
 
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      id="avv-acceptance"
+                      checked={agreedToAvv}
+                      onChange={(e) => setAgreedToAvv(e.target.checked)}
+                      className="mt-1 cursor-pointer"
+                    />
+                    <label htmlFor="avv-acceptance" className="text-sm text-muted-foreground cursor-pointer">
+                      Ich akzeptiere die{" "}
+                      <a href="/datenschutz" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                        Datenschutzerklärung
+                      </a>{" "}
+                      und den{" "}
+                      <a href="/avv" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                        Auftragsverarbeitungsvertrag (AVV)
+                      </a>.
+                    </label>
+                  </div>
+
                   <div className="flex flex-col gap-4">
-                    <Button type="submit" size="lg" disabled={loading} className="w-full">
+                    <Button type="submit" size="lg" disabled={loading || !agreedToAvv} className="w-full">
                       {loading ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />

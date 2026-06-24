@@ -99,6 +99,12 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
               >
                 Datenschutzerklärung
               </a>
+              <a
+                href="/avv"
+                className="hover:text-blue-600 transition-colors"
+              >
+                AVV
+              </a>
               <button
                 onClick={openSettings}
                 className="hover:text-blue-600 transition-colors"

@@ -346,7 +346,7 @@ const Datenschutz = () => {
 
               <section>
                 <SectionHeading id="auftragsverarbeitung" number="11" title="Auftragsverarbeitung (Art. 28 DSGVO)" />
-                <p>Da der HSE Hub Daten der Mitarbeiter unserer Kunden verarbeitet, agieren wir als <strong>Auftragsverarbeiter</strong>. Mit jedem Kunden wird ein AVV abgeschlossen, der regelt:</p>
+                <p>Da der HSE Hub Daten der Mitarbeiter unserer Kunden verarbeitet, agieren wir als <strong>Auftragsverarbeiter</strong>. Mit jedem Kunden wird bei der Registrierung automatisch ein <a href="/avv" className="text-blue-600 hover:underline">Auftragsverarbeitungsvertrag (AVV)</a> abgeschlossen, der regelt:</p>
                 <ul className="list-disc pl-6 mt-4 space-y-2 text-sm">
                   <li>Gegenstand, Dauer und Zweck der Verarbeitung</li>
                   <li>Art der Daten und Kategorien betroffener Personen</li>

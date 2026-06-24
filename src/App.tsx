@@ -19,6 +19,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
+import AVV from "./pages/AVV";
 import MainLayout from "./components/MainLayout";
 import SuperAdminRoute from "./components/SuperAdminRoute";
 import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
@@ -92,6 +93,7 @@ const App = () => (
               <Route path="/register" element={<CompanyRegistration />} />
               <Route path="/impressum" element={<Impressum />} />
               <Route path="/datenschutz" element={<Datenschutz />} />
+              <Route path="/avv" element={<AVV />} />
               <Route path="/auth-debug" element={<AuthDebug />} />
 
               {/* Super Admin PIN Verification */}
