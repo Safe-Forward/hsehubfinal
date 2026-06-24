@@ -49,19 +49,7 @@ const Impressum = () => {
                   <span className="h-6 w-1 bg-blue-600 rounded-full"></span>
                   Registereintrag
                 </h2>
-                <p>Eintragung im Handelsregister.</p>
-                <p>Registergericht: </p>
-                <p>Registernummer: </p>
-              </section>
-
-              {/* VAT */}
-              <section>
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <span className="h-6 w-1 bg-green-600 rounded-full"></span>
-                  Umsatzsteuer-ID
-                </h2>
-                <p>Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:</p>
-                <p className="font-mono font-semibold"> </p>
+                <p>Safe-Forward ist ein Einzelunternehmen. Eine Eintragung im Handelsregister besteht nicht.</p>
               </section>
 
               {/* Disclaimer */}
