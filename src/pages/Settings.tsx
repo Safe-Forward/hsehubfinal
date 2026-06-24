@@ -3462,15 +3462,15 @@ const handleUpdateManager = async (
                     <button
                       onClick={() => setActiveTab("danger-zone")}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "danger-zone"
-                        ? "bg-destructive text-destructive-foreground"
-                        : "hover:bg-destructive/10 text-destructive"
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted text-muted-foreground"
                         }`}
                     >
                       <Trash2 className="w-4 h-4" />
                       <div className="text-left">
-                        <div>Gefahrenzone</div>
+                        <div>Konto</div>
                         <div className="text-xs opacity-80">
-                          Konto löschen
+                          Verwaltung
                         </div>
                       </div>
                     </button>
