@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useSubscriptionLimits } from "@/hooks/useSubscriptionLimits";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ export default function Documents() {
   const { t } = useLanguage();
   const { companyId, user } = useAuth();
   const { hasDetailedPermission } = usePermissions();
+  const { getStorageLimitBytes } = useSubscriptionLimits();
   const { toast } = useToast();
   const { logAction } = useAuditLog();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -192,6 +194,27 @@ export default function Documents() {
         variant: "destructive",
       });
       return;
+    }
+
+    // Plan limit: tier (plus any active Speicher+ add-on) caps total
+    // storage. Check fresh from the DB rather than trusting cached state,
+    // since this gates a quota decision.
+    const storageLimit = getStorageLimitBytes();
+    if (storageLimit !== Infinity) {
+      const { data: companyRow } = await supabase
+        .from("companies")
+        .select("storage_used_bytes")
+        .eq("id", companyId)
+        .single();
+      const currentUsage = companyRow?.storage_used_bytes ?? 0;
+      if (currentUsage + uploadFile.size > storageLimit) {
+        toast({
+          title: "Speicherlimit erreicht",
+          description: "Ihr Speicherplatz ist ausgeschöpft. Bitte ein Speicher-Add-on buchen oder den Tarif upgraden.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     try {

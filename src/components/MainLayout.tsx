@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useSubscriptionLimits } from "@/hooks/useSubscriptionLimits";
 import NotificationBell from "@/components/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
@@ -48,6 +49,7 @@ export default function MainLayout({ children }: Props) {
   const { userRole, signOut, companyName, companyId } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { hasPermission, loading: permissionsLoading, roleName, permissions } = usePermissions();
+  const { canAccessFeature } = useSubscriptionLimits();
   const location = useLocation();
   const [darkMode, setDarkMode] = useState(false);
 
@@ -320,7 +322,7 @@ export default function MainLayout({ children }: Props) {
                 </Link>
               )}
 
-              {hasPermission("investigations") && (
+              {hasPermission("investigations") && canAccessFeature("investigations") && (
                 <Link
                   to="/investigations"
                   className={getLinkClasses("/investigations")}
@@ -330,7 +332,7 @@ export default function MainLayout({ children }: Props) {
                 </Link>
               )}
 
-              {hasPermission("riskAssessments") && (
+              {hasPermission("riskAssessments") && canAccessFeature("riskAssessments") && (
                 <Link
                   to="/risk-assessments"
                   className={getLinkClasses("/risk-assessments")}
@@ -340,7 +342,7 @@ export default function MainLayout({ children }: Props) {
                 </Link>
               )}
 
-              {hasPermission("trainings") && (
+              {hasPermission("trainings") && canAccessFeature("trainings") && (
                 <Link to="/training" className={getLinkClasses("/training")}>
                   <CheckCircle className="w-4 h-4" />
                   <span>{t("nav.trainings")}</span>
@@ -352,14 +354,14 @@ export default function MainLayout({ children }: Props) {
                 </Link>
               )}
 
-              {hasPermission("incidents") && (
+              {hasPermission("incidents") && canAccessFeature("incidents") && (
                 <Link to="/incidents" className={getLinkClasses("/incidents")}>
                   <AlertTriangle className="w-4 h-4" />
                   <span>{t("nav.incidents")}</span>
                 </Link>
               )}
 
-              {hasPermission("riskAssessments") && (
+              {hasPermission("riskAssessments") && canAccessFeature("riskAssessments") && (
                 <Link to="/measures" className={getLinkClasses("/measures")}>
                   <ClipboardList className="w-4 h-4" />
                   <span>Maßnahmen</span>
@@ -371,7 +373,7 @@ export default function MainLayout({ children }: Props) {
                 </Link>
               )}
 
-              {hasPermission("audits") && (
+              {hasPermission("audits") && canAccessFeature("audits") && (
                 <Link to="/audits" className={getLinkClasses("/audits")}>
                   <FileCheck className="w-4 h-4" />
                   <span>{t("nav.audits")}</span>

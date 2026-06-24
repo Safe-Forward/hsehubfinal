@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/form";
 import LessonTypeSelector from "@/components/training/LessonTypeSelector";
 import FileUploadZone from "@/components/training/FileUploadZone";
+import { useSubscriptionLimits } from "@/hooks/useSubscriptionLimits";
 
 const lessonSchema = z.object({
   name: z.string().min(1, "Lektionsname ist erforderlich"),
@@ -113,6 +114,8 @@ export default function LessonEditor() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { hasAddon } = useSubscriptionLimits();
+  const canUploadOwnContent = hasAddon("custom-course-upload");
 
   const [course, setCourse] = useState<Course | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
@@ -590,15 +593,44 @@ export default function LessonEditor() {
                         <div className="flex-1 h-px bg-border" />
                       </div>
 
+                      {canUploadOwnContent ? (
+                        <FormField
+                          control={form.control}
+                          name="content_url"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <FileUploadZone
+                                  lessonType="video_audio"
+                                  currentFileUrl={field.value?.includes("cloudinary.com") ? field.value : undefined}
+                                  onUploadComplete={field.onChange}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                          <Lock className="w-4 h-4 shrink-0" />
+                          Datei-Upload erfordert das Add-on "Eigenen Kurs hochladen". Sie können stattdessen eine Video-URL eingeben.
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {currentType === "pdf" && (
+                    canUploadOwnContent ? (
                       <FormField
                         control={form.control}
                         name="content_url"
                         render={({ field }) => (
                           <FormItem>
+                            <FormLabel>PDF hochladen</FormLabel>
                             <FormControl>
                               <FileUploadZone
-                                lessonType="video_audio"
-                                currentFileUrl={field.value?.includes("cloudinary.com") ? field.value : undefined}
+                                lessonType="pdf"
+                                currentFileUrl={field.value}
                                 onUploadComplete={field.onChange}
                               />
                             </FormControl>
@@ -606,27 +638,12 @@ export default function LessonEditor() {
                           </FormItem>
                         )}
                       />
-                    </div>
-                  )}
-
-                  {currentType === "pdf" && (
-                    <FormField
-                      control={form.control}
-                      name="content_url"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>PDF hochladen</FormLabel>
-                          <FormControl>
-                            <FileUploadZone
-                              lessonType="pdf"
-                              currentFileUrl={field.value}
-                              onUploadComplete={field.onChange}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                        <Lock className="w-4 h-4 shrink-0" />
+                        PDF-Upload erfordert das Add-on "Eigenen Kurs hochladen".
+                      </div>
+                    )
                   )}
 
                   {currentType === "text" && (
