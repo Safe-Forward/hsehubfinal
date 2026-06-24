@@ -44,6 +44,9 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  let errCompanyId: string | null = null;
+  let errUserEmail: string | null = null;
+
   try {
     // 1. Auth – verify JWT
     const authHeader = req.headers.get("authorization") ?? "";
@@ -61,6 +64,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    errUserEmail = user.email ?? null;
 
     // 2. Parse body
     const body = await req.json().catch(() => ({}));
@@ -95,6 +99,7 @@ serve(async (req) => {
       .limit(10);
 
     const companyId = (roleRows ?? []).find((row) => row?.company_id)?.company_id ?? null;
+    errCompanyId = companyId;
     if (!companyId) {
       return new Response(JSON.stringify({ error: "No company found" }), {
         status: 400,
@@ -169,6 +174,26 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("stripe-checkout error:", err);
+    try {
+      const logClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      await logClient.rpc("create_audit_log", {
+        p_action_type: "error",
+        p_target_type: "system",
+        p_target_id: null,
+        p_target_name: "stripe-checkout",
+        p_details: {
+          message: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack?.slice(0, 500) : null,
+          actor_email: errUserEmail,
+        },
+        p_company_id: errCompanyId,
+      });
+    } catch (logErr) {
+      console.error("Failed to log stripe-checkout error:", logErr);
+    }
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

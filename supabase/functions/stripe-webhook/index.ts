@@ -681,6 +681,23 @@ serve(async (req: Request) => {
     }
   } catch (err) {
     console.error("Webhook handler error:", err);
+    try {
+      await supabase.rpc("create_audit_log", {
+        p_action_type: "error",
+        p_target_type: "system",
+        p_target_id: null,
+        p_target_name: "stripe-webhook",
+        p_details: {
+          message: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack?.slice(0, 500) : null,
+          stripe_event_type: event?.type ?? null,
+          stripe_event_id: event?.id ?? null,
+        },
+        p_company_id: null,
+      });
+    } catch (logErr) {
+      console.error("Failed to log stripe-webhook error:", logErr);
+    }
     return new Response("Handler Error", { status: 500 });
   }
 

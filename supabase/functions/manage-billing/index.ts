@@ -48,14 +48,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let errCompanyId: string | null = null;
+  let errUserEmail: string | null = null;
+
   try {
     // Auth check
     const authHeader = req.headers.get("authorization") ?? "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
+
     const { data: { user }, error: authError } = await supabase.auth.getUser(
       authHeader.replace("Bearer ", "")
     );
@@ -66,9 +69,11 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    errUserEmail = user.email ?? null;
 
     // Get user's company
     const companyId = await resolveUserCompanyId(supabase, user.id);
+    errCompanyId = companyId;
 
     if (!companyId) {
       return new Response(
@@ -347,6 +352,26 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Billing management error:", error);
+    try {
+      const logClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      await logClient.rpc("create_audit_log", {
+        p_action_type: "error",
+        p_target_type: "system",
+        p_target_id: null,
+        p_target_name: "manage-billing",
+        p_details: {
+          message: error?.message || String(error),
+          stack: error?.stack?.slice(0, 500) ?? null,
+          actor_email: errUserEmail,
+        },
+        p_company_id: errCompanyId,
+      });
+    } catch (logErr) {
+      console.error("Failed to log manage-billing error:", logErr);
+    }
     return new Response(
       JSON.stringify({ error: error.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

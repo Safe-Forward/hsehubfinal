@@ -21,6 +21,7 @@ import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import MainLayout from "./components/MainLayout";
 import SuperAdminRoute from "./components/SuperAdminRoute";
+import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
 
 // Lazily loaded routes: less-frequently visited / heavier pages.
 // Keeping these out of the main bundle shrinks the critical first-load path.
@@ -77,6 +78,7 @@ const App = () => (
       <BrowserRouter>
         <LanguageProvider>
           <AuthProvider>
+            <GlobalErrorBoundary>
             <Suspense fallback={<PageLoadingFallback />}>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -460,6 +462,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             </Suspense>
+            </GlobalErrorBoundary>
           </AuthProvider>
         </LanguageProvider>
       </BrowserRouter>
