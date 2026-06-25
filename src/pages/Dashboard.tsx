@@ -80,10 +80,6 @@ const ALL_KPI_IDS = [
 // Virtual widgets — appear in "Kacheln anpassen" but render no KPI card
 const SIDEBAR_WIDGET_IDS = ["sidebarMeasuresBadge"];
 
-const sidebarWidgetLabels: Record<string, string> = {
-  sidebarMeasuresBadge: "Maßnahmen-Badge (Sidebar)",
-};
-
 const DEFAULT_KPI_IDS = [
   "employees",
   "overdueObligations",
@@ -101,6 +97,10 @@ export default function Dashboard() {
   const { logError } = useAuditLog();
   const { t } = useLanguage();
   const navigate = useNavigate();
+
+  const sidebarWidgetLabels: Record<string, string> = {
+    sidebarMeasuresBadge: t("dashboard.sidebarMeasuresBadge"),
+  };
 
   const [stats, setStats] = useState({
     employees: 0,
@@ -822,21 +822,30 @@ export default function Dashboard() {
   const criticalWarnings: { label: string; count: number; link: string }[] = [];
   if (stats.overdueCheckups > 0) {
     criticalWarnings.push({
-      label: `${stats.overdueCheckups} überfällige Untersuchung${stats.overdueCheckups !== 1 ? "en" : ""}`,
+      label: (stats.overdueCheckups !== 1
+        ? t("dashboard.warningOverdueCheckupsPlural")
+        : t("dashboard.warningOverdueCheckupsSingular")
+      ).replace("{count}", String(stats.overdueCheckups)),
       count: stats.overdueCheckups,
       link: "/health-checkups",
     });
   }
   if (oldOverdueMeasures > 0) {
     criticalWarnings.push({
-      label: `${oldOverdueMeasures} offene Maßnahme${oldOverdueMeasures !== 1 ? "n" : ""} älter als 30 Tage`,
+      label: (oldOverdueMeasures !== 1
+        ? t("dashboard.warningOldOverdueMeasuresPlural")
+        : t("dashboard.warningOldOverdueMeasuresSingular")
+      ).replace("{count}", String(oldOverdueMeasures)),
       count: oldOverdueMeasures,
       link: "/measures",
     });
   }
   if (stats.recentIncidents > 0) {
     criticalWarnings.push({
-      label: `${stats.recentIncidents} Vorfall${stats.recentIncidents !== 1 ? "fälle" : ""} in den letzten 7 Tagen`,
+      label: (stats.recentIncidents !== 1
+        ? t("dashboard.warningRecentIncidentsPlural")
+        : t("dashboard.warningRecentIncidentsSingular")
+      ).replace("{count}", String(stats.recentIncidents)),
       count: stats.recentIncidents,
       link: "/incidents",
     });
@@ -881,32 +890,32 @@ export default function Dashboard() {
       gradient: "from-amber-500 via-amber-600 to-orange-600",
     },
     openMeasures: {
-      title: "Offene Maßnahmen",
+      title: t("dashboard.openMeasures"),
       value: stats.openMeasures,
       icon: ListTodo,
       gradient: "from-purple-500 via-purple-600 to-purple-700",
     },
     overdueMeasures: {
-      title: "Überfällige Maßnahmen",
+      title: t("dashboard.overdueMeasures"),
       value: stats.overdueMeasures,
       icon: AlertTriangle,
       gradient: "from-rose-500 via-rose-600 to-red-700",
     },
     upcomingCheckups: {
-      title: "Anstehende Untersuchungen (30 Tage)",
+      title: t("dashboard.upcomingCheckups30Days"),
       value: stats.upcomingCheckups,
       icon: Clock,
       gradient: "from-cyan-500 via-cyan-600 to-cyan-700",
     },
     trainingCompletionRate: {
-      title: "Schulungsabschlussquote",
+      title: t("dashboard.trainingCompletionRate"),
       value: `${stats.trainingCompletionRate}%`,
       icon: FileCheck,
       gradient: "from-violet-500 via-violet-600 to-violet-700",
-      context: stats.employees > 0 ? `von ${stats.employees} Mitarbeitern` : undefined,
+      context: stats.employees > 0 ? t("dashboard.ofEmployeesCount").replace("{count}", String(stats.employees)) : undefined,
     },
     auditComplianceRate: {
-      title: "Audit Compliance-Rate",
+      title: t("dashboard.auditComplianceRate"),
       value: `${stats.complianceRate}%`,
       icon: BarChart,
       gradient: "from-indigo-500 via-indigo-600 to-indigo-700",
@@ -918,11 +927,11 @@ export default function Dashboard() {
     overdueObligations: t("dashboard.overdueObligations"),
     recentIncidents: `${t("dashboard.last7Days")}: ${t("dashboard.incidents")}`,
     recentHazards: `${t("dashboard.last7Days")}: ${t("dashboard.hazards")}`,
-    openMeasures: "Offene Maßnahmen",
-    overdueMeasures: "Überfällige Maßnahmen",
-    upcomingCheckups: "Anstehende Untersuchungen (30 Tage)",
-    trainingCompletionRate: "Schulungsabschlussquote",
-    auditComplianceRate: "Audit Compliance-Rate",
+    openMeasures: t("dashboard.openMeasures"),
+    overdueMeasures: t("dashboard.overdueMeasures"),
+    upcomingCheckups: t("dashboard.upcomingCheckups30Days"),
+    trainingCompletionRate: t("dashboard.trainingCompletionRate"),
+    auditComplianceRate: t("dashboard.auditComplianceRate"),
   };
 
   return (
@@ -960,11 +969,11 @@ export default function Dashboard() {
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm">
                 <SlidersHorizontal className="w-4 h-4 mr-2" />
-                Kacheln anpassen
+                {t("dashboard.customizeTiles")}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-72" align="end">
-              <p className="text-sm font-medium mb-3">Sichtbare Kacheln</p>
+              <p className="text-sm font-medium mb-3">{t("dashboard.visibleTiles")}</p>
               <div className="space-y-2">
                 {ALL_KPI_IDS.map((id) => (
                   <label
@@ -980,7 +989,7 @@ export default function Dashboard() {
                 ))}
               </div>
               <div className="border-t border-border mt-3 pt-3">
-                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Sidebar</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">{t("dashboard.sidebar")}</p>
                 <div className="space-y-2">
                   {SIDEBAR_WIDGET_IDS.map((id) => (
                     <label
@@ -1004,8 +1013,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-10 sm:mb-12">
           {visibleKpis.length === 0 ? (
             <div className="col-span-full text-center py-8 text-muted-foreground border rounded-xl">
-              Keine Kacheln ausgewählt. Klicke auf "Kacheln anpassen" um
-              Kacheln hinzuzufügen.
+              {t("dashboard.noTilesSelected")}
             </div>
           ) : (
             visibleKpis.filter((id) => !SIDEBAR_WIDGET_IDS.includes(id)).map((id) => {
@@ -1282,7 +1290,7 @@ export default function Dashboard() {
                             {(task as any).profile_employee ? (
                               <div className="flex items-center gap-1">
                                 <Users className="w-3 h-3" />
-                                <span className="text-muted-foreground/70">Profil:</span>
+                                <span className="text-muted-foreground/70">{t("dashboard.profileLabel")}</span>
                                 <Link
                                   to={`/employees/${
                                     (task as any).employee_profile_id ||
