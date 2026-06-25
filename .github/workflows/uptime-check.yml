@@ -1,0 +1,85 @@
+name: Uptime Check (Production)
+
+# --------------------------------------------------------------------------
+# WHAT THIS IS
+#
+# A minimal "is the site even reachable from the outside" check for
+# https://www.safe-forward.de, built entirely from infrastructure we
+# already have (GitHub Actions) — no third-party account was created to
+# build this. GitHub's default behavior is to email the repository owner
+# and watchers whenever a *scheduled* workflow run fails, so a failed
+# health check here becomes an automatic email alert with zero extra setup.
+#
+# WHAT THIS IS **NOT** — READ BEFORE TRUSTING THIS AS YOUR ONLY MONITORING
+#
+# This is a basic safety net, not a replacement for a dedicated uptime
+# monitoring service. Concretely, compared to something like UptimeRobot,
+# Pingdom, or Better Uptime (all of which have free tiers), this approach:
+#
+#   1. Has NO historical uptime % / dashboard. We only get pass/fail per
+#      run in the Actions tab — there's no "99.95% uptime this month"
+#      chart, no incident timeline, nothing to show customers or to use
+#      for SLA tracking.
+#
+#   2. Has NO SMS or phone call alerts. Only a GitHub notification email
+#      to the repo owner/watchers (per each user's GitHub notification
+#      settings). If that inbox isn't checked promptly, the alert is
+#      effectively silent. There is no escalation policy.
+#
+#   3. Has NO public status page. Dedicated services typically offer a
+#      shareable status.example.com page; this gives us nothing to point
+#      customers or support staff at.
+#
+#   4. Only checks every 15 minutes, not continuously. A real outage could
+#      already be ~15 minutes old before this even attempts the next
+#      check, and GitHub Actions does not guarantee sub-minute resolution
+#      anyway (see point 5). Dedicated services typically check every
+#      1 minute (or faster on paid tiers).
+#
+#   5. GitHub Actions `schedule` triggers are BEST-EFFORT, not real-time.
+#      During high load on GitHub's infrastructure, scheduled runs are
+#      documented to be delayed by several minutes — sometimes more. Do
+#      not treat "checked every 15 minutes" as a hard guarantee; treat it
+#      as "checked at least roughly every 15 minutes, usually."
+#
+#   6. Only checks one URL with a simple HTTP GET. No multi-region checks,
+#      no TCP/DNS/SSL-expiry-specific diagnostics, no synthetic user-flow
+#      checks (e.g. can a user actually log in), no alerting integrations
+#      (Slack/PagerDuty/etc) beyond what GitHub itself sends by email.
+#
+# RECOMMENDATION
+#
+# This workflow is a reasonable zero-cost stopgap. When/if uptime
+# monitoring becomes a priority (e.g. once there are paying customers
+# depending on availability), a quick manual sign-up for a dedicated
+# free-tier service — e.g. UptimeRobot's free plan (50 monitors, 5-minute
+# checks, email/SMS alerts, public status page) — would be a much more
+# robust solution. That sign-up has to be done by a human; this workflow
+# intentionally avoids creating any such third-party account itself.
+# --------------------------------------------------------------------------
+
+on:
+  schedule:
+    # Every 15 minutes. Cron is UTC and best-effort (see limitations above).
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {} # allows manual "Run workflow" from the Actions tab for testing
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production site is reachable
+        run: |
+          set -euo pipefail
+          URL="https://www.safe-forward.de"
+          echo "Checking $URL ..."
+          # -f: fail (non-zero exit) on HTTP error status (4xx/5xx)
+          # -s: silent (no progress meter, but errors still shown via -S)
+          # -S: show errors even in silent mode
+          # --max-time 10: give up after 10s so a hanging connection doesn't hang the job
+          if curl -fsS --max-time 10 -o /dev/null -w "HTTP %{http_code} in %{time_total}s\n" "$URL"; then
+            echo "Site is up."
+          else
+            echo "::error::Production site $URL did not respond successfully (DNS failure, connection refused, timeout, or HTTP error status). This may indicate a DNS issue, hosting outage (Vercel), or paused database (Supabase)."
+            exit 1
+          fi
