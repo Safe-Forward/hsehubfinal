@@ -7,11 +7,13 @@ import { RotateCcw, GripVertical, Shield } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { stats: ReportStats; chartData: any[]; riskLevelData: any[] }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -89,19 +91,19 @@ export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { st
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_risk_assessments');
-    toast({ title: "Layout Reset", description: "Risk Assessments layout has been reset to default" });
-  }, [toast]);
+    toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.riskAssessmentsLayoutResetDesc") });
+  }, [toast, t]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Risk Assessments</h2>
-          <p className="text-muted-foreground">GBU and hazard analysis. Drag cards to reposition, drag corners to resize.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("reports.riskAssessments.heading")}</h2>
+          <p className="text-muted-foreground">{t("reports.riskAssessments.description")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={resetLayout}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Layout
+          {t("reports.overview.resetLayout")}
         </Button>
       </div>
 
@@ -125,8 +127,8 @@ export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { st
       >
         <div key="risk-total">
           <DraggableCard
-            title="Total GBU"
-            subtitle="Risk assessments"
+            title={t("reports.riskAssessments.totalTitle")}
+            subtitle={t("reports.riskAssessments.totalSubtitle")}
             value={stats.totalRiskAssessments}
             icon={<Shield className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
@@ -138,13 +140,13 @@ export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { st
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">Risk Level Distribution</CardTitle>
-              <CardDescription>Risk assessments grouped by risk level</CardDescription>
+              <CardTitle className="text-base">{t("reports.riskAssessments.levelChartTitle")}</CardTitle>
+              <CardDescription>{t("reports.riskAssessments.levelChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
               {riskLevelData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  No data for selected date range
+                  {t("reports.riskAssessments.noDataForRange")}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">

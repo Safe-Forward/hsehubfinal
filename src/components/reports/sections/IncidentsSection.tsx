@@ -9,11 +9,13 @@ import {
 } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats: ReportStats; chartData: any[]; incidentTypeData: any[] }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -100,19 +102,19 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_incidents');
-    toast({ title: "Zurückgesetzt", description: "Vorfälle-Layout wurde zurückgesetzt" });
-  }, [toast]);
+    toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.incidentsLayoutResetDesc") });
+  }, [toast, t]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Incidents</h2>
-          <p className="text-muted-foreground">Workplace incident tracking. Drag cards to reposition, drag corners to resize.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("reports.incidents.heading")}</h2>
+          <p className="text-muted-foreground">{t("reports.incidents.description")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={resetLayout}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Layout
+          {t("reports.overview.resetLayout")}
         </Button>
       </div>
 
@@ -136,8 +138,8 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
       >
         <div key="incident-total">
           <DraggableCard
-            title="Total Incidents"
-            subtitle="All incidents"
+            title={t("reports.incidents.totalTitle")}
+            subtitle={t("reports.incidents.totalSubtitle")}
             value={stats.totalIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-red-50 text-red-600"
@@ -145,8 +147,8 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
         </div>
         <div key="incident-open">
           <DraggableCard
-            title="Open Cases"
-            subtitle="Under investigation"
+            title={t("reports.incidents.openTitle")}
+            subtitle={t("reports.incidents.openSubtitle")}
             value={stats.openIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
@@ -154,8 +156,8 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
         </div>
         <div key="incident-closed">
           <DraggableCard
-            title="Closed"
-            subtitle="Resolved incidents"
+            title={t("reports.incidents.closedTitle")}
+            subtitle={t("reports.incidents.closedSubtitle")}
             value={stats.totalIncidents - stats.openIncidents}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
@@ -167,13 +169,13 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">Incidents per Period</CardTitle>
-              <CardDescription>Number of incidents reported over time</CardDescription>
+              <CardTitle className="text-base">{t("reports.incidents.trendChartTitle")}</CardTitle>
+              <CardDescription>{t("reports.incidents.trendChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
               {chartData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  No data for selected date range
+                  {t("reports.incidents.noDataForRange")}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
@@ -195,13 +197,13 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">Incidents by Type</CardTitle>
-              <CardDescription>Breakdown of incidents by category</CardDescription>
+              <CardTitle className="text-base">{t("reports.incidents.typeChartTitle")}</CardTitle>
+              <CardDescription>{t("reports.incidents.typeChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
               {incidentTypeData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  No data for selected date range
+                  {t("reports.incidents.noDataForRange")}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">

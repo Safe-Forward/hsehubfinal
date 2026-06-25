@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { GripVertical, EyeOff } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function DraggableCard({
   title,
@@ -16,6 +17,7 @@ export function DraggableCard({
   color: string;
   onHide?: () => void;
 }) {
+  const { t } = useLanguage();
   return (
     <Card className="dashboard-grid-card border hover:border-primary/50 transition-colors shadow-sm h-full group">
       <div className="drag-handle border-b cursor-grab active:cursor-grabbing flex-shrink-0 flex items-center justify-between px-2">
@@ -24,7 +26,7 @@ export function DraggableCard({
           <button
             onClick={(e) => { e.stopPropagation(); onHide(); }}
             className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-            title="Hide this card"
+            title={t("reports.draggableCard.hide")}
           >
             <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
           </button>

@@ -7,11 +7,13 @@ import { RotateCcw, GripVertical, ClipboardCheck, CheckCircle } from "lucide-rea
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export function AuditsSection({ stats, chartData, auditStatusData }: { stats: ReportStats; chartData: any[]; auditStatusData: any[] }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -92,19 +94,19 @@ export function AuditsSection({ stats, chartData, auditStatusData }: { stats: Re
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_audits');
-    toast({ title: "Layout Reset", description: "Audits layout has been reset to default" });
-  }, [toast]);
+    toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.auditsLayoutResetDesc") });
+  }, [toast, t]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Safety Audits</h2>
-          <p className="text-muted-foreground">Tracks compliance checks and ISO standard audits. This shows audit completion status and helps ensure regulatory compliance.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("reports.audits.heading")}</h2>
+          <p className="text-muted-foreground">{t("reports.audits.description")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={resetLayout}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Layout
+          {t("reports.overview.resetLayout")}
         </Button>
       </div>
 
@@ -128,8 +130,8 @@ export function AuditsSection({ stats, chartData, auditStatusData }: { stats: Re
       >
         <div key="audit-total">
           <DraggableCard
-            title="Total Audits"
-            subtitle="All audits"
+            title={t("reports.audits.totalTitle")}
+            subtitle={t("reports.audits.totalSubtitle")}
             value={stats.totalAudits}
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
@@ -137,8 +139,8 @@ export function AuditsSection({ stats, chartData, auditStatusData }: { stats: Re
         </div>
         <div key="audit-completed">
           <DraggableCard
-            title="Completed"
-            subtitle="Finished audits"
+            title={t("reports.audits.completedTitle")}
+            subtitle={t("reports.audits.completedSubtitle")}
             value={stats.completedAudits}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
@@ -150,13 +152,13 @@ export function AuditsSection({ stats, chartData, auditStatusData }: { stats: Re
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">Audit Status Distribution</CardTitle>
-              <CardDescription>Audits grouped by current status</CardDescription>
+              <CardTitle className="text-base">{t("reports.audits.statusChartTitle")}</CardTitle>
+              <CardDescription>{t("reports.audits.statusChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
               {auditStatusData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  No data for selected date range
+                  {t("reports.audits.noDataForRange")}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">

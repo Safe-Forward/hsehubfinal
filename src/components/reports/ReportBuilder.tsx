@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, BarChart3, PieChart, TrendingUp } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -64,10 +65,11 @@ export default function ReportBuilder({
   data = [],
   onRefreshData,
 }: ReportBuilderProps) {
+  const { t } = useLanguage();
   const [config, setConfig] = useState<ReportConfig>(
     initialConfig || {
       id: Date.now().toString(),
-      title: "New Report",
+      title: t("reports.builder.newReportTitle"),
       metric: "employees",
       groupBy: "department",
       dateProperty: "created_at",
@@ -138,55 +140,55 @@ export default function ReportBuilder({
     switch (metric) {
       case 'employees':
         return [
-          { value: 'department', label: 'Department' },
-          { value: 'created_at', label: 'Hire Date' },
+          { value: 'department', label: t("reports.builder.groupBy.department") },
+          { value: 'created_at', label: t("reports.builder.groupBy.hireDate") },
         ];
       case 'incidents':
         return [
-          { value: 'investigation_status', label: 'Status' },
-          { value: 'incident_type', label: 'Category' },
-          { value: 'severity', label: 'Severity' },
-          { value: 'location', label: 'Location' },
-          { value: 'created_at', label: 'Date' },
+          { value: 'investigation_status', label: t("reports.builder.groupBy.status") },
+          { value: 'incident_type', label: t("reports.builder.groupBy.category") },
+          { value: 'severity', label: t("reports.builder.groupBy.severity") },
+          { value: 'location', label: t("reports.builder.groupBy.location") },
+          { value: 'created_at', label: t("reports.builder.groupBy.date") },
         ];
       case 'audits':
         return [
-          { value: 'status', label: 'Status' },
-          { value: 'iso_code', label: 'ISO Code' },
-          { value: 'created_at', label: 'Date' },
+          { value: 'status', label: t("reports.builder.groupBy.status") },
+          { value: 'iso_code', label: t("reports.builder.groupBy.isoCode") },
+          { value: 'created_at', label: t("reports.builder.groupBy.date") },
         ];
       case 'trainings':
         return [
-          { value: 'status', label: 'Status' },
-          { value: 'employee_id', label: 'Employee' },
-          { value: 'created_at', label: 'Date' },
+          { value: 'status', label: t("reports.builder.groupBy.status") },
+          { value: 'employee_id', label: t("reports.builder.groupBy.employee") },
+          { value: 'created_at', label: t("reports.builder.groupBy.date") },
         ];
       case 'risks':
         return [
-          { value: 'risk_level', label: 'Risk Level' },
-          { value: 'department', label: 'Department' },
-          { value: 'approval_status', label: 'Approval Status' },
+          { value: 'risk_level', label: t("reports.builder.groupBy.riskLevel") },
+          { value: 'department', label: t("reports.builder.groupBy.department") },
+          { value: 'approval_status', label: t("reports.builder.groupBy.approvalStatus") },
         ];
       case 'measures':
         return [
-          { value: 'status', label: 'Status' },
-          { value: 'department', label: 'Department' },
+          { value: 'status', label: t("reports.builder.groupBy.status") },
+          { value: 'department', label: t("reports.builder.groupBy.department") },
         ];
       case 'checkups':
         return [
-          { value: 'status', label: 'Status' },
-          { value: 'created_at', label: 'Date' },
+          { value: 'status', label: t("reports.builder.groupBy.status") },
+          { value: 'created_at', label: t("reports.builder.groupBy.date") },
         ];
       case 'tasks':
         return [
-          { value: 'status', label: 'Status' },
-          { value: 'priority', label: 'Priority' },
-          { value: 'assigned_to', label: 'Assigned To' },
+          { value: 'status', label: t("reports.builder.groupBy.status") },
+          { value: 'priority', label: t("reports.builder.groupBy.priority") },
+          { value: 'assigned_to', label: t("reports.builder.groupBy.assignedTo") },
         ];
       default:
         return [
-          { value: 'department', label: 'Department' },
-          { value: 'status', label: 'Status' },
+          { value: 'department', label: t("reports.builder.groupBy.department") },
+          { value: 'status', label: t("reports.builder.groupBy.status") },
         ];
     }
   };
@@ -210,7 +212,7 @@ export default function ReportBuilder({
       return (
         <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground border-2 border-dashed rounded-lg">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
-          <p>Loading data...</p>
+          <p>{t("reports.builder.loadingData")}</p>
         </div>
       );
     }
@@ -219,7 +221,7 @@ export default function ReportBuilder({
       return (
         <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground border-2 border-dashed rounded-lg">
           <BarChart3 className="w-8 h-8 mb-2 opacity-20" />
-          <p>No data available for this report</p>
+          <p>{t("reports.builder.noDataAvailable")}</p>
         </div>
       );
     }
@@ -287,7 +289,7 @@ export default function ReportBuilder({
       <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
-          <h2 className="text-xl font-semibold">Report Builder</h2>
+          <h2 className="text-xl font-semibold">{t("reports.builder.title")}</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
@@ -298,41 +300,41 @@ export default function ReportBuilder({
           <div className="grid grid-cols-2 gap-4">
             {/* Report Title */}
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="title">Report Title</Label>
+              <Label htmlFor="title">{t("reports.builder.reportTitleLabel")}</Label>
               <Input
                 id="title"
                 value={config.title}
                 onChange={(e) => updateConfig('title', e.target.value)}
-                placeholder="Enter report title"
+                placeholder={t("reports.builder.reportTitlePlaceholder")}
               />
             </div>
 
             {/* Metric Selection */}
             <div className="space-y-2">
-              <Label htmlFor="metric">Metric</Label>
+              <Label htmlFor="metric">{t("reports.builder.metricLabel")}</Label>
               <Select value={config.metric} onValueChange={(val) => updateConfig('metric', val)}>
                 <SelectTrigger id="metric">
-                  <SelectValue placeholder="Select metric" />
+                  <SelectValue placeholder={t("reports.builder.metricPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="employees">Employees</SelectItem>
-                  <SelectItem value="incidents">Incidents</SelectItem>
-                  <SelectItem value="audits">Audits</SelectItem>
-                  <SelectItem value="trainings">Trainings</SelectItem>
-                  <SelectItem value="risks">Risk Assessments</SelectItem>
-                  <SelectItem value="checkups">Health Checkups</SelectItem>
-                  <SelectItem value="measures">Measures</SelectItem>
-                  <SelectItem value="tasks">Tasks</SelectItem>
+                  <SelectItem value="employees">{t("reports.builder.metric.employees")}</SelectItem>
+                  <SelectItem value="incidents">{t("reports.builder.metric.incidents")}</SelectItem>
+                  <SelectItem value="audits">{t("reports.builder.metric.audits")}</SelectItem>
+                  <SelectItem value="trainings">{t("reports.builder.metric.trainings")}</SelectItem>
+                  <SelectItem value="risks">{t("reports.builder.metric.risks")}</SelectItem>
+                  <SelectItem value="checkups">{t("reports.builder.metric.checkups")}</SelectItem>
+                  <SelectItem value="measures">{t("reports.builder.metric.measures")}</SelectItem>
+                  <SelectItem value="tasks">{t("reports.builder.metric.tasks")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Group By */}
             <div className="space-y-2">
-              <Label htmlFor="groupBy">Group By</Label>
+              <Label htmlFor="groupBy">{t("reports.builder.groupByLabel")}</Label>
               <Select value={config.groupBy} onValueChange={(val) => updateConfig('groupBy', val)}>
                 <SelectTrigger id="groupBy">
-                  <SelectValue placeholder="Select grouping" />
+                  <SelectValue placeholder={t("reports.builder.groupByPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {getGroupByOptions().map((option) => (
@@ -346,45 +348,45 @@ export default function ReportBuilder({
 
             {/* Date Property */}
             <div className="space-y-2">
-              <Label htmlFor="dateProperty">Date Property</Label>
+              <Label htmlFor="dateProperty">{t("reports.builder.datePropertyLabel")}</Label>
               <Select value={config.dateProperty} onValueChange={(val) => updateConfig('dateProperty', val)}>
                 <SelectTrigger id="dateProperty">
-                  <SelectValue placeholder="Select date field" />
+                  <SelectValue placeholder={t("reports.builder.datePropertyPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="created_at">Created Date</SelectItem>
-                  <SelectItem value="updated_at">Updated Date</SelectItem>
-                  <SelectItem value="due_date">Due Date</SelectItem>
-                  <SelectItem value="completed_at">Completed Date</SelectItem>
+                  <SelectItem value="created_at">{t("reports.builder.dateProperty.createdAt")}</SelectItem>
+                  <SelectItem value="updated_at">{t("reports.builder.dateProperty.updatedAt")}</SelectItem>
+                  <SelectItem value="due_date">{t("reports.builder.dateProperty.dueDate")}</SelectItem>
+                  <SelectItem value="completed_at">{t("reports.builder.dateProperty.completedAt")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Date Range */}
             <div className="space-y-2">
-              <Label htmlFor="dateRange">Date Range</Label>
+              <Label htmlFor="dateRange">{t("reports.builder.dateRangeLabel")}</Label>
               <Select
                 value={config.dateRange.type}
                 onValueChange={(val) => updateConfig('dateRange', { ...config.dateRange, type: val })}
               >
                 <SelectTrigger id="dateRange">
-                  <SelectValue placeholder="Select range" />
+                  <SelectValue placeholder={t("reports.builder.dateRangePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="last_7_days">Last 7 Days</SelectItem>
-                  <SelectItem value="last_30_days">Last 30 Days</SelectItem>
-                  <SelectItem value="last_90_days">Last 90 Days</SelectItem>
-                  <SelectItem value="this_month">This Month</SelectItem>
-                  <SelectItem value="this_year">This Year</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
+                  <SelectItem value="today">{t("reports.builder.dateRange.today")}</SelectItem>
+                  <SelectItem value="last_7_days">{t("reports.builder.dateRange.last7Days")}</SelectItem>
+                  <SelectItem value="last_30_days">{t("reports.builder.dateRange.last30Days")}</SelectItem>
+                  <SelectItem value="last_90_days">{t("reports.builder.dateRange.last90Days")}</SelectItem>
+                  <SelectItem value="this_month">{t("reports.builder.dateRange.thisMonth")}</SelectItem>
+                  <SelectItem value="this_year">{t("reports.builder.dateRange.thisYear")}</SelectItem>
+                  <SelectItem value="custom">{t("reports.builder.dateRange.custom")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Chart Type */}
             <div className="space-y-2">
-              <Label>Chart Type</Label>
+              <Label>{t("reports.builder.chartTypeLabel")}</Label>
               <div className="flex gap-2">
                 <Button
                   variant={config.chartType === 'pie' ? 'default' : 'outline'}
@@ -393,7 +395,7 @@ export default function ReportBuilder({
                   className="flex-1"
                 >
                   <PieChart className="w-4 h-4 mr-2" />
-                  Pie
+                  {t("reports.builder.chartType.pie")}
                 </Button>
                 <Button
                   variant={config.chartType === 'bar' ? 'default' : 'outline'}
@@ -402,7 +404,7 @@ export default function ReportBuilder({
                   className="flex-1"
                 >
                   <BarChart3 className="w-4 h-4 mr-2" />
-                  Bar
+                  {t("reports.builder.chartType.bar")}
                 </Button>
                 <Button
                   variant={config.chartType === 'line' ? 'default' : 'outline'}
@@ -411,21 +413,21 @@ export default function ReportBuilder({
                   className="flex-1"
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
-                  Line
+                  {t("reports.builder.chartType.line")}
                 </Button>
               </div>
             </div>
 
             {/* Sort By */}
             <div className="space-y-2">
-              <Label htmlFor="sortBy">Sort By</Label>
+              <Label htmlFor="sortBy">{t("reports.builder.sortByLabel")}</Label>
               <Select value={config.sortBy} onValueChange={(val) => updateConfig('sortBy', val)}>
                 <SelectTrigger id="sortBy">
-                  <SelectValue placeholder="Select sorting" />
+                  <SelectValue placeholder={t("reports.builder.sortByPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="value">Value (High to Low)</SelectItem>
-                  <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                  <SelectItem value="value">{t("reports.builder.sortBy.value")}</SelectItem>
+                  <SelectItem value="alphabetical">{t("reports.builder.sortBy.alphabetical")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -434,9 +436,9 @@ export default function ReportBuilder({
           {/* Preview Tabs */}
           <Tabs defaultValue="chart" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="chart">Chart</TabsTrigger>
-              <TabsTrigger value="table">Data Table</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
+              <TabsTrigger value="chart">{t("reports.builder.tabs.chart")}</TabsTrigger>
+              <TabsTrigger value="table">{t("reports.builder.tabs.table")}</TabsTrigger>
+              <TabsTrigger value="summary">{t("reports.builder.tabs.summary")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="chart" className="mt-4">
@@ -451,9 +453,9 @@ export default function ReportBuilder({
                 <table className="w-full">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="text-left p-3 font-semibold">Name</th>
-                      <th className="text-right p-3 font-semibold">Value</th>
-                      <th className="text-right p-3 font-semibold">Percentage</th>
+                      <th className="text-left p-3 font-semibold">{t("reports.builder.table.name")}</th>
+                      <th className="text-right p-3 font-semibold">{t("reports.builder.table.value")}</th>
+                      <th className="text-right p-3 font-semibold">{t("reports.builder.table.percentage")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -477,26 +479,26 @@ export default function ReportBuilder({
               <div className="border rounded-lg p-6 space-y-4">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm text-muted-foreground">Total Count</div>
+                    <div className="text-sm text-muted-foreground">{t("reports.builder.summary.totalCount")}</div>
                     <div className="text-2xl font-bold">
                       {chartData.reduce((sum, d) => sum + d.value, 0)}
                     </div>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm text-muted-foreground">Average</div>
+                    <div className="text-sm text-muted-foreground">{t("reports.builder.summary.average")}</div>
                     <div className="text-2xl font-bold">
                       {(chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length).toFixed(1)}
                     </div>
                   </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="text-sm text-muted-foreground">Categories</div>
+                    <div className="text-sm text-muted-foreground">{t("reports.builder.summary.categories")}</div>
                     <div className="text-2xl font-bold">{chartData.length}</div>
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  <p><strong>Date Range:</strong> {config.dateRange.type.replace(/_/g, ' ')}</p>
-                  <p><strong>Grouped By:</strong> {config.groupBy}</p>
-                  <p><strong>Metric:</strong> {config.metric}</p>
+                  <p><strong>{t("reports.builder.summary.dateRange")}</strong> {config.dateRange.type.replace(/_/g, ' ')}</p>
+                  <p><strong>{t("reports.builder.summary.groupedBy")}</strong> {config.groupBy}</p>
+                  <p><strong>{t("reports.builder.summary.metric")}</strong> {config.metric}</p>
                 </div>
               </div>
             </TabsContent>
@@ -506,10 +508,10 @@ export default function ReportBuilder({
         {/* Footer */}
         <div className="sticky bottom-0 bg-white border-t p-4 flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {t("reports.builder.cancel")}
           </Button>
           <Button onClick={handleSave}>
-            {initialConfig ? 'Save Report' : 'Add Report'}
+            {initialConfig ? t("reports.builder.saveReport") : t("reports.builder.addReport")}
           </Button>
         </div>
       </div>

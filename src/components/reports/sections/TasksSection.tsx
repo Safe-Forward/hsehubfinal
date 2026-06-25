@@ -5,11 +5,13 @@ import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, ListChecks, CheckCircle } from "lucide-react";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats } from "@/components/reports/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export function TasksSection({ stats, chartData }: { stats: ReportStats; chartData: any[] }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -87,19 +89,19 @@ export function TasksSection({ stats, chartData }: { stats: ReportStats; chartDa
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_tasks');
-    toast({ title: "Zurückgesetzt", description: "Aufgaben-Layout wurde zurückgesetzt" });
-  }, [toast]);
+    toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.tasksLayoutResetDesc") });
+  }, [toast, t]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Tasks</h2>
-          <p className="text-muted-foreground">Task management and completion. Drag cards to reposition, drag corners to resize.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("reports.tasks.heading")}</h2>
+          <p className="text-muted-foreground">{t("reports.tasks.description")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={resetLayout}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Layout
+          {t("reports.overview.resetLayout")}
         </Button>
       </div>
 
@@ -123,8 +125,8 @@ export function TasksSection({ stats, chartData }: { stats: ReportStats; chartDa
       >
         <div key="tasks-total">
           <DraggableCard
-            title="Total Tasks"
-            subtitle="All tasks"
+            title={t("reports.tasks.totalTitle")}
+            subtitle={t("reports.tasks.totalSubtitle")}
             value={stats.totalTasks}
             icon={<ListChecks className="w-5 h-5" />}
             color="bg-indigo-50 text-indigo-600"
@@ -132,8 +134,8 @@ export function TasksSection({ stats, chartData }: { stats: ReportStats; chartDa
         </div>
         <div key="tasks-completed">
           <DraggableCard
-            title="Completed"
-            subtitle="Finished tasks"
+            title={t("reports.tasks.completedTitle")}
+            subtitle={t("reports.tasks.completedSubtitle")}
             value={stats.completedTasks}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
