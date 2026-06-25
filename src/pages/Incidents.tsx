@@ -202,21 +202,33 @@ export default function Incidents() {
     if (!companyId) return;
 
     try {
-      const { data, error } = await supabase
-        .from("incidents" as any)
-        .select(
+      // PostgREST caps unranged selects at 1000 rows - loop until a page
+      // comes back short, otherwise companies with >1000 incidents would
+      // silently see only the newest 1000 with no error or indication.
+      const PAGE_SIZE = 1000;
+      const allRows: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("incidents" as any)
+          .select(
+            `
+            *,
+            affected_employee:employees!affected_employee_id(full_name),
+            reported_by:employees!reported_by_id(full_name),
+            department:departments(name)
           `
-          *,
-          affected_employee:employees!affected_employee_id(full_name),
-          reported_by:employees!reported_by_id(full_name),
-          department:departments(name)
-        `
-        )
-        .eq("company_id", companyId)
-        .order("incident_date", { ascending: false });
+          )
+          .eq("company_id", companyId)
+          .order("incident_date", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
 
-      if (error) throw error;
-      setIncidents((data as any) || []);
+        if (error) throw error;
+        allRows.push(...((data as any) || []));
+        if (!data || data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      setIncidents(allRows);
     } catch (error: any) {
       console.error("Error fetching incidents:", error);
       toast({

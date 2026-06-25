@@ -208,24 +208,36 @@ export default function Investigations() {
     if (!companyId) return;
 
     try {
-      const { data, error } = await supabase
-        .from("investigations" as any)
-        .select(
+      // PostgREST caps unranged selects at 1000 rows - loop until a page
+      // comes back short, otherwise companies with >1000 investigations
+      // would silently see only the newest 1000 with no error shown.
+      const PAGE_SIZE = 1000;
+      const allRows: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("investigations" as any)
+          .select(
+            `
+            *,
+            assigned_to:employees!assigned_to_id(
+              full_name,
+              employee_number,
+              departments(name),
+              exposure_groups(name)
+            )
           `
-          *,
-          assigned_to:employees!assigned_to_id(
-            full_name,
-            employee_number,
-            departments(name),
-            exposure_groups(name)
           )
-        `
-        )
-        .eq("company_id", companyId)
-        .order("start_date", { ascending: false });
+          .eq("company_id", companyId)
+          .order("start_date", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
 
-      if (error) throw error;
-      setInvestigations((data as any) || []);
+        if (error) throw error;
+        allRows.push(...((data as any) || []));
+        if (!data || data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      setInvestigations(allRows);
     } catch (error: any) {
       console.error("Error fetching investigations:", error);
     }

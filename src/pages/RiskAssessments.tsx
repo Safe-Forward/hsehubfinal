@@ -341,13 +341,29 @@ export default function RiskAssessments() {
         approvalWorkflowsRes,
         myEmployeeRes,
       ] = await Promise.all([
-        supabase
-          .from("risk_assessments")
-          .select(
-            "*, departments(name), locations(name), exposure_groups(name), team_members!risk_assessments_line_manager_id_fkey(first_name, last_name, role)"
-          )
-          .eq("company_id", companyId)
-          .order("assessment_date", { ascending: false }),
+        // PostgREST caps unranged selects at 1000 rows - loop until a page
+        // comes back short, otherwise companies with >1000 risk assessments
+        // would silently see only the newest 1000 with no error shown.
+        (async () => {
+          const PAGE_SIZE = 1000;
+          const allRows: any[] = [];
+          let from = 0;
+          while (true) {
+            const { data, error } = await supabase
+              .from("risk_assessments")
+              .select(
+                "*, departments(name), locations(name), exposure_groups(name), team_members!risk_assessments_line_manager_id_fkey(first_name, last_name, role)"
+              )
+              .eq("company_id", companyId)
+              .order("assessment_date", { ascending: false })
+              .range(from, from + PAGE_SIZE - 1);
+            if (error) return { data: null, error };
+            allRows.push(...(data || []));
+            if (!data || data.length < PAGE_SIZE) break;
+            from += PAGE_SIZE;
+          }
+          return { data: allRows, error: null };
+        })(),
         supabase
           .from("locations")
           .select("id, name")

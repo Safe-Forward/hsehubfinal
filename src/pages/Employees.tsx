@@ -209,25 +209,43 @@ export default function Employees() {
     // Sichtbarkeit wird serverseitig per RLS (user_can_view_employee) durchgesetzt:
     // berücksichtigt department_managers (inkl. Subtree) und employee_managers.
     // Kein zusätzlicher Client-Filter nötig — der würde das Modell nur verfälschen.
-    const { data, error } = await supabase
-      .from("employees")
-      .select(
+    //
+    // PostgREST returns at most 1000 rows per request by default. This page
+    // keeps the full employee list in memory for client-side search/filter/
+    // department-tree logic, so a single unranged .select() silently
+    // truncates companies above 1000 employees instead of erroring - it
+    // looked fine in testing because no test company had that many. Loop
+    // with .range() until a page comes back short of the page size.
+    const PAGE_SIZE = 1000;
+    const allRows: Employee[] = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("employees")
+        .select(
+          `
+          *,
+          departments(name),
+          job_roles(title),
+          exposure_groups(name)
         `
-        *,
-        departments(name),
-        job_roles(title),
-        exposure_groups(name)
-      `
-      )
-      .eq("company_id", companyId)
-      .order("created_at", { ascending: false });
+        )
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
 
-    if (error) {
-      toast.error(t("employees.loadError"));
-      console.error(error);
-    } else {
-      setEmployees((data as Employee[]) || []);
+      if (error) {
+        toast.error(t("employees.loadError"));
+        console.error(error);
+        return;
+      }
+
+      allRows.push(...((data as Employee[]) || []));
+      if (!data || data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
     }
+
+    setEmployees(allRows);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

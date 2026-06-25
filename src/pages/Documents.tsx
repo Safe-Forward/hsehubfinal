@@ -101,20 +101,32 @@ export default function Documents() {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("documents")
-        .select(
+      // PostgREST caps unranged selects at 1000 rows - loop until a page
+      // comes back short, otherwise companies with >1000 documents would
+      // silently see only the newest 1000 with no error or indication.
+      const PAGE_SIZE = 1000;
+      const allRows: typeof documents = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("documents")
+          .select(
+            `
+            *,
+            uploader:uploaded_by(email, user_metadata),
+            department:departments(name)
           `
-          *,
-          uploader:uploaded_by(email, user_metadata),
-          department:departments(name)
-        `
-        )
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false });
+          )
+          .eq("company_id", companyId)
+          .order("created_at", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
 
-      if (error) throw error;
-      setDocuments(data || []);
+        if (error) throw error;
+        allRows.push(...(data || []));
+        if (!data || data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      setDocuments(allRows);
     } catch (error: any) {
       console.error("Error fetching documents:", error);
       toast({
