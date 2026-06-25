@@ -345,7 +345,7 @@ export default function Employees() {
       setEmployeeTasks(data || []);
     } catch (error) {
       console.error("Error fetching tasks:", error);
-      toast.error("Aufgaben konnten nicht geladen werden");
+      toast.error(t("employees.tasksLoadError"));
     }
   };
 
@@ -373,7 +373,7 @@ export default function Employees() {
       setEmployeeNotes(parsedNotes);
     } catch (error) {
       console.error("Error fetching notes:", error);
-      toast.error("Notizen konnten nicht geladen werden");
+      toast.error(t("employees.notesLoadError"));
     }
   };
 
@@ -399,7 +399,7 @@ export default function Employees() {
       );
 
       if (mentionedEmployees.length === 0) {
-        toast.error("Bitte mindestens einen Mitarbeiter mit @ erwähnen");
+        toast.error(t("employees.mentionAtLeastOne"));
         return;
       }
 
@@ -428,14 +428,17 @@ export default function Employees() {
 
       if (errors.length > 0) {
         console.error("Some tasks failed:", errors);
-        toast.error("Einige Aufgaben konnten nicht erstellt werden");
+        toast.error(t("employees.someTasksFailed"));
       } else {
         const createdTasks = results.map((r) => r.data).filter(Boolean);
         setEmployeeTasks([...createdTasks, ...employeeTasks]);
         setNewTaskTitle("");
         setShowMentionDropdown(false);
         toast.success(
-          `Task assigned to ${mentionedEmployees.length} employee(s)`
+          t("employees.taskAssignedTo").replace(
+            "{count}",
+            String(mentionedEmployees.length)
+          )
         );
 
         // Create audit log for valid tasks
@@ -452,7 +455,7 @@ export default function Employees() {
       }
     } catch (error) {
       console.error("Error creating task:", error);
-      toast.error("Aufgabe konnte nicht erstellt werden");
+      toast.error(t("employees.taskCreateError"));
     }
   };
 
@@ -471,7 +474,11 @@ export default function Employees() {
           t.id === task.id ? { ...t, status: newStatus } : t
         )
       );
-      toast.success(`Task marked as ${newStatus}`);
+      toast.success(
+        newStatus === "completed"
+          ? t("employees.taskMarkedCompleted")
+          : t("employees.taskMarkedPending")
+      );
 
       // Create audit log
       logAction({
@@ -483,7 +490,7 @@ export default function Employees() {
       });
     } catch (error) {
       console.error("Error updating task:", error);
-      toast.error("Aufgabe konnte nicht aktualisiert werden");
+      toast.error(t("employees.taskUpdateError"));
     }
   };
 
@@ -509,7 +516,7 @@ export default function Employees() {
       );
 
       if (mentionedEmployees.length === 0) {
-        toast.error("Bitte mindestens einen Mitarbeiter mit @ erwähnen");
+        toast.error(t("employees.mentionAtLeastOne"));
         return;
       }
 
@@ -570,12 +577,17 @@ export default function Employees() {
 
       if (errors.length > 0) {
         console.error("Some notes failed:", errors);
-        toast.error("Einige Notizen konnten nicht gespeichert werden");
+        toast.error(t("employees.someNotesFailed"));
       } else {
         setEmployeeNotes([newNoteObj, ...employeeNotes]);
         setNewNote("");
         setShowMentionDropdown(false);
-        toast.success(`Note added to ${mentionedEmployees.length} employee(s)`);
+        toast.success(
+          t("employees.noteAddedTo").replace(
+            "{count}",
+            String(mentionedEmployees.length)
+          )
+        );
 
         // Create audit log
         mentionedEmployees.forEach((emp) => {
@@ -590,7 +602,7 @@ export default function Employees() {
       }
     } catch (error) {
       console.error("Error saving note:", error);
-      toast.error("Notiz konnte nicht gespeichert werden");
+      toast.error(t("employees.noteSaveError"));
     }
   };
 
@@ -609,7 +621,7 @@ export default function Employees() {
       if (error) throw error;
 
       setEmployeeNotes(updatedNotes);
-      toast.success("Notiz wurde gelöscht");
+      toast.success(t("employees.noteDeleted"));
 
       // Create audit log
       logAction({
@@ -621,7 +633,7 @@ export default function Employees() {
       });
     } catch (error) {
       console.error("Error deleting note:", error);
-      toast.error("Notiz konnte nicht gelöscht werden");
+      toast.error(t("employees.noteDeleteError"));
     }
   };
 
@@ -691,7 +703,10 @@ export default function Employees() {
     }
 
     const confirmed = window.confirm(
-      `${selectedEmployees.size} Mitarbeiter wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`
+      t("employees.confirmBulkDelete").replace(
+        "{count}",
+        String(selectedEmployees.size)
+      )
     );
 
     if (!confirmed) return;
@@ -718,15 +733,20 @@ export default function Employees() {
         });
       });
 
-      toast.success(`Successfully deleted ${selectedEmployees.size} employee(s)`);
+      toast.success(
+        t("employees.bulkDeleteSuccess").replace(
+          "{count}",
+          String(selectedEmployees.size)
+        )
+      );
       setSelectedEmployees(new Set());
       fetchEmployees();
     } catch (error: any) {
       console.error("Error deleting employees:", error);
 
       // Show detailed error message
-      const errorMessage = error?.message || error?.details || error?.hint || "Failed to delete employees";
-      const errorDetails = error?.code ? ` (Error code: ${error.code})` : "";
+      const errorMessage = error?.message || error?.details || error?.hint || t("employees.bulkDeleteError");
+      const errorDetails = error?.code ? ` (${t("employees.errorCode")}: ${error.code})` : "";
 
       toast.error(`${errorMessage}${errorDetails}`);
     } finally {
@@ -813,7 +833,7 @@ export default function Employees() {
       workbook,
       `employees_import_template_${new Date().toISOString().split("T")[0]}.xlsx`
     );
-    toast.success("Importvorlage heruntergeladen");
+    toast.success(t("employees.importTemplateDownloaded"));
   };
 
   const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1006,17 +1026,27 @@ export default function Employees() {
       });
 
       if (importedCount === 0 && skippedCount > 0) {
-        toast.error(`${t("employees.importError")}: all ${skippedCount} rows skipped`);
+        toast.error(
+          `${t("employees.importError")}: ${t(
+            "employees.importAllRowsSkipped"
+          ).replace("{count}", String(skippedCount))}`
+        );
         return;
       }
 
       if (skippedCount > 0) {
         toast.success(
-          `${t("employees.importSuccess")}: ${importedCount} imported, ${skippedCount} skipped. See import details below.`
+          `${t("employees.importSuccess")}: ${t(
+            "employees.importPartialResult"
+          )
+            .replace("{imported}", String(importedCount))
+            .replace("{skipped}", String(skippedCount))}`
         );
       } else {
         toast.success(
-          `${t("employees.importSuccess")}: ${importedCount} employee${importedCount > 1 ? "s" : ""} imported`
+          `${t("employees.importSuccess")}: ${t(
+            "employees.importFullResult"
+          ).replace("{count}", String(importedCount))}`
         );
       }
 
@@ -1298,7 +1328,12 @@ export default function Employees() {
                     disabled={isDeleting}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    {isDeleting ? "Deleting..." : `Delete (${selectedEmployees.size})`}
+                    {isDeleting
+                      ? t("employees.deletingEllipsis")
+                      : t("employees.deleteWithCount").replace(
+                          "{count}",
+                          String(selectedEmployees.size)
+                        )}
                   </Button>
                 )}
                 {hasDetailedPermission('employees', 'manage') && (
@@ -1420,12 +1455,15 @@ export default function Employees() {
                                 });
                                 await fetchJobRoles();
                                 toast.success(
-                                  `Job role "${customRole}" created`
+                                  t("employees.jobRoleCreated").replace(
+                                    "{name}",
+                                    customRole
+                                  )
                                 );
                               }
                             } catch (error) {
                               console.error("Error creating job role:", error);
-                              toast.error("Stellenbezeichnung konnte nicht erstellt werden");
+                              toast.error(t("employees.jobRoleCreateError"));
                             }
                           }}
                         />
@@ -1469,7 +1507,10 @@ export default function Employees() {
                                 });
                                 await fetchDepartments();
                                 toast.success(
-                                  `Department "${customDept}" created`
+                                  t("employees.departmentCreated").replace(
+                                    "{name}",
+                                    customDept
+                                  )
                                 );
                               }
                             } catch (error) {
@@ -1477,7 +1518,7 @@ export default function Employees() {
                                 "Error creating department:",
                                 error
                               );
-                              toast.error("Abteilung konnte nicht erstellt werden");
+                              toast.error(t("employees.departmentCreateError"));
                             }
                           }}
                         />
@@ -1541,7 +1582,7 @@ export default function Employees() {
             <div className="flex flex-col sm:flex-row gap-4 mb-4 p-4 bg-muted/30 rounded-xl border border-border/50">
               <div className="flex items-center gap-2 mb-2 sm:mb-0">
                 <Filter className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Filters</span>
+                <span className="text-sm font-medium">{t("employees.filtersLabel")}</span>
               </div>
               <div className="flex-1">
                 <Label className="text-xs mb-1">
@@ -1661,26 +1702,19 @@ export default function Employees() {
             >
               <DialogContent className="max-w-xl">
                 <DialogHeader>
-                  <DialogTitle>Employee import requirements</DialogTitle>
+                  <DialogTitle>{t("employees.importGuideTitle")}</DialogTitle>
                   <DialogDescription>
-                    Review the format once, then continue to choose your file.
+                    {t("employees.importGuideDescription")}
                   </DialogDescription>
                 </DialogHeader>
 
                 <div className="text-sm space-y-2">
-                  <p>Accepted file formats: .xlsx, .xls, .csv</p>
-                  <p>Required columns: employee_number, first_name, last_name</p>
+                  <p>{t("employees.importGuideFormats")}</p>
+                  <p>{t("employees.importGuideRequiredColumns")}</p>
+                  <p>{t("employees.importGuideOptionalColumns")}</p>
+                  <p>{t("employees.importGuideHeaderAliases")}</p>
                   <p>
-                    Optional columns: email, department, hire_date
-                    (YYYY-MM-DD, DD.MM.YYYY, DD/MM/YYYY, or Excel date)
-                  </p>
-                  <p>
-                    Header aliases are accepted (for example:
-                    Mitarbeiternummer, Vorname, Nachname, Abteilung,
-                    Einstellungsdatum).
-                  </p>
-                  <p>
-                    Need a sample file?{" "}
+                    {t("employees.importGuideSampleFile")}{" "}
                     <a
                       href="#"
                       className="text-primary underline underline-offset-4"
@@ -1689,7 +1723,7 @@ export default function Employees() {
                         handleDownloadImportTemplate();
                       }}
                     >
-                      Download template
+                      {t("employees.importGuideDownloadTemplate")}
                     </a>
                   </p>
                 </div>
@@ -1700,7 +1734,7 @@ export default function Employees() {
                     variant="outline"
                     onClick={() => setIsImportGuideDialogOpen(false)}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     type="button"
@@ -1709,7 +1743,7 @@ export default function Employees() {
                       document.getElementById("import-employees")?.click();
                     }}
                   >
-                    Continue to file selection
+                    {t("employees.importGuideContinue")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1718,7 +1752,10 @@ export default function Employees() {
             {importErrors.length > 0 && (
               <div className="mb-4 p-4 rounded-xl border border-destructive/30 bg-destructive/5 text-sm space-y-2">
                 <p className="font-medium text-destructive">
-                  Import issues ({importErrors.length})
+                  {t("employees.importIssuesCount").replace(
+                    "{count}",
+                    String(importErrors.length)
+                  )}
                 </p>
                 <div className="max-h-48 overflow-auto space-y-1 pr-1">
                   {importErrors.map((issue, idx) => (
@@ -1733,17 +1770,23 @@ export default function Employees() {
             {lastImportReport && lastImportReport.skippedCount > 0 && (
               <div className="mb-4 p-4 rounded-xl border border-amber-300 bg-amber-50 text-sm space-y-3">
                 <p className="font-medium text-amber-900">
-                  Import report for {lastImportReport.fileName}
+                  {t("employees.importReportFor").replace(
+                    "{fileName}",
+                    lastImportReport.fileName
+                  )}
                 </p>
                 <p className="text-amber-900">
-                  Total rows: {lastImportReport.totalRows} | Imported: {lastImportReport.importedCount} | Skipped: {lastImportReport.skippedCount}
+                  {t("employees.importReportTotals")
+                    .replace("{total}", String(lastImportReport.totalRows))
+                    .replace("{imported}", String(lastImportReport.importedCount))
+                    .replace("{skipped}", String(lastImportReport.skippedCount))}
                 </p>
 
                 <div className="space-y-1">
-                  <p className="font-medium text-amber-900">Imported rows</p>
+                  <p className="font-medium text-amber-900">{t("employees.importedRowsLabel")}</p>
                   <div className="max-h-32 overflow-auto space-y-1 pr-1">
                     {lastImportReport.importedRows.length === 0 ? (
-                      <p className="text-muted-foreground">No rows imported.</p>
+                      <p className="text-muted-foreground">{t("employees.noRowsImported")}</p>
                     ) : (
                       lastImportReport.importedRows.map((item, idx) => (
                         <p key={idx} className="text-muted-foreground">
@@ -1755,7 +1798,7 @@ export default function Employees() {
                 </div>
 
                 <div className="space-y-1">
-                  <p className="font-medium text-amber-900">Skipped rows</p>
+                  <p className="font-medium text-amber-900">{t("employees.skippedRowsLabel")}</p>
                   <div className="max-h-40 overflow-auto space-y-1 pr-1">
                     {lastImportReport.skippedRows.map((item, idx) => (
                       <p key={idx} className="text-muted-foreground">
@@ -1811,7 +1854,7 @@ export default function Employees() {
                             {t("employees.noEmployees")}
                           </p>
                           <p className="text-sm text-muted-foreground/60">
-                            Add your first employee to get started
+                            {t("employees.noEmployeesHint")}
                           </p>
                         </div>
                       </TableCell>
@@ -1840,7 +1883,7 @@ export default function Employees() {
                           className="font-medium cursor-pointer"
                           onClick={() => navigate(`/employees/${employee.id}`)}
                         >
-                          {employee.full_name || "Unnamed Employee"}
+                          {employee.full_name || t("employees.unnamedEmployee")}
                         </TableCell>
                         <TableCell
                           className="cursor-pointer"
@@ -1901,7 +1944,7 @@ export default function Employees() {
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
             <SheetHeader>
-              <SheetTitle>{selectedEmployee?.full_name || "Employee Details"}</SheetTitle>
+              <SheetTitle>{selectedEmployee?.full_name || t("employees.employeeDetailsFallback")}</SheetTitle>
               <SheetDescription>{t("employees.details")}</SheetDescription>
             </SheetHeader>
 
@@ -2015,10 +2058,10 @@ export default function Employees() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base">
                 <ClipboardList className="w-4 h-4" />
-                Assign Task
+                {t("employees.assignTaskTitle")}
               </DialogTitle>
               <DialogDescription className="text-xs">
-                Type @ to mention employees
+                {t("employees.mentionHint")}
               </DialogDescription>
             </DialogHeader>
 
@@ -2027,7 +2070,7 @@ export default function Employees() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Input
-                    placeholder="Enter task and type @ to select employee..."
+                    placeholder={t("employees.taskInputPlaceholder")}
                     value={newTaskTitle}
                     className="h-9 text-sm flex-1"
                     onChange={(e) => {
@@ -2060,7 +2103,7 @@ export default function Employees() {
                     className="h-9 px-4"
                   >
                     <Plus className="w-3 h-3 mr-1" />
-                    Assign
+                    {t("employees.assignButton")}
                   </Button>
                 </div>
                 {/* Preview with styled mentions */}
@@ -2077,7 +2120,10 @@ export default function Employees() {
                   <div className="border rounded-lg overflow-hidden">
                     <div className="bg-muted/50 px-3 py-2 border-b">
                       <p className="text-xs font-medium text-muted-foreground">
-                        Select Employee ({filteredEmployeesForMention.length})
+                        {t("employees.selectEmployeeCount").replace(
+                          "{count}",
+                          String(filteredEmployeesForMention.length)
+                        )}
                       </p>
                     </div>
                     <div className="max-h-[380px] overflow-y-auto">
@@ -2110,8 +2156,8 @@ export default function Employees() {
                           </div>
                           <div className="text-xs text-muted-foreground mt-0.5">
                             {emp.employee_number} •{" "}
-                            {emp.departments?.name || "No dept"} •{" "}
-                            {emp.job_roles?.title || "No role"}
+                            {emp.departments?.name || t("employees.noDepartmentShort")} •{" "}
+                            {emp.job_roles?.title || t("employees.noJobRoleShort")}
                           </div>
                         </div>
                       ))}
@@ -2133,10 +2179,10 @@ export default function Employees() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base">
                 <StickyNote className="w-4 h-4" />
-                Add Note
+                {t("employees.addNoteTitle")}
               </DialogTitle>
               <DialogDescription className="text-xs">
-                Type @ to mention employees
+                {t("employees.mentionHint")}
               </DialogDescription>
             </DialogHeader>
 
@@ -2144,7 +2190,7 @@ export default function Employees() {
               {/* Note Input */}
               <div className="space-y-2">
                 <Textarea
-                  placeholder="Enter note and type @ to select employee..."
+                  placeholder={t("employees.noteInputPlaceholder")}
                   value={newNote}
                   onChange={handleNoteChange}
                   className="min-h-[80px] text-sm resize-none"
@@ -2162,7 +2208,7 @@ export default function Employees() {
                     className="h-9 px-4"
                   >
                     <Save className="w-3 h-3 mr-1" />
-                    Save
+                    {t("common.save")}
                   </Button>
                 </div>
               </div>
@@ -2173,7 +2219,10 @@ export default function Employees() {
                   <div className="border rounded-lg overflow-hidden">
                     <div className="bg-muted/50 px-3 py-2 border-b">
                       <p className="text-xs font-medium text-muted-foreground">
-                        Select Employee ({filteredEmployeesForMention.length})
+                        {t("employees.selectEmployeeCount").replace(
+                          "{count}",
+                          String(filteredEmployeesForMention.length)
+                        )}
                       </p>
                     </div>
                     <div className="max-h-[320px] overflow-y-auto">
@@ -2188,8 +2237,8 @@ export default function Employees() {
                           </div>
                           <div className="text-xs text-muted-foreground mt-0.5">
                             {emp.employee_number} •{" "}
-                            {emp.departments?.name || "No dept"} •{" "}
-                            {emp.job_roles?.title || "No role"}
+                            {emp.departments?.name || t("employees.noDepartmentShort")} •{" "}
+                            {emp.job_roles?.title || t("employees.noJobRoleShort")}
                           </div>
                         </div>
                       ))}
