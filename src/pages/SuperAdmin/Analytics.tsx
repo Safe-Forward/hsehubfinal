@@ -199,14 +199,31 @@ export default function Analytics() {
 
   const fetchCompanyUsage = async () => {
     try {
-      const { data: companies, error } = await supabase
-        .from("companies")
-        .select("*")
-        .order("last_activity_at", { ascending: false });
+      // PostgREST caps unranged selects at 1000 rows - loop with .range()
+      // until a page comes back short, otherwise the platform would
+      // silently show only the first 1000 companies/documents once it
+      // grows past that.
+      const PAGE_SIZE = 1000;
+      const fetchAllPages = async <T,>(
+        buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>
+      ): Promise<T[]> => {
+        const allRows: T[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+          if (error) throw error;
+          allRows.push(...(data || []));
+          if (!data || data.length < PAGE_SIZE) break;
+          from += PAGE_SIZE;
+        }
+        return allRows;
+      };
 
-      if (error) throw error;
+      const companies = await fetchAllPages<any>((from, to) =>
+        supabase.from("companies").select("*").order("last_activity_at", { ascending: false }).range(from, to)
+      );
 
-      const usagePromises = (companies || []).map(async (company) => {
+      const usagePromises = companies.map(async (company) => {
         const [
           employees,
           documents,
@@ -214,7 +231,7 @@ export default function Analytics() {
           audits,
           incidents,
           riskAssessments,
-          documentStorage,
+          documentStorageRows,
         ] = await Promise.all([
           supabase
             .from("employees")
@@ -240,15 +257,14 @@ export default function Analytics() {
             .from("risk_assessments")
             .select("id", { count: "exact", head: true })
             .eq("company_id", company.id),
-          supabase
-            .from("documents")
-            .select("file_size")
-            .eq("company_id", company.id),
+          fetchAllPages<{ file_size: number | null }>((from, to) =>
+            supabase.from("documents").select("file_size").eq("company_id", company.id).range(from, to)
+          ),
         ]);
 
         // Calculate total storage from documents
-        const totalStorage = (documentStorage.data || []).reduce(
-          (sum, doc: any) => sum + (doc.file_size || 0),
+        const totalStorage = documentStorageRows.reduce(
+          (sum, doc) => sum + (doc.file_size || 0),
           0
         );
 

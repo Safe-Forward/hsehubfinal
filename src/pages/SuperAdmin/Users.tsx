@@ -97,16 +97,46 @@ export default function GlobalUsers() {
         try {
             setLoadingData(true);
 
+            // PostgREST caps unranged/unranged-.in() selects at 1000 rows -
+            // loop with .range() until a page comes back short. This list
+            // is platform-wide (all users across all companies), so it's
+            // exactly the query most likely to eventually exceed 1000 as
+            // the customer base grows - without this it would silently
+            // hide users instead of erroring.
+            const PAGE_SIZE = 1000;
+            const fetchAllPages = async <T,>(
+                buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>
+            ): Promise<T[]> => {
+                const allRows: T[] = [];
+                let from = 0;
+                while (true) {
+                    const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+                    if (error) throw error;
+                    allRows.push(...(data || []));
+                    if (!data || data.length < PAGE_SIZE) break;
+                    from += PAGE_SIZE;
+                }
+                return allRows;
+            };
+
             // Fetch all user roles
-            const { data: userRolesData, error: rolesError } = await supabase
-                .from("user_roles")
-                .select("user_id, role, company_id, last_login_at, failed_login_count, created_at")
-                .not("company_id", "is", null)
-                .order("created_at", { ascending: false });
+            const userRolesData = await fetchAllPages<{
+                user_id: string;
+                role: string;
+                company_id: string | null;
+                last_login_at: string | null;
+                failed_login_count: number | null;
+                created_at: string;
+            }>((from, to) =>
+                supabase
+                    .from("user_roles")
+                    .select("user_id, role, company_id, last_login_at, failed_login_count, created_at")
+                    .not("company_id", "is", null)
+                    .order("created_at", { ascending: false })
+                    .range(from, to)
+            );
 
-            if (rolesError) throw rolesError;
-
-            if (!userRolesData || userRolesData.length === 0) {
+            if (userRolesData.length === 0) {
                 setUsers([]);
                 setLoadingData(false);
                 return;
@@ -117,20 +147,14 @@ export default function GlobalUsers() {
             const companyIds = [...new Set(userRolesData.map((ur) => ur.company_id).filter(Boolean))];
 
             // Fetch profiles separately
-            const { data: profilesData, error: profilesError } = await supabase
-                .from("profiles")
-                .select("id, email, full_name")
-                .in("id", userIds);
-
-            if (profilesError) throw profilesError;
+            const profilesData = await fetchAllPages<{ id: string; email: string; full_name: string }>(
+                (from, to) => supabase.from("profiles").select("id, email, full_name").in("id", userIds).range(from, to)
+            );
 
             // Fetch companies separately
-            const { data: companiesData, error: companiesError } = await supabase
-                .from("companies")
-                .select("id, name")
-                .in("id", companyIds);
-
-            if (companiesError) throw companiesError;
+            const companiesData = await fetchAllPages<{ id: string; name: string }>((from, to) =>
+                supabase.from("companies").select("id, name").in("id", companyIds as string[]).range(from, to)
+            );
 
             // Join the data on the frontend
             const transformedUsers = userRolesData.map((ur) => {

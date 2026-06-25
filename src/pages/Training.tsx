@@ -512,13 +512,42 @@ export default function Training() {
   const fetchEmployees = async () => {
     if (!companyId) return;
     try {
-      const { data: teamData, error: teamError } = await supabase.from("team_members").select("user_id").eq("company_id", companyId).not("user_id", "is", null);
-      if (teamError) throw teamError;
-      const teamUserIds = (teamData || []).map((t: any) => t.user_id);
+      // PostgREST caps unranged selects at 1000 rows - loop with .range()
+      // until a page comes back short, otherwise companies above that
+      // volume of team members/employees would silently see only the
+      // first 1000.
+      const PAGE_SIZE = 1000;
+      const fetchAllPages = async <T,>(
+        buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>
+      ): Promise<T[]> => {
+        const allRows: T[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+          if (error) throw error;
+          allRows.push(...(data || []));
+          if (!data || data.length < PAGE_SIZE) break;
+          from += PAGE_SIZE;
+        }
+        return allRows;
+      };
+
+      const teamData = await fetchAllPages<{ user_id: string }>((from, to) =>
+        supabase.from("team_members").select("user_id").eq("company_id", companyId).not("user_id", "is", null).range(from, to)
+      );
+      const teamUserIds = teamData.map((t) => t.user_id);
       if (teamUserIds.length === 0) { setEmployees([]); return; }
-      const { data, error } = await supabase.from("employees").select("id, full_name").eq("company_id", companyId).eq("is_active", true).in("user_id", teamUserIds).order("full_name");
-      if (error) throw error;
-      setEmployees((data as Employee[]) || []);
+      const data = await fetchAllPages<Employee>((from, to) =>
+        supabase
+          .from("employees")
+          .select("id, full_name")
+          .eq("company_id", companyId)
+          .eq("is_active", true)
+          .in("user_id", teamUserIds)
+          .order("full_name")
+          .range(from, to)
+      );
+      setEmployees(data);
     } catch (err: any) {
       toast({ title: "Fehler beim Laden der Nutzer", description: err.message, variant: "destructive" });
     }

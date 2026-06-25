@@ -255,22 +255,31 @@ export default function Reports() {
       return { employeeIds: null, riskAssessmentIds: null };
     }
 
-    const [employeesRes, risksRes] = await Promise.all([
-      supabase
-        .from("employees")
-        .select("id")
-        .eq("company_id", companyId)
-        .eq("department_id", departmentFilter),
-      supabase
-        .from("risk_assessments")
-        .select("id")
-        .eq("company_id", companyId)
-        .eq("department_id", departmentFilter),
+    // PostgREST caps unranged selects at 1000 rows - a department at a
+    // large company could plausibly exceed that, so this paginates with
+    // .range() instead of a single unranged select (see fetchAllPages).
+    const [employeeIds, riskAssessmentIds] = await Promise.all([
+      fetchAllPages<{ id: string }>((from, to) =>
+        supabase
+          .from("employees")
+          .select("id")
+          .eq("company_id", companyId)
+          .eq("department_id", departmentFilter)
+          .range(from, to)
+      ),
+      fetchAllPages<{ id: string }>((from, to) =>
+        supabase
+          .from("risk_assessments")
+          .select("id")
+          .eq("company_id", companyId)
+          .eq("department_id", departmentFilter)
+          .range(from, to)
+      ),
     ]);
 
     return {
-      employeeIds: (employeesRes.data || []).map((e: any) => e.id),
-      riskAssessmentIds: (risksRes.data || []).map((r: any) => r.id),
+      employeeIds: employeeIds.map((e) => e.id),
+      riskAssessmentIds: riskAssessmentIds.map((r) => r.id),
     };
   }, [companyId, departmentFilter]);
 
@@ -618,53 +627,78 @@ export default function Reports() {
     }
   };
 
+  // PostgREST caps unranged selects at 1000 rows - this loops a query
+  // builder factory with .range() until a page comes back short, otherwise
+  // the training matrix would silently use only the first 1000 employees/
+  // assignments/participations for companies above that volume.
+  const fetchAllPages = async <T,>(
+    buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>
+  ): Promise<T[]> => {
+    const PAGE_SIZE = 1000;
+    const allRows: T[] = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      allRows.push(...(data || []));
+      if (!data || data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+    }
+    return allRows;
+  };
+
   const fetchTrainingMatrix = async (startIso: string, endIso: string, deptEmployeeIds: string[] | null = null) => {
     if (!companyId) return [];
 
     try {
       // Echte Trainingsdaten: course_employee_access (Zuweisung) + training_participations
       // (Status) + courses (Wiederholungsintervall). Vier Queries statt einer pro Mitarbeiter.
-      let employeesQuery = supabase
-        .from("employees")
-        .select("id, full_name")
-        .eq("company_id", companyId)
-        .eq("is_active", true);
-      if (deptEmployeeIds !== null) {
-        employeesQuery = employeesQuery.in(
-          "id",
-          deptEmployeeIds.length > 0 ? deptEmployeeIds : ["00000000-0000-0000-0000-000000000000"]
-        );
-      }
-
-      const [employeesRes, accessRes, coursesRes, participationsRes] = await Promise.all([
-        employeesQuery,
-        supabase
-          .from("course_employee_access")
-          .select("employee_id, course_id, created_at")
-          .eq("company_id", companyId)
-          .gte("created_at", startIso)
-          .lte("created_at", endIso),
+      const [employeesData, accessData, coursesRes, participationsData] = await Promise.all([
+        fetchAllPages<{ id: string; full_name: string }>((from, to) => {
+          let q = supabase
+            .from("employees")
+            .select("id, full_name")
+            .eq("company_id", companyId)
+            .eq("is_active", true);
+          if (deptEmployeeIds !== null) {
+            q = q.in(
+              "id",
+              deptEmployeeIds.length > 0 ? deptEmployeeIds : ["00000000-0000-0000-0000-000000000000"]
+            );
+          }
+          return q.range(from, to);
+        }),
+        fetchAllPages<{ employee_id: string; course_id: string; created_at: string }>((from, to) =>
+          supabase
+            .from("course_employee_access")
+            .select("employee_id, course_id, created_at")
+            .eq("company_id", companyId)
+            .gte("created_at", startIso)
+            .lte("created_at", endIso)
+            .range(from, to)
+        ),
         supabase
           .from("courses")
           .select("id, renewal_months")
           .eq("company_id", companyId),
-        supabase
-          .from("training_participations")
-          .select("employee_id, course_id, status, completion_date")
-          .eq("company_id", companyId),
+        fetchAllPages<{ employee_id: string; course_id: string; status: string; completion_date: string | null }>(
+          (from, to) =>
+            supabase
+              .from("training_participations")
+              .select("employee_id, course_id, status, completion_date")
+              .eq("company_id", companyId)
+              .range(from, to)
+        ),
       ]);
 
-      if (employeesRes.error) throw employeesRes.error;
-      if (accessRes.error) throw accessRes.error;
       if (coursesRes.error) throw coursesRes.error;
-      if (participationsRes.error) throw participationsRes.error;
 
       const renewalByCourse = new Map<string, number | null>(
         (coursesRes.data || []).map((c: any) => [c.id, c.renewal_months])
       );
 
       const participationByKey = new Map<string, { status: string; completion_date: string | null }>();
-      (participationsRes.data || []).forEach((p: any) => {
+      participationsData.forEach((p) => {
         participationByKey.set(`${p.employee_id}|${p.course_id}`, {
           status: p.status,
           completion_date: p.completion_date,
@@ -672,14 +706,14 @@ export default function Reports() {
       });
 
       const courseIdsByEmployee = new Map<string, string[]>();
-      (accessRes.data || []).forEach((a: any) => {
+      accessData.forEach((a) => {
         const list = courseIdsByEmployee.get(a.employee_id) || [];
         list.push(a.course_id);
         courseIdsByEmployee.set(a.employee_id, list);
       });
 
       const now = new Date();
-      const matrix: TrainingStatus[] = (employeesRes.data || []).map((emp: any) => {
+      const matrix: TrainingStatus[] = employeesData.map((emp) => {
         const courseIds = courseIdsByEmployee.get(emp.id) || [];
         let completed = 0;
         let expired = 0;

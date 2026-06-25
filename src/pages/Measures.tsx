@@ -195,33 +195,56 @@ export default function Measures() {
     if (!companyId) return;
 
     try {
+      // PostgREST caps unranged selects at 1000 rows - loop with .range()
+      // until a page comes back short, otherwise companies above that
+      // volume of measures would silently see only the newest 1000.
+      const PAGE_SIZE = 1000;
+      const fetchAllPages = async <T,>(
+        buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>
+      ): Promise<T[]> => {
+        const allRows: T[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+          if (error) throw error;
+          allRows.push(...(data || []));
+          if (!data || data.length < PAGE_SIZE) break;
+          from += PAGE_SIZE;
+        }
+        return allRows;
+      };
+
       // FK-Constraint measures_incident_id_fkey existiert in der DB (ON DELETE SET NULL)
       // → direkter Join möglich
-      const { data, error } = await supabase
-        .from("measures" as any)
-        .select(
+      const data = await fetchAllPages<any>((from, to) =>
+        supabase
+          .from("measures" as any)
+          .select(
+            `
+            *,
+            responsible_person:employees!responsible_person_id(full_name),
+            incident:incidents!incident_id(title, department_id),
+            risk_assessment:risk_assessments!risk_assessment_id(title, department_id),
+            audit:audits!audit_id(title, department_id)
           `
-          *,
-          responsible_person:employees!responsible_person_id(full_name),
-          incident:incidents!incident_id(title, department_id),
-          risk_assessment:risk_assessments!risk_assessment_id(title, department_id),
-          audit:audits!audit_id(title, department_id)
-        `
-        )
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+          )
+          .eq("company_id", companyId)
+          .order("created_at", { ascending: false })
+          .range(from, to)
+      );
 
       // Auch GBU-Inline-Maßnahmen (risk_assessment_measures) laden und mergen
-      const { data: ramData } = await supabase
-        .from("risk_assessment_measures" as any)
-        .select(`
-          *,
-          risk_assessment:risk_assessments!risk_assessment_id(id, title, department_id)
-        `)
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false });
+      const ramData = await fetchAllPages<any>((from, to) =>
+        supabase
+          .from("risk_assessment_measures" as any)
+          .select(`
+            *,
+            risk_assessment:risk_assessments!risk_assessment_id(id, title, department_id)
+          `)
+          .eq("company_id", companyId)
+          .order("created_at", { ascending: false })
+          .range(from, to)
+      );
 
       // Status-Mapping: progress_status → measures.status
       const statusMap: Record<string, string> = {
@@ -277,15 +300,27 @@ export default function Measures() {
     if (!companyId) return;
 
     try {
-      const { data, error } = await supabase
-        .from("employees")
-        .select("id, full_name")
-        .eq("company_id", companyId)
-        .eq("is_active", true)
-        .order("full_name");
+      // PostgREST caps unranged selects at 1000 rows - loop with .range()
+      // until a page comes back short, otherwise companies above that
+      // many employees would silently see only the first 1000 in this picker.
+      const PAGE_SIZE = 1000;
+      const allRows: { id: string; full_name: string }[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("employees")
+          .select("id, full_name")
+          .eq("company_id", companyId)
+          .eq("is_active", true)
+          .order("full_name")
+          .range(from, from + PAGE_SIZE - 1);
 
-      if (error) throw error;
-      setEmployees(data || []);
+        if (error) throw error;
+        allRows.push(...(data || []));
+        if (!data || data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      setEmployees(allRows);
     } catch (error: any) {
       console.error("Error fetching employees:", error);
     }

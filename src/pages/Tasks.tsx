@@ -139,20 +139,41 @@ export default function Tasks() {
 
     setLoadingData(true);
     try {
-      const [tasksRes, employeesRes] = await Promise.all([
-        supabase
-          .from("tasks")
-          .select("*, employees!tasks_assigned_to_fkey(full_name)")
-          .eq("company_id", companyId)
-          .order("created_at", { ascending: false }),
-        supabase.from("employees").select("*").eq("company_id", companyId),
+      // PostgREST caps unranged selects at 1000 rows - loop with .range()
+      // until a page comes back short, otherwise companies with >1000
+      // tasks or employees would silently see only the first 1000.
+      const PAGE_SIZE = 1000;
+      const fetchAllPages = async <T,>(
+        buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>
+      ): Promise<T[]> => {
+        const allRows: T[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+          if (error) throw error;
+          allRows.push(...(data || []));
+          if (!data || data.length < PAGE_SIZE) break;
+          from += PAGE_SIZE;
+        }
+        return allRows;
+      };
+
+      const [tasksData, employeesData] = await Promise.all([
+        fetchAllPages<TaskWithJoins>((from, to) =>
+          supabase
+            .from("tasks")
+            .select("*, employees!tasks_assigned_to_fkey(full_name)")
+            .eq("company_id", companyId)
+            .order("created_at", { ascending: false })
+            .range(from, to)
+        ),
+        fetchAllPages<Tables<"employees">>((from, to) =>
+          supabase.from("employees").select("*").eq("company_id", companyId).range(from, to)
+        ),
       ]);
 
-      if (tasksRes.error) throw tasksRes.error;
-      if (employeesRes.error) throw employeesRes.error;
-
-      setTasks((tasksRes.data as TaskWithJoins[]) || []);
-      setEmployees((employeesRes.data as Tables<"employees">[]) || []);
+      setTasks(tasksData);
+      setEmployees(employeesData);
     } catch (err: unknown) {
       const e = err as { message?: string } | Error | null;
       const message =
