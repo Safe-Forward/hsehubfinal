@@ -1,13 +1,20 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const POLL_INTERVAL_MS = 30000; // 30s Fallback — Supabase Realtime ist primär
+// 60s Fallback. Alle Tabellen, für die dieser Hook genutzt wird, sind in der
+// supabase_realtime-Publikation registriert (siehe Migration
+// enable_realtime_for_polled_tables) — Layer 1 ist damit der Normalfall,
+// dieses Intervall fängt nur kurze Verbindungsaussetzer ab. Vorher stand
+// hier 30s bei jeder offenen Seite, was bei vielen gleichzeitig geöffneten
+// Tabs unnötige Hintergrundlast verursacht hat, ohne dass Realtime damals
+// überhaupt aktiv war.
+const POLL_INTERVAL_MS = 60000;
 
 /**
  * Zwei-Schichten-Sync:
- * 1. Supabase postgres_changes (Echtzeit) — funktioniert sobald Realtime
- *    für die Tabellen im Supabase-Dashboard aktiviert ist.
- * 2. Polling alle 8 Sekunden — greift sofort, unabhängig von Realtime-Config.
+ * 1. Supabase postgres_changes (Echtzeit) — primärer Mechanismus.
+ * 2. Polling als Fallback — greift, falls die Realtime-Verbindung kurz
+ *    getrennt ist oder eine Tabelle künftig aus der Publikation fällt.
  *
  * onRefetch wird in einem Ref gehalten — kein useCallback beim Aufrufer nötig.
  */

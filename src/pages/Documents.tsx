@@ -139,13 +139,32 @@ export default function Documents() {
     }
   };
 
+  // Matches the "documents" Storage bucket's configured file_size_limit
+  // (50MB). Checking this before upload starts avoids a slow, doomed
+  // upload over a weak connection that only fails with a raw Storage
+  // error at the very end.
+  const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+
+  const validateAndSetFile = (file: File) => {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      toast({
+        title: "Datei zu groß",
+        description: `"${file.name}" ist ${(file.size / 1024 / 1024).toFixed(1)} MB groß. Maximal erlaubt sind 50 MB pro Datei.`,
+        variant: "destructive",
+      });
+      return false;
+    }
+    setUploadFile(file);
+    if (!uploadTitle) {
+      setUploadTitle(file.name.replace(/\.[^/.]+$/, ""));
+    }
+    return true;
+  };
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setUploadFile(file);
-      if (!uploadTitle) {
-        setUploadTitle(file.name.replace(/\.[^/.]+$/, ""));
-      }
+      validateAndSetFile(file);
     }
   };
 
@@ -168,11 +187,7 @@ export default function Documents() {
       setIsDragging(false);
 
       const file = e.dataTransfer.files?.[0];
-      if (file) {
-        setUploadFile(file);
-        if (!uploadTitle) {
-          setUploadTitle(file.name.replace(/\.[^/.]+$/, ""));
-        }
+      if (file && validateAndSetFile(file)) {
         setShowUploadDialog(true);
       }
     },
