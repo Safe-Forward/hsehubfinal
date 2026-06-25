@@ -253,7 +253,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative overflow-hidden">
             <div className="relative z-10 bg-gradient-to-br from-blue-500 via-blue-600 to-green-500 rounded-3xl p-1 shadow-2xl hover:shadow-3xl transition-shadow">
               <div className="bg-white rounded-2xl p-8 lg:p-12">
                 <div className="grid grid-cols-2 gap-4">

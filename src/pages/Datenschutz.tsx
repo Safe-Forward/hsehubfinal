@@ -41,7 +41,7 @@ const TOC_SECTIONS = [
 
 const SectionHeading = ({ id, number, title, color = "blue" }: { id: string; number: string; title: string; color?: "blue" | "green" }) => (
   <h2 id={id} className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3 scroll-mt-8">
-    <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${color === "green" ? "bg-green-600" : "bg-blue-600"}`}>
+    <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${color === "green" ? "bg-green-700" : "bg-blue-600"}`}>
       {number}
     </span>
     {title}
