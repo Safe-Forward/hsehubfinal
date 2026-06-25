@@ -339,7 +339,7 @@ export default function CompanyRegistration() {
                   <div className="flex items-center justify-between">
                     <CardTitle>{plan.name}</CardTitle>
                     {plan.popular && (
-                      <Badge className="bg-green-600">Beliebt</Badge>
+                      <Badge className="bg-green-700">Beliebt</Badge>
                     )}
                   </div>
                   <CardDescription className="text-xs mb-2 font-semibold text-gray-700">
@@ -476,6 +476,7 @@ export default function CompanyRegistration() {
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
                           >
                             {showPassword ? (
                               <EyeOff className="h-4 w-4" />
@@ -504,6 +505,7 @@ export default function CompanyRegistration() {
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label={showConfirmPassword ? "Passwort verbergen" : "Passwort anzeigen"}
                           >
                             {showConfirmPassword ? (
                               <EyeOff className="h-4 w-4" />
@@ -556,7 +558,7 @@ export default function CompanyRegistration() {
                     </Button>
                     <p className="text-xs text-center text-muted-foreground">
                       Bereits ein Konto?{" "}
-                      <a href="/auth" className="text-primary hover:underline">
+                      <a href="/auth" className="text-primary underline">
                         Jetzt anmelden
                       </a>
                     </p>
@@ -592,6 +594,7 @@ export default function CompanyRegistration() {
                         onChange={() => toggleAddOn(addOn.id)}
                         className="mt-1 cursor-pointer"
                         onClick={(e) => e.stopPropagation()}
+                        aria-label={addOn.name}
                       />
                       <div className="flex-1">
                         <div className="font-semibold text-sm">{addOn.name}</div>

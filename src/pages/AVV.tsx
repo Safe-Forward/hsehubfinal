@@ -200,22 +200,24 @@ const AVV = () => {
               <section>
                 <SectionHeading id="anlage1" number="" title="Anlage 1: Genehmigte Unterauftragsverarbeiter" />
                 <p className="text-xs text-gray-500 mb-3">Stand: {LAST_UPDATED}. Wird bei Änderungen gemäß § 6 aktualisiert.</p>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b-2 border-gray-200 text-left text-xs uppercase text-gray-500">
-                      <th className="py-2 pr-4">Anbieter</th>
-                      <th className="py-2 pr-4">Zweck</th>
-                      <th className="py-2 pr-4">Sitz</th>
-                      <th className="py-2">Garantie</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <ProviderRow name="Supabase, Inc." purpose="Datenbank, Auth, Dateispeicher" country="USA / EU-Region (Frankfurt)" guarantee="EU-SCC; AVV besteht" />
-                    <ProviderRow name="Vercel Inc." purpose="Hosting" country="USA / EU-Rechenzentrum" guarantee="DPA automatisch wirksam" />
-                    <ProviderRow name="Stripe Payments Europe, Ltd." purpose="Zahlungsabwicklung" country="Irland (EU)" guarantee="Innerhalb EU; DPA besteht" />
-                    <ProviderRow name="Brevo GmbH" purpose="Transaktionaler E-Mail-Versand" country="Deutschland" guarantee="Innerhalb Deutschlands; AVV besteht" />
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200 text-left text-xs uppercase text-gray-500">
+                        <th className="py-2 pr-4">Anbieter</th>
+                        <th className="py-2 pr-4">Zweck</th>
+                        <th className="py-2 pr-4">Sitz</th>
+                        <th className="py-2">Garantie</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <ProviderRow name="Supabase, Inc." purpose="Datenbank, Auth, Dateispeicher" country="USA / EU-Region (Frankfurt)" guarantee="EU-SCC; AVV besteht" />
+                      <ProviderRow name="Vercel Inc." purpose="Hosting" country="USA / EU-Rechenzentrum" guarantee="DPA automatisch wirksam" />
+                      <ProviderRow name="Stripe Payments Europe, Ltd." purpose="Zahlungsabwicklung" country="Irland (EU)" guarantee="Innerhalb EU; DPA besteht" />
+                      <ProviderRow name="Brevo GmbH" purpose="Transaktionaler E-Mail-Versand" country="Deutschland" guarantee="Innerhalb Deutschlands; AVV besteht" />
+                    </tbody>
+                  </table>
+                </div>
               </section>
 
               <section>

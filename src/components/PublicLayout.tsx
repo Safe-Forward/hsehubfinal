@@ -86,7 +86,7 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
             <p className="text-sm text-gray-600">
               © 2025 Safe-Forward. All rights reserved.
             </p>
-            <div className="flex gap-6 text-sm text-gray-600">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-600">
               <a
                 href="/impressum"
                 className="hover:text-blue-600 transition-colors"
