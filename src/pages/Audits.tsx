@@ -93,7 +93,28 @@ export default function Audits() {
 
     setLoadingData(true);
     try {
-      const [auditsRes, isoRes, employeesRes] = await Promise.all([
+      // audits (geplante Audits pro Firma) und company_iso_standards (Auswahl aus
+      // einem kleinen festen ISO-Katalog) sind von Natur aus niedrig-kardinal und
+      // bleiben unranged. team_members hingegen wächst mit der Mitarbeiterzahl mit
+      // ALLEN Login-Konten der Firma (kein Filter) - PostgREST begrenzt unranged
+      // .select()-Aufrufe auf 1000 Zeilen, also mit .range() in Pages laden.
+      const PAGE_SIZE = 1000;
+      const fetchAllPages = async <T,>(
+        buildQuery: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: any }>
+      ): Promise<T[]> => {
+        const allRows: T[] = [];
+        let from = 0;
+        while (true) {
+          const { data, error } = await buildQuery(from, from + PAGE_SIZE - 1);
+          if (error) throw error;
+          allRows.push(...(data || []));
+          if (!data || data.length < PAGE_SIZE) break;
+          from += PAGE_SIZE;
+        }
+        return allRows;
+      };
+
+      const [auditsRes, isoRes, teamMembersData] = await Promise.all([
         supabase
           .from("audits")
           .select(
@@ -109,21 +130,24 @@ export default function Audits() {
           .select("*")
           .eq("company_id", companyId)
           .eq("is_active", true),
-        supabase
-          .from("team_members")
-          .select("id, first_name, last_name, email, role")
-          .eq("company_id", companyId)
-          .order("first_name"),
+        fetchAllPages<{ id: string; first_name: string; last_name: string; email: string; role: string }>(
+          (from, to) =>
+            supabase
+              .from("team_members")
+              .select("id, first_name, last_name, email, role")
+              .eq("company_id", companyId)
+              .order("first_name")
+              .range(from, to)
+        ),
       ]);
 
       if (auditsRes.error) throw auditsRes.error;
       if (isoRes.error) throw isoRes.error;
-      if (employeesRes.error) throw employeesRes.error;
 
       setAudits(auditsRes.data || []);
       setIsoStandards(isoRes.data || []);
       // Map team members to employees format with full_name
-      setEmployees((employeesRes.data || []).map((tm: any) => ({
+      setEmployees(teamMembersData.map((tm) => ({
         id: tm.id,
         full_name: `${tm.first_name} ${tm.last_name} (${tm.email})`,
       })));

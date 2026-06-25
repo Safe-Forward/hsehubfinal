@@ -655,14 +655,27 @@ fetchProfileFields();
   const fetchEmployees = async () => {
     if (!companyId) return;
     try {
-      const { data, error } = await supabase
-        .from("employees")
-        .select("id, full_name, email, employee_number")
-        .eq("company_id", companyId);
+      // Diese Seite zeigt nur EIN Mitarbeiterprofil, aber dieser Picker lädt die
+      // komplette Firmenliste (kein .eq("id", ...)) - PostgREST begrenzt unranged
+      // .select()-Aufrufe auf 1000 Zeilen, also mit .range() in Pages laden,
+      // sonst sähen Firmen mit >1000 Mitarbeitern hier nur die ersten 1000.
+      const PAGE_SIZE = 1000;
+      const allRows: { id: string; full_name: string; email: string; employee_number: string }[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("employees")
+          .select("id, full_name, email, employee_number")
+          .eq("company_id", companyId)
+          .range(from, from + PAGE_SIZE - 1);
 
-      if (error) throw error;
+        if (error) throw error;
+        allRows.push(...(data || []));
+        if (!data || data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
 
-      setEmployees(data || []);
+      setEmployees(allRows);
     } catch (error) {
       console.error("Error fetching employees:", error);
     }
@@ -671,12 +684,27 @@ fetchProfileFields();
   const fetchTeamMembersForMention = async () => {
     if (!companyId) return;
     try {
-      const { data } = await supabase
-        .from("team_members")
-        .select("id, first_name, last_name, email, user_id, role")
-        .eq("company_id", companyId)
-        .order("first_name");
-      setTeamMembersForMention((data || []).map(m => ({
+      // Gleiches Problem wie fetchEmployees oben: team_members hat ein Login-Konto
+      // pro Mitarbeiter mit Zugriff und wächst mit der Firmengröße, nicht mit
+      // diesem einen Profil - ohne .range() wären über 1000 Konten abgeschnitten.
+      const PAGE_SIZE = 1000;
+      const allRows: { id: string; first_name: string; last_name: string; email: string; user_id: string | null; role: string }[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("team_members")
+          .select("id, first_name, last_name, email, user_id, role")
+          .eq("company_id", companyId)
+          .order("first_name")
+          .range(from, from + PAGE_SIZE - 1);
+
+        if (error) throw error;
+        allRows.push(...(data || []));
+        if (!data || data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+
+      setTeamMembersForMention(allRows.map(m => ({
         ...m,
         full_name: `${m.first_name} ${m.last_name}`.trim(),
       })));
@@ -850,19 +878,31 @@ const fetchGInvestigations = async () => {
     if (!companyId) return;
 
     try {
-      const { data, error } = await supabase
-        .from("team_members")
-        .select("*")
-        .eq("company_id", companyId)
-        .order("first_name", { ascending: true });
+      // Wieder firmenweite Liste statt auf dieses eine Profil beschränkt - mit
+      // .range() in Pages laden, sonst Abschneidung ab 1000 Team-Mitgliedern.
+      const PAGE_SIZE = 1000;
+      const allRows: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("team_members")
+          .select("*")
+          .eq("company_id", companyId)
+          .order("first_name", { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
 
-      if (error) {
-        console.error("Error fetching team members:", error);
-        setTeamMembers([]);
-        return;
+        if (error) {
+          console.error("Error fetching team members:", error);
+          setTeamMembers([]);
+          return;
+        }
+
+        allRows.push(...(data || []));
+        if (!data || data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
       }
 
-      setTeamMembers(data || []);
+      setTeamMembers(allRows);
     } catch (error) {
       console.error("Error fetching team members:", error);
       setTeamMembers([]);
@@ -2237,13 +2277,27 @@ if (mentionMatch && companyId) {
 
   // ── Fallback: name-based match against employees (typed @mention or no user_id) ──
   if (finalAssignedTo === id) {
-    const { data: allEmployees } = await supabase
-      .from("employees")
-      .select("id, full_name")
-      .eq("company_id", companyId);
+    // Wieder firmenweite Liste (für den @mention-Textabgleich), nicht auf dieses
+    // Profil beschränkt - mit .range() in Pages laden, sonst Abschneidung bei
+    // Firmen mit über 1000 Mitarbeitern.
+    const PAGE_SIZE = 1000;
+    const allEmployees: { id: string; full_name: string }[] = [];
+    let employeesFrom = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, full_name")
+        .eq("company_id", companyId)
+        .range(employeesFrom, employeesFrom + PAGE_SIZE - 1);
+
+      if (error) break;
+      allEmployees.push(...(data || []));
+      if (!data || data.length < PAGE_SIZE) break;
+      employeesFrom += PAGE_SIZE;
+    }
 
     // Longest prefix match wins (handles "Will" vs "Will Baker" ambiguity)
-    const matchedEmployee = (allEmployees || [])
+    const matchedEmployee = allEmployees
       .filter(emp =>
         rawAfterMention.toLowerCase().startsWith(emp.full_name.toLowerCase())
       )
