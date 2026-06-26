@@ -58,6 +58,27 @@ const translations = {
     "dashboard.investigationsByStatus": "Untersuchungen nach Status",
     "dashboard.investigationStatusOverview": "Überblick über den Status aller Untersuchungen",
     "dashboard.upcoming": "Anstehend",
+
+    // Dashboard.tsx hardcoded-text fixes
+    "dashboard.sidebarMeasuresBadge": "Maßnahmen-Badge (Sidebar)",
+    "dashboard.openMeasures": "Offene Maßnahmen",
+    "dashboard.overdueMeasures": "Überfällige Maßnahmen",
+    "dashboard.upcomingCheckups30Days": "Anstehende Untersuchungen (30 Tage)",
+    "dashboard.trainingCompletionRate": "Schulungsabschlussquote",
+    "dashboard.auditComplianceRate": "Audit Compliance-Rate",
+    "dashboard.ofEmployeesCount": "von {count} Mitarbeitern",
+    "dashboard.warningOverdueCheckupsSingular": "{count} überfällige Untersuchung",
+    "dashboard.warningOverdueCheckupsPlural": "{count} überfällige Untersuchungen",
+    "dashboard.warningOldOverdueMeasuresSingular": "{count} offene Maßnahme älter als 30 Tage",
+    "dashboard.warningOldOverdueMeasuresPlural": "{count} offene Maßnahmen älter als 30 Tage",
+    "dashboard.warningRecentIncidentsSingular": "{count} Vorfall in den letzten 7 Tagen",
+    "dashboard.warningRecentIncidentsPlural": "{count} Vorfallfälle in den letzten 7 Tagen",
+    "dashboard.customizeTiles": "Kacheln anpassen",
+    "dashboard.visibleTiles": "Sichtbare Kacheln",
+    "dashboard.sidebar": "Sidebar",
+    "dashboard.noTilesSelected": "Keine Kacheln ausgewählt. Klicke auf \"Kacheln anpassen\" um Kacheln hinzuzufügen.",
+    "dashboard.profileLabel": "Profil:",
+
     "profile.title": "Profileinstellungen",
     "profile.subtitle": "Verwalten Sie Ihre Kontoinformationen",
     "profile.saveChanges": "Änderungen speichern",
@@ -827,6 +848,123 @@ const translations = {
     "settings.notificationConfig":
       "Benachrichtigungslogik-Konfiguration kommt bald...",
 
+    // Settings.tsx hardcoded-text fixes
+    "settings.toast.settingsSavedTitle": "Erfolgreich",
+    "settings.toast.settingsSavedDesc": "Einstellungen wurden gespeichert",
+    "settings.toast.savedTitle": "Gespeichert",
+    "settings.toast.orgTypeUpdatedDesc": "Organisationsform aktualisiert",
+    "settings.toast.errorTitle": "Fehler",
+    "settings.toast.tokenGeneratedTitle": "Token generiert",
+    "settings.toast.tokenGeneratedDesc":
+      "Jetzt kopieren und speichern — er wird nicht erneut angezeigt.",
+    "settings.toast.tokenCopiedDesc": "API-Token in die Zwischenablage kopiert",
+    "settings.toast.systemConnectedTitle": "Verbunden",
+    "settings.toast.systemConnectedDesc": "wurde hinzugefügt.",
+    "settings.toast.systemRemovedTitle": "Entfernt",
+    "settings.toast.systemRemovedDesc": "wurde getrennt.",
+    "settings.toast.connectionSuccessTitle": "Verbindung erfolgreich",
+    "settings.toast.connectionSuccessDesc": "antwortete mit Status",
+    "settings.toast.connectionFailedTitle": "Verbindung fehlgeschlagen",
+    "settings.toast.connectionTestFailedTitle": "Verbindungstest fehlgeschlagen",
+    "settings.toast.endpointUnreachable": "Endpunkt nicht erreichbar",
+    "settings.toast.alreadyUpToDateTitle": "Bereits aktuell",
+    "settings.toast.hazardCategoriesUpToDateDesc":
+      "Alle vordefinierten Gefahrenkategorien sind bereits vorhanden.",
+    "settings.toast.hazardCategoriesAddedDesc":
+      "vordefinierte Gefahrenkategorien hinzugefügt.",
+    "settings.toast.measureBlocksUpToDateDesc":
+      "Alle vordefinierten Maßnahmenbausteine sind bereits vorhanden.",
+    "settings.toast.measureBlocksAddedDesc":
+      "vordefinierte Maßnahmenbausteine hinzugefügt.",
+    "settings.toast.loadErrorTitle": "Ladefehler",
+    "settings.toast.gInvestigationsSavedDesc":
+      "G-Untersuchungen erfolgreich gespeichert",
+    "settings.toast.gInvestigationsSaveFailedDesc":
+      "G-Untersuchungen konnten nicht gespeichert werden",
+    "settings.toast.fillRequiredFieldsDesc": "Bitte alle Pflichtfelder ausfüllen",
+    "settings.toast.ticketSubmittedTitle": "Ticket gesendet",
+    "settings.toast.ticketSubmittedDesc":
+      "Ihr Support-Ticket wurde erfolgreich gesendet. Wir melden uns in Kürze!",
+    "settings.toast.ticketSubmitFailedDesc":
+      "Support-Ticket konnte nicht gesendet werden",
+    "settings.toast.approvalWorkflowSavedDesc": "Freigabe-Workflow wurde gespeichert",
+    "settings.toast.fillAllFieldsDesc": "Bitte alle Felder ausfüllen",
+    "settings.toast.teamMemberAddedDesc": "Teammitglied wurde hinzugefügt",
+    "settings.toast.roleUpdatedDesc": "Rolle wurde aktualisiert von",
+    "settings.toast.itemUpdatedDesc": "Element wurde aktualisiert",
+    "settings.toast.itemCreatedDesc": "Element wurde erstellt",
+    "settings.toast.missingDataDesc":
+      "Erforderliche Daten fehlen. Bitte versuchen Sie es erneut.",
+    "settings.toast.tableNameMissingDesc":
+      "Tabellenname fehlt. Bitte versuchen Sie es erneut.",
+    "settings.toast.itemDeletedDesc": "Element wurde gelöscht",
+    "settings.toast.companyIdNotFoundDesc": "Unternehmens-ID nicht gefunden",
+    "settings.toast.isoCriteriaImportedDesc": "Kriterien erfolgreich importiert",
+    "settings.toast.isoCriteriaImportFailedDesc":
+      "ISO-Kriterien konnten nicht importiert werden",
+    "settings.toast.enterCriterionIdAndTitleDesc":
+      "Bitte ID und Titel des Kriteriums eingeben",
+    "settings.toast.sectionNotFoundDesc":
+      "Abschnitt für diese ISO konnte nicht gefunden werden. Bitte versuchen Sie es erneut.",
+    "settings.toast.criterionAddedDesc": "Kriterium wurde hinzugefügt",
+    "settings.toast.criterionAddFailedDesc":
+      "Kriterium konnte nicht hinzugefügt werden",
+    "settings.toast.criterionDeletedDesc": "Kriterium wurde gelöscht",
+    "settings.toast.criterionDeleteFailedDesc":
+      "Kriterium konnte nicht gelöscht werden",
+    "settings.toast.criteriaDeletedDesc": "Kriterien gelöscht",
+    "settings.toast.criteriaDeleteFailedDesc":
+      "Kriterien konnten nicht gelöscht werden",
+    "settings.toast.sectionDeletedDesc": "Abschnitt wurde gelöscht",
+    "settings.toast.sectionDeleteFailedDesc":
+      "Abschnitt konnte nicht gelöscht werden",
+    "settings.toast.updatingTranslationsTitle": "Übersetzungen werden aktualisiert...",
+    "settings.toast.updatingTranslationsDesc":
+      "Alte Daten werden gelöscht und mit englischen Übersetzungen neu importiert",
+    "settings.toast.noDataTitle": "Keine Daten",
+    "settings.toast.noIsoCriteriaFoundDesc":
+      "Keine ISO-Kriterien in der Datenbank gefunden. Bitte zuerst ISO-Standards importieren.",
+    "settings.toast.successTitle": "Erfolg!",
+    "settings.toast.isoCriteriaReimportedDesc":
+      "ISO-Kriterien erfolgreich mit englischen Übersetzungen neu importiert für",
+    "settings.toast.englishTranslationsFailedDesc":
+      "Englische Übersetzungen konnten nicht aktualisiert werden",
+    "settings.toast.addingGermanTranslationsTitle": "Deutsche Übersetzungen werden hinzugefügt...",
+    "settings.toast.addingGermanTranslationsDesc":
+      "ISO-Kriterien werden mit deutschem Text aktualisiert",
+    "settings.toast.germanTranslationsAddedDesc":
+      "Deutsche Übersetzungen erfolgreich hinzugefügt!",
+    "settings.toast.germanTranslationsFailedDesc":
+      "Deutsche Übersetzungen konnten nicht hinzugefügt werden",
+    "settings.toast.roleNameEmptyDesc": "Rollenname darf nicht leer sein",
+    "settings.toast.roleExistsDesc": "Rolle existiert bereits",
+    "settings.toast.roleCreatedDesc": "wurde erfolgreich erstellt",
+    "settings.toast.roleDeletedDesc": "wurde erfolgreich gelöscht",
+    "settings.toast.predefinedRolesProtectedDesc":
+      "Vordefinierte Rollen können nicht gelöscht werden",
+    "settings.toast.permissionDeniedTitle": "Zugriff verweigert",
+    "settings.toast.noRoleManagementPermissionDesc":
+      "Keine Berechtigung zur Rollenverwaltung",
+    "settings.toast.descriptionUpdatedDesc": "Beschreibung wurde aktualisiert",
+    "settings.toast.templateNameRequiredDesc": "Vorlagenname ist erforderlich",
+    "settings.toast.templateUpdatedDesc": "Vorlage wurde aktualisiert",
+    "settings.toast.templateAddedDesc": "Vorlage wurde hinzugefügt",
+    "settings.toast.templateDeletedDesc": "Vorlage wurde gelöscht",
+    "settings.toast.selectTemplateFirstDesc": "Bitte zuerst eine Vorlage auswählen",
+    "settings.toast.fieldNameLabelRequiredDesc":
+      "Feldname und Bezeichnung sind erforderlich",
+    "settings.toast.profileFieldUpdatedDesc": "Profilfeld wurde aktualisiert",
+    "settings.toast.profileFieldAddedDesc": "Profilfeld wurde hinzugefügt",
+    "settings.toast.profileFieldDeletedDesc": "Profilfeld wurde gelöscht",
+    "settings.nav.organisationTitle": "Organisation & Führung",
+    "settings.nav.organisationDesc": "Org-Typ & Vorgesetzte",
+    "settings.nav.invoicesBillingTitle": "Rechnungen & Abrechnung",
+    "settings.nav.invoicesBillingDesc": "Abonnements verwalten",
+    "settings.nav.supportTitle": "Support",
+    "settings.nav.supportDesc": "Ticket erstellen",
+    "settings.nav.accountTitle": "Konto",
+    "settings.nav.accountDesc": "Verwaltung",
+
     // G-Investigations (Medical Care)
     "gcode.title": "G-Untersuchungsliste",
     "gcode.description":
@@ -888,6 +1026,510 @@ const translations = {
     "gcode.G45": "Styrol",
     "gcode.G46":
       "Belastungen des Muskel- und Skelettapparates einschl. Vibrationen",
+
+    // Reports.tsx + components/reports/* — new reports.* section
+    "reports.reportNamePlaceholder": "Berichtsname",
+    "reports.allDepartments": "Alle Abteilungen",
+    "reports.dateRange.last7Days": "Letzte 7 Tage",
+    "reports.dateRange.last30Days": "Letzte 30 Tage",
+    "reports.dateRange.last90Days": "Letzte 90 Tage",
+    "reports.dateRange.thisMonth": "Dieser Monat",
+    "reports.dateRange.lastMonth": "Letzter Monat",
+    "reports.dateRange.thisYear": "Dieses Jahr",
+    "reports.visibility.onlyMe": "Nur für mich sichtbar",
+    "reports.visibility.team": "Für Team sichtbar",
+    "reports.visibility.company": "Für Unternehmen sichtbar",
+    "reports.addReport": "Bericht hinzufügen",
+    "reports.exportPdf": "PDF exportieren",
+    "reports.nav.overview": "Übersicht",
+    "reports.nav.riskAssessments": "Gefährdungsbeurteilungen",
+    "reports.nav.audits": "Audits",
+    "reports.nav.incidents": "Vorfälle",
+    "reports.nav.trainings": "Schulungen",
+    "reports.nav.measures": "Maßnahmen",
+    "reports.nav.tasks": "Aufgaben",
+    "reports.nav.checkups": "Untersuchungen",
+    "reports.customReports.title": "Benutzerdefinierte Berichte",
+    "reports.customReports.subtitle": "Berichte, die zu diesem Tab passen",
+    "reports.deleteDialog.title": "Bericht löschen?",
+    "reports.deleteDialog.description":
+      'Möchten Sie "{name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
+    "reports.deleteDialog.cancel": "Abbrechen",
+    "reports.deleteDialog.confirm": "Löschen",
+    "reports.toast.permissionDeniedTitle": "Zugriff verweigert",
+    "reports.toast.permissionDeniedExport":
+      "Keine Berechtigung zum Exportieren von Daten",
+    "reports.toast.errorTitle": "Fehler",
+    "reports.toast.reportDataLoadError":
+      "Berichtsdaten konnten nicht geladen werden",
+    "reports.toast.templateDataLoadError":
+      "Vorlagendaten konnten nicht geladen werden",
+    "reports.toast.layoutResetTitle": "Layout zurückgesetzt",
+    "reports.toast.customLayoutResetDesc":
+      "Benutzerdefiniertes Berichtslayout wurde zurückgesetzt",
+    "reports.toast.dashboardLayoutResetDesc":
+      "Dashboard-Layout wurde auf die Standardansicht zurückgesetzt",
+    "reports.toast.auditsLayoutResetDesc":
+      "Audits-Layout wurde auf die Standardansicht zurückgesetzt",
+    "reports.toast.riskAssessmentsLayoutResetDesc":
+      "Gefährdungsbeurteilungen-Layout wurde auf die Standardansicht zurückgesetzt",
+    "reports.toast.incidentsLayoutResetDesc":
+      "Vorfälle-Layout wurde zurückgesetzt",
+    "reports.toast.measuresLayoutResetDesc":
+      "Maßnahmen-Layout wurde zurückgesetzt",
+    "reports.toast.tasksLayoutResetDesc": "Aufgaben-Layout wurde zurückgesetzt",
+    "reports.toast.trainingsLayoutResetDesc":
+      "Schulungen-Layout wurde zurückgesetzt",
+    "reports.toast.checkupsLayoutResetDesc":
+      "G-Untersuchungen-Layout wurde zurückgesetzt",
+    "reports.toast.dateRangeUpdatedTitle": "Zeitraum aktualisiert",
+    "reports.toast.dateRangeUpdatedDesc": "Zeige Daten für {range}",
+    "reports.toast.reportUpdatedTitle": "Bericht aktualisiert",
+    "reports.toast.reportUpdatedDesc": '"{title}" wurde aktualisiert',
+    "reports.toast.reportCreatedTitle": "Bericht erstellt",
+    "reports.toast.reportCreatedDesc":
+      '"{title}" wurde Ihrem Dashboard hinzugefügt',
+    "reports.toast.reportDuplicatedTitle": "Bericht dupliziert",
+    "reports.toast.reportDuplicatedDesc": 'Kopie von "{title}" erstellt',
+    "reports.toast.reportDeletedTitle": "Bericht gelöscht",
+    "reports.toast.reportDeletedDesc": '"{title}" wurde entfernt',
+    "reports.toast.reportExportedTitle": "Bericht exportiert",
+    "reports.toast.reportExportedDesc": '"{title}" als {fileName} herunterladen',
+    "reports.toast.pdfExportedTitle": "PDF exportiert",
+    "reports.toast.pdfExportedDesc": '"{name}" wurde als {fileName} heruntergeladen',
+    "reports.toast.visibilityUpdatedTitle": "Sichtbarkeit aktualisiert",
+    "reports.toast.visibilityUpdatedDesc": "Bericht ist jetzt {visibility} sichtbar",
+    "reports.visibility.onlyMeShort": "nur für Sie",
+    "reports.visibility.teamShort": "für Ihr Team",
+    "reports.visibility.companyShort": "für das Unternehmen",
+    "reports.copySuffix": "(Kopie)",
+    "reports.duplicateReportTitle": "{title} (Kopie)",
+    "reports.pdf.title": "HSE Hub – Sicherheitsmanagement",
+    "reports.pdf.generated": "Erstellt am: {date} um {time}",
+    "reports.pdf.dateRange": "Zeitraum: {range}",
+    "reports.pdf.defaultReportName": "Sicherheitsbericht",
+    "reports.pdf.section": "Bereich: {section}",
+    "reports.pdf.footerConfidential": "HSE Hub – Vertraulich",
+    "reports.pdf.footerPage": "Seite {current} von {total}",
+    "reports.pdf.kpi.title": "Wichtige Kennzahlen",
+    "reports.pdf.kpi.totalEmployees": "Mitarbeiter insgesamt",
+    "reports.pdf.kpi.riskAssessments": "Gefährdungsbeurteilungen (GBU)",
+    "reports.pdf.kpi.safetyAudits": "Sicherheitsaudits",
+    "reports.pdf.kpi.completedAudits": "Abgeschlossene Audits",
+    "reports.pdf.kpi.incidents": "Vorfälle",
+    "reports.pdf.kpi.openIncidents": "Offene Vorfälle",
+    "reports.pdf.kpi.closedIncidents": "Geschlossene Vorfälle",
+    "reports.pdf.kpi.trainingCourses": "Schulungskurse",
+    "reports.pdf.kpi.trainingCompliance": "Schulungs-Compliance",
+    "reports.pdf.kpi.measures": "Maßnahmen",
+    "reports.pdf.kpi.completedMeasures": "Abgeschlossene Maßnahmen",
+    "reports.pdf.kpi.inProgressMeasures": "Laufende Maßnahmen",
+    "reports.pdf.kpi.tasks": "Aufgaben",
+    "reports.pdf.kpi.completedTasks": "Abgeschlossene Aufgaben",
+    "reports.pdf.kpi.healthCheckups": "Gesundheitsuntersuchungen",
+    "reports.pdf.metric": "Kennzahl",
+    "reports.pdf.value": "Wert",
+    "reports.pdf.monthlyIncidentTrend": "Monatlicher Vorfallstrend",
+    "reports.pdf.month": "Monat",
+    "reports.pdf.incidentsColumn": "Vorfälle",
+    "reports.pdf.riskAssessmentsSummary": "Zusammenfassung der Gefährdungsbeurteilungen",
+    "reports.pdf.totalRiskAssessments": "Gefährdungsbeurteilungen (GBU) gesamt",
+    "reports.pdf.auditsSummary": "Zusammenfassung der Sicherheitsaudits",
+    "reports.pdf.totalAudits": "Audits gesamt",
+    "reports.pdf.completed": "Abgeschlossen",
+    "reports.pdf.pendingInProgress": "Ausstehend / In Bearbeitung",
+    "reports.pdf.completionRate": "Abschlussquote",
+    "reports.pdf.incidentsSummary": "Zusammenfassung der Vorfälle",
+    "reports.pdf.totalIncidents": "Vorfälle gesamt",
+    "reports.pdf.openUnderInvestigation": "Offen / In Untersuchung",
+    "reports.pdf.closedResolved": "Geschlossen / Gelöst",
+    "reports.pdf.trainingSummary": "Zusammenfassung der Schulungen",
+    "reports.pdf.totalTrainingCourses": "Schulungskurse gesamt",
+    "reports.pdf.overallComplianceRate": "Gesamt-Compliance-Quote",
+    "reports.pdf.employeeTrainingMatrix": "Schulungsmatrix der Mitarbeiter",
+    "reports.pdf.employee": "Mitarbeiter",
+    "reports.pdf.required": "Erforderlich",
+    "reports.pdf.expired": "Abgelaufen",
+    "reports.pdf.compliance": "Compliance",
+    "reports.pdf.status": "Status",
+    "reports.pdf.compliant": "Konform",
+    "reports.pdf.needsAttention": "Benötigt Aufmerksamkeit",
+    "reports.pdf.nonCompliant": "Nicht konform",
+    "reports.pdf.measuresSummary": "Zusammenfassung der Maßnahmen",
+    "reports.pdf.totalMeasures": "Maßnahmen gesamt",
+    "reports.pdf.inProgress": "In Bearbeitung",
+    "reports.pdf.tasksSummary": "Zusammenfassung der Aufgaben",
+    "reports.pdf.totalTasks": "Aufgaben gesamt",
+    "reports.pdf.pending": "Ausstehend",
+    "reports.pdf.checkupsSummary": "Zusammenfassung der Gesundheitsuntersuchungen",
+    "reports.pdf.totalCheckups": "Gesundheitsuntersuchungen gesamt",
+    "reports.pdf.reportData": "Berichtsdaten",
+    "reports.pdf.property": "Eigenschaft",
+    "reports.pdf.chartType": "Diagrammtyp",
+    "reports.pdf.groupBy": "Gruppiert nach",
+    "reports.pdf.dateRangeProperty": "Zeitraum",
+    "reports.pdf.allTime": "Gesamter Zeitraum",
+    "reports.pdf.incidentType": "Vorfallstyp",
+    "reports.pdf.auditTemplate": "Audit-Vorlage",
+
+    // DraggableCard.tsx
+    "reports.draggableCard.hide": "Diese Karte ausblenden",
+
+    // ReportBuilder.tsx
+    "reports.builder.newReportTitle": "Neuer Bericht",
+    "reports.builder.title": "Berichtseditor",
+    "reports.builder.reportTitleLabel": "Berichtstitel",
+    "reports.builder.reportTitlePlaceholder": "Berichtstitel eingeben",
+    "reports.builder.metricLabel": "Kennzahl",
+    "reports.builder.metricPlaceholder": "Kennzahl auswählen",
+    "reports.builder.metric.employees": "Mitarbeiter",
+    "reports.builder.metric.incidents": "Vorfälle",
+    "reports.builder.metric.audits": "Audits",
+    "reports.builder.metric.trainings": "Schulungen",
+    "reports.builder.metric.risks": "Gefährdungsbeurteilungen",
+    "reports.builder.metric.checkups": "Gesundheitsuntersuchungen",
+    "reports.builder.metric.measures": "Maßnahmen",
+    "reports.builder.metric.tasks": "Aufgaben",
+    "reports.builder.groupByLabel": "Gruppieren nach",
+    "reports.builder.groupByPlaceholder": "Gruppierung auswählen",
+    "reports.builder.groupBy.department": "Abteilung",
+    "reports.builder.groupBy.hireDate": "Eintrittsdatum",
+    "reports.builder.groupBy.status": "Status",
+    "reports.builder.groupBy.category": "Kategorie",
+    "reports.builder.groupBy.severity": "Schweregrad",
+    "reports.builder.groupBy.location": "Standort",
+    "reports.builder.groupBy.date": "Datum",
+    "reports.builder.groupBy.isoCode": "ISO-Code",
+    "reports.builder.groupBy.employee": "Mitarbeiter",
+    "reports.builder.groupBy.riskLevel": "Risikostufe",
+    "reports.builder.groupBy.approvalStatus": "Freigabestatus",
+    "reports.builder.groupBy.priority": "Priorität",
+    "reports.builder.groupBy.assignedTo": "Zugewiesen an",
+    "reports.builder.datePropertyLabel": "Datumsfeld",
+    "reports.builder.datePropertyPlaceholder": "Datumsfeld auswählen",
+    "reports.builder.dateProperty.createdAt": "Erstellungsdatum",
+    "reports.builder.dateProperty.updatedAt": "Aktualisierungsdatum",
+    "reports.builder.dateProperty.dueDate": "Fälligkeitsdatum",
+    "reports.builder.dateProperty.completedAt": "Abschlussdatum",
+    "reports.builder.dateRangeLabel": "Zeitraum",
+    "reports.builder.dateRangePlaceholder": "Zeitraum auswählen",
+    "reports.builder.dateRange.today": "Heute",
+    "reports.builder.dateRange.last7Days": "Letzte 7 Tage",
+    "reports.builder.dateRange.last30Days": "Letzte 30 Tage",
+    "reports.builder.dateRange.last90Days": "Letzte 90 Tage",
+    "reports.builder.dateRange.thisMonth": "Dieser Monat",
+    "reports.builder.dateRange.thisYear": "Dieses Jahr",
+    "reports.builder.dateRange.custom": "Benutzerdefinierter Zeitraum",
+    "reports.builder.chartTypeLabel": "Diagrammtyp",
+    "reports.builder.chartType.pie": "Kreis",
+    "reports.builder.chartType.bar": "Balken",
+    "reports.builder.chartType.line": "Linie",
+    "reports.builder.sortByLabel": "Sortieren nach",
+    "reports.builder.sortByPlaceholder": "Sortierung auswählen",
+    "reports.builder.sortBy.value": "Wert (absteigend)",
+    "reports.builder.sortBy.alphabetical": "Alphabetisch",
+    "reports.builder.tabs.chart": "Diagramm",
+    "reports.builder.tabs.table": "Datentabelle",
+    "reports.builder.tabs.summary": "Zusammenfassung",
+    "reports.builder.loadingData": "Daten werden geladen...",
+    "reports.builder.noDataAvailable": "Keine Daten für diesen Bericht verfügbar",
+    "reports.builder.table.name": "Name",
+    "reports.builder.table.value": "Wert",
+    "reports.builder.table.percentage": "Prozentsatz",
+    "reports.builder.summary.totalCount": "Gesamtanzahl",
+    "reports.builder.summary.average": "Durchschnitt",
+    "reports.builder.summary.categories": "Kategorien",
+    "reports.builder.summary.dateRange": "Zeitraum:",
+    "reports.builder.summary.groupedBy": "Gruppiert nach:",
+    "reports.builder.summary.metric": "Kennzahl:",
+    "reports.builder.cancel": "Abbrechen",
+    "reports.builder.saveReport": "Bericht speichern",
+    "reports.builder.addReport": "Bericht hinzufügen",
+
+    // ReportLibrary.tsx
+    "reports.library.title": "Berichtvorlagen",
+    "reports.library.subtitle":
+      "Wählen Sie eine vorgefertigte Berichtvorlage, um zu beginnen",
+    "reports.library.close": "Schließen",
+    "reports.library.last30Days": "Letzte 30 Tage",
+    "reports.library.category.employees": "Mitarbeiter",
+    "reports.library.category.incidents": "Vorfälle",
+    "reports.library.category.audits": "Audits",
+    "reports.library.category.trainings": "Schulungen",
+    "reports.library.category.riskAssessments": "Gefährdungsbeurteilungen",
+    "reports.library.category.measures": "Maßnahmen",
+    "reports.library.category.checkups": "G-Untersuchungen",
+    "reports.library.employeesByDepartment.title": "Mitarbeiter nach Abteilung",
+    "reports.library.employeesByDepartment.description":
+      "Mitarbeiterverteilung auf Abteilungen",
+    "reports.library.employeesOverTime.title": "Mitarbeiter im Zeitverlauf",
+    "reports.library.employeesOverTime.description":
+      "Wachstumstrend der Belegschaft",
+    "reports.library.incidentsByStatus.title": "Vorfälle nach Status",
+    "reports.library.incidentsByStatus.description":
+      "Übersicht der Vorfallsstatus",
+    "reports.library.incidentsByCategory.title": "Vorfälle nach Kategorie",
+    "reports.library.incidentsByCategory.description":
+      "Aufschlüsselung nach Vorfallstyp",
+    "reports.library.auditsByIso.title": "Audits nach ISO-Norm",
+    "reports.library.auditsByIso.description": "Verteilung der Auditnormen",
+    "reports.library.auditsCompletionStatus.title": "Abschlussstatus",
+    "reports.library.auditsCompletionStatus.description":
+      "Abschlussquote der Audits",
+    "reports.library.auditsTimeline.title": "Audit-Zeitlinie",
+    "reports.library.auditsTimeline.description":
+      "Audit-Aktivität im Zeitverlauf",
+    "reports.library.trainingComplianceByEmployee.title":
+      "Schulungscompliance je Mitarbeiter",
+    "reports.library.trainingComplianceByEmployee.description":
+      "Individuelle Schulungsabschlussquoten",
+    "reports.library.trainingCompletedVsPending.title":
+      "Abgeschlossen vs. Ausstehend",
+    "reports.library.trainingCompletedVsPending.description":
+      "Übersicht der Schulungsstatus",
+    "reports.library.trainingTrends.title": "Schulungstrends",
+    "reports.library.trainingTrends.description":
+      "Schulungsaktivität im Zeitverlauf",
+    "reports.library.risksByLevel.title": "Risiken nach Stufe",
+    "reports.library.risksByLevel.description":
+      "Verteilung nach Risikoschwere",
+    "reports.library.risksByDepartment.title": "Risiken nach Abteilung",
+    "reports.library.risksByDepartment.description":
+      "Risikoexposition je Abteilung",
+    "reports.library.risksApprovalStatus.title": "GBU-Freigabestatus",
+    "reports.library.risksApprovalStatus.description":
+      "Freigabe-Workflow der GBUs",
+    "reports.library.measuresByStatus.title": "Maßnahmen nach Status",
+    "reports.library.measuresByStatus.description":
+      "Fortschrittsübersicht der Maßnahmen",
+    "reports.library.measuresByDepartment.title": "Maßnahmen nach Abteilung",
+    "reports.library.measuresByDepartment.description":
+      "Maßnahmenverteilung auf Abteilungen",
+    "reports.library.checkupsStatus.title": "Untersuchungsstatus",
+    "reports.library.checkupsStatus.description":
+      "Abschlussquote der G-Untersuchungen",
+    "reports.library.checkupsOverTime.title": "Untersuchungen im Zeitverlauf",
+    "reports.library.checkupsOverTime.description":
+      "Aktivitätstrends der Untersuchungen",
+
+    // ReportWidget.tsx
+    "reports.widget.subtitleIncidentTypeOverTime": "{type} Vorfälle im Zeitverlauf",
+    "reports.widget.subtitleIncidentsDefault":
+      "Monatliche Vorfallsberichte der letzten 6 Monate",
+    "reports.widget.subtitleAuditTemplate": "{template} Audits",
+    "reports.widget.subtitleAuditsDefault": "Audit-Abschlussstatus",
+    "reports.widget.subtitleTrainings": "Schulungsabschluss nach Status",
+    "reports.widget.subtitleEmployeesByGroup": "Mitarbeiter nach {groupBy}",
+    "reports.widget.subtitleEmployeesDefault": "Mitarbeiterverteilung",
+    "reports.widget.subtitleGroupedBy": "Gruppiert nach {groupBy}",
+    "reports.widget.subtitleDefault": "Berichtsdatenübersicht",
+    "reports.widget.noDataAvailable": "Keine Daten verfügbar",
+    "reports.widget.editReport": "Bericht bearbeiten",
+    "reports.widget.duplicate": "Duplizieren",
+    "reports.widget.exportData": "Daten exportieren",
+    "reports.widget.delete": "Löschen",
+
+    // OverviewSection.tsx
+    "reports.overview.manageWidgets": "Widgets verwalten",
+    "reports.overview.hiddenCount": "{count} ausgeblendet",
+    "reports.overview.showHideCards": "Karten ein-/ausblenden",
+    "reports.overview.toggleVisibilityHint":
+      "Sichtbarkeit der Dashboard-Widgets umschalten",
+    "reports.overview.standard": "Standard",
+    "reports.overview.customReports": "Benutzerdefinierte Berichte",
+    "reports.overview.resetLayout": "Layout zurücksetzen",
+    "reports.overview.card.riskAssessments": "Gefährdungsbeurteilungen",
+    "reports.overview.card.safetyAudits": "Sicherheitsaudits",
+    "reports.overview.card.incidents": "Vorfälle",
+    "reports.overview.card.trainingCompliance": "Schulungs-Compliance",
+    "reports.overview.card.incidentTrends": "Vorfallstrends",
+    "reports.overview.card.auditCompletion": "Audit-Abschluss",
+    "reports.overview.card.taskCompletion": "Aufgaben-Abschluss",
+    "reports.overview.subtitle.totalGbu": "GBU gesamt",
+    "reports.overview.subtitle.completedCount": "{count} abgeschlossen",
+    "reports.overview.subtitle.openCases": "{count} offene Fälle",
+    "reports.overview.subtitle.overallRate": "Gesamtquote",
+    "reports.overview.incidentTrendsDesc":
+      "Monatliche Vorfallsberichte der letzten 6 Monate",
+    "reports.overview.total": "Gesamt",
+    "reports.overview.done": "Erledigt",
+    "reports.overview.rate": "Quote",
+    "reports.overview.hiddenWidgets": "Ausgeblendete Widgets ({count})",
+
+    // AuditsSection.tsx
+    "reports.audits.heading": "Sicherheitsaudits",
+    "reports.audits.description":
+      "Verfolgt Compliance-Prüfungen und ISO-Norm-Audits. Zeigt den Abschlussstatus der Audits und unterstützt die Einhaltung gesetzlicher Vorgaben.",
+    "reports.audits.totalTitle": "Audits gesamt",
+    "reports.audits.totalSubtitle": "Alle Audits",
+    "reports.audits.completedTitle": "Abgeschlossen",
+    "reports.audits.completedSubtitle": "Fertiggestellte Audits",
+    "reports.audits.statusChartTitle": "Audit-Statusverteilung",
+    "reports.audits.statusChartDesc": "Audits gruppiert nach aktuellem Status",
+    "reports.audits.noDataForRange": "Keine Daten für den gewählten Zeitraum",
+
+    // CheckupsSection.tsx
+    "reports.checkups.heading": "Gesundheitsuntersuchungen",
+    "reports.checkups.description":
+      "Verfolgt G-Untersuchungen (z. B. Seh- und Hörtests) zur Einhaltung der arbeitsmedizinischen Vorsorge.",
+    "reports.checkups.totalTitle": "Untersuchungen gesamt",
+    "reports.checkups.totalSubtitle": "Gesundheitsüberwachung",
+    "reports.checkups.completedTitle": "Abgeschlossen",
+    "reports.checkups.completedSubtitle": "Erledigte Untersuchungen",
+    "reports.checkups.statusChartTitle": "Untersuchungsstatusverteilung",
+    "reports.checkups.statusChartDesc":
+      "Gesundheitsuntersuchungen gruppiert nach aktuellem Status",
+    "reports.checkups.noDataForRange": "Keine Daten für den gewählten Zeitraum",
+
+    // IncidentsSection.tsx
+    "reports.incidents.heading": "Vorfälle",
+    "reports.incidents.description":
+      "Erfassung von Vorfällen am Arbeitsplatz. Karten zum Verschieben ziehen, Ecken zum Größenändern ziehen.",
+    "reports.incidents.totalTitle": "Vorfälle gesamt",
+    "reports.incidents.totalSubtitle": "Alle Vorfälle",
+    "reports.incidents.openTitle": "Offene Fälle",
+    "reports.incidents.openSubtitle": "In Untersuchung",
+    "reports.incidents.closedTitle": "Geschlossen",
+    "reports.incidents.closedSubtitle": "Gelöste Vorfälle",
+    "reports.incidents.trendChartTitle": "Vorfälle pro Zeitraum",
+    "reports.incidents.trendChartDesc": "Anzahl gemeldeter Vorfälle im Zeitverlauf",
+    "reports.incidents.typeChartTitle": "Vorfälle nach Typ",
+    "reports.incidents.typeChartDesc": "Aufschlüsselung der Vorfälle nach Kategorie",
+    "reports.incidents.noDataForRange": "Keine Daten für den gewählten Zeitraum",
+
+    // MeasuresSection.tsx
+    "reports.measures.heading": "Maßnahmen",
+    "reports.measures.description":
+      "Verfolgt Korrektur- und Vorbeugemaßnahmen aus Gefährdungsbeurteilungen, Auditfeststellungen und Vorfalluntersuchungen.",
+    "reports.measures.totalTitle": "Maßnahmen gesamt",
+    "reports.measures.totalSubtitle": "Alle Maßnahmen",
+    "reports.measures.completedTitle": "Abgeschlossen",
+    "reports.measures.completedSubtitle": "Fertiggestellte Maßnahmen",
+    "reports.measures.inProgressTitle": "In Bearbeitung",
+    "reports.measures.inProgressSubtitle": "Laufende Maßnahmen",
+    "reports.measures.statusChartTitle": "Maßnahmenstatusverteilung",
+    "reports.measures.statusChartDesc": "Alle Maßnahmen gruppiert nach Status",
+    "reports.measures.noDataForRange": "Keine Daten für den gewählten Zeitraum",
+
+    // RiskAssessmentsSection.tsx
+    "reports.riskAssessments.heading": "Gefährdungsbeurteilungen",
+    "reports.riskAssessments.description":
+      "GBU- und Gefährdungsanalyse. Karten zum Verschieben ziehen, Ecken zum Größenändern ziehen.",
+    "reports.riskAssessments.totalTitle": "GBU gesamt",
+    "reports.riskAssessments.totalSubtitle": "Gefährdungsbeurteilungen",
+    "reports.riskAssessments.levelChartTitle": "Risikostufenverteilung",
+    "reports.riskAssessments.levelChartDesc":
+      "Gefährdungsbeurteilungen gruppiert nach Risikostufe",
+    "reports.riskAssessments.noDataForRange":
+      "Keine Daten für den gewählten Zeitraum",
+
+    // TasksSection.tsx
+    "reports.tasks.heading": "Aufgaben",
+    "reports.tasks.description":
+      "Aufgabenverwaltung und -abschluss. Karten zum Verschieben ziehen, Ecken zum Größenändern ziehen.",
+    "reports.tasks.totalTitle": "Aufgaben gesamt",
+    "reports.tasks.totalSubtitle": "Alle Aufgaben",
+    "reports.tasks.completedTitle": "Abgeschlossen",
+    "reports.tasks.completedSubtitle": "Fertiggestellte Aufgaben",
+
+    // TrainingsSection.tsx
+    "reports.trainings.heading": "Schulungen",
+    "reports.trainings.description":
+      "Schulungs-Compliance der Mitarbeiter. Karten zum Verschieben ziehen, Ecken zum Größenändern ziehen.",
+    "reports.trainings.totalTitle": "Kurse gesamt",
+    "reports.trainings.totalSubtitle": "Schulungsprogramme",
+    "reports.trainings.complianceTitle": "Compliance-Quote",
+    "reports.trainings.complianceSubtitle": "Gesamt-Compliance",
+    "reports.trainings.matrixTitle": "Schulungsmatrix der Mitarbeiter",
+    "reports.trainings.matrixDesc": "Schulungs-Compliance nach Mitarbeiter",
+    "reports.trainings.table.employeeName": "Mitarbeitername",
+    "reports.trainings.table.required": "Erforderlich",
+    "reports.trainings.table.completed": "Abgeschlossen",
+    "reports.trainings.table.expired": "Abgelaufen",
+    "reports.trainings.table.compliance": "Compliance",
+    "reports.trainings.table.status": "Status",
+    "reports.trainings.noData": "Keine Schulungsdaten verfügbar",
+    "reports.trainings.compliant": "Konform",
+    "reports.trainings.needsAttention": "Benötigt Aufmerksamkeit",
+    "reports.trainings.nonCompliant": "Nicht konform",
+    "reports.trainings.pageInfo": "Seite {page} von {pageCount} ({count} Mitarbeiter)",
+    "reports.trainings.previous": "Zurück",
+    "reports.trainings.next": "Weiter",
+
+    // Employees.tsx hardcoded-text fixes
+    "employees.tasksLoadError": "Aufgaben konnten nicht geladen werden",
+    "employees.notesLoadError": "Notizen konnten nicht geladen werden",
+    "employees.mentionAtLeastOne":
+      "Bitte mindestens einen Mitarbeiter mit @ erwähnen",
+    "employees.someTasksFailed":
+      "Einige Aufgaben konnten nicht erstellt werden",
+    "employees.taskAssignedTo": "Aufgabe {count} Mitarbeiter(n) zugewiesen",
+    "employees.taskCreateError": "Aufgabe konnte nicht erstellt werden",
+    "employees.taskMarkedCompleted": "Aufgabe als erledigt markiert",
+    "employees.taskMarkedPending": "Aufgabe als offen markiert",
+    "employees.taskUpdateError": "Aufgabe konnte nicht aktualisiert werden",
+    "employees.someNotesFailed":
+      "Einige Notizen konnten nicht gespeichert werden",
+    "employees.noteAddedTo": "Notiz zu {count} Mitarbeiter(n) hinzugefügt",
+    "employees.noteSaveError": "Notiz konnte nicht gespeichert werden",
+    "employees.noteDeleted": "Notiz wurde gelöscht",
+    "employees.noteDeleteError": "Notiz konnte nicht gelöscht werden",
+    "employees.confirmBulkDelete":
+      "{count} Mitarbeiter wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "employees.bulkDeleteSuccess":
+      "{count} Mitarbeiter erfolgreich gelöscht",
+    "employees.bulkDeleteError": "Mitarbeiter konnten nicht gelöscht werden",
+    "employees.errorCode": "Fehlercode",
+    "employees.deletingEllipsis": "Wird gelöscht...",
+    "employees.deleteWithCount": "Löschen ({count})",
+    "employees.importTemplateDownloaded": "Importvorlage heruntergeladen",
+    "employees.jobRoleCreated": 'Berufsbezeichnung "{name}" erstellt',
+    "employees.jobRoleCreateError":
+      "Stellenbezeichnung konnte nicht erstellt werden",
+    "employees.departmentCreated": 'Abteilung "{name}" erstellt',
+    "employees.departmentCreateError":
+      "Abteilung konnte nicht erstellt werden",
+    "employees.importAllRowsSkipped": "alle {count} Zeilen übersprungen",
+    "employees.importPartialResult":
+      "{imported} importiert, {skipped} übersprungen. Details siehe unten.",
+    "employees.importFullResult": "{count} Mitarbeiter importiert",
+    "employees.importGuideTitle": "Anforderungen für den Mitarbeiterimport",
+    "employees.importGuideDescription":
+      "Format einmal prüfen, dann mit der Dateiauswahl fortfahren.",
+    "employees.importGuideFormats":
+      "Akzeptierte Dateiformate: .xlsx, .xls, .csv",
+    "employees.importGuideRequiredColumns":
+      "Erforderliche Spalten: employee_number, first_name, last_name",
+    "employees.importGuideOptionalColumns":
+      "Optionale Spalten: email, department, hire_date (YYYY-MM-DD, DD.MM.YYYY, DD/MM/YYYY oder Excel-Datum)",
+    "employees.importGuideHeaderAliases":
+      "Alternative Spaltennamen werden akzeptiert (z. B. Mitarbeiternummer, Vorname, Nachname, Abteilung, Einstellungsdatum).",
+    "employees.importGuideSampleFile": "Beispieldatei benötigt?",
+    "employees.importGuideDownloadTemplate": "Vorlage herunterladen",
+    "employees.importGuideContinue": "Weiter zur Dateiauswahl",
+    "employees.importIssuesCount": "Importprobleme ({count})",
+    "employees.importReportFor": "Importbericht für {fileName}",
+    "employees.importReportTotals":
+      "Zeilen gesamt: {total} | Importiert: {imported} | Übersprungen: {skipped}",
+    "employees.importedRowsLabel": "Importierte Zeilen",
+    "employees.noRowsImported": "Keine Zeilen importiert.",
+    "employees.skippedRowsLabel": "Übersprungene Zeilen",
+    "employees.filtersLabel": "Filter",
+    "employees.assignTaskTitle": "Aufgabe zuweisen",
+    "employees.mentionHint": "Tippen Sie @ um Mitarbeiter zu erwähnen",
+    "employees.taskInputPlaceholder":
+      "Aufgabe eingeben und @ tippen, um Mitarbeiter auszuwählen...",
+    "employees.assignButton": "Zuweisen",
+    "employees.selectEmployeeCount": "Mitarbeiter auswählen ({count})",
+    "employees.noDepartmentShort": "Keine Abteilung",
+    "employees.noJobRoleShort": "Keine Rolle",
+    "employees.addNoteTitle": "Notiz hinzufügen",
+    "employees.noteInputPlaceholder":
+      "Notiz eingeben und @ tippen, um Mitarbeiter auszuwählen...",
+    "employees.noEmployeesHint":
+      "Fügen Sie Ihren ersten Mitarbeiter hinzu, um zu starten",
+    "employees.unnamedEmployee": "Unbenannter Mitarbeiter",
+    "employees.employeeDetailsFallback": "Mitarbeiterdetails",
   },
   en: {
     // Dashboard
@@ -932,6 +1574,27 @@ const translations = {
     "dashboard.investigationsByStatus": "Investigations by Status",
     "dashboard.investigationStatusOverview": "Overview of all investigation status",
     "dashboard.upcoming": "Upcoming",
+
+    // Dashboard.tsx hardcoded-text fixes
+    "dashboard.sidebarMeasuresBadge": "Measures Badge (Sidebar)",
+    "dashboard.openMeasures": "Open Measures",
+    "dashboard.overdueMeasures": "Overdue Measures",
+    "dashboard.upcomingCheckups30Days": "Upcoming Checkups (30 Days)",
+    "dashboard.trainingCompletionRate": "Training Completion Rate",
+    "dashboard.auditComplianceRate": "Audit Compliance Rate",
+    "dashboard.ofEmployeesCount": "of {count} employees",
+    "dashboard.warningOverdueCheckupsSingular": "{count} overdue checkup",
+    "dashboard.warningOverdueCheckupsPlural": "{count} overdue checkups",
+    "dashboard.warningOldOverdueMeasuresSingular": "{count} open measure older than 30 days",
+    "dashboard.warningOldOverdueMeasuresPlural": "{count} open measures older than 30 days",
+    "dashboard.warningRecentIncidentsSingular": "{count} incident in the last 7 days",
+    "dashboard.warningRecentIncidentsPlural": "{count} incidents in the last 7 days",
+    "dashboard.customizeTiles": "Customize Tiles",
+    "dashboard.visibleTiles": "Visible Tiles",
+    "dashboard.sidebar": "Sidebar",
+    "dashboard.noTilesSelected": "No tiles selected. Click \"Customize Tiles\" to add tiles.",
+    "dashboard.profileLabel": "Profile:",
+
     "profile.title": "Profile Settings",
     "profile.subtitle": "Manage your account information",
     "profile.saveChanges": "Save Changes",
@@ -1672,6 +2335,117 @@ const translations = {
     "settings.notificationConfig":
       "Notification logic configuration coming soon...",
 
+    // Settings.tsx hardcoded-text fixes
+    "settings.toast.settingsSavedTitle": "Success",
+    "settings.toast.settingsSavedDesc": "Settings have been saved",
+    "settings.toast.savedTitle": "Saved",
+    "settings.toast.orgTypeUpdatedDesc": "Organization type updated",
+    "settings.toast.errorTitle": "Error",
+    "settings.toast.tokenGeneratedTitle": "Token generated",
+    "settings.toast.tokenGeneratedDesc":
+      "Copy and save it now — it will not be shown again.",
+    "settings.toast.tokenCopiedDesc": "API token copied to clipboard",
+    "settings.toast.systemConnectedTitle": "Connected",
+    "settings.toast.systemConnectedDesc": "was added.",
+    "settings.toast.systemRemovedTitle": "Removed",
+    "settings.toast.systemRemovedDesc": "was disconnected.",
+    "settings.toast.connectionSuccessTitle": "Connection successful",
+    "settings.toast.connectionSuccessDesc": "responded with status",
+    "settings.toast.connectionFailedTitle": "Connection failed",
+    "settings.toast.connectionTestFailedTitle": "Connection test failed",
+    "settings.toast.endpointUnreachable": "Endpoint unreachable",
+    "settings.toast.alreadyUpToDateTitle": "Already up to date",
+    "settings.toast.hazardCategoriesUpToDateDesc":
+      "All predefined hazard categories already exist.",
+    "settings.toast.hazardCategoriesAddedDesc":
+      "predefined hazard categories added.",
+    "settings.toast.measureBlocksUpToDateDesc":
+      "All predefined measure building blocks are already available.",
+    "settings.toast.measureBlocksAddedDesc":
+      "predefined measure building blocks added.",
+    "settings.toast.loadErrorTitle": "Load error",
+    "settings.toast.gInvestigationsSavedDesc":
+      "G-Investigations saved successfully",
+    "settings.toast.gInvestigationsSaveFailedDesc":
+      "G-Investigations could not be saved",
+    "settings.toast.fillRequiredFieldsDesc": "Please fill in all required fields",
+    "settings.toast.ticketSubmittedTitle": "Ticket submitted",
+    "settings.toast.ticketSubmittedDesc":
+      "Your support ticket has been submitted successfully. We'll get back to you soon!",
+    "settings.toast.ticketSubmitFailedDesc":
+      "Support ticket could not be submitted",
+    "settings.toast.approvalWorkflowSavedDesc": "Approval workflow has been saved",
+    "settings.toast.fillAllFieldsDesc": "Please fill in all fields",
+    "settings.toast.teamMemberAddedDesc": "Team member has been added",
+    "settings.toast.roleUpdatedDesc": "Role updated from",
+    "settings.toast.itemUpdatedDesc": "Item has been updated",
+    "settings.toast.itemCreatedDesc": "Item has been created",
+    "settings.toast.missingDataDesc": "Missing required data. Please try again.",
+    "settings.toast.tableNameMissingDesc":
+      "Table name is missing. Please try again.",
+    "settings.toast.itemDeletedDesc": "Item deleted successfully",
+    "settings.toast.companyIdNotFoundDesc": "Company ID not found",
+    "settings.toast.isoCriteriaImportedDesc": "criteria imported successfully!",
+    "settings.toast.isoCriteriaImportFailedDesc": "Failed to import ISO criteria",
+    "settings.toast.enterCriterionIdAndTitleDesc":
+      "Please enter both Criterion ID and Title",
+    "settings.toast.sectionNotFoundDesc":
+      "Could not find section for this ISO. Please try again.",
+    "settings.toast.criterionAddedDesc": "Criterion has been added",
+    "settings.toast.criterionAddFailedDesc": "Criterion could not be added",
+    "settings.toast.criterionDeletedDesc": "Criterion has been deleted",
+    "settings.toast.criterionDeleteFailedDesc": "Criterion could not be deleted",
+    "settings.toast.criteriaDeletedDesc": "criterion(s) deleted successfully",
+    "settings.toast.criteriaDeleteFailedDesc": "Criteria could not be deleted",
+    "settings.toast.sectionDeletedDesc": "Section has been deleted",
+    "settings.toast.sectionDeleteFailedDesc": "Section could not be deleted",
+    "settings.toast.updatingTranslationsTitle": "Updating translations...",
+    "settings.toast.updatingTranslationsDesc":
+      "Deleting old data and re-importing with English translations",
+    "settings.toast.noDataTitle": "No data",
+    "settings.toast.noIsoCriteriaFoundDesc":
+      "No ISO criteria found in database. Please import ISO standards first.",
+    "settings.toast.successTitle": "Success!",
+    "settings.toast.isoCriteriaReimportedDesc":
+      "ISO criteria re-imported successfully with English translations for",
+    "settings.toast.englishTranslationsFailedDesc":
+      "Failed to update English translations",
+    "settings.toast.addingGermanTranslationsTitle": "Adding German translations...",
+    "settings.toast.addingGermanTranslationsDesc":
+      "Updating ISO criteria with German text",
+    "settings.toast.germanTranslationsAddedDesc":
+      "German translations added successfully!",
+    "settings.toast.germanTranslationsFailedDesc":
+      "Failed to add German translations",
+    "settings.toast.roleNameEmptyDesc": "Role name cannot be empty",
+    "settings.toast.roleExistsDesc": "Role already exists",
+    "settings.toast.roleCreatedDesc": "created successfully",
+    "settings.toast.roleDeletedDesc": "deleted successfully",
+    "settings.toast.predefinedRolesProtectedDesc":
+      "Predefined roles cannot be deleted",
+    "settings.toast.permissionDeniedTitle": "Permission Denied",
+    "settings.toast.noRoleManagementPermissionDesc":
+      "No permission to manage roles",
+    "settings.toast.descriptionUpdatedDesc": "Description has been updated",
+    "settings.toast.templateNameRequiredDesc": "Template name is required",
+    "settings.toast.templateUpdatedDesc": "Template updated successfully",
+    "settings.toast.templateAddedDesc": "Template added successfully",
+    "settings.toast.templateDeletedDesc": "Template has been deleted",
+    "settings.toast.selectTemplateFirstDesc": "Please select a template first",
+    "settings.toast.fieldNameLabelRequiredDesc":
+      "Field name and label are required",
+    "settings.toast.profileFieldUpdatedDesc": "Profile field has been updated",
+    "settings.toast.profileFieldAddedDesc": "Profile field has been added",
+    "settings.toast.profileFieldDeletedDesc": "Profile field has been deleted",
+    "settings.nav.organisationTitle": "Organisation & Leadership",
+    "settings.nav.organisationDesc": "Org type & managers",
+    "settings.nav.invoicesBillingTitle": "Invoices & Billing",
+    "settings.nav.invoicesBillingDesc": "Manage subscriptions",
+    "settings.nav.supportTitle": "Support",
+    "settings.nav.supportDesc": "Submit a ticket",
+    "settings.nav.accountTitle": "Account",
+    "settings.nav.accountDesc": "Management",
+
     // G-Investigations (Medical Care)
     "gcode.title": "G-Investigations List",
     "gcode.description":
@@ -1731,6 +2505,74 @@ const translations = {
     "gcode.G44": "Hardwood dusts",
     "gcode.G45": "Styrene",
     "gcode.G46": "Musculoskeletal stress including vibrations",
+
+    // Employees.tsx hardcoded-text fixes
+    "employees.tasksLoadError": "Failed to load tasks",
+    "employees.notesLoadError": "Failed to load notes",
+    "employees.mentionAtLeastOne":
+      "Please mention at least one employee with @",
+    "employees.someTasksFailed": "Some tasks could not be created",
+    "employees.taskAssignedTo": "Task assigned to {count} employee(s)",
+    "employees.taskCreateError": "Failed to create task",
+    "employees.taskMarkedCompleted": "Task marked as completed",
+    "employees.taskMarkedPending": "Task marked as pending",
+    "employees.taskUpdateError": "Failed to update task",
+    "employees.someNotesFailed": "Some notes could not be saved",
+    "employees.noteAddedTo": "Note added to {count} employee(s)",
+    "employees.noteSaveError": "Failed to save note",
+    "employees.noteDeleted": "Note deleted",
+    "employees.noteDeleteError": "Failed to delete note",
+    "employees.confirmBulkDelete":
+      "Really delete {count} employee(s)? This action cannot be undone.",
+    "employees.bulkDeleteSuccess": "Successfully deleted {count} employee(s)",
+    "employees.bulkDeleteError": "Failed to delete employees",
+    "employees.errorCode": "Error code",
+    "employees.deletingEllipsis": "Deleting...",
+    "employees.deleteWithCount": "Delete ({count})",
+    "employees.importTemplateDownloaded": "Import template downloaded",
+    "employees.jobRoleCreated": 'Job role "{name}" created',
+    "employees.jobRoleCreateError": "Failed to create job role",
+    "employees.departmentCreated": 'Department "{name}" created',
+    "employees.departmentCreateError": "Failed to create department",
+    "employees.importAllRowsSkipped": "all {count} rows skipped",
+    "employees.importPartialResult":
+      "{imported} imported, {skipped} skipped. See import details below.",
+    "employees.importFullResult": "{count} employee(s) imported",
+    "employees.importGuideTitle": "Employee import requirements",
+    "employees.importGuideDescription":
+      "Review the format once, then continue to choose your file.",
+    "employees.importGuideFormats": "Accepted file formats: .xlsx, .xls, .csv",
+    "employees.importGuideRequiredColumns":
+      "Required columns: employee_number, first_name, last_name",
+    "employees.importGuideOptionalColumns":
+      "Optional columns: email, department, hire_date (YYYY-MM-DD, DD.MM.YYYY, DD/MM/YYYY, or Excel date)",
+    "employees.importGuideHeaderAliases":
+      "Header aliases are accepted (for example: Mitarbeiternummer, Vorname, Nachname, Abteilung, Einstellungsdatum).",
+    "employees.importGuideSampleFile": "Need a sample file?",
+    "employees.importGuideDownloadTemplate": "Download template",
+    "employees.importGuideContinue": "Continue to file selection",
+    "employees.importIssuesCount": "Import issues ({count})",
+    "employees.importReportFor": "Import report for {fileName}",
+    "employees.importReportTotals":
+      "Total rows: {total} | Imported: {imported} | Skipped: {skipped}",
+    "employees.importedRowsLabel": "Imported rows",
+    "employees.noRowsImported": "No rows imported.",
+    "employees.skippedRowsLabel": "Skipped rows",
+    "employees.filtersLabel": "Filters",
+    "employees.assignTaskTitle": "Assign Task",
+    "employees.mentionHint": "Type @ to mention employees",
+    "employees.taskInputPlaceholder":
+      "Enter task and type @ to select employee...",
+    "employees.assignButton": "Assign",
+    "employees.selectEmployeeCount": "Select Employee ({count})",
+    "employees.noDepartmentShort": "No dept",
+    "employees.noJobRoleShort": "No role",
+    "employees.addNoteTitle": "Add Note",
+    "employees.noteInputPlaceholder":
+      "Enter note and type @ to select employee...",
+    "employees.noEmployeesHint": "Add your first employee to get started",
+    "employees.unnamedEmployee": "Unnamed Employee",
+    "employees.employeeDetailsFallback": "Employee Details",
   },
 };
 
