@@ -30,6 +30,7 @@ import {
   Legend,
 } from "recharts";
 import { ReportConfig } from "./ReportBuilder";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ReportWidgetProps {
   config: ReportConfig;
@@ -43,29 +44,29 @@ interface ReportWidgetProps {
 const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#6366f1'];
 
 // Get subtitle based on report configuration
-const getSubtitle = (config: ReportConfig) => {
+const getSubtitle = (config: ReportConfig, t: (key: string) => string) => {
   if (config.metric === 'incidents') {
     return config.incidentType
-      ? `${config.incidentType} incidents over time`
-      : 'Monthly incident reports over the last 6 months';
+      ? t("reports.widget.subtitleIncidentTypeOverTime").replace("{type}", config.incidentType)
+      : t("reports.widget.subtitleIncidentsDefault");
   }
   if (config.metric === 'audits') {
     return config.auditTemplate
-      ? `${config.auditTemplate} audits`
-      : 'Audit completion status';
+      ? t("reports.widget.subtitleAuditTemplate").replace("{template}", config.auditTemplate)
+      : t("reports.widget.subtitleAuditsDefault");
   }
   if (config.metric === 'trainings') {
-    return 'Training completion by status';
+    return t("reports.widget.subtitleTrainings");
   }
   if (config.metric === 'employees') {
     return config.groupBy
-      ? `Employees by ${config.groupBy}`
-      : 'Employee distribution';
+      ? t("reports.widget.subtitleEmployeesByGroup").replace("{groupBy}", config.groupBy)
+      : t("reports.widget.subtitleEmployeesDefault");
   }
   if (config.groupBy) {
-    return `Grouped by ${config.groupBy}`;
+    return t("reports.widget.subtitleGroupedBy").replace("{groupBy}", config.groupBy);
   }
-  return 'Report data overview';
+  return t("reports.widget.subtitleDefault");
 };
 
 export default function ReportWidget({
@@ -76,12 +77,13 @@ export default function ReportWidget({
   onDelete,
   onExport,
 }: ReportWidgetProps) {
+  const { t } = useLanguage();
   // Use provided data or config data
   const chartData = (data && data.length > 0) ? data : (config.data || []);
 
   // Check if there's actual data (non-zero totals) and not just empty categories
   const hasData = chartData && chartData.length > 0 && chartData.some(d => d.value > 0);
-  const subtitle = getSubtitle(config);
+  const subtitle = getSubtitle(config, t);
 
   const renderChart = () => {
     if (!hasData) {
@@ -89,7 +91,7 @@ export default function ReportWidget({
         <div className="flex-1 flex items-center justify-center text-muted-foreground min-h-[150px]">
           <div className="text-center">
             <BarChart className="w-8 h-8 mx-auto mb-2 opacity-20" />
-            <p className="text-sm">No data available</p>
+            <p className="text-sm">{t("reports.widget.noDataAvailable")}</p>
           </div>
         </div>
       );
@@ -263,21 +265,21 @@ export default function ReportWidget({
               onEdit(config);
             }}>
               <Edit className="mr-2 h-4 w-4" />
-              Edit Report
+              {t("reports.widget.editReport")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => {
               e.stopPropagation();
               onDuplicate(config);
             }}>
               <Copy className="mr-2 h-4 w-4" />
-              Duplicate
+              {t("reports.widget.duplicate")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => {
               e.stopPropagation();
               onExport(config);
             }}>
               <Download className="mr-2 h-4 w-4" />
-              Export Data
+              {t("reports.widget.exportData")}
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
@@ -287,7 +289,7 @@ export default function ReportWidget({
               }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {t("reports.widget.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -2,6 +2,7 @@ import { Grid3x3, Users, AlertTriangle, ClipboardCheck, GraduationCap, Shield, A
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReportConfig } from "./ReportBuilder";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ReportLibraryProps {
   isOpen: boolean;
@@ -9,175 +10,179 @@ interface ReportLibraryProps {
   onSelectTemplate: (config: Partial<ReportConfig>) => void;
 }
 
-const REPORT_TEMPLATES = [
-  {
-    category: "Mitarbeiter",
-    icon: <Users className="w-5 h-5" />,
-    reports: [
-      {
-        title: "Mitarbeiter nach Abteilung",
-        metric: "employees",
-        groupBy: "department",
-        chartType: "bar" as const,
-        description: "Mitarbeiterverteilung auf Abteilungen",
-      },
-      {
-        title: "Mitarbeiter im Zeitverlauf",
-        metric: "employees",
-        groupBy: "created_at",
-        chartType: "line" as const,
-        description: "Wachstumstrend der Belegschaft",
-      },
-    ],
-  },
-  {
-    category: "Vorfälle",
-    icon: <AlertTriangle className="w-5 h-5" />,
-    reports: [
-      {
-        title: "Vorfälle nach Status",
-        metric: "incidents",
-        groupBy: "investigation_status",
-        chartType: "pie" as const,
-        description: "Übersicht der Vorfallsstatus",
-      },
-      {
-        title: "Vorfälle nach Kategorie",
-        metric: "incidents",
-        groupBy: "incident_type",
-        chartType: "bar" as const,
-        description: "Aufschlüsselung nach Vorfallstyp",
-      },
-    ],
-  },
-  {
-    category: "Audits",
-    icon: <ClipboardCheck className="w-5 h-5" />,
-    reports: [
-      {
-        title: "Audits nach ISO-Norm",
-        metric: "audits",
-        groupBy: "iso_code",
-        chartType: "bar" as const,
-        description: "Verteilung der Auditnormen",
-      },
-      {
-        title: "Abschlussstatus",
-        metric: "audits",
-        groupBy: "status",
-        chartType: "pie" as const,
-        description: "Abschlussquote der Audits",
-      },
-      {
-        title: "Audit-Zeitlinie",
-        metric: "audits",
-        groupBy: "created_at",
-        chartType: "line" as const,
-        description: "Audit-Aktivität im Zeitverlauf",
-      },
-    ],
-  },
-  {
-    category: "Schulungen",
-    icon: <GraduationCap className="w-5 h-5" />,
-    reports: [
-      {
-        title: "Schulungscompliance je Mitarbeiter",
-        metric: "trainings",
-        groupBy: "employee_id",
-        chartType: "bar" as const,
-        description: "Individuelle Schulungsabschlussquoten",
-      },
-      {
-        title: "Abgeschlossen vs. Ausstehend",
-        metric: "trainings",
-        groupBy: "status",
-        chartType: "pie" as const,
-        description: "Übersicht der Schulungsstatus",
-      },
-      {
-        title: "Schulungstrends",
-        metric: "trainings",
-        groupBy: "created_at",
-        chartType: "line" as const,
-        description: "Schulungsaktivität im Zeitverlauf",
-      },
-    ],
-  },
-  {
-    category: "Gefährdungsbeurteilungen",
-    icon: <Shield className="w-5 h-5" />,
-    reports: [
-      {
-        title: "Risiken nach Stufe",
-        metric: "risks",
-        groupBy: "risk_level",
-        chartType: "pie" as const,
-        description: "Verteilung nach Risikoschwere",
-      },
-      {
-        title: "Risiken nach Abteilung",
-        metric: "risks",
-        groupBy: "department",
-        chartType: "bar" as const,
-        description: "Risikoexposition je Abteilung",
-      },
-      {
-        title: "GBU-Freigabestatus",
-        metric: "risks",
-        groupBy: "approval_status",
-        chartType: "pie" as const,
-        description: "Freigabe-Workflow der GBUs",
-      },
-    ],
-  },
-  {
-    category: "Maßnahmen",
-    icon: <CheckSquare className="w-5 h-5" />,
-    reports: [
-      {
-        title: "Maßnahmen nach Status",
-        metric: "measures",
-        groupBy: "status",
-        chartType: "pie" as const,
-        description: "Fortschrittsübersicht der Maßnahmen",
-      },
-      {
-        title: "Maßnahmen nach Abteilung",
-        metric: "measures",
-        groupBy: "department",
-        chartType: "bar" as const,
-        description: "Maßnahmenverteilung auf Abteilungen",
-      },
-    ],
-  },
-  {
-    category: "G-Untersuchungen",
-    icon: <Activity className="w-5 h-5" />,
-    reports: [
-      {
-        title: "Untersuchungsstatus",
-        metric: "checkups",
-        groupBy: "status",
-        chartType: "pie" as const,
-        description: "Abschlussquote der G-Untersuchungen",
-      },
-      {
-        title: "Untersuchungen im Zeitverlauf",
-        metric: "checkups",
-        groupBy: "created_at",
-        chartType: "line" as const,
-        description: "Aktivitätstrends der Untersuchungen",
-      },
-    ],
-  },
-];
+function useReportTemplates(t: (key: string) => string) {
+  return [
+    {
+      category: t("reports.library.category.employees"),
+      icon: <Users className="w-5 h-5" />,
+      reports: [
+        {
+          title: t("reports.library.employeesByDepartment.title"),
+          metric: "employees",
+          groupBy: "department",
+          chartType: "bar" as const,
+          description: t("reports.library.employeesByDepartment.description"),
+        },
+        {
+          title: t("reports.library.employeesOverTime.title"),
+          metric: "employees",
+          groupBy: "created_at",
+          chartType: "line" as const,
+          description: t("reports.library.employeesOverTime.description"),
+        },
+      ],
+    },
+    {
+      category: t("reports.library.category.incidents"),
+      icon: <AlertTriangle className="w-5 h-5" />,
+      reports: [
+        {
+          title: t("reports.library.incidentsByStatus.title"),
+          metric: "incidents",
+          groupBy: "investigation_status",
+          chartType: "pie" as const,
+          description: t("reports.library.incidentsByStatus.description"),
+        },
+        {
+          title: t("reports.library.incidentsByCategory.title"),
+          metric: "incidents",
+          groupBy: "incident_type",
+          chartType: "bar" as const,
+          description: t("reports.library.incidentsByCategory.description"),
+        },
+      ],
+    },
+    {
+      category: t("reports.library.category.audits"),
+      icon: <ClipboardCheck className="w-5 h-5" />,
+      reports: [
+        {
+          title: t("reports.library.auditsByIso.title"),
+          metric: "audits",
+          groupBy: "iso_code",
+          chartType: "bar" as const,
+          description: t("reports.library.auditsByIso.description"),
+        },
+        {
+          title: t("reports.library.auditsCompletionStatus.title"),
+          metric: "audits",
+          groupBy: "status",
+          chartType: "pie" as const,
+          description: t("reports.library.auditsCompletionStatus.description"),
+        },
+        {
+          title: t("reports.library.auditsTimeline.title"),
+          metric: "audits",
+          groupBy: "created_at",
+          chartType: "line" as const,
+          description: t("reports.library.auditsTimeline.description"),
+        },
+      ],
+    },
+    {
+      category: t("reports.library.category.trainings"),
+      icon: <GraduationCap className="w-5 h-5" />,
+      reports: [
+        {
+          title: t("reports.library.trainingComplianceByEmployee.title"),
+          metric: "trainings",
+          groupBy: "employee_id",
+          chartType: "bar" as const,
+          description: t("reports.library.trainingComplianceByEmployee.description"),
+        },
+        {
+          title: t("reports.library.trainingCompletedVsPending.title"),
+          metric: "trainings",
+          groupBy: "status",
+          chartType: "pie" as const,
+          description: t("reports.library.trainingCompletedVsPending.description"),
+        },
+        {
+          title: t("reports.library.trainingTrends.title"),
+          metric: "trainings",
+          groupBy: "created_at",
+          chartType: "line" as const,
+          description: t("reports.library.trainingTrends.description"),
+        },
+      ],
+    },
+    {
+      category: t("reports.library.category.riskAssessments"),
+      icon: <Shield className="w-5 h-5" />,
+      reports: [
+        {
+          title: t("reports.library.risksByLevel.title"),
+          metric: "risks",
+          groupBy: "risk_level",
+          chartType: "pie" as const,
+          description: t("reports.library.risksByLevel.description"),
+        },
+        {
+          title: t("reports.library.risksByDepartment.title"),
+          metric: "risks",
+          groupBy: "department",
+          chartType: "bar" as const,
+          description: t("reports.library.risksByDepartment.description"),
+        },
+        {
+          title: t("reports.library.risksApprovalStatus.title"),
+          metric: "risks",
+          groupBy: "approval_status",
+          chartType: "pie" as const,
+          description: t("reports.library.risksApprovalStatus.description"),
+        },
+      ],
+    },
+    {
+      category: t("reports.library.category.measures"),
+      icon: <CheckSquare className="w-5 h-5" />,
+      reports: [
+        {
+          title: t("reports.library.measuresByStatus.title"),
+          metric: "measures",
+          groupBy: "status",
+          chartType: "pie" as const,
+          description: t("reports.library.measuresByStatus.description"),
+        },
+        {
+          title: t("reports.library.measuresByDepartment.title"),
+          metric: "measures",
+          groupBy: "department",
+          chartType: "bar" as const,
+          description: t("reports.library.measuresByDepartment.description"),
+        },
+      ],
+    },
+    {
+      category: t("reports.library.category.checkups"),
+      icon: <Activity className="w-5 h-5" />,
+      reports: [
+        {
+          title: t("reports.library.checkupsStatus.title"),
+          metric: "checkups",
+          groupBy: "status",
+          chartType: "pie" as const,
+          description: t("reports.library.checkupsStatus.description"),
+        },
+        {
+          title: t("reports.library.checkupsOverTime.title"),
+          metric: "checkups",
+          groupBy: "created_at",
+          chartType: "line" as const,
+          description: t("reports.library.checkupsOverTime.description"),
+        },
+      ],
+    },
+  ];
+}
 
 export default function ReportLibrary({
   isOpen,
   onClose,
   onSelectTemplate,
 }: ReportLibraryProps) {
+  const { t } = useLanguage();
+  const REPORT_TEMPLATES = useReportTemplates(t);
   if (!isOpen) return null;
 
   const handleSelectTemplate = (template: any) => {
@@ -199,13 +204,13 @@ export default function ReportLibrary({
         <div className="sticky top-0 bg-white border-b p-6 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold">Berichtvorlagen</h2>
+              <h2 className="text-2xl font-bold">{t("reports.library.title")}</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Wählen Sie eine vorgefertigte Berichtvorlage, um zu beginnen
+                {t("reports.library.subtitle")}
               </p>
             </div>
             <Button variant="ghost" onClick={onClose}>
-              Schließen
+              {t("reports.library.close")}
             </Button>
           </div>
         </div>
@@ -237,7 +242,7 @@ export default function ReportLibrary({
                       <div className="flex items-center gap-2 text-xs">
 
                         <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                          Letzte 30 Tage
+                          {t("reports.library.last30Days")}
                         </span>
                       </div>
                     </CardContent>

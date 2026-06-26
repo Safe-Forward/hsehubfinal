@@ -439,9 +439,9 @@ const saveCompanySettings = async (updates: Partial<typeof companySettings>) => 
     if (error) throw error;
 
     setCompanySettings(newSettings);
-    toast({ title: "Erfolgreich", description: "Einstellungen wurden gespeichert" });
+    toast({ title: t("settings.toast.settingsSavedTitle"), description: t("settings.toast.settingsSavedDesc") });
   } catch (err: any) {
-    toast({ title: "Fehler", description: err.message, variant: "destructive" });
+    toast({ title: t("settings.toast.errorTitle"), description: err.message, variant: "destructive" });
   } finally {
     setSavingSettings(false);
   }
@@ -455,9 +455,9 @@ const handleUpdateOrgType = async (newType: 'linie' | 'matrix') => {
       .from('company_settings')
       .upsert({ company_id: companyId, org_type: newType }, { onConflict: 'company_id' });
     if (error) throw error;
-    toast({ title: 'Gespeichert', description: 'Organisationsform aktualisiert' });
+    toast({ title: t("settings.toast.savedTitle"), description: t("settings.toast.orgTypeUpdatedDesc") });
   } catch (err: any) {
-    toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
+    toast({ title: t("settings.toast.errorTitle"), description: err.message, variant: 'destructive' });
     setOrgType(newType === 'linie' ? 'matrix' : 'linie');
   }
 };
@@ -477,9 +477,9 @@ const handleUpdateManager = async (
     setTeamMembers((prev) =>
       prev.map((m) => (m.id === memberId ? { ...m, [field]: value || null } : m))
     );
-    toast({ title: 'Gespeichert' });
+    toast({ title: t("settings.toast.savedTitle") });
   } catch (err: any) {
-    toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
+    toast({ title: t("settings.toast.errorTitle"), description: err.message, variant: 'destructive' });
   } finally {
     setManagerSaving(false);
   }
@@ -557,7 +557,7 @@ const handleUpdateManager = async (
 
       setApiToken(newToken);
       setShowApiToken(true);
-      toast({ title: "Token generiert", description: "Jetzt kopieren und speichern — er wird nicht erneut angezeigt." });
+      toast({ title: t("settings.toast.tokenGeneratedTitle"), description: t("settings.toast.tokenGeneratedDesc") });
 
       // Log action
       await supabase.rpc("create_audit_log", {
@@ -569,7 +569,7 @@ const handleUpdateManager = async (
         p_company_id: companyId,
       });
     } catch (err: any) {
-      toast({ title: "Fehler", description: err.message, variant: "destructive" });
+      toast({ title: t("settings.toast.errorTitle"), description: err.message, variant: "destructive" });
     } finally {
       setIsGeneratingToken(false);
     }
@@ -611,7 +611,7 @@ const handleUpdateManager = async (
 
       if (error) throw error;
 
-      toast({ title: "Verbunden", description: `${newSystemForm.name} wurde hinzugefügt.` });
+      toast({ title: t("settings.toast.systemConnectedTitle"), description: `${newSystemForm.name} ${t("settings.toast.systemConnectedDesc")}` });
       setNewSystemForm({ name: "", type: "webhook", endpoint: "" });
       setIsAddSystemDialogOpen(false);
       fetchExternalSystems();
@@ -626,7 +626,7 @@ const handleUpdateManager = async (
         p_company_id: companyId,
       });
     } catch (err: any) {
-      toast({ title: "Fehler", description: err.message, variant: "destructive" });
+      toast({ title: t("settings.toast.errorTitle"), description: err.message, variant: "destructive" });
     } finally {
       setIsAddingSystem(false);
     }
@@ -643,10 +643,10 @@ const handleUpdateManager = async (
 
       if (error) throw error;
 
-      toast({ title: "Entfernt", description: `${systemName} wurde getrennt.` });
+      toast({ title: t("settings.toast.systemRemovedTitle"), description: `${systemName} ${t("settings.toast.systemRemovedDesc")}` });
       fetchExternalSystems();
     } catch (err: any) {
-      toast({ title: "Fehler", description: err.message, variant: "destructive" });
+      toast({ title: t("settings.toast.errorTitle"), description: err.message, variant: "destructive" });
     }
   };
 
@@ -662,15 +662,15 @@ const handleUpdateManager = async (
       });
 
       if (response.ok) {
-        toast({ title: "Verbindung erfolgreich", description: `${system.name} antwortete mit Status ${response.status}` });
+        toast({ title: t("settings.toast.connectionSuccessTitle"), description: `${system.name} ${t("settings.toast.connectionSuccessDesc")} ${response.status}` });
         // Update last sync time
         await supabase.from("external_systems").update({ last_sync_at: new Date().toISOString() }).eq("id", system.id);
         fetchExternalSystems();
       } else {
-        toast({ title: "Verbindung fehlgeschlagen", description: `${system.name} antwortete mit Status ${response.status}`, variant: "destructive" });
+        toast({ title: t("settings.toast.connectionFailedTitle"), description: `${system.name} ${t("settings.toast.connectionSuccessDesc")} ${response.status}`, variant: "destructive" });
       }
     } catch (err: any) {
-      toast({ title: "Verbindungstest fehlgeschlagen", description: err.message || "Endpunkt nicht erreichbar", variant: "destructive" });
+      toast({ title: t("settings.toast.connectionTestFailedTitle"), description: err.message || t("settings.toast.endpointUnreachable"), variant: "destructive" });
     }
   };
 
@@ -690,8 +690,8 @@ const handleUpdateManager = async (
 
       if (missing.length === 0) {
         toast({
-          title: "Bereits aktuell",
-          description: "Alle vordefinierten Gefahrenkategorien sind bereits vorhanden.",
+          title: t("settings.toast.alreadyUpToDateTitle"),
+          description: t("settings.toast.hazardCategoriesUpToDateDesc"),
         });
         return;
       }
@@ -707,8 +707,8 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: `${missing.length} predefined hazard categories added.`,
+        title: t("settings.toast.savedTitle"),
+        description: `${missing.length} ${t("settings.toast.hazardCategoriesAddedDesc")}`,
       });
       fetchAllData();
     } catch (err: unknown) {
@@ -716,7 +716,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -739,9 +739,8 @@ const handleUpdateManager = async (
 
       if (missing.length === 0) {
         toast({
-          title: "Bereits aktuell",
-          description:
-            "All predefined measure building blocks are already available.",
+          title: t("settings.toast.alreadyUpToDateTitle"),
+          description: t("settings.toast.measureBlocksUpToDateDesc"),
         });
         return;
       }
@@ -756,8 +755,8 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: `${missing.length} predefined measure building blocks added.`,
+        title: t("settings.toast.savedTitle"),
+        description: `${missing.length} ${t("settings.toast.measureBlocksAddedDesc")}`,
       });
       fetchAllData();
     } catch (err: unknown) {
@@ -765,7 +764,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -843,7 +842,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Ladefehler",
+        title: t("settings.toast.loadErrorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -1169,13 +1168,13 @@ const handleUpdateManager = async (
       }
 
       toast({
-        title: "Gespeichert",
-        description: "G-Investigations saved successfully",
+        title: t("settings.toast.savedTitle"),
+        description: t("settings.toast.gInvestigationsSavedDesc"),
       });
     } catch (err: any) {
       toast({
-        title: "Fehler",
-        description: err.message || "G-Untersuchungen konnten nicht gespeichert werden",
+        title: t("settings.toast.errorTitle"),
+        description: err.message || t("settings.toast.gInvestigationsSaveFailedDesc"),
         variant: "destructive",
       });
     }
@@ -1187,8 +1186,8 @@ const handleUpdateManager = async (
 
     if (!ticketForm.category || !ticketForm.title || !ticketForm.description) {
       toast({
-        title: "Fehler",
-        description: "Bitte alle Pflichtfelder ausfüllen",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.fillRequiredFieldsDesc"),
         variant: "destructive",
       });
       return;
@@ -1210,8 +1209,8 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Ticket Submitted",
-        description: "Your support ticket has been submitted successfully. We'll get back to you soon!",
+        title: t("settings.toast.ticketSubmittedTitle"),
+        description: t("settings.toast.ticketSubmittedDesc"),
       });
 
       // Reset form
@@ -1226,8 +1225,8 @@ const handleUpdateManager = async (
       fetchMyTickets();
     } catch (err: any) {
       toast({
-        title: "Fehler",
-        description: err.message || "Support-Ticket konnte nicht gesendet werden",
+        title: t("settings.toast.errorTitle"),
+        description: err.message || t("settings.toast.ticketSubmitFailedDesc"),
         variant: "destructive",
       });
     } finally {
@@ -1258,8 +1257,8 @@ const handleUpdateManager = async (
     if (apiToken) {
       navigator.clipboard.writeText(apiToken);
       toast({
-        title: t("settings.tokenCopied") || "Copied!",
-        description: "API token copied to clipboard",
+        title: t("settings.tokenCopied"),
+        description: t("settings.toast.tokenCopiedDesc"),
       });
     }
   };
@@ -1355,14 +1354,14 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: "Freigabe-Workflow wurde gespeichert",
+        title: t("settings.toast.savedTitle"),
+        description: t("settings.toast.approvalWorkflowSavedDesc"),
       });
 
       fetchApprovalWorkflows();
     } catch (err: any) {
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: err.message,
         variant: "destructive",
       });
@@ -1384,7 +1383,7 @@ const handleUpdateManager = async (
       fetchApprovalWorkflows();
     } catch (err: any) {
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: err.message,
         variant: "destructive",
       });
@@ -1424,7 +1423,7 @@ const handleUpdateManager = async (
       });
     } catch (err: any) {
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: err.message,
         variant: "destructive",
       });
@@ -1454,7 +1453,7 @@ const handleUpdateManager = async (
 
     } catch (err: any) {
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: err.message,
         variant: "destructive",
       });
@@ -1471,8 +1470,8 @@ const handleUpdateManager = async (
       !teamMemberForm.role
     ) {
       toast({
-        title: "Fehler",
-        description: "Bitte alle Felder ausfüllen",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.fillAllFieldsDesc"),
         variant: "destructive",
       });
       return;
@@ -1497,8 +1496,8 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: "Teammitglied wurde hinzugefügt",
+        title: t("settings.toast.savedTitle"),
+        description: t("settings.toast.teamMemberAddedDesc"),
       });
 
       // Create audit log
@@ -1526,7 +1525,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -1548,8 +1547,8 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: `Role updated from ${oldRole} to ${newRole}`,
+        title: t("settings.toast.savedTitle"),
+        description: `${t("settings.toast.roleUpdatedDesc")} ${oldRole} ${language === "de" ? "zu" : "to"} ${newRole}`,
       });
 
       // Create audit log
@@ -1568,7 +1567,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -1597,8 +1596,8 @@ const handleUpdateManager = async (
 
     if (!companyId || !currentTableName) {
       toast({
-        title: "Fehler",
-        description: "Missing required data. Please try again.",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.missingDataDesc"),
         variant: "destructive",
       });
       return;
@@ -1623,7 +1622,7 @@ const handleUpdateManager = async (
           .eq("company_id", companyId);
 
         if (error) throw error;
-        toast({ title: "Gespeichert", description: "Element wurde aktualisiert" });
+        toast({ title: t("settings.toast.savedTitle"), description: t("settings.toast.itemUpdatedDesc") });
 
         // Create audit log
         const itemType = tableName.endsWith('s') ? tableName.slice(0, -1) : tableName;
@@ -1644,7 +1643,7 @@ const handleUpdateManager = async (
         ]).select(); // Added select to get ID
 
         if (error) throw error;
-        toast({ title: "Gespeichert", description: "Element wurde erstellt" });
+        toast({ title: t("settings.toast.savedTitle"), description: t("settings.toast.itemCreatedDesc") });
 
         // Create audit log
         const itemType = tableName.endsWith('s') ? tableName.slice(0, -1) : tableName;
@@ -1668,7 +1667,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -1689,8 +1688,8 @@ const handleUpdateManager = async (
       const tableName = deleteItem.tableName;
       if (!tableName) {
         toast({
-          title: "Fehler",
-          description: "Table name is missing. Please try again.",
+          title: t("settings.toast.errorTitle"),
+          description: t("settings.toast.tableNameMissingDesc"),
           variant: "destructive",
         });
         return;
@@ -1704,7 +1703,7 @@ const handleUpdateManager = async (
 
       if (error) throw error;
 
-      toast({ title: "Gespeichert", description: "Item deleted successfully" });
+      toast({ title: t("settings.toast.savedTitle"), description: t("settings.toast.itemDeletedDesc") });
 
       // Create audit log
       const itemType = tableName.endsWith('s') ? tableName.slice(0, -1) : tableName;
@@ -1726,7 +1725,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -1737,8 +1736,8 @@ const handleUpdateManager = async (
   const importIsoCriteria = async (isoCode: string) => {
     if (!companyId) {
       toast({
-        title: "Fehler",
-        description: "Company ID not found",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.companyIdNotFoundDesc"),
         variant: "destructive",
       });
       return;
@@ -1820,8 +1819,8 @@ const handleUpdateManager = async (
       }
 
       toast({
-        title: "Gespeichert",
-        description: `${data.iso_name} criteria imported successfully! (${data.total_criteria} criteria)`,
+        title: t("settings.toast.savedTitle"),
+        description: `${data.iso_name} ${t("settings.toast.isoCriteriaImportedDesc")} (${data.total_criteria})`,
       });
 
       // Refresh the criteria data
@@ -1829,8 +1828,8 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error importing ISO criteria:", error);
       toast({
-        title: "Fehler",
-        description: error.message || "Failed to import ISO criteria",
+        title: t("settings.toast.errorTitle"),
+        description: error.message || t("settings.toast.isoCriteriaImportFailedDesc"),
         variant: "destructive",
       });
     } finally {
@@ -1870,8 +1869,8 @@ const handleUpdateManager = async (
   const handleAddCustomCriterion = async () => {
     if (!activeISOForCriteria || !newCriterionId.trim() || !newCriterionText.trim()) {
       toast({
-        title: "Fehler",
-        description: "Please enter both Criterion ID and Title",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.enterCriterionIdAndTitleDesc"),
         variant: "destructive",
       });
       return;
@@ -1893,8 +1892,8 @@ const handleUpdateManager = async (
 
       if (sectionError || !sectionData) {
         toast({
-          title: "Fehler",
-          description: `Could not find section for this ISO. Please try again.`,
+          title: t("settings.toast.errorTitle"),
+          description: t("settings.toast.sectionNotFoundDesc"),
           variant: "destructive",
         });
         return;
@@ -1925,8 +1924,8 @@ const handleUpdateManager = async (
       if (insertError) throw insertError;
 
       toast({
-        title: "Gespeichert",
-        description: "Kriterium wurde hinzugefügt",
+        title: t("settings.toast.savedTitle"),
+        description: t("settings.toast.criterionAddedDesc"),
       });
 
       // Reset inputs
@@ -1938,8 +1937,8 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error adding custom criterion:", error);
       toast({
-        title: "Fehler",
-        description: error.message || "Kriterium konnte nicht hinzugefügt werden",
+        title: t("settings.toast.errorTitle"),
+        description: error.message || t("settings.toast.criterionAddFailedDesc"),
         variant: "destructive",
       });
     }
@@ -1962,8 +1961,8 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: "Kriterium wurde gelöscht",
+        title: t("settings.toast.savedTitle"),
+        description: t("settings.toast.criterionDeletedDesc"),
       });
 
       // Manually remove from state for instant UI update
@@ -1989,8 +1988,8 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error deleting criterion:", error);
       toast({
-        title: "Fehler",
-        description: error.message || "Kriterium konnte nicht gelöscht werden",
+        title: t("settings.toast.errorTitle"),
+        description: error.message || t("settings.toast.criterionDeleteFailedDesc"),
         variant: "destructive",
       });
     }
@@ -2009,8 +2008,8 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: `${subsectionIds.length} criterion(s) deleted successfully`,
+        title: t("settings.toast.savedTitle"),
+        description: `${subsectionIds.length} ${t("settings.toast.criteriaDeletedDesc")}`,
       });
 
       // Manually remove from state for instant UI update
@@ -2036,8 +2035,8 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error deleting criteria:", error);
       toast({
-        title: "Fehler",
-        description: error.message || "Kriterien konnten nicht gelöscht werden",
+        title: t("settings.toast.errorTitle"),
+        description: error.message || t("settings.toast.criteriaDeleteFailedDesc"),
         variant: "destructive",
       });
     }
@@ -2070,8 +2069,8 @@ const handleUpdateManager = async (
         }
 
         toast({
-          title: "Gespeichert",
-          description: "Kriterium wurde gelöscht",
+          title: t("settings.toast.savedTitle"),
+          description: t("settings.toast.criterionDeletedDesc"),
         });
 
         // Refresh the criteria data
@@ -2106,8 +2105,8 @@ const handleUpdateManager = async (
       if (error) throw error;
 
       toast({
-        title: "Gespeichert",
-        description: "Abschnitt wurde gelöscht",
+        title: t("settings.toast.savedTitle"),
+        description: t("settings.toast.sectionDeletedDesc"),
       });
 
       // Refresh the criteria data
@@ -2115,8 +2114,8 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error deleting section:", error);
       toast({
-        title: "Fehler",
-        description: error.message || "Abschnitt konnte nicht gelöscht werden",
+        title: t("settings.toast.errorTitle"),
+        description: error.message || t("settings.toast.sectionDeleteFailedDesc"),
         variant: "destructive",
       });
     }
@@ -2159,9 +2158,8 @@ const handleUpdateManager = async (
       setLoadingData(true);
 
       toast({
-        title: "Updating translations...",
-        description:
-          "Deleting old data and re-importing with English translations",
+        title: t("settings.toast.updatingTranslationsTitle"),
+        description: t("settings.toast.updatingTranslationsDesc"),
       });
 
       // Get list of imported ISO codes
@@ -2175,9 +2173,8 @@ const handleUpdateManager = async (
 
       if (uniqueIsoCodes.length === 0) {
         toast({
-          title: "Keine Daten",
-          description:
-            "No ISO criteria found in database. Please import ISO standards first.",
+          title: t("settings.toast.noDataTitle"),
+          description: t("settings.toast.noIsoCriteriaFoundDesc"),
           variant: "destructive",
         });
         setLoadingData(false);
@@ -2197,8 +2194,8 @@ const handleUpdateManager = async (
       }
 
       toast({
-        title: "Success!",
-        description: `ISO criteria re-imported successfully with English translations for ${uniqueIsoCodes.length} standard(s)!`,
+        title: t("settings.toast.successTitle"),
+        description: `${t("settings.toast.isoCriteriaReimportedDesc")} ${uniqueIsoCodes.length}!`,
       });
 
       // Refresh the data
@@ -2206,8 +2203,8 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error updating English translations:", error);
       toast({
-        title: "Fehler",
-        description: error.message || "Failed to update English translations",
+        title: t("settings.toast.errorTitle"),
+        description: error.message || t("settings.toast.englishTranslationsFailedDesc"),
         variant: "destructive",
       });
     } finally {
@@ -2221,8 +2218,8 @@ const handleUpdateManager = async (
       setLoadingData(true);
 
       toast({
-        title: "Adding German translations...",
-        description: "Updating ISO criteria with German text",
+        title: t("settings.toast.addingGermanTranslationsTitle"),
+        description: t("settings.toast.addingGermanTranslationsDesc"),
       });
 
       // German translations for ISO 45001 sections
@@ -2325,8 +2322,8 @@ const handleUpdateManager = async (
       }
 
       toast({
-        title: "Success!",
-        description: `German translations added successfully! (${updatedCount} items updated)`,
+        title: t("settings.toast.successTitle"),
+        description: `${t("settings.toast.germanTranslationsAddedDesc")} (${updatedCount})`,
       });
 
       // Refresh the data
@@ -2334,8 +2331,8 @@ const handleUpdateManager = async (
     } catch (error: any) {
       console.error("Error adding German translations:", error);
       toast({
-        title: "Fehler",
-        description: error.message || "Failed to add German translations",
+        title: t("settings.toast.errorTitle"),
+        description: error.message || t("settings.toast.germanTranslationsFailedDesc"),
         variant: "destructive",
       });
     } finally {
@@ -2453,8 +2450,8 @@ const handleUpdateManager = async (
   const addCustomRole = async () => {
     if (!customRoleName.trim()) {
       toast({
-        title: "Fehler",
-        description: "Rollenname darf nicht leer sein",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.roleNameEmptyDesc"),
         variant: "destructive",
       });
       return;
@@ -2462,8 +2459,8 @@ const handleUpdateManager = async (
 
     if (roles[customRoleName]) {
       toast({
-        title: "Fehler",
-        description: "Rolle existiert bereits",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.roleExistsDesc"),
         variant: "destructive",
       });
       return;
@@ -2471,8 +2468,8 @@ const handleUpdateManager = async (
 
     if (!companyId) {
       toast({
-        title: "Fehler",
-        description: "Company ID not found",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.companyIdNotFoundDesc"),
         variant: "destructive",
       });
       return;
@@ -2508,15 +2505,15 @@ const handleUpdateManager = async (
       setCustomRoleName("");
       setIsAddingCustomRole(false);
       toast({
-        title: "Gespeichert",
-        description: `Role "${customRoleName}" created successfully`,
+        title: t("settings.toast.savedTitle"),
+        description: `"${customRoleName}" ${t("settings.toast.roleCreatedDesc")}`,
       });
     } catch (err: unknown) {
       const e = err as { message?: string } | Error | null;
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -2535,8 +2532,8 @@ const handleUpdateManager = async (
 
     if (predefinedRoles.includes(roleName)) {
       toast({
-        title: "Fehler",
-        description: "Vordefinierte Rollen können nicht gelöscht werden",
+        title: t("settings.toast.errorTitle"),
+        description: t("settings.toast.predefinedRolesProtectedDesc"),
         variant: "destructive",
       });
       return;
@@ -2566,8 +2563,8 @@ const handleUpdateManager = async (
       }
 
       toast({
-        title: "Gespeichert",
-        description: `Role "${roleName}" deleted successfully`,
+        title: t("settings.toast.savedTitle"),
+        description: `"${roleName}" ${t("settings.toast.roleDeletedDesc")}`,
       });
 
       // Refresh roles
@@ -2577,7 +2574,7 @@ const handleUpdateManager = async (
       const message =
         e && "message" in e && e.message ? e.message : String(err);
       toast({
-        title: "Fehler",
+        title: t("settings.toast.errorTitle"),
         description: message,
         variant: "destructive",
       });
@@ -2658,7 +2655,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("common.success"),
-        description: t("settings.permissionUpdated") || "Berechtigung wurde aktualisiert",
+        description: t("settings.permissionUpdated"),
       });
     } catch (err: unknown) {
       // Revert on error
@@ -2679,8 +2676,8 @@ const handleUpdateManager = async (
     // Check permission before allowing role creation
     if (!hasDetailedPermission('settings', 'user_role_management')) {
       toast({
-        title: "Permission Denied",
-        description: "Keine Berechtigung zur Rollenverwaltung",
+        title: t("settings.toast.permissionDeniedTitle"),
+        description: t("settings.toast.noRoleManagementPermissionDesc"),
         variant: "destructive",
       });
       return;
@@ -2717,7 +2714,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("common.success"),
-        description: `Role "${name}" created successfully`,
+        description: `"${name}" ${t("settings.toast.roleCreatedDesc")}`,
       });
 
       // Refresh roles
@@ -2745,8 +2742,8 @@ const handleUpdateManager = async (
     // Check permission before allowing role deletion
     if (!hasDetailedPermission('settings', 'user_role_management')) {
       toast({
-        title: "Permission Denied",
-        description: "Keine Berechtigung zur Rollenverwaltung",
+        title: t("settings.toast.permissionDeniedTitle"),
+        description: t("settings.toast.noRoleManagementPermissionDesc"),
         variant: "destructive",
       });
       return;
@@ -2777,7 +2774,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("common.success"),
-        description: "Beschreibung wurde aktualisiert",
+        description: t("settings.toast.descriptionUpdatedDesc"),
       });
     } catch (err: unknown) {
       const e = err as { message?: string } | Error | null;
@@ -2815,7 +2812,7 @@ const handleUpdateManager = async (
     if (!templateForm.name.trim()) {
       toast({
         title: t("settings.error"),
-        description: "Vorlagenname ist erforderlich",
+        description: t("settings.toast.templateNameRequiredDesc"),
         variant: "destructive",
       });
       return;
@@ -2849,8 +2846,8 @@ const handleUpdateManager = async (
       toast({
         title: t("settings.success"),
         description: editingTemplate
-          ? "Template updated successfully"
-          : "Template added successfully",
+          ? t("settings.toast.templateUpdatedDesc")
+          : t("settings.toast.templateAddedDesc"),
       });
 
       await fetchProfileFieldTemplates();
@@ -2877,7 +2874,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("settings.success"),
-        description: "Vorlage wurde gelöscht",
+        description: t("settings.toast.templateDeletedDesc"),
       });
 
       if (selectedProfileTemplateId === templateId) {
@@ -2935,7 +2932,7 @@ const handleUpdateManager = async (
     if (!selectedProfileTemplateId) {
       toast({
         title: t("settings.error"),
-        description: "Bitte zuerst eine Vorlage auswählen",
+        description: t("settings.toast.selectTemplateFirstDesc"),
         variant: "destructive",
       });
       return;
@@ -2944,7 +2941,7 @@ const handleUpdateManager = async (
     if (!profileFieldForm.fieldName || !profileFieldForm.fieldLabel) {
       toast({
         title: t("settings.error"),
-        description: "Feldname und Bezeichnung sind erforderlich",
+        description: t("settings.toast.fieldNameLabelRequiredDesc"),
         variant: "destructive",
       });
       return;
@@ -2970,7 +2967,7 @@ const handleUpdateManager = async (
 
         toast({
           title: t("settings.success"),
-          description: "Profilfeld wurde aktualisiert",
+          description: t("settings.toast.profileFieldUpdatedDesc"),
         });
       } else {
         // Create new field
@@ -2993,7 +2990,7 @@ const handleUpdateManager = async (
 
         toast({
           title: t("settings.success"),
-          description: "Profilfeld wurde hinzugefügt",
+          description: t("settings.toast.profileFieldAddedDesc"),
         });
       }
 
@@ -3023,7 +3020,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("settings.success"),
-        description: "Profilfeld wurde gelöscht",
+        description: t("settings.toast.profileFieldDeletedDesc"),
       });
 
       if (selectedProfileTemplateId) {
@@ -3310,8 +3307,8 @@ const handleUpdateManager = async (
                   >
                     <GitBranch className="w-4 h-4" />
                     <div className="text-left">
-                      <div>Organisation & Führung</div>
-                      <div className="text-xs opacity-80">Org-Typ & Vorgesetzte</div>
+                      <div>{t("settings.nav.organisationTitle")}</div>
+                      <div className="text-xs opacity-80">{t("settings.nav.organisationDesc")}</div>
                     </div>
                   </button>
 
@@ -3435,9 +3432,9 @@ const handleUpdateManager = async (
                   >
                     <Receipt className="w-4 h-4" />
                     <div className="text-left">
-                      <div>Invoices & Billing</div>
+                      <div>{t("settings.nav.invoicesBillingTitle")}</div>
                       <div className="text-xs opacity-80">
-                        Manage subscriptions
+                        {t("settings.nav.invoicesBillingDesc")}
                       </div>
                     </div>
                   </button>
@@ -3451,9 +3448,9 @@ const handleUpdateManager = async (
                   >
                     <Headphones className="w-4 h-4" />
                     <div className="text-left">
-                      <div>Support</div>
+                      <div>{t("settings.nav.supportTitle")}</div>
                       <div className="text-xs opacity-80">
-                        Submit a ticket
+                        {t("settings.nav.supportDesc")}
                       </div>
                     </div>
                   </button>
@@ -3468,9 +3465,9 @@ const handleUpdateManager = async (
                     >
                       <Trash2 className="w-4 h-4" />
                       <div className="text-left">
-                        <div>Konto</div>
+                        <div>{t("settings.nav.accountTitle")}</div>
                         <div className="text-xs opacity-80">
-                          Verwaltung
+                          {t("settings.nav.accountDesc")}
                         </div>
                       </div>
                     </button>

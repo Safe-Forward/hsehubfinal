@@ -81,7 +81,7 @@ export default function Reports() {
   const { logAction } = useAuditLog();
 
   const [activeSection, setActiveSection] = useState("overview");
-  const [reportName, setReportName] = useState("Monthly Safety Report");
+  const [reportName, setReportName] = useState(t("reports.defaultReportNameValue"));
   const [visibility, setVisibility] = useState("only-me");
   const [dateRange, setDateRange] = useState("last-30-days");
   const [departmentFilter, setDepartmentFilter] = useState("all");
@@ -191,21 +191,21 @@ export default function Reports() {
     });
 
     toast({
-      title: "Layout Reset",
-      description: "Benutzerdefiniertes Berichtslayout wurde zurückgesetzt",
+      title: t("reports.toast.layoutResetTitle"),
+      description: t("reports.toast.customLayoutResetDesc"),
     });
-  }, [customReports, toast]);
+  }, [customReports, toast, t]);
 
   // Navigation sections
   const navSections: NavSection[] = [
-    { id: "overview", name: "Overview", icon: <BarChart3 className="w-4 h-4" /> },
-    { id: "risk-assessments", name: "Risk Assessments", icon: <Shield className="w-4 h-4" /> },
-    { id: "audits", name: "Audits", icon: <ClipboardCheck className="w-4 h-4" /> },
-    { id: "incidents", name: "Incidents", icon: <AlertTriangle className="w-4 h-4" /> },
-    { id: "trainings", name: "Trainings", icon: <GraduationCap className="w-4 h-4" /> },
-    { id: "measures", name: "Measures", icon: <CheckCircle className="w-4 h-4" /> },
-    { id: "tasks", name: "Tasks", icon: <ListChecks className="w-4 h-4" /> },
-    { id: "checkups", name: "Check-ups", icon: <Stethoscope className="w-4 h-4" /> },
+    { id: "overview", name: t("reports.nav.overview"), icon: <BarChart3 className="w-4 h-4" /> },
+    { id: "risk-assessments", name: t("reports.nav.riskAssessments"), icon: <Shield className="w-4 h-4" /> },
+    { id: "audits", name: t("reports.nav.audits"), icon: <ClipboardCheck className="w-4 h-4" /> },
+    { id: "incidents", name: t("reports.nav.incidents"), icon: <AlertTriangle className="w-4 h-4" /> },
+    { id: "trainings", name: t("reports.nav.trainings"), icon: <GraduationCap className="w-4 h-4" /> },
+    { id: "measures", name: t("reports.nav.measures"), icon: <CheckCircle className="w-4 h-4" /> },
+    { id: "tasks", name: t("reports.nav.tasks"), icon: <ListChecks className="w-4 h-4" /> },
+    { id: "checkups", name: t("reports.nav.checkups"), icon: <Stethoscope className="w-4 h-4" /> },
   ];
 
   useEffect(() => {
@@ -620,8 +620,8 @@ export default function Reports() {
     } catch (error: any) {
       console.error("Error fetching report data:", error);
       toast({
-        title: "Fehler",
-        description: error.message || "Berichtsdaten konnten nicht geladen werden",
+        title: t("reports.toast.errorTitle"),
+        description: error.message || t("reports.toast.reportDataLoadError"),
         variant: "destructive",
       });
     }
@@ -986,8 +986,8 @@ export default function Reports() {
     // Check permission before allowing export
     if (!hasDetailedPermission('reports', 'export_data')) {
       toast({
-        title: "Permission Denied",
-        description: "Keine Berechtigung zum Exportieren von Daten",
+        title: t("reports.toast.permissionDeniedTitle"),
+        description: t("reports.toast.permissionDeniedExport"),
         variant: "destructive",
       });
       return;
@@ -1005,24 +1005,24 @@ export default function Reports() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("HSE Hub – Safety Management", 14, 10);
+    doc.text(t("reports.pdf.title"), 14, 10);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text(`Generated: ${dateStr} at ${timeStr}`, 14, 17);
-    doc.text(`Date range: ${dateRange.replace(/-/g, " ")}`, pageW - 14, 17, { align: "right" });
+    doc.text(t("reports.pdf.generated").replace("{date}", dateStr).replace("{time}", timeStr), 14, 17);
+    doc.text(t("reports.pdf.dateRange").replace("{range}", dateRange.replace(/-/g, " ")), pageW - 14, 17, { align: "right" });
 
     // ── Report title ────────────────────────────────────────────
     doc.setTextColor(30, 30, 30);
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text(reportName || "Safety Report", 14, 34);
+    doc.text(reportName || t("reports.pdf.defaultReportName"), 14, 34);
 
     // Section label
     const sectionLabel = navSections.find(s => s.id === activeSection)?.name || activeSection;
     doc.setFontSize(10);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(100, 100, 100);
-    doc.text(`Section: ${sectionLabel}`, 14, 41);
+    doc.text(t("reports.pdf.section").replace("{section}", sectionLabel), 14, 41);
 
     let cursorY = 50;
 
@@ -1039,26 +1039,26 @@ export default function Reports() {
 
     // ── Build content based on active section ───────────────────
     if (activeSection === "overview") {
-      sectionHeading("Key Performance Indicators");
+      sectionHeading(t("reports.pdf.kpi.title"));
       autoTable(doc, {
         startY: cursorY,
-        head: [["Metric", "Value"]],
+        head: [[t("reports.pdf.metric"), t("reports.pdf.value")]],
         body: [
-          ["Total Employees", stats.totalEmployees],
-          ["Risk Assessments (GBU)", stats.totalRiskAssessments],
-          ["Safety Audits", stats.totalAudits],
-          ["Completed Audits", stats.completedAudits],
-          ["Incidents", stats.totalIncidents],
-          ["Open Incidents", stats.openIncidents],
-          ["Closed Incidents", stats.totalIncidents - stats.openIncidents],
-          ["Training Courses", stats.totalTrainings],
-          ["Training Compliance", `${stats.trainingCompliance}%`],
-          ["Measures", stats.totalMeasures],
-          ["Completed Measures", stats.completedMeasures],
-          ["In-Progress Measures", stats.totalMeasures - stats.completedMeasures],
-          ["Tasks", stats.totalTasks],
-          ["Completed Tasks", stats.completedTasks],
-          ["Health Check-ups", stats.totalCheckUps],
+          [t("reports.pdf.kpi.totalEmployees"), stats.totalEmployees],
+          [t("reports.pdf.kpi.riskAssessments"), stats.totalRiskAssessments],
+          [t("reports.pdf.kpi.safetyAudits"), stats.totalAudits],
+          [t("reports.pdf.kpi.completedAudits"), stats.completedAudits],
+          [t("reports.pdf.kpi.incidents"), stats.totalIncidents],
+          [t("reports.pdf.kpi.openIncidents"), stats.openIncidents],
+          [t("reports.pdf.kpi.closedIncidents"), stats.totalIncidents - stats.openIncidents],
+          [t("reports.pdf.kpi.trainingCourses"), stats.totalTrainings],
+          [t("reports.pdf.kpi.trainingCompliance"), `${stats.trainingCompliance}%`],
+          [t("reports.pdf.kpi.measures"), stats.totalMeasures],
+          [t("reports.pdf.kpi.completedMeasures"), stats.completedMeasures],
+          [t("reports.pdf.kpi.inProgressMeasures"), stats.totalMeasures - stats.completedMeasures],
+          [t("reports.pdf.kpi.tasks"), stats.totalTasks],
+          [t("reports.pdf.kpi.completedTasks"), stats.completedTasks],
+          [t("reports.pdf.kpi.healthCheckups"), stats.totalCheckUps],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: "bold" },
@@ -1069,10 +1069,10 @@ export default function Reports() {
       cursorY = (doc as any).lastAutoTable.finalY + 10;
 
       if (chartData && chartData.length > 0) {
-        sectionHeading("Monthly Incident Trend");
+        sectionHeading(t("reports.pdf.monthlyIncidentTrend"));
         autoTable(doc, {
           startY: cursorY,
-          head: [["Month", "Incidents"]],
+          head: [[t("reports.pdf.month"), t("reports.pdf.incidentsColumn")]],
           body: chartData.map((d: any) => [d.month || d.name || "", d.incidents ?? d.value ?? 0]),
           styles: { fontSize: 9, cellPadding: 3 },
           headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: "bold" },
@@ -1082,12 +1082,12 @@ export default function Reports() {
         cursorY = (doc as any).lastAutoTable.finalY + 10;
       }
     } else if (activeSection === "risk-assessments") {
-      sectionHeading("Risk Assessments Summary");
+      sectionHeading(t("reports.pdf.riskAssessmentsSummary"));
       autoTable(doc, {
         startY: cursorY,
-        head: [["Metric", "Value"]],
+        head: [[t("reports.pdf.metric"), t("reports.pdf.value")]],
         body: [
-          ["Total GBU Risk Assessments", stats.totalRiskAssessments],
+          [t("reports.pdf.totalRiskAssessments"), stats.totalRiskAssessments],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [234, 88, 12], textColor: 255, fontStyle: "bold" },
@@ -1097,17 +1097,17 @@ export default function Reports() {
       });
       cursorY = (doc as any).lastAutoTable.finalY + 10;
     } else if (activeSection === "audits") {
-      sectionHeading("Safety Audits Summary");
+      sectionHeading(t("reports.pdf.auditsSummary"));
       const pending = stats.totalAudits - stats.completedAudits;
       const completionRate = stats.totalAudits > 0 ? Math.round((stats.completedAudits / stats.totalAudits) * 100) : 0;
       autoTable(doc, {
         startY: cursorY,
-        head: [["Metric", "Value"]],
+        head: [[t("reports.pdf.metric"), t("reports.pdf.value")]],
         body: [
-          ["Total Audits", stats.totalAudits],
-          ["Completed", stats.completedAudits],
-          ["Pending / In Progress", pending],
-          ["Completion Rate", `${completionRate}%`],
+          [t("reports.pdf.totalAudits"), stats.totalAudits],
+          [t("reports.pdf.completed"), stats.completedAudits],
+          [t("reports.pdf.pendingInProgress"), pending],
+          [t("reports.pdf.completionRate"), `${completionRate}%`],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
@@ -1117,14 +1117,14 @@ export default function Reports() {
       });
       cursorY = (doc as any).lastAutoTable.finalY + 10;
     } else if (activeSection === "incidents") {
-      sectionHeading("Incidents Summary");
+      sectionHeading(t("reports.pdf.incidentsSummary"));
       autoTable(doc, {
         startY: cursorY,
-        head: [["Metric", "Value"]],
+        head: [[t("reports.pdf.metric"), t("reports.pdf.value")]],
         body: [
-          ["Total Incidents", stats.totalIncidents],
-          ["Open / Under Investigation", stats.openIncidents],
-          ["Closed / Resolved", stats.totalIncidents - stats.openIncidents],
+          [t("reports.pdf.totalIncidents"), stats.totalIncidents],
+          [t("reports.pdf.openUnderInvestigation"), stats.openIncidents],
+          [t("reports.pdf.closedResolved"), stats.totalIncidents - stats.openIncidents],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [220, 38, 38], textColor: 255, fontStyle: "bold" },
@@ -1134,13 +1134,13 @@ export default function Reports() {
       });
       cursorY = (doc as any).lastAutoTable.finalY + 10;
     } else if (activeSection === "trainings") {
-      sectionHeading("Training Summary");
+      sectionHeading(t("reports.pdf.trainingSummary"));
       autoTable(doc, {
         startY: cursorY,
-        head: [["Metric", "Value"]],
+        head: [[t("reports.pdf.metric"), t("reports.pdf.value")]],
         body: [
-          ["Total Training Courses", stats.totalTrainings],
-          ["Overall Compliance Rate", `${stats.trainingCompliance}%`],
+          [t("reports.pdf.totalTrainingCourses"), stats.totalTrainings],
+          [t("reports.pdf.overallComplianceRate"), `${stats.trainingCompliance}%`],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [22, 163, 74], textColor: 255, fontStyle: "bold" },
@@ -1151,17 +1151,17 @@ export default function Reports() {
       cursorY = (doc as any).lastAutoTable.finalY + 10;
 
       if (trainingMatrix && trainingMatrix.length > 0) {
-        sectionHeading("Employee Training Matrix");
+        sectionHeading(t("reports.pdf.employeeTrainingMatrix"));
         autoTable(doc, {
           startY: cursorY,
-          head: [["Employee", "Required", "Completed", "Expired", "Compliance", "Status"]],
+          head: [[t("reports.pdf.employee"), t("reports.pdf.required"), t("reports.pdf.completed"), t("reports.pdf.expired"), t("reports.pdf.compliance"), t("reports.pdf.status")]],
           body: trainingMatrix.map(item => [
             item.employee_name,
             item.total_required,
             item.completed,
             item.expired,
             `${item.compliance_rate}%`,
-            item.compliance_rate >= 80 ? "Compliant" : item.compliance_rate >= 50 ? "Needs Attention" : "Non-Compliant",
+            item.compliance_rate >= 80 ? t("reports.pdf.compliant") : item.compliance_rate >= 50 ? t("reports.pdf.needsAttention") : t("reports.pdf.nonCompliant"),
           ]),
           styles: { fontSize: 8, cellPadding: 2.5 },
           headStyles: { fillColor: [22, 163, 74], textColor: 255, fontStyle: "bold" },
@@ -1173,8 +1173,8 @@ export default function Reports() {
           didDrawCell: (data: any) => {
             if (data.column.index === 5 && data.section === "body") {
               const val = String(data.cell.raw);
-              if (val === "Compliant") doc.setTextColor(22, 163, 74);
-              else if (val === "Needs Attention") doc.setTextColor(202, 138, 4);
+              if (val === t("reports.pdf.compliant")) doc.setTextColor(22, 163, 74);
+              else if (val === t("reports.pdf.needsAttention")) doc.setTextColor(202, 138, 4);
               else doc.setTextColor(220, 38, 38);
             }
           },
@@ -1183,16 +1183,16 @@ export default function Reports() {
         cursorY = (doc as any).lastAutoTable.finalY + 10;
       }
     } else if (activeSection === "measures") {
-      sectionHeading("Measures Summary");
+      sectionHeading(t("reports.pdf.measuresSummary"));
       const completionRate = stats.totalMeasures > 0 ? Math.round((stats.completedMeasures / stats.totalMeasures) * 100) : 0;
       autoTable(doc, {
         startY: cursorY,
-        head: [["Metric", "Value"]],
+        head: [[t("reports.pdf.metric"), t("reports.pdf.value")]],
         body: [
-          ["Total Measures", stats.totalMeasures],
-          ["Completed", stats.completedMeasures],
-          ["In Progress", stats.totalMeasures - stats.completedMeasures],
-          ["Completion Rate", `${completionRate}%`],
+          [t("reports.pdf.totalMeasures"), stats.totalMeasures],
+          [t("reports.pdf.completed"), stats.completedMeasures],
+          [t("reports.pdf.inProgress"), stats.totalMeasures - stats.completedMeasures],
+          [t("reports.pdf.completionRate"), `${completionRate}%`],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: "bold" },
@@ -1202,16 +1202,16 @@ export default function Reports() {
       });
       cursorY = (doc as any).lastAutoTable.finalY + 10;
     } else if (activeSection === "tasks") {
-      sectionHeading("Tasks Summary");
+      sectionHeading(t("reports.pdf.tasksSummary"));
       const completionRate = stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0;
       autoTable(doc, {
         startY: cursorY,
-        head: [["Metric", "Value"]],
+        head: [[t("reports.pdf.metric"), t("reports.pdf.value")]],
         body: [
-          ["Total Tasks", stats.totalTasks],
-          ["Completed", stats.completedTasks],
-          ["Pending", stats.totalTasks - stats.completedTasks],
-          ["Completion Rate", `${completionRate}%`],
+          [t("reports.pdf.totalTasks"), stats.totalTasks],
+          [t("reports.pdf.completed"), stats.completedTasks],
+          [t("reports.pdf.pending"), stats.totalTasks - stats.completedTasks],
+          [t("reports.pdf.completionRate"), `${completionRate}%`],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [99, 102, 241], textColor: 255, fontStyle: "bold" },
@@ -1221,13 +1221,13 @@ export default function Reports() {
       });
       cursorY = (doc as any).lastAutoTable.finalY + 10;
     } else if (activeSection === "checkups") {
-      sectionHeading("Health Check-ups Summary");
+      sectionHeading(t("reports.pdf.checkupsSummary"));
       autoTable(doc, {
         startY: cursorY,
-        head: [["Metric", "Value"]],
+        head: [[t("reports.pdf.metric"), t("reports.pdf.value")]],
         body: [
-          ["Total Health Check-ups", stats.totalCheckUps],
-          ["Completed", stats.completedCheckUps],
+          [t("reports.pdf.totalCheckups"), stats.totalCheckUps],
+          [t("reports.pdf.completed"), stats.completedCheckUps],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [13, 148, 136], textColor: 255, fontStyle: "bold" },
@@ -1245,8 +1245,8 @@ export default function Reports() {
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       doc.setFont("helvetica", "normal");
-      doc.text(`Page ${i} of ${totalPages}`, pageW / 2, doc.internal.pageSize.getHeight() - 6, { align: "center" });
-      doc.text("HSE Hub – Confidential", 14, doc.internal.pageSize.getHeight() - 6);
+      doc.text(t("reports.pdf.footerPage").replace("{current}", String(i)).replace("{total}", String(totalPages)), pageW / 2, doc.internal.pageSize.getHeight() - 6, { align: "center" });
+      doc.text(t("reports.pdf.footerConfidential"), 14, doc.internal.pageSize.getHeight() - 6);
       doc.text(dateStr, pageW - 14, doc.internal.pageSize.getHeight() - 6, { align: "right" });
     }
 
@@ -1255,8 +1255,8 @@ export default function Reports() {
     doc.save(fileName);
 
     toast({
-      title: "✅ PDF Exported",
-      description: `"${reportName}" has been downloaded as ${fileName}`,
+      title: `✅ ${t("reports.toast.pdfExportedTitle")}`,
+      description: t("reports.toast.pdfExportedDesc").replace("{name}", reportName).replace("{fileName}", fileName),
     });
 
     logAction({
@@ -1271,8 +1271,8 @@ export default function Reports() {
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
     toast({
-      title: "Date Range Updated",
-      description: `Showing data for ${range.replace("-", " ")}`,
+      title: t("reports.toast.dateRangeUpdatedTitle"),
+      description: t("reports.toast.dateRangeUpdatedDesc").replace("{range}", range.replace("-", " ")),
     });
   };
 
@@ -1337,7 +1337,7 @@ export default function Reports() {
           }
 
           const grouped = (data || []).reduce((acc: Record<string, number>, item: any) => {
-            const deptName = item.departments?.name || "Unassigned";
+            const deptName = item.departments?.name || t("reports.fallback.unassigned");
             acc[deptName] = (acc[deptName] || 0) + 1;
             return acc;
           }, {});
@@ -1346,7 +1346,7 @@ export default function Reports() {
         } else if (groupBy === "location") {
           // Employees don't have location field - return empty
           console.warn("Employees table does not have a location field");
-          return [{ name: "No Location Data", value: 0 }];
+          return [{ name: t("reports.fallback.noLocationData"), value: 0 }];
         } else if (groupBy === "created_at") {
           const { data, error } = await supabase
             .from("employees")
@@ -1389,7 +1389,7 @@ export default function Reports() {
             return [];
           }
           const grouped = (data || []).reduce((acc: Record<string, number>, item: any) => {
-            const name = item.departments?.name || "Unassigned";
+            const name = item.departments?.name || t("reports.fallback.unassigned");
             acc[name] = (acc[name] || 0) + 1;
             return acc;
             }, {});
@@ -1409,7 +1409,7 @@ export default function Reports() {
             return [];
           }
           const grouped = (data || []).reduce((acc: Record<string, number>, item: any) => {
-            const key = item[column] || "Unknown";
+            const key = item[column] || t("reports.fallback.unknown");
             acc[key] = (acc[key] || 0) + 1;
             return acc;
           }, {});
@@ -1467,13 +1467,13 @@ export default function Reports() {
 
           // Add data from main measures table
           (measuresRes.data || []).forEach((item: any) => {
-            const dept = item.responsible_person?.departments?.name || "Unassigned";
+            const dept = item.responsible_person?.departments?.name || t("reports.fallback.unassigned");
             grouped[dept] = (grouped[dept] || 0) + 1;
           });
 
           // Add data from risk_assessment_measures table
           (riskMeasuresRes.data || []).forEach((item: any) => {
-            const dept = item.responsible_employee?.departments?.name || "Unassigned";
+            const dept = item.responsible_employee?.departments?.name || t("reports.fallback.unassigned");
             grouped[dept] = (grouped[dept] || 0) + 1;
           });
 
@@ -1498,7 +1498,7 @@ export default function Reports() {
 
             if (error) return [];
             const grouped = (data || []).reduce((acc: Record<string, number>, item: any) => {
-              const key = item.location || "Unknown";
+              const key = item.location || t("reports.fallback.unknown");
               acc[key] = (acc[key] || 0) + 1;
               return acc;
             }, {});
@@ -1529,7 +1529,7 @@ export default function Reports() {
             return [];
           }
           const groupedIncidents = (data || []).reduce((acc: Record<string, number>, item: any) => {
-            const key = item[incidentGroupCol] || "Unknown";
+            const key = item[incidentGroupCol] || t("reports.fallback.unknown");
             acc[key] = (acc[key] || 0) + 1;
             return acc;
           }, {});
@@ -1569,7 +1569,7 @@ export default function Reports() {
               const employeeStats: Record<string, { total: number; completed: number }> = {};
 
               (data || []).forEach((item: any) => {
-                const empName = item.employees?.full_name || "Unassigned";
+                const empName = item.employees?.full_name || t("reports.fallback.unassigned");
                 if (!employeeStats[empName]) {
                   employeeStats[empName] = { total: 0, completed: 0 };
                 }
@@ -1598,7 +1598,7 @@ export default function Reports() {
               }
 
               const grouped = (data || []).reduce((acc: Record<string, number>, item: any) => {
-                const key = item.status || "Unknown";
+                const key = item.status || t("reports.fallback.unknown");
                 acc[key] = (acc[key] || 0) + 1;
                 return acc;
               }, {});
@@ -1672,14 +1672,14 @@ export default function Reports() {
 
             // Add data from main measures table
             (measuresRes.data || []).forEach((item: any) => {
-              const key = item.status || "Unknown";
+              const key = item.status || t("reports.fallback.unknown");
               combined[key] = (combined[key] || 0) + 1;
             });
 
             // Add data from risk_assessment_measures table (map progress_status to status)
             (riskMeasuresRes.data || []).forEach((item: any) => {
               // Map progress_status names to match status names
-              let key = item.progress_status || "Unknown";
+              let key = item.progress_status || t("reports.fallback.unknown");
               // Map risk assessment statuses to standard measure statuses
               if (key === "not_started") key = "planned";
               if (key === "blocked") key = "cancelled";
@@ -1706,7 +1706,7 @@ export default function Reports() {
               }
 
               const grouped = (data || []).reduce((acc: Record<string, number>, item: any) => {
-                const key = item.status || "Unknown";
+                const key = item.status || t("reports.fallback.unknown");
                 acc[key] = (acc[key] || 0) + 1;
                 return acc;
               }, {});
@@ -1785,7 +1785,7 @@ export default function Reports() {
       }
 
       const groupedStd = (stdData || []).reduce((acc: Record<string, number>, item: any) => {
-        const key = item[groupColumn] || "Unknown";
+        const key = item[groupColumn] || t("reports.fallback.unknown");
         acc[key] = (acc[key] || 0) + 1;
         return acc;
       }, {});
@@ -1819,8 +1819,8 @@ export default function Reports() {
     } catch (error) {
       console.error("Error selecting template:", error);
       toast({
-        title: "Fehler",
-        description: "Vorlagendaten konnten nicht geladen werden",
+        title: t("reports.toast.errorTitle"),
+        description: t("reports.toast.templateDataLoadError"),
         variant: "destructive",
       });
     }
@@ -1839,8 +1839,8 @@ export default function Reports() {
       saveCustomReports(updatedReports);
 
       toast({
-        title: "Report Updated",
-        description: `"${config.title}" has been updated`,
+        title: t("reports.toast.reportUpdatedTitle"),
+        description: t("reports.toast.reportUpdatedDesc").replace("{title}", config.title),
       });
     } else {
       // Add new - INSERT AT BEGINNING (Latest First)
@@ -1858,8 +1858,8 @@ export default function Reports() {
       });
 
       toast({
-        title: "Report Created",
-        description: `"${config.title}" has been added to your dashboard`,
+        title: t("reports.toast.reportCreatedTitle"),
+        description: t("reports.toast.reportCreatedDesc").replace("{title}", config.title),
       });
     }
 
@@ -1876,7 +1876,7 @@ export default function Reports() {
     const duplicate = {
       ...config,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      title: `${config.title} (Copy)`,
+      title: t("reports.duplicateReportTitle").replace("{title}", config.title),
       data: config.data ? [...config.data] : [],
     };
 
@@ -1895,8 +1895,8 @@ export default function Reports() {
     });
 
     toast({
-      title: "Report Duplicated",
-      description: `Created a copy of "${config.title}"`,
+      title: t("reports.toast.reportDuplicatedTitle"),
+      description: t("reports.toast.reportDuplicatedDesc").replace("{title}", config.title),
     });
   };
 
@@ -1925,8 +1925,8 @@ export default function Reports() {
     });
 
     toast({
-      title: "Report Deleted",
-      description: `"${reportToDelete.title}" has been removed`,
+      title: t("reports.toast.reportDeletedTitle"),
+      description: t("reports.toast.reportDeletedDesc").replace("{title}", reportToDelete.title),
     });
     setReportToDelete(null);
   };
@@ -1935,8 +1935,8 @@ export default function Reports() {
     // Check permission before allowing export
     if (!hasDetailedPermission('reports', 'export_data')) {
       toast({
-        title: "Permission Denied",
-        description: "Keine Berechtigung zum Exportieren von Daten",
+        title: t("reports.toast.permissionDeniedTitle"),
+        description: t("reports.toast.permissionDeniedExport"),
         variant: "destructive",
       });
       return;
@@ -1954,10 +1954,10 @@ export default function Reports() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("HSE Hub – Safety Management", 14, 10);
+    doc.text(t("reports.pdf.title"), 14, 10);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text(`Generated: ${dateStr} at ${timeStr}`, 14, 17);
+    doc.text(t("reports.pdf.generated").replace("{date}", dateStr).replace("{time}", timeStr), 14, 17);
 
     // Report Title
     doc.setTextColor(30, 30, 30);
@@ -1969,21 +1969,21 @@ export default function Reports() {
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100, 100, 100);
-    doc.text(`Metric: ${config.metric}  |  Chart: ${config.chartType}  |  Group by: ${config.groupBy}`, 14, 41);
+    doc.text(`${t("reports.pdf.metric")}: ${config.metric}  |  ${t("reports.pdf.chartType")}: ${config.chartType}  |  ${t("reports.pdf.groupBy")}: ${config.groupBy}`, 14, 41);
 
     let cursorY = 52;
 
     // Config summary table
     autoTable(doc, {
       startY: cursorY,
-      head: [["Property", "Value"]],
+      head: [[t("reports.pdf.property"), t("reports.pdf.value")]],
       body: [
-        ["Metric", config.metric],
-        ["Chart Type", config.chartType],
-        ["Group By", config.groupBy],
-        ["Date Range", config.dateRange?.type?.replace(/_/g, " ") || "All time"],
-        ...(config.incidentType ? [["Incident Type", config.incidentType]] : []),
-        ...(config.auditTemplate ? [["Audit Template", config.auditTemplate]] : []),
+        [t("reports.pdf.metric"), config.metric],
+        [t("reports.pdf.chartType"), config.chartType],
+        [t("reports.pdf.groupBy"), config.groupBy],
+        [t("reports.pdf.dateRangeProperty"), config.dateRange?.type?.replace(/_/g, " ") || t("reports.pdf.allTime")],
+        ...(config.incidentType ? [[t("reports.pdf.incidentType"), config.incidentType]] : []),
+        ...(config.auditTemplate ? [[t("reports.pdf.auditTemplate"), config.auditTemplate]] : []),
       ],
       styles: { fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [79, 70, 229], textColor: 255, fontStyle: "bold" },
@@ -2000,7 +2000,7 @@ export default function Reports() {
       doc.setTextColor(55, 65, 81);
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
-      doc.text("Report Data", 16, cursorY + 5.5);
+      doc.text(t("reports.pdf.reportData"), 16, cursorY + 5.5);
       cursorY += 12;
 
       const dataKeys = Object.keys(config.data[0]);
@@ -2023,8 +2023,8 @@ export default function Reports() {
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       doc.setFont("helvetica", "normal");
-      doc.text(`Page ${i} of ${totalPages}`, pageW / 2, doc.internal.pageSize.getHeight() - 6, { align: "center" });
-      doc.text("HSE Hub – Confidential", 14, doc.internal.pageSize.getHeight() - 6);
+      doc.text(t("reports.pdf.footerPage").replace("{current}", String(i)).replace("{total}", String(totalPages)), pageW / 2, doc.internal.pageSize.getHeight() - 6, { align: "center" });
+      doc.text(t("reports.pdf.footerConfidential"), 14, doc.internal.pageSize.getHeight() - 6);
       doc.text(dateStr, pageW - 14, doc.internal.pageSize.getHeight() - 6, { align: "right" });
     }
 
@@ -2032,17 +2032,17 @@ export default function Reports() {
     doc.save(fileName);
 
     toast({
-      title: "✅ Report Exported",
-      description: `"${config.title}" downloaded as ${fileName}`,
+      title: `✅ ${t("reports.toast.reportExportedTitle")}`,
+      description: t("reports.toast.reportExportedDesc").replace("{title}", config.title).replace("{fileName}", fileName),
     });
   };
 
   const handleVisibilityChange = (value: string) => {
     setVisibility(value);
-    const visibilityText = value === "only-me" ? "only to you" : value === "team" ? "to your team" : "to the company";
+    const visibilityText = value === "only-me" ? t("reports.visibility.onlyMeShort") : value === "team" ? t("reports.visibility.teamShort") : t("reports.visibility.companyShort");
     toast({
-      title: "Visibility Updated",
-      description: `Report is now visible ${visibilityText}`,
+      title: t("reports.toast.visibilityUpdatedTitle"),
+      description: t("reports.toast.visibilityUpdatedDesc").replace("{visibility}", visibilityText),
     });
   };
 
@@ -2117,7 +2117,7 @@ export default function Reports() {
                 value={reportName}
                 onChange={(e) => setReportName(e.target.value)}
                 className="w-full max-w-lg font-semibold text-lg px-2"
-                placeholder="Report Name"
+                placeholder={t("reports.reportNamePlaceholder")}
               />
             </div>
 
@@ -2128,7 +2128,7 @@ export default function Reports() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Alle Abteilungen</SelectItem>
+                  <SelectItem value="all">{t("reports.allDepartments")}</SelectItem>
                   {departments.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
                       {dept.name}
@@ -2143,12 +2143,12 @@ export default function Reports() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="last-7-days">Last 7 days</SelectItem>
-                  <SelectItem value="last-30-days">Last 30 days</SelectItem>
-                  <SelectItem value="last-90-days">Last 90 days</SelectItem>
-                  <SelectItem value="this-month">This month</SelectItem>
-                  <SelectItem value="last-month">Last month</SelectItem>
-                  <SelectItem value="this-year">This year</SelectItem>
+                  <SelectItem value="last-7-days">{t("reports.dateRange.last7Days")}</SelectItem>
+                  <SelectItem value="last-30-days">{t("reports.dateRange.last30Days")}</SelectItem>
+                  <SelectItem value="last-90-days">{t("reports.dateRange.last90Days")}</SelectItem>
+                  <SelectItem value="this-month">{t("reports.dateRange.thisMonth")}</SelectItem>
+                  <SelectItem value="last-month">{t("reports.dateRange.lastMonth")}</SelectItem>
+                  <SelectItem value="this-year">{t("reports.dateRange.thisYear")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -2158,23 +2158,23 @@ export default function Reports() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="only-me">Visible only to me</SelectItem>
-                  <SelectItem value="team">Visible to team</SelectItem>
-                  <SelectItem value="company">Visible to company</SelectItem>
+                  <SelectItem value="only-me">{t("reports.visibility.onlyMe")}</SelectItem>
+                  <SelectItem value="team">{t("reports.visibility.team")}</SelectItem>
+                  <SelectItem value="company">{t("reports.visibility.company")}</SelectItem>
                 </SelectContent>
               </Select>
 
               {hasDetailedPermission('reports', 'create_dashboards') && (
                 <Button className="bg-purple-600 hover:bg-purple-700" size="sm" onClick={handleAddReport}>
                   <Plus className="w-4 h-4 mr-2" />
-                  Add report
+                  {t("reports.addReport")}
                 </Button>
               )}
 
               {hasDetailedPermission('reports', 'export_data') && (
                 <Button variant="outline" size="sm" onClick={exportReport}>
                   <Download className="w-4 h-4 mr-2" />
-                  Export PDF
+                  {t("reports.exportPdf")}
                 </Button>
               )}
             </div>
@@ -2226,9 +2226,9 @@ export default function Reports() {
           {activeSection !== "overview" && sectionCustomReports.length > 0 && (
             <div className="mt-8 space-y-4">
               <div>
-                <h3 className="text-xl font-semibold">Custom Reports</h3>
+                <h3 className="text-xl font-semibold">{t("reports.customReports.title")}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Reports matching this tab
+                  {t("reports.customReports.subtitle")}
                 </p>
               </div>
 
@@ -2276,15 +2276,15 @@ export default function Reports() {
       <AlertDialog open={!!reportToDelete} onOpenChange={(open) => !open && setReportToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Report?</AlertDialogTitle>
+            <AlertDialogTitle>{t("reports.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{reportToDelete?.title}"? This action cannot be undone.
+              {t("reports.deleteDialog.description").replace("{name}", reportToDelete?.title || "")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setReportToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setReportToDelete(null)}>{t("reports.deleteDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteReport} className="bg-destructive hover:bg-destructive/90">
-              Delete
+              {t("reports.deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

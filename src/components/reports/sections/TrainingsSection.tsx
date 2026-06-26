@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, GraduationCap, CheckCircle } from "lucide-react";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats, TrainingStatus } from "@/components/reports/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -21,6 +22,7 @@ export function TrainingsSection({
   chartData: any[];
 }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -112,19 +114,19 @@ export function TrainingsSection({
     } catch (e) {
       console.error(e);
     }
-    toast({ title: "Zurückgesetzt", description: "Schulungen-Layout wurde zurückgesetzt" });
-  }, [toast]);
+    toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.trainingsLayoutResetDesc") });
+  }, [toast, t]);
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Trainings</h2>
-          <p className="text-muted-foreground">Employee training compliance. Drag cards to reposition, drag corners to resize.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("reports.trainings.heading")}</h2>
+          <p className="text-muted-foreground">{t("reports.trainings.description")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={resetLayout}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Layout
+          {t("reports.overview.resetLayout")}
         </Button>
       </div>
 
@@ -148,8 +150,8 @@ export function TrainingsSection({
       >
         <div key="training-total">
           <DraggableCard
-            title="Total Courses"
-            subtitle="Training programs"
+            title={t("reports.trainings.totalTitle")}
+            subtitle={t("reports.trainings.totalSubtitle")}
             value={stats.totalTrainings}
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
@@ -157,8 +159,8 @@ export function TrainingsSection({
         </div>
         <div key="training-compliance">
           <DraggableCard
-            title="Compliance Rate"
-            subtitle="Overall compliance"
+            title={t("reports.trainings.complianceTitle")}
+            subtitle={t("reports.trainings.complianceSubtitle")}
             value={`${stats.trainingCompliance}%`}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
@@ -169,27 +171,27 @@ export function TrainingsSection({
       {/* Training Matrix */}
       <Card className="border shadow-sm">
         <CardHeader>
-          <CardTitle>Employee Training Matrix</CardTitle>
-          <CardDescription>Training compliance by employee</CardDescription>
+          <CardTitle>{t("reports.trainings.matrixTitle")}</CardTitle>
+          <CardDescription>{t("reports.trainings.matrixDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="font-semibold">Employee Name</TableHead>
-                  <TableHead className="font-semibold">Required</TableHead>
-                  <TableHead className="font-semibold">Completed</TableHead>
-                  <TableHead className="font-semibold">Expired</TableHead>
-                  <TableHead className="font-semibold">Compliance</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold">{t("reports.trainings.table.employeeName")}</TableHead>
+                  <TableHead className="font-semibold">{t("reports.trainings.table.required")}</TableHead>
+                  <TableHead className="font-semibold">{t("reports.trainings.table.completed")}</TableHead>
+                  <TableHead className="font-semibold">{t("reports.trainings.table.expired")}</TableHead>
+                  <TableHead className="font-semibold">{t("reports.trainings.table.compliance")}</TableHead>
+                  <TableHead className="font-semibold">{t("reports.trainings.table.status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {trainingMatrix.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No training data available
+                      {t("reports.trainings.noData")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -213,14 +215,14 @@ export function TrainingsSection({
                       <TableCell>
                         {item.compliance_rate >= 80 ? (
                           <Badge className="bg-green-100 text-green-800 border-green-200">
-                            Compliant
+                            {t("reports.trainings.compliant")}
                           </Badge>
                         ) : item.compliance_rate >= 50 ? (
                           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-                            Needs Attention
+                            {t("reports.trainings.needsAttention")}
                           </Badge>
                         ) : (
-                          <Badge variant="destructive">Non-Compliant</Badge>
+                          <Badge variant="destructive">{t("reports.trainings.nonCompliant")}</Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -232,7 +234,10 @@ export function TrainingsSection({
           {trainingMatrix.length > matrixPageSize && (
             <div className="flex items-center justify-between pt-4">
               <span className="text-sm text-muted-foreground">
-                Seite {matrixPage} von {matrixPageCount} ({trainingMatrix.length} Mitarbeiter)
+                {t("reports.trainings.pageInfo")
+                  .replace("{page}", String(matrixPage))
+                  .replace("{pageCount}", String(matrixPageCount))
+                  .replace("{count}", String(trainingMatrix.length))}
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -241,7 +246,7 @@ export function TrainingsSection({
                   disabled={matrixPage <= 1}
                   onClick={() => setMatrixPage((p) => Math.max(1, p - 1))}
                 >
-                  Zurück
+                  {t("reports.trainings.previous")}
                 </Button>
                 <Button
                   variant="outline"
@@ -249,7 +254,7 @@ export function TrainingsSection({
                   disabled={matrixPage >= matrixPageCount}
                   onClick={() => setMatrixPage((p) => Math.min(matrixPageCount, p + 1))}
                 >
-                  Weiter
+                  {t("reports.trainings.next")}
                 </Button>
               </div>
             </div>

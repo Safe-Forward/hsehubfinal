@@ -14,6 +14,7 @@ import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContai
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats } from "@/components/reports/types";
 import ReportWidget, { ReportConfig } from "@/components/reports/ReportWidget";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function OverviewSection({
   stats,
@@ -41,6 +42,7 @@ export function OverviewSection({
   onViewReport: (config: ReportConfig) => void;
 }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const UNIFIED_LAYOUT_KEY = "hse_unified_dashboard_layout_v5";
 
   // Mounted state to suppress CSS transition glitch on first render
@@ -63,14 +65,14 @@ export function OverviewSection({
   // Hidden cards state
   const HIDDEN_CARDS_KEY = "hse_hidden_overview_cards";
   const OVERVIEW_CARDS = useMemo(() => [
-    { id: "risk-assessments", label: "Risk Assessments", icon: <Shield className="w-4 h-4" /> },
-    { id: "safety-audits", label: "Safety Audits", icon: <ClipboardCheck className="w-4 h-4" /> },
-    { id: "incidents", label: "Incidents", icon: <AlertTriangle className="w-4 h-4" /> },
-    { id: "training-compliance", label: "Training Compliance", icon: <GraduationCap className="w-4 h-4" /> },
-    { id: "incident-trends", label: "Incident Trends", icon: <TrendingUp className="w-4 h-4" /> },
-    { id: "audit-completion", label: "Audit Completion", icon: <ClipboardCheck className="w-4 h-4" /> },
-    { id: "task-completion", label: "Task Completion", icon: <ListChecks className="w-4 h-4" /> },
-  ], []);
+    { id: "risk-assessments", label: t("reports.overview.card.riskAssessments"), icon: <Shield className="w-4 h-4" /> },
+    { id: "safety-audits", label: t("reports.overview.card.safetyAudits"), icon: <ClipboardCheck className="w-4 h-4" /> },
+    { id: "incidents", label: t("reports.overview.card.incidents"), icon: <AlertTriangle className="w-4 h-4" /> },
+    { id: "training-compliance", label: t("reports.overview.card.trainingCompliance"), icon: <GraduationCap className="w-4 h-4" /> },
+    { id: "incident-trends", label: t("reports.overview.card.incidentTrends"), icon: <TrendingUp className="w-4 h-4" /> },
+    { id: "audit-completion", label: t("reports.overview.card.auditCompletion"), icon: <ClipboardCheck className="w-4 h-4" /> },
+    { id: "task-completion", label: t("reports.overview.card.taskCompletion"), icon: <ListChecks className="w-4 h-4" /> },
+  ], [t]);
 
   const [hiddenCards, setHiddenCards] = useState<Set<string>>(() => {
     try {
@@ -379,10 +381,10 @@ export function OverviewSection({
     localStorage.removeItem(HIDDEN_CARDS_KEY);
 
     toast({
-      title: "Layout Reset",
-      description: "Dashboard-Layout wurde auf die Standardansicht zurückgesetzt",
+      title: t("reports.toast.layoutResetTitle"),
+      description: t("reports.toast.dashboardLayoutResetDesc"),
     });
-  }, [buildDefaultUnifiedLayout, toast]);
+  }, [buildDefaultUnifiedLayout, toast, t]);
 
   // Get hidden card info for display
   const hiddenCardsList = useMemo(() => {
@@ -401,10 +403,10 @@ export function OverviewSection({
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm">
               <Settings2 className="w-4 h-4 mr-2" />
-              Manage Widgets
+              {t("reports.overview.manageWidgets")}
               {totalHidden > 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
-                  {totalHidden} hidden
+                  {t("reports.overview.hiddenCount").replace("{count}", String(totalHidden))}
                 </Badge>
               )}
             </Button>
@@ -412,12 +414,12 @@ export function OverviewSection({
           <PopoverContent className="w-72" align="end">
             <div className="space-y-4">
               <div>
-                <h4 className="font-medium text-sm mb-1">Show / Hide Cards</h4>
-                <p className="text-xs text-muted-foreground">Toggle visibility of dashboard widgets</p>
+                <h4 className="font-medium text-sm mb-1">{t("reports.overview.showHideCards")}</h4>
+                <p className="text-xs text-muted-foreground">{t("reports.overview.toggleVisibilityHint")}</p>
               </div>
               {OVERVIEW_CARDS.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Standard</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("reports.overview.standard")}</p>
                   {OVERVIEW_CARDS.map(card => (
                     <div key={card.id} className="flex items-center justify-between">
                       <label htmlFor={`toggle-${card.id}`} className="text-sm cursor-pointer">{card.label}</label>
@@ -432,7 +434,7 @@ export function OverviewSection({
               )}
               {customReports.length > 0 && (
                 <div className="space-y-2 pt-2 border-t">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Custom Reports</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("reports.overview.customReports")}</p>
                   {customReports.map(report => (
                     <div key={report.id} className="flex items-center justify-between">
                       <label htmlFor={`toggle-report-${report.id}`} className="text-sm cursor-pointer truncate mr-2">{report.title}</label>
@@ -450,7 +452,7 @@ export function OverviewSection({
         </Popover>
         <Button variant="outline" size="sm" onClick={resetLayout}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Layout
+          {t("reports.overview.resetLayout")}
         </Button>
       </div>
 
@@ -467,8 +469,8 @@ export function OverviewSection({
         {/* --- Standard Cards --- */}
         {!hiddenCards.has("risk-assessments") && <div key="risk-assessments">
           <DraggableCard
-            title="Risk Assessments"
-            subtitle="Total GBU"
+            title={t("reports.overview.card.riskAssessments")}
+            subtitle={t("reports.overview.subtitle.totalGbu")}
             value={stats.totalRiskAssessments}
             icon={<Shield className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
@@ -478,8 +480,8 @@ export function OverviewSection({
 
         {!hiddenCards.has("safety-audits") && <div key="safety-audits">
           <DraggableCard
-            title="Safety Audits"
-            subtitle={`${stats.completedAudits} completed`}
+            title={t("reports.overview.card.safetyAudits")}
+            subtitle={t("reports.overview.subtitle.completedCount").replace("{count}", String(stats.completedAudits))}
             value={stats.totalAudits}
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
@@ -489,8 +491,8 @@ export function OverviewSection({
 
         {!hiddenCards.has("incidents") && <div key="incidents">
           <DraggableCard
-            title="Incidents"
-            subtitle={`${stats.openIncidents} open cases`}
+            title={t("reports.overview.card.incidents")}
+            subtitle={t("reports.overview.subtitle.openCases").replace("{count}", String(stats.openIncidents))}
             value={stats.totalIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-red-50 text-red-600"
@@ -500,8 +502,8 @@ export function OverviewSection({
 
         {!hiddenCards.has("training-compliance") && <div key="training-compliance">
           <DraggableCard
-            title="Training Compliance"
-            subtitle="Overall rate"
+            title={t("reports.overview.card.trainingCompliance")}
+            subtitle={t("reports.overview.subtitle.overallRate")}
             value={`${stats.trainingCompliance}%`}
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
@@ -516,14 +518,14 @@ export function OverviewSection({
               <button
                 onClick={(e) => { e.stopPropagation(); toggleCardVisibility("incident-trends"); }}
                 className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-                title="Hide this card"
+                title={t("reports.draggableCard.hide")}
               >
                 <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
             </div>
             <CardHeader className="py-4 pb-3">
-              <CardTitle className="text-lg">Incident Trends</CardTitle>
-              <CardDescription>Monthly incident reports over the last 6 months</CardDescription>
+              <CardTitle className="text-lg">{t("reports.overview.card.incidentTrends")}</CardTitle>
+              <CardDescription>{t("reports.overview.incidentTrendsDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -559,7 +561,7 @@ export function OverviewSection({
               <button
                 onClick={(e) => { e.stopPropagation(); toggleCardVisibility("audit-completion"); }}
                 className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-                title="Hide this card"
+                title={t("reports.draggableCard.hide")}
               >
                 <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
@@ -567,24 +569,24 @@ export function OverviewSection({
             <CardHeader className="py-2 pb-1 px-4">
               <CardTitle className="text-sm flex items-center gap-2">
                 <ClipboardCheck className="w-4 h-4 text-blue-600" />
-                Audit Completion
+                {t("reports.overview.card.auditCompletion")}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center pb-3 pt-1 px-4">
               <div className="flex items-center gap-3">
                 <div className="flex-1 text-center py-1.5 px-2 rounded-md bg-blue-50">
                   <div className="text-lg font-bold text-blue-600">{stats.totalAudits}</div>
-                  <div className="text-[9px] text-blue-600/70">Total</div>
+                  <div className="text-[9px] text-blue-600/70">{t("reports.overview.total")}</div>
                 </div>
                 <div className="flex-1 text-center py-1.5 px-2 rounded-md bg-green-50">
                   <div className="text-lg font-bold text-green-600">{stats.completedAudits}</div>
-                  <div className="text-[9px] text-green-600/70">Done</div>
+                  <div className="text-[9px] text-green-600/70">{t("reports.overview.done")}</div>
                 </div>
                 <div className="flex-1 text-center">
                   <div className="text-xl font-bold">
                     {stats.totalAudits > 0 ? Math.round((stats.completedAudits / stats.totalAudits) * 100) : 0}%
                   </div>
-                  <div className="text-[9px] text-muted-foreground">Rate</div>
+                  <div className="text-[9px] text-muted-foreground">{t("reports.overview.rate")}</div>
                 </div>
               </div>
             </CardContent>
@@ -598,7 +600,7 @@ export function OverviewSection({
               <button
                 onClick={(e) => { e.stopPropagation(); toggleCardVisibility("task-completion"); }}
                 className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-                title="Hide this card"
+                title={t("reports.draggableCard.hide")}
               >
                 <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
@@ -606,24 +608,24 @@ export function OverviewSection({
             <CardHeader className="py-2 pb-1 px-4">
               <CardTitle className="text-sm flex items-center gap-2">
                 <ListChecks className="w-4 h-4 text-blue-600" />
-                Task Completion
+                {t("reports.overview.card.taskCompletion")}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col justify-center pb-3 pt-1 px-4">
               <div className="flex items-center gap-3">
                 <div className="flex-1 text-center py-1.5 px-2 rounded-md bg-blue-50">
                   <div className="text-lg font-bold text-blue-600">{stats.totalTasks}</div>
-                  <div className="text-[9px] text-blue-600/70">Total</div>
+                  <div className="text-[9px] text-blue-600/70">{t("reports.overview.total")}</div>
                 </div>
                 <div className="flex-1 text-center py-1.5 px-2 rounded-md bg-green-50">
                   <div className="text-lg font-bold text-green-600">{stats.completedTasks}</div>
-                  <div className="text-[9px] text-green-600/70">Done</div>
+                  <div className="text-[9px] text-green-600/70">{t("reports.overview.done")}</div>
                 </div>
                 <div className="flex-1 text-center">
                   <div className="text-xl font-bold">
                     {stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0}%
                   </div>
-                  <div className="text-[9px] text-muted-foreground">Rate</div>
+                  <div className="text-[9px] text-muted-foreground">{t("reports.overview.rate")}</div>
                 </div>
               </div>
             </CardContent>
@@ -649,7 +651,7 @@ export function OverviewSection({
         <div className="border rounded-lg bg-muted/30 p-4">
           <div className="flex items-center gap-2 mb-3">
             <EyeOff className="w-4 h-4 text-muted-foreground" />
-            <h4 className="text-sm font-medium text-muted-foreground">Hidden Widgets ({totalHidden})</h4>
+            <h4 className="text-sm font-medium text-muted-foreground">{t("reports.overview.hiddenWidgets").replace("{count}", String(totalHidden))}</h4>
           </div>
           <div className="flex flex-wrap gap-2">
             {hiddenCardsList.hiddenStandard.map(card => (

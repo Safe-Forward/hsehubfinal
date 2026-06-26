@@ -7,11 +7,13 @@ import { RotateCcw, GripVertical, Stethoscope, CheckCircle } from "lucide-react"
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportStats; checkUpsStatusData: any[] }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -92,19 +94,19 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_checkups');
-    toast({ title: "Zurückgesetzt", description: "G-Untersuchungen-Layout wurde zurückgesetzt" });
-  }, [toast]);
+    toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.checkupsLayoutResetDesc") });
+  }, [toast, t]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Health Check-ups</h2>
-          <p className="text-muted-foreground">Tracks G-Investigation health examinations (e.g., vision tests, hearing tests) for occupational medical care compliance.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("reports.checkups.heading")}</h2>
+          <p className="text-muted-foreground">{t("reports.checkups.description")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={resetLayout}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Layout
+          {t("reports.overview.resetLayout")}
         </Button>
       </div>
 
@@ -128,8 +130,8 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
       >
         <div key="checkups-total">
           <DraggableCard
-            title="Total Check-ups"
-            subtitle="Health monitoring"
+            title={t("reports.checkups.totalTitle")}
+            subtitle={t("reports.checkups.totalSubtitle")}
             value={stats.totalCheckUps}
             icon={<Stethoscope className="w-5 h-5" />}
             color="bg-teal-50 text-teal-600"
@@ -137,8 +139,8 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
         </div>
         <div key="checkups-completed">
           <DraggableCard
-            title="Completed"
-            subtitle="Done check-ups"
+            title={t("reports.checkups.completedTitle")}
+            subtitle={t("reports.checkups.completedSubtitle")}
             value={stats.completedCheckUps}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
@@ -150,13 +152,13 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">Check-up Status Distribution</CardTitle>
-              <CardDescription>Health check-ups grouped by current status</CardDescription>
+              <CardTitle className="text-base">{t("reports.checkups.statusChartTitle")}</CardTitle>
+              <CardDescription>{t("reports.checkups.statusChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
               {checkUpsStatusData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  No data for selected date range
+                  {t("reports.checkups.noDataForRange")}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">

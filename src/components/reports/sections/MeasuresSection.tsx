@@ -7,11 +7,13 @@ import { RotateCcw, GripVertical, CheckCircle, TrendingUp } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export function MeasuresSection({ stats, chartData, measuresStatusData }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[] }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -95,19 +97,19 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
     const defaultLayouts = defaultLayout;
     setLayouts(defaultLayouts);
     localStorage.removeItem('hse_layout_measures_v2');
-    toast({ title: "Zurückgesetzt", description: "Maßnahmen-Layout wurde zurückgesetzt" });
-  }, [toast]);
+    toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.measuresLayoutResetDesc") });
+  }, [toast, t]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Measures</h2>
-          <p className="text-muted-foreground">Tracks corrective and preventive actions derived from risk assessments, audit findings, and incident investigations.</p>
+          <h2 className="text-2xl font-bold mb-2">{t("reports.measures.heading")}</h2>
+          <p className="text-muted-foreground">{t("reports.measures.description")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={resetLayout}>
           <RotateCcw className="w-4 h-4 mr-2" />
-          Reset Layout
+          {t("reports.overview.resetLayout")}
         </Button>
       </div>
 
@@ -131,8 +133,8 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
       >
         <div key="measures-total">
           <DraggableCard
-            title="Total Measures"
-            subtitle="All measures"
+            title={t("reports.measures.totalTitle")}
+            subtitle={t("reports.measures.totalSubtitle")}
             value={stats.totalMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-purple-50 text-purple-600"
@@ -140,8 +142,8 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
         </div>
         <div key="measures-completed">
           <DraggableCard
-            title="Completed"
-            subtitle="Finished measures"
+            title={t("reports.measures.completedTitle")}
+            subtitle={t("reports.measures.completedSubtitle")}
             value={stats.completedMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
@@ -149,8 +151,8 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
         </div>
         <div key="measures-progress">
           <DraggableCard
-            title="In Progress"
-            subtitle="Active measures"
+            title={t("reports.measures.inProgressTitle")}
+            subtitle={t("reports.measures.inProgressSubtitle")}
             value={stats.totalMeasures - stats.completedMeasures}
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
@@ -162,13 +164,13 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
               <GripVertical className="w-4 h-4 text-muted-foreground" />
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">Measures Status Distribution</CardTitle>
-              <CardDescription>All measures grouped by status</CardDescription>
+              <CardTitle className="text-base">{t("reports.measures.statusChartTitle")}</CardTitle>
+              <CardDescription>{t("reports.measures.statusChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
               {measuresStatusData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  No data for selected date range
+                  {t("reports.measures.noDataForRange")}
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
