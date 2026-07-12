@@ -1,14 +1,17 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /employees
+Disallow: /documents
+Disallow: /incidents
+Disallow: /risk-assessments
+Disallow: /measures
+Disallow: /training
+Disallow: /audits
+Disallow: /investigations
+Disallow: /reports
+Disallow: /settings
+Disallow: /super-admin
+
+Sitemap: https://www.safe-forward.de/sitemap.xml
