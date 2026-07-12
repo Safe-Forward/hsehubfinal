@@ -289,27 +289,14 @@ export default function Analytics() {
   };
 
   const fetchRevenueData = async () => {
-    // Generate mock revenue data for the last 6 months
-    const months = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const mockData = months.map((month, index) => ({
-      month,
-      subscriptions: 2000 + index * 500 + Math.floor(Math.random() * 500),
-      addons: 300 + index * 100 + Math.floor(Math.random() * 200),
-      total: 0,
-    }));
-    mockData.forEach((d) => (d.total = d.subscriptions + d.addons));
-    setRevenueData(mockData);
+    // No historical revenue snapshots stored yet — chart stays empty until
+    // a periodic snapshot table is implemented.
+    setRevenueData([]);
   };
 
   const fetchGrowthData = async () => {
-    // Generate mock growth data
-    const months = ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const mockData = months.map((month, index) => ({
-      month,
-      companies: 5 + index * 2 + Math.floor(Math.random() * 3),
-      users: 20 + index * 10 + Math.floor(Math.random() * 15),
-    }));
-    setGrowthData(mockData);
+    // No historical growth snapshots stored yet.
+    setGrowthData([]);
   };
 
   const fetchTierBreakdown = async () => {
@@ -403,9 +390,9 @@ export default function Analytics() {
 
       setSummaryStats({
         totalMRR,
-        mrrGrowth: 12.5, // Mock growth percentage
+        mrrGrowth: 0,
         avgRevenuePerCompany: totalMRR / companyCount,
-        churnRate: 2.3, // Mock churn rate
+        churnRate: 0,
         totalStorage,
         avgStoragePerCompany: totalStorage / companyCount,
       });
@@ -512,35 +499,25 @@ export default function Analytics() {
             <CardDescription>Monthly subscription and add-on revenue</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `€${value}`} />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="subscriptions"
-                    stackId="1"
-                    stroke="#3B82F6"
-                    fill="#3B82F6"
-                    fillOpacity={0.6}
-                    name="Subscriptions"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="addons"
-                    stackId="1"
-                    stroke="#8B5CF6"
-                    fill="#8B5CF6"
-                    fillOpacity={0.6}
-                    name="Add-ons"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            {revenueData.length === 0 ? (
+              <div className="h-80 flex items-center justify-center text-sm text-muted-foreground">
+                Noch keine historischen Umsatzdaten vorhanden.
+              </div>
+            ) : (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `€${value}`} />
+                    <Legend />
+                    <Area type="monotone" dataKey="subscriptions" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} name="Subscriptions" />
+                    <Area type="monotone" dataKey="addons" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} name="Add-ons" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -551,31 +528,25 @@ export default function Analytics() {
             <CardDescription>New companies and users over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={growthData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="companies"
-                    stroke="#3B82F6"
-                    strokeWidth={2}
-                    name="New Companies"
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="users"
-                    stroke="#10B981"
-                    strokeWidth={2}
-                    name="New Users"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {growthData.length === 0 ? (
+              <div className="h-80 flex items-center justify-center text-sm text-muted-foreground">
+                Noch keine historischen Wachstumsdaten vorhanden.
+              </div>
+            ) : (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={growthData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="companies" stroke="#3B82F6" strokeWidth={2} name="New Companies" />
+                    <Line type="monotone" dataKey="users" stroke="#10B981" strokeWidth={2} name="New Users" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

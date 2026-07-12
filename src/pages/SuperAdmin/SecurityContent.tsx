@@ -82,11 +82,7 @@ export default function SecurityContent() {
         dataExports: 0,
     });
 
-    // Mock data for demonstration (in production, fetch from audit_logs/security tables)
-    const [failedLogins, setFailedLogins] = useState<LoginAttempt[]>([
-        { email: "user@example.com", attempts: 5, last_attempt: new Date().toISOString(), status: "warning" },
-        { email: "test@company.com", attempts: 3, last_attempt: new Date().toISOString(), status: "normal" },
-    ]);
+    const [failedLogins, setFailedLogins] = useState<LoginAttempt[]>([]);
 
     const [rightsChanges, setRightsChanges] = useState<RightsChange[]>([]);
     const [gdprEvents, setGDPREvents] = useState<GDPREvent[]>([]);
@@ -141,12 +137,12 @@ export default function SecurityContent() {
             }
 
             setSecurityStats({
-                loginAnomalies: 2, // Would come from auth.users or custom login tracking
+                loginAnomalies: 0,
                 failedAttempts: failedLogins.reduce((sum, l) => sum + l.attempts, 0),
                 rightsChanges: rightsCount || 0,
                 gdprEvents: 0, // Would come from GDPR tracking table
                 adminActions: adminCount || 0,
-                dataExports: 3, // Would track data export requests
+                dataExports: 0,
             });
 
         } catch (error) {
