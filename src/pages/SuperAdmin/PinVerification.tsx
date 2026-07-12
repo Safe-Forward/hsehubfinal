@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Lock, AlertTriangle } from "lucide-react";
+import { Shield, Lock, AlertTriangle, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,9 @@ export default function SuperAdminPinVerification() {
   const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [locked, setLocked] = useState(false);
+  const [showForgotPin, setShowForgotPin] = useState(false);
+  const [resetSending, setResetSending] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { userRole, signOut } = useAuth();
@@ -139,6 +142,28 @@ export default function SuperAdminPinVerification() {
     navigate("/auth", { replace: true });
   };
 
+  const handleForgotPin = async () => {
+    setResetSending(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail("superadmin@safe-forward.internal");
+      if (error) throw error;
+      setResetSent(true);
+      toast({
+        title: "Reset-Link gesendet",
+        description: "Prüfe dein E-Mail-Postfach für den Reset-Link.",
+      });
+    } catch (error) {
+      console.error("PIN reset error:", error);
+      toast({
+        title: "Fehler",
+        description: "Reset-Link konnte nicht gesendet werden.",
+        variant: "destructive",
+      });
+    } finally {
+      setResetSending(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden">
@@ -216,7 +241,54 @@ export default function SuperAdminPinVerification() {
             </>
           )}
 
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="pt-2">
+            {!showForgotPin ? (
+              <Button
+                variant="link"
+                size="sm"
+                className="w-full text-xs text-gray-400 hover:text-blue-500"
+                onClick={() => setShowForgotPin(true)}
+              >
+                <KeyRound className="w-3 h-3 mr-1" />
+                PIN vergessen?
+              </Button>
+            ) : (
+              <div className="border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20 space-y-3">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">PIN zurücksetzen</p>
+                {resetSent ? (
+                  <p className="text-xs text-blue-600 dark:text-blue-300">
+                    Reset-Link wurde an <strong>superadmin@safe-forward.internal</strong> gesendet. Nach dem Login mit neuem Passwort kannst du unter <strong>/super-admin/set-pin</strong> einen neuen PIN setzen.
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-xs text-blue-600 dark:text-blue-300">
+                      Wir senden dir einen Reset-Link an <strong>superadmin@safe-forward.internal</strong>
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleForgotPin}
+                        disabled={resetSending}
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                      >
+                        {resetSending ? "Sende..." : "Reset-Link senden"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowForgotPin(false)}
+                        className="text-xs"
+                      >
+                        Abbrechen
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="ghost"
               onClick={handleLogout}

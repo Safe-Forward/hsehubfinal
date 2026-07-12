@@ -58,6 +58,7 @@ const SuperAdminInvoices = lazy(() => import("./pages/SuperAdmin/Invoices"));
 const SuperAdminAddons = lazy(() => import("./pages/SuperAdmin/Addons"));
 const SuperAdminAnalytics = lazy(() => import("./pages/SuperAdmin/Analytics"));
 const SuperAdminPinVerification = lazy(() => import("./pages/SuperAdmin/PinVerification"));
+const SuperAdminSetPin = lazy(() => import("./pages/SuperAdmin/SetPin"));
 const SuperAdminCompanyDetail = lazy(() => import("./pages/SuperAdmin/CompanyDetail"));
 const SuperAdminUsers = lazy(() => import("./pages/SuperAdmin/Users"));
 const SuperAdminSystemLogs = lazy(() => import("./pages/SuperAdmin/SystemLogs"));
@@ -102,6 +103,16 @@ const App = () => (
                 element={
                   <ProtectedRoute requiredRole="super_admin">
                     <SuperAdminPinVerification />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Super Admin Set PIN (accessible after password reset, no PIN check) */}
+              <Route
+                path="/super-admin/set-pin"
+                element={
+                  <ProtectedRoute requiredRole="super_admin">
+                    <SuperAdminSetPin />
                   </ProtectedRoute>
                 }
               />

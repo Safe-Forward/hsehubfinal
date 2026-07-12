@@ -3,6 +3,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSubscriptionLimits } from "@/hooks/useSubscriptionLimits";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ export default function Documents() {
     DocumentCategory | "all"
   >("all");
   const [isDragging, setIsDragging] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   // Upload form state
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -235,11 +237,7 @@ export default function Documents() {
         .single();
       const currentUsage = companyRow?.storage_used_bytes ?? 0;
       if (currentUsage + uploadFile.size > storageLimit) {
-        toast({
-          title: "Speicherlimit erreicht",
-          description: "Ihr Speicherplatz ist ausgeschöpft. Bitte ein Speicher-Add-on buchen oder den Tarif upgraden.",
-          variant: "destructive",
-        });
+        setShowUpgradeDialog(true);
         return;
       }
     }
@@ -812,6 +810,14 @@ export default function Documents() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UpgradeDialog
+        open={showUpgradeDialog}
+        onClose={() => setShowUpgradeDialog(false)}
+        title="Speicherlimit erreicht"
+        description="Ihr Speicherplatz ist ausgeschöpft. Bitte ein Speicher-Add-on buchen oder den Tarif upgraden."
+        hint="Basic: 5 GB · Standard: 20 GB · Premium: 100 GB · Speicher-Add-ons buchbar"
+      />
     </div>
   );
 }

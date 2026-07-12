@@ -289,14 +289,34 @@ export default function Analytics() {
   };
 
   const fetchRevenueData = async () => {
-    // No historical revenue snapshots stored yet — chart stays empty until
-    // a periodic snapshot table is implemented.
-    setRevenueData([]);
+    const { data } = await supabase
+      .from("mrr_snapshots")
+      .select("snapshot_date, total_mrr")
+      .order("snapshot_date", { ascending: true })
+      .limit(12);
+    if (data && data.length > 0) {
+      setRevenueData(data.map(d => ({
+        month: new Date(d.snapshot_date).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' }),
+        subscriptions: d.total_mrr,
+        addons: 0,
+        total: d.total_mrr,
+      })));
+    }
   };
 
   const fetchGrowthData = async () => {
-    // No historical growth snapshots stored yet.
-    setGrowthData([]);
+    const { data } = await supabase
+      .from("mrr_snapshots")
+      .select("snapshot_date, active_companies, new_companies")
+      .order("snapshot_date", { ascending: true })
+      .limit(12);
+    if (data && data.length > 0) {
+      setGrowthData(data.map(d => ({
+        month: new Date(d.snapshot_date).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' }),
+        companies: d.new_companies,
+        users: d.active_companies,
+      })));
+    }
   };
 
   const fetchTierBreakdown = async () => {
@@ -388,11 +408,32 @@ export default function Analytics() {
         companies?.reduce((sum, c) => sum + (c.storage_used_bytes || 0), 0) || 0;
       const companyCount = companies?.length || 1;
 
+      // Derive mrrGrowth and churnRate from the last two snapshots
+      const { data: snapshots } = await supabase
+        .from("mrr_snapshots")
+        .select("total_mrr, churned_companies, active_companies, snapshot_date")
+        .order("snapshot_date", { ascending: false })
+        .limit(2);
+
+      let mrrGrowth = 0;
+      let churnRate = 0;
+
+      if (snapshots && snapshots.length >= 2) {
+        const latest = snapshots[0];
+        const previous = snapshots[1];
+        if (previous.total_mrr > 0) {
+          mrrGrowth = Math.round(((latest.total_mrr - previous.total_mrr) / previous.total_mrr) * 100);
+        }
+        if (previous.active_companies > 0) {
+          churnRate = Math.round((latest.churned_companies / previous.active_companies) * 100 * 10) / 10;
+        }
+      }
+
       setSummaryStats({
         totalMRR,
-        mrrGrowth: 0,
+        mrrGrowth,
         avgRevenuePerCompany: totalMRR / companyCount,
-        churnRate: 0,
+        churnRate,
         totalStorage,
         avgStoragePerCompany: totalStorage / companyCount,
       });

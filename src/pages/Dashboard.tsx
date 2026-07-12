@@ -64,6 +64,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 
 const ALL_KPI_IDS = [
   "employees",
@@ -1350,7 +1351,7 @@ export default function Dashboard() {
           </div>
           ))}
         </div>
-      </>
+      <OnboardingWizard />
     </div>
   );
 }

@@ -78,6 +78,8 @@ import {
 } from "@/components/ui/popover";
 import { RefreshAuthButton } from "@/components/RefreshAuthButton";
 import { useAuditLog } from "@/hooks/useAuditLog";
+import { useSubscriptionLimits } from "@/hooks/useSubscriptionLimits";
+import { UpgradeDialog } from "@/components/UpgradeDialog";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -96,6 +98,8 @@ interface Employee {
 
 export default function Employees() {
   const { companyId, userRole, loading, user } = useAuth();
+  const { maxEmployees } = useSubscriptionLimits();
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { t } = useLanguage();
   const { hasDetailedPermission, loading: permissionsLoading } = usePermissions();
   const { logAction } = useAuditLog();
@@ -254,6 +258,12 @@ export default function Employees() {
     // Check permission before allowing create
     if (!hasDetailedPermission('employees', 'manage')) {
       toast.error(t("employees.noCreatePermission") || "You do not have permission to create employees");
+      return;
+    }
+
+    // Check employee limit
+    if (maxEmployees > 0 && employees.length >= maxEmployees) {
+      setShowUpgradeDialog(true);
       return;
     }
 
@@ -1247,6 +1257,14 @@ export default function Employees() {
   });
 
   return (
+    <>
+    <UpgradeDialog
+      open={showUpgradeDialog}
+      onClose={() => setShowUpgradeDialog(false)}
+      title="Mitarbeiterlimit erreicht"
+      description={`Ihr aktueller Tarif erlaubt maximal ${maxEmployees} Mitarbeiter. Um weitere Mitarbeiter anzulegen, upgraden Sie bitte Ihren Tarif.`}
+      hint="Basic: 5 Mitarbeiter · Standard: 10 Mitarbeiter · Premium: unbegrenzt"
+    />
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6 flex items-center gap-4">
@@ -2250,5 +2268,6 @@ export default function Employees() {
         </Dialog>
       </div>
     </div>
+    </>
   );
 }

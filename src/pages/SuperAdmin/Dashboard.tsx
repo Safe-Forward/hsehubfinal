@@ -323,21 +323,16 @@ export default function SuperAdminDashboard() {
 
   const fetchExpiringTrials = async () => {
     try {
-      const { startDate, endDate } = getDateRangeBounds(dateRange);
-      let query = supabase
+      const now = new Date();
+      const in3Days = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+      const { data } = await supabase
         .from("companies")
-        .select("id, name, email, trial_ends_at, created_at")
-        .eq("subscription_status", "trial");
-
-      if (startDate && endDate) {
-        query = query
-          .gte("created_at", startDate.toISOString())
-          .lte("created_at", endDate.toISOString());
-      }
-
-      const { data } = await query
-        .order("created_at", { ascending: true })
-        .limit(5);
+        .select("id, name, trial_ends_at, email")
+        .eq("subscription_status", "trial")
+        .gte("trial_ends_at", now.toISOString())
+        .lte("trial_ends_at", in3Days.toISOString())
+        .order("trial_ends_at", { ascending: true });
 
       setExpiringTrials(data || []);
     } catch (error) {
@@ -430,6 +425,40 @@ export default function SuperAdminDashboard() {
           </Select>
         </div>
       </div>
+
+      {/* Expiring Trials Alert Banner */}
+      {expiringTrials.length > 0 && (
+        <div className="mb-6 border border-orange-300 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-700 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <Clock className="w-5 h-5 text-orange-500 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="font-semibold text-orange-800 dark:text-orange-200">
+                {expiringTrials.length} Trial{expiringTrials.length > 1 ? "s" : ""} läuft bald ab
+              </p>
+              <div className="mt-2 space-y-1">
+                {expiringTrials.map((company) => {
+                  const hoursLeft = Math.max(0, Math.round((new Date(company.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60)));
+                  const daysLeft = Math.floor(hoursLeft / 24);
+                  const remaining = daysLeft > 0 ? `${daysLeft}d ${hoursLeft % 24}h` : `${hoursLeft}h`;
+                  return (
+                    <div key={company.id} className="flex items-center justify-between text-sm">
+                      <Link
+                        to={`/super-admin/companies/${company.id}`}
+                        className="font-medium text-orange-700 dark:text-orange-300 hover:underline"
+                      >
+                        {company.name}
+                      </Link>
+                      <Badge variant="destructive" className="text-xs ml-2">
+                        noch {remaining}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -581,29 +610,28 @@ export default function SuperAdminDashboard() {
                 </h4>
                 {expiringTrials.length === 0 ? (
                   <p className="text-center py-4 text-muted-foreground text-sm">
-                    No trials expiring soon
+                    Keine Trials laufen in den nächsten 3 Tagen ab
                   </p>
                 ) : (
                   expiringTrials.map((company) => {
-                    const createdDate = new Date(company.created_at);
-                    const trialEndDate = company.trial_ends_at
-                      ? new Date(company.trial_ends_at)
-                      : new Date(createdDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-                    const daysLeft = Math.max(0, Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                    const hoursLeft = Math.max(0, Math.round((new Date(company.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60)));
+                    const daysLeft = Math.floor(hoursLeft / 24);
+                    const remaining = daysLeft > 0 ? `${daysLeft}d ${hoursLeft % 24}h` : `${hoursLeft}h`;
 
                     return (
-                      <div
+                      <Link
                         key={company.id}
-                        className="flex items-center justify-between p-3 border rounded-lg"
+                        to={`/super-admin/companies/${company.id}`}
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
                       >
                         <div>
                           <p className="font-medium text-sm">{company.name}</p>
                           <p className="text-xs text-muted-foreground">{company.email}</p>
                         </div>
-                        <Badge variant={daysLeft <= 2 ? "destructive" : "secondary"}>
-                          {daysLeft} days left
+                        <Badge variant={hoursLeft <= 24 ? "destructive" : "secondary"}>
+                          noch {remaining}
                         </Badge>
-                      </div>
+                      </Link>
                     );
                   })
                 )}

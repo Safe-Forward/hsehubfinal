@@ -89,12 +89,11 @@ export default function SystemHealthContent() {
         if (data && !error) {
             setSystemMetrics(data as SystemMetric);
 
-            // Simulate additional metrics (in production, these would come from APM/monitoring service)
             setPerformanceMetrics({
                 api_latency_ms: latency,
-                error_rate: Math.random() * 0.5, // 0-0.5% error rate
-                queue_length: Math.floor(Math.random() * 10),
-                memory_usage_mb: 450 + Math.random() * 100, // Simulated memory usage
+                error_rate: 0,
+                queue_length: 0,
+                memory_usage_mb: 0,
             });
 
             setMetricHistory(prev => {
@@ -103,7 +102,7 @@ export default function SystemHealthContent() {
                     connections: (data as SystemMetric).active_connections,
                     cache_hit: (data as SystemMetric).cache_hit_ratio,
                     api_latency: latency,
-                    error_rate: Math.random() * 0.5,
+                    error_rate: 0,
                 };
                 const newHistory = [...prev, newPoint];
                 return newHistory.slice(-20);
@@ -201,8 +200,8 @@ export default function SystemHealthContent() {
                         <AlertTriangle className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{performanceMetrics.error_rate.toFixed(2)}%</div>
-                        <p className="text-xs text-muted-foreground mt-1">Within SLA</p>
+                        <div className="text-2xl font-bold text-muted-foreground">N/A</div>
+                        <p className="text-xs text-muted-foreground mt-1">Nicht verfügbar (APM)</p>
                     </CardContent>
                 </Card>
 
@@ -213,8 +212,8 @@ export default function SystemHealthContent() {
                         <Clock className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{performanceMetrics.queue_length}</div>
-                        <p className="text-xs text-muted-foreground mt-1">Background jobs</p>
+                        <div className="text-2xl font-bold text-muted-foreground">N/A</div>
+                        <p className="text-xs text-muted-foreground mt-1">Nicht verfügbar (APM)</p>
                     </CardContent>
                 </Card>
             </div>
@@ -260,9 +259,9 @@ export default function SystemHealthContent() {
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
                                     <span className="text-muted-foreground">Memory Usage</span>
-                                    <span className="font-mono text-xs">{performanceMetrics.memory_usage_mb.toFixed(0)} MB</span>
+                                    <span className="font-mono text-xs text-muted-foreground">N/A</span>
                                 </div>
-                                <Progress value={65} className="h-2" />
+                                <Progress value={0} className="h-2" />
                             </div>
                         </div>
                     </CardContent>

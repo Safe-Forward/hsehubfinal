@@ -192,8 +192,8 @@ export default function SecurityContent() {
                         <AlertTriangle className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-amber-600">{securityStats.loginAnomalies}</div>
-                        <p className="text-xs text-muted-foreground">Suspicious patterns</p>
+                        <div className="text-2xl font-bold text-muted-foreground">N/A</div>
+                        <p className="text-xs text-muted-foreground" title="Nicht verfügbar (Supabase Auth-Logs nicht zugänglich)">Supabase Auth-Logs nicht zugänglich</p>
                     </CardContent>
                 </Card>
 
