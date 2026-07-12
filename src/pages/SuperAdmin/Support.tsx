@@ -112,23 +112,9 @@ export default function Support() {
         bugReports: 0,
     });
 
-    // Mock data for common problems (would fetch from aggregated ticket data)
-    const [commonProblems, setCommonProblems] = useState([
-        { name: "Login Issues", count: 45, percentage: 28 },
-        { name: "Payment Errors", count: 32, percentage: 20 },
-        { name: "Slow Performance", count: 28, percentage: 17 },
-        { name: "Export Failed", count: 22, percentage: 14 },
-        { name: "Mobile App Bugs", count: 18, percentage: 11 },
-        { name: "Other", count: 16, percentage: 10 },
-    ]);
+    const [commonProblems, setCommonProblems] = useState<{ name: string; count: number; percentage: number }[]>([]);
 
-    // Priority breakdown
-    const [priorityBreakdown, setPriorityBreakdown] = useState([
-        { name: "Urgent", value: 5, color: "#EF4444" },
-        { name: "High", value: 12, color: "#F59E0B" },
-        { name: "Medium", value: 28, color: "#3B82F6" },
-        { name: "Low", value: 15, color: "#10B981" },
-    ]);
+    const [priorityBreakdown, setPriorityBreakdown] = useState<{ name: string; value: number; color: string }[]>([]);
 
     useEffect(() => {
         if (!loading && (!user || userRole !== "super_admin")) {
@@ -162,7 +148,6 @@ export default function Support() {
 
             setTickets(data || []);
 
-            // Update priority breakdown based on actual data
             if (data) {
                 const urgent = data.filter(t => t.priority === "urgent").length;
                 const high = data.filter(t => t.priority === "high").length;
@@ -174,7 +159,22 @@ export default function Support() {
                     { name: "High", value: high, color: "#F59E0B" },
                     { name: "Medium", value: medium, color: "#3B82F6" },
                     { name: "Low", value: low, color: "#10B981" },
-                ]);
+                ].filter(e => e.value > 0));
+
+                const categoryCounts: Record<string, number> = {};
+                data.forEach(t => {
+                    const cat = t.category || "other";
+                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                });
+                const total = data.length;
+                const problems = Object.entries(categoryCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name, count]) => ({
+                        name: name.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+                        count,
+                        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+                    }));
+                setCommonProblems(problems);
             }
         } catch (error: any) {
             console.error("Error fetching tickets:", error);
@@ -428,17 +428,21 @@ export default function Support() {
                         <CardDescription>Top issues reported by customers</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            {commonProblems.map((problem, index) => (
-                                <div key={index} className="space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="font-medium">{problem.name}</span>
-                                        <span className="text-muted-foreground">{problem.count} tickets ({problem.percentage}%)</span>
+                        {commonProblems.length === 0 ? (
+                            <p className="text-sm text-muted-foreground text-center py-6">Noch keine Tickets vorhanden.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {commonProblems.map((problem, index) => (
+                                    <div key={index} className="space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-medium">{problem.name}</span>
+                                            <span className="text-muted-foreground">{problem.count} tickets ({problem.percentage}%)</span>
+                                        </div>
+                                        <Progress value={problem.percentage} className="h-2" />
                                     </div>
-                                    <Progress value={problem.percentage} className="h-2" />
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
