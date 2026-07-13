@@ -105,6 +105,14 @@ const PublicLayout = ({ children }: PublicLayoutProps) => {
               >
                 AVV
               </a>
+              <a
+                href="https://blog.safe-forward.de"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-blue-600 transition-colors"
+              >
+                Blog
+              </a>
               <button
                 onClick={openSettings}
                 className="hover:text-blue-600 transition-colors"
