@@ -56,7 +56,6 @@ import { TrainingsSection } from "@/components/reports/sections/TrainingsSection
 import { MeasuresSection } from "@/components/reports/sections/MeasuresSection";
 import { TasksSection } from "@/components/reports/sections/TasksSection";
 import { CheckupsSection } from "@/components/reports/sections/CheckupsSection";
-import { AccidentKPISection } from "@/components/reports/sections/AccidentKPISection";
 import {
   ReportStats,
   TrainingStatus,
@@ -2288,12 +2287,13 @@ export default function Reports() {
             <AuditsSection stats={stats} chartData={chartData} auditStatusData={auditStatusData} />
           )}
           {activeSection === "incidents" && (
-            <div className="space-y-8">
-              {companyId && (
-                <AccidentKPISection companyId={companyId} selectedYear={selectedYear} />
-              )}
-              <IncidentsSection stats={stats} chartData={chartData} incidentTypeData={incidentTypeData} />
-            </div>
+            <IncidentsSection
+              stats={stats}
+              chartData={chartData}
+              incidentTypeData={incidentTypeData}
+              companyId={companyId || ""}
+              selectedYear={selectedYear}
+            />
           )}
           {activeSection === "trainings" && (
             <TrainingsSection stats={stats} trainingMatrix={trainingMatrix} chartData={chartData} />

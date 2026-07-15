@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { X, BarChart3, PieChart, TrendingUp } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, BarChart3, PieChart, TrendingUp, Plus, Tag } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,7 @@ export interface ReportConfig {
   incidentType?: string;
   auditTemplate?: string;
   targetSection?: string; // section where the report should appear (overrides metric-based routing)
+  tagFilters?: string[];
 }
 
 interface ReportBuilderProps {
@@ -88,12 +89,18 @@ export default function ReportBuilder({
   const [chartData, setChartData] = useState<any[]>(data);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Tag filter state
+  const [tagFilters, setTagFilters] = useState<string[]>(initialConfig?.tagFilters || []);
+  const [tagInput, setTagInput] = useState("");
+  const tagInputRef = useRef<HTMLInputElement>(null);
+
   // Sync config when initialConfig changes (e.g., when editing different reports)
   useEffect(() => {
     if (initialConfig) {
       setConfig(initialConfig);
       // Also update chart data from initial config
       setChartData(initialConfig.data || data || []);
+      setTagFilters(initialConfig.tagFilters || []);
     }
   }, [initialConfig]);
 
@@ -206,9 +213,23 @@ export default function ReportBuilder({
     const configWithData = {
       ...config,
       data: chartData && chartData.length > 0 ? chartData : config.data || [],
+      tagFilters: tagFilters.length > 0 ? tagFilters : undefined,
     };
     onSave(configWithData);
     onClose();
+  };
+
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed && !tagFilters.includes(trimmed)) {
+      setTagFilters((prev) => [...prev, trimmed]);
+    }
+    setTagInput("");
+    tagInputRef.current?.focus();
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setTagFilters((prev) => prev.filter((t) => t !== tag));
   };
 
   const hasData = chartData.length > 0;
@@ -513,6 +534,52 @@ export default function ReportBuilder({
               </div>
             </TabsContent>
           </Tabs>
+          {/* Tag / Profile-field filters */}
+          <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
+            <div className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-semibold">Profilfelder &amp; Tags filtern</span>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                ref={tagInputRef}
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                placeholder="Tag eingeben …"
+                className="flex-1"
+              />
+              <Button type="button" variant="outline" size="sm" onClick={handleAddTag}>
+                <Plus className="w-4 h-4 mr-1" />
+                Hinzufügen
+              </Button>
+            </div>
+            {tagFilters.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tagFilters.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 px-3 py-1 text-sm font-medium"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="ml-1 rounded-full hover:bg-blue-200 p-0.5 transition-colors"
+                      aria-label={`Tag "${tag}" entfernen`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
