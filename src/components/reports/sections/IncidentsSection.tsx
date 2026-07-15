@@ -64,12 +64,14 @@ export function IncidentsSection({
   incidentTypeData,
   companyId,
   selectedYear,
+  departmentFilter = "all",
 }: {
   stats: ReportStats;
   chartData: any[];
   incidentTypeData: any[];
   companyId: string;
   selectedYear: number;
+  departmentFilter?: string;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -89,30 +91,41 @@ export function IncidentsSection({
       try {
         const yearStart = `${selectedYear}-01-01`;
         const yearEnd = `${selectedYear}-12-31`;
+        const deptActive = departmentFilter !== "all";
+
+        let allIncidentsQ = (supabase as any)
+          .from("incidents")
+          .select("incident_date, severity, incident_type, department_id")
+          .eq("company_id", companyId)
+          .in("severity", REPORTABLE_SEVERITIES)
+          .eq("incident_type", "injury")
+          .order("incident_date", { ascending: false });
+        if (deptActive) allIncidentsQ = allIncidentsQ.eq("department_id", departmentFilter);
+
+        let employeesQ = supabase
+          .from("employees")
+          .select("id, department_id", { count: "exact" })
+          .eq("company_id", companyId)
+          .eq("is_active", true);
+        if (deptActive) employeesQ = (employeesQ as any).eq("department_id", departmentFilter);
+
+        let yearIncidentsQ = (supabase as any)
+          .from("incidents")
+          .select("id, severity, incident_type, department_id, incident_date")
+          .eq("company_id", companyId)
+          .gte("incident_date", yearStart)
+          .lte("incident_date", yearEnd);
+        if (deptActive) yearIncidentsQ = yearIncidentsQ.eq("department_id", departmentFilter);
+
         const [allIncidentsRes, employeesRes, departmentsRes, yearIncidentsRes] = await Promise.all([
-          (supabase as any)
-            .from("incidents")
-            .select("incident_date, severity, incident_type, department_id")
-            .eq("company_id", companyId)
-            .in("severity", REPORTABLE_SEVERITIES)
-            .eq("incident_type", "injury")
-            .order("incident_date", { ascending: false }),
-          supabase
-            .from("employees")
-            .select("id, department_id", { count: "exact" })
-            .eq("company_id", companyId)
-            .eq("is_active", true),
+          allIncidentsQ,
+          employeesQ,
           supabase
             .from("departments")
             .select("id, name")
             .eq("company_id", companyId)
             .order("name"),
-          (supabase as any)
-            .from("incidents")
-            .select("id, severity, incident_type, department_id, incident_date")
-            .eq("company_id", companyId)
-            .gte("incident_date", yearStart)
-            .lte("incident_date", yearEnd),
+          yearIncidentsQ,
         ]);
 
         const allReportable: Array<{ incident_date: string; severity: string; incident_type: string; department_id: string | null }> =

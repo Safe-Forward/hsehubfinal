@@ -2293,6 +2293,7 @@ export default function Reports() {
               incidentTypeData={incidentTypeData}
               companyId={companyId || ""}
               selectedYear={selectedYear}
+              departmentFilter={departmentFilter}
             />
           )}
           {activeSection === "trainings" && (
