@@ -9,9 +9,13 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
+import { TileEditPopover } from "@/components/reports/TileEditPopover";
+import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+
+const SECTION_ID = "incidents";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -79,6 +83,27 @@ export function IncidentsSection({
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
+
+  // ── Tile label overrides ────────────────────────────────────────────────────
+  const [tileLabels, setTileLabels] = useState<Record<string, { title: string; subtitle: string }>>(() => {
+    const tileIds = ["incident-total", "incident-open", "incident-closed", "incident-reportable", "accident-free", "teur-rate"];
+    const result: Record<string, { title: string; subtitle: string }> = {};
+    tileIds.forEach((id) => {
+      const cfg = getTileConfig(SECTION_ID, id);
+      result[id] = { title: cfg.title ?? "", subtitle: cfg.subtitle ?? "" };
+    });
+    return result;
+  });
+  const getTileLabel = (id: string, defaultTitle: string, defaultSubtitle: string) => ({
+    title: tileLabels[id]?.title || defaultTitle,
+    subtitle: tileLabels[id]?.subtitle || defaultSubtitle,
+  });
+  const updateTileLabel = (id: string, title: string, subtitle: string) => {
+    setTileLabels((prev) => ({ ...prev, [id]: { title, subtitle } }));
+  };
+  const resetTileLabel = (id: string) => {
+    setTileLabels((prev) => ({ ...prev, [id]: { title: "", subtitle: "" } }));
+  };
 
   // ── Accident KPI state ──────────────────────────────────────────────────────
   const [accidentKPI, setAccidentKPI] = useState<AccidentKPIData | null>(null);
