@@ -58,6 +58,7 @@ export default function MainLayout({ children }: Props) {
   const [openMeasuresCount, setOpenMeasuresCount] = useState(0);
 
   // Sidebar Training-Badge: Pflichtschulungen ohne Abschluss
+  const [showTrainingBadge, setShowTrainingBadge] = useState(false);
   const [incompleteTrainingCount, setIncompleteTrainingCount] = useState(0);
 
   const fetchOpenMeasures = useCallback(async () => {
@@ -93,11 +94,14 @@ export default function MainLayout({ children }: Props) {
         if (stored) {
           const parsed = JSON.parse(stored);
           setShowMeasuresBadge(Array.isArray(parsed) && parsed.includes("sidebarMeasuresBadge"));
+          setShowTrainingBadge(Array.isArray(parsed) && parsed.includes("sidebarTrainingBadge"));
         } else {
           setShowMeasuresBadge(false);
+          setShowTrainingBadge(false);
         }
       } catch {
         setShowMeasuresBadge(false);
+        setShowTrainingBadge(false);
       }
     };
     checkBadgeSetting();
@@ -177,16 +181,16 @@ export default function MainLayout({ children }: Props) {
   }, [companyId]);
 
   useEffect(() => {
-    if (companyId && (userRole === "company_admin" || userRole === "super_admin")) {
+    if (showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin")) {
       fetchIncompleteTrainings();
     }
-  }, [companyId, userRole, fetchIncompleteTrainings]);
+  }, [showTrainingBadge, companyId, userRole, fetchIncompleteTrainings]);
 
   useRealtimeRefetch(
-    companyId && (userRole === "company_admin" || userRole === "super_admin")
+    showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin")
       ? ["courses", "course_employee_access", "course_certificates", "training_participations"]
       : [],
-    companyId && (userRole === "company_admin" || userRole === "super_admin") ? companyId : null,
+    showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin") ? companyId : null,
     fetchIncompleteTrainings
   );
 
@@ -346,7 +350,7 @@ export default function MainLayout({ children }: Props) {
                 <Link to="/training" className={getLinkClasses("/training")}>
                   <CheckCircle className="w-4 h-4" />
                   <span>{t("nav.trainings")}</span>
-                  {incompleteTrainingCount > 0 && (
+                  {showTrainingBadge && incompleteTrainingCount > 0 && (
                     <span className="ml-auto flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
                       {incompleteTrainingCount > 99 ? "99+" : incompleteTrainingCount}
                     </span>

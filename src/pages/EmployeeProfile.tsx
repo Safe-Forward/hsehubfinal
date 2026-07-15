@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { WorkplaceBriefingsTab } from "@/components/employee/tabs/WorkplaceBriefingsTab";
+import { QualificationsTab } from "@/components/employee/tabs/QualificationsTab";
+import { CoreTrainingsTab } from "@/components/employee/tabs/CoreTrainingsTab";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -325,6 +328,8 @@ export default function EmployeeProfile() {
     completion_date: "",
     certificate_url: "",
     notes: "",
+    result: "" as "" | "passed" | "conditionally_passed" | "failed",
+    result_notes: "",
   });
   const [editingCheckup, setEditingCheckup] = useState<any>(null);
 
@@ -403,7 +408,7 @@ fetchProfileFields();
       }
     } catch (error) {
       console.error("Error fetching employee:", error);
-      toast.error("Failed to load employee data");
+      toast.error("Mitarbeiterdaten konnten nicht geladen werden.");
     } finally {
       setLoading(false);
     }
@@ -541,7 +546,7 @@ fetchProfileFields();
           error.code === "42P01"
         ) {
           toast.error(
-            "Activity log table not set up. Please run the SQL setup script."
+            "Aktivitätsprotokoll nicht eingerichtet. Bitte Konsole prüfen."
           );
           console.error(
             "🔴 TABLE DOES NOT EXIST - Run SETUP_EMPLOYEE_PROFILE_FEATURES.sql"
@@ -613,10 +618,10 @@ fetchProfileFields();
         ) {
           console.error("🔴 TABLE DOES NOT EXIST");
           console.error("👉 Run this SQL in Supabase: RUN_THIS_NOW.sql");
-          toast.error("Activity log not set up. Check console for SQL script.");
+          toast.error("Aktivitätsprotokoll nicht eingerichtet. Bitte Konsole prüfen.");
         } else if (error.code === "42501") {
           console.error("🔴 PERMISSION DENIED - RLS policy issue");
-          toast.error("Permission denied. Check RLS policies.");
+          toast.error("Zugriff verweigert. Bitte RLS-Richtlinien prüfen.");
         }
 
         return false;
@@ -632,7 +637,7 @@ fetchProfileFields();
       }
     } catch (error: any) {
       console.error("❌ Exception while logging activity:", error);
-      toast.error("Failed to log activity: " + error.message);
+      toast.error("Aktivität konnte nicht protokolliert werden: " + error.message);
       return false;
     }
   };
@@ -1052,7 +1057,7 @@ const fetchGInvestigations = async () => {
 
   const applyTemplate = async () => {
     if (!selectedTemplateId) {
-      toast.error("Please select a template to apply");
+      toast.error("Bitte eine Vorlage auswählen.");
       return;
     }
 
@@ -1066,7 +1071,7 @@ const fetchGInvestigations = async () => {
       if (templateError) throw templateError;
 
       if (!templateFields || templateFields.length === 0) {
-        toast.error("Selected template has no fields");
+        toast.error("Die ausgewählte Vorlage hat keine Felder.");
         return;
       }
 
@@ -1106,7 +1111,7 @@ const fetchGInvestigations = async () => {
       setTemplatePreviewFields([]);
 
       toast.success(
-        `Applied ${newFields.length} profile field${newFields.length !== 1 ? "s" : ""} from template`
+        `${newFields.length} Profilfeld${newFields.length !== 1 ? "er" : ""} aus Vorlage übernommen.`
       );
 
       const selectedTemplate = profileFieldTemplates.find(
@@ -1122,7 +1127,7 @@ const fetchGInvestigations = async () => {
       await fetchActivityLogs();
     } catch (error) {
       console.error("Error applying template:", error);
-      toast.error("Failed to apply template");
+      toast.error("Vorlage konnte nicht angewendet werden.");
     }
   };
 
@@ -1150,7 +1155,7 @@ const fetchGInvestigations = async () => {
 
       setProfileFields(updatedFields);
       setShowProfileFieldMenu(false);
-      toast.success("Profile field added");
+      toast.success("Profilfeld hinzugefügt.");
 
       await logActivity(
         `Added profile field: ${newField.label}`,
@@ -1161,7 +1166,7 @@ const fetchGInvestigations = async () => {
       await fetchActivityLogs();
     } catch (error) {
       console.error("Error adding profile field:", error);
-      toast.error("Failed to add profile field");
+      toast.error("Profilfeld konnte nicht hinzugefügt werden.");
     }
   };
 
@@ -1180,7 +1185,7 @@ const fetchGInvestigations = async () => {
 
       const field = profileFields.find((f) => f.id === fieldId);
       setProfileFields(updatedFields);
-      toast.success("Field updated");
+      toast.success("Feld aktualisiert.");
 
       await logActivity(
         `Updated profile field: ${field?.label || fieldId}`,
@@ -1191,7 +1196,7 @@ const fetchGInvestigations = async () => {
       await fetchActivityLogs();
     } catch (error) {
       console.error("Error updating profile field:", error);
-      toast.error("Failed to update field");
+      toast.error("Feld konnte nicht aktualisiert werden.");
     }
   };
 
@@ -1219,7 +1224,7 @@ const fetchGInvestigations = async () => {
         if (error) throw error;
 
         const field = profileFields.find((f) => f.id === fieldId);
-        toast.success("Field updated");
+        toast.success("Feld aktualisiert.");
 
         await logActivity(
           `Updated profile field: ${field?.label || fieldId}`,
@@ -1230,7 +1235,7 @@ const fetchGInvestigations = async () => {
         await fetchActivityLogs();
       } catch (error) {
         console.error("Error updating profile field:", error);
-        toast.error("Failed to update field");
+        toast.error("Feld konnte nicht aktualisiert werden.");
       }
     }, 1000); // 1 second delay
   };
@@ -1248,7 +1253,7 @@ const fetchGInvestigations = async () => {
       if (error) throw error;
 
       setProfileFields(updatedFields);
-      toast.success("Field deleted");
+      toast.success("Feld gelöscht.");
 
       await logActivity(
         `Deleted profile field: ${field?.label || fieldId}`,
@@ -1259,7 +1264,7 @@ const fetchGInvestigations = async () => {
       await fetchActivityLogs();
     } catch (error) {
       console.error("Error deleting profile field:", error);
-      toast.error("Failed to delete field");
+      toast.error("Feld konnte nicht gelöscht werden.");
     }
   };
 
@@ -1318,14 +1323,14 @@ const fetchGInvestigations = async () => {
         details: { field, old_value: oldValue, new_value: newValue },
       });
 
-      toast.success("Updated successfully");
+      toast.success("Erfolgreich aktualisiert.");
       setEditMode({ ...editMode, [field]: false });
       fetchEmployeeData();
       fetchDropdownData();
       fetchActivityLogs();
     } catch (error) {
       console.error("Error updating field:", error);
-      toast.error("Failed to update");
+      toast.error("Aktualisierung fehlgeschlagen.");
     }
   };
 
@@ -1368,13 +1373,13 @@ const fetchGInvestigations = async () => {
         details: { field, new_value: value },
       });
 
-      toast.success("Updated successfully");
+      toast.success("Erfolgreich aktualisiert.");
       setEditingSpecialField(null);
       fetchEmployeeData();
       fetchActivityLogs();
     } catch (error) {
       console.error("Error updating field:", error);
-      toast.error("Failed to update");
+      toast.error("Aktualisierung fehlgeschlagen.");
     }
   };
 
@@ -1466,7 +1471,7 @@ const fetchGInvestigations = async () => {
       });
 
 
-      toast.success("Note added successfully");
+      toast.success("Notiz erfolgreich hinzugefügt.");
       setNotes("");
       // Clear the contentEditable editor
       if (notesTextareaRef.current) {
@@ -1479,7 +1484,7 @@ const fetchGInvestigations = async () => {
       fetchEmployeeData();
     } catch (error) {
       console.error("Error saving notes:", error);
-      toast.error("Failed to save note");
+      toast.error("Notiz konnte nicht gespeichert werden.");
     }
   };
 
@@ -1497,7 +1502,7 @@ const fetchGInvestigations = async () => {
           if (!Array.isArray(existingNotes)) existingNotes = [];
         } catch (e) {
           console.error("Error parsing notes:", e);
-          toast.error("Error parsing notes data");
+          toast.error("Fehler beim Verarbeiten der Notizdaten.");
           return;
         }
       }
@@ -1506,7 +1511,7 @@ const fetchGInvestigations = async () => {
       const noteToDelete = existingNotes.find((note) => note.id === noteId);
 
       if (!noteToDelete) {
-        toast.error("Note not found");
+        toast.error("Notiz nicht gefunden.");
         return;
       }
 
@@ -1537,11 +1542,11 @@ const fetchGInvestigations = async () => {
         details: { note_id: noteId, note_preview: noteContent.substring(0, 100) },
       });
 
-      toast.success("Note deleted successfully");
+      toast.success("Notiz erfolgreich gelöscht.");
       fetchEmployeeData();
     } catch (error) {
       console.error("Error deleting note:", error);
-      toast.error("Failed to delete note");
+      toast.error("Notiz konnte nicht gelöscht werden.");
     }
   };
 
@@ -1597,7 +1602,7 @@ const fetchGInvestigations = async () => {
       fetchEmployeeData();
     } catch (error) {
       console.error("Error liking note:", error);
-      toast.error("Failed to update like");
+      toast.error("Like konnte nicht aktualisiert werden.");
     }
   };
 
@@ -1667,7 +1672,7 @@ const fetchGInvestigations = async () => {
         replyText.substring(0, 100) + (replyText.length > 100 ? "..." : "")
       );
 
-      toast.success("Reply added successfully");
+      toast.success("Antwort erfolgreich hinzugefügt.");
       setReplyingToNoteId(null);
       setReplyText("");
       fetchEmployeeData();
@@ -1693,7 +1698,7 @@ const fetchGInvestigations = async () => {
       }
     } catch (error) {
       console.error("Error saving reply:", error);
-      toast.error("Failed to save reply");
+      toast.error("Antwort konnte nicht gespeichert werden.");
     }
   };
 
@@ -1918,10 +1923,10 @@ const fetchGInvestigations = async () => {
       editorDiv.innerHTML = currentHtml + attachmentHtml;
       setNotes(editorDiv.innerHTML);
 
-      toast.success(`${file.name} attached successfully`);
+      toast.success(`${file.name} erfolgreich angehängt.`);
     } catch (error: any) {
       console.error("Error uploading attachment:", error);
-      toast.error("Failed to upload attachment");
+      toast.error("Anhang konnte nicht hochgeladen werden.");
       // Remove uploading indicator if there was an error
       const currentHtml = editorDiv.innerHTML;
       editorDiv.innerHTML = currentHtml.replace(/📎 Uploading .*?<\/span>&nbsp;/g, '');
@@ -1960,11 +1965,11 @@ const fetchGInvestigations = async () => {
 
       setTags(updatedTags);
       setNewTag("");
-      toast.success("Tag added");
+      toast.success("Tag hinzugefügt.");
       fetchEmployeeData();
     } catch (error) {
       console.error("Error adding tag:", error);
-      toast.error("Failed to add tag");
+      toast.error("Tag konnte nicht hinzugefügt werden.");
     }
   };
 
@@ -1989,11 +1994,11 @@ const fetchGInvestigations = async () => {
       );
 
       setTags(updatedTags);
-      toast.success("Tag removed");
+      toast.success("Tag entfernt.");
       fetchEmployeeData();
     } catch (error) {
       console.error("Error removing tag:", error);
-      toast.error("Failed to remove tag");
+      toast.error("Tag konnte nicht entfernt werden.");
     }
   };
 
@@ -2012,7 +2017,7 @@ const fetchGInvestigations = async () => {
       setShowPreviewDialog(true);
     } catch (error: any) {
       console.error("Error loading preview:", error);
-      toast.error("Failed to load document preview");
+      toast.error("Dokumentvorschau konnte nicht geladen werden.");
     }
   };
 
@@ -2032,7 +2037,7 @@ const fetchGInvestigations = async () => {
 
   const handleSaveRename = async (docId: string) => {
     if (!editingDocumentTitle.trim()) {
-      toast.error("Document title cannot be empty");
+      toast.error("Dokumenttitel darf nicht leer sein.");
       return;
     }
 
@@ -2057,13 +2062,13 @@ const fetchGInvestigations = async () => {
         }
       );
 
-      toast.success("Document renamed successfully");
+      toast.success("Dokument erfolgreich umbenannt.");
       setEditingDocumentId(null);
       setEditingDocumentTitle("");
       fetchDocuments();
     } catch (error) {
       console.error("Error renaming document:", error);
-      toast.error("Failed to rename document");
+      toast.error("Dokument konnte nicht umbenannt werden.");
     }
   };
 
@@ -2123,12 +2128,12 @@ const fetchGInvestigations = async () => {
         details: { field: "is_active", new_value: isActive },
       });
 
-      toast.success(`Employee ${isActive ? "activated" : "deactivated"}`);
+      toast.success(`Mitarbeiter ${isActive ? "aktiviert" : "deaktiviert"}.`);
       fetchEmployeeData();
       fetchActivityLogs();
     } catch (error) {
       console.error("Error toggling active status:", error);
-      toast.error("Failed to update status");
+      toast.error("Status konnte nicht aktualisiert werden.");
     }
   };
 
@@ -2218,11 +2223,11 @@ const fetchGInvestigations = async () => {
         },
       });
 
-      toast.success("Document uploaded successfully");
+      toast.success("Dokument erfolgreich hochgeladen.");
       fetchDocuments();
     } catch (error: any) {
       console.error("Error uploading document:", error);
-      toast.error(error.message || "Failed to upload document");
+      toast.error(error.message || "Dokument konnte nicht hochgeladen werden.");
     }
   };
 
@@ -2420,7 +2425,7 @@ p_sender_name: senderName,
       toast.success("Task erstellt");
     } catch (error) {
       console.error("Error creating task:", error);
-      toast.error("Failed to create task");
+      toast.error("Aufgabe konnte nicht erstellt werden.");
     }
   };
 
@@ -2475,23 +2480,36 @@ p_sender_name: senderName,
       setTasks(
         tasks.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t))
       );
-      toast.success(`Task marked as ${newStatus}`);
+      toast.success(`Aufgabe als ${newStatus === "completed" ? "erledigt" : "offen"} markiert.`);
     } catch (error) {
       console.error("Error updating task:", error);
-      toast.error("Failed to update task");
+      toast.error("Aufgabe konnte nicht aktualisiert werden.");
     }
   };
 
   const handleCreateCheckup = async () => {
     // Check permission before allowing health examination creation
     if (!hasDetailedPermission('health_examinations', 'create_edit')) {
-      toast.error("You do not have permission to create health examinations");
+      toast.error("Keine Berechtigung zum Erstellen von Gesundheitsuntersuchungen.");
       return;
     }
 
     // Only G-Investigation is required, appointment date is optional
     if (!checkupFormData.investigation_id) {
-      toast.error("Please select a G-Investigation");
+      toast.error("Bitte eine G-Untersuchung auswählen.");
+      return;
+    }
+
+    // Begründung ist Pflicht bei Untauglich und Bedingt tauglich
+    if (
+      (checkupFormData.result === "failed" || checkupFormData.result === "conditionally_passed") &&
+      !checkupFormData.result_notes?.trim()
+    ) {
+      toast.error(
+        checkupFormData.result === "failed"
+          ? "Bei 'Untauglich' ist eine Begründung erforderlich."
+          : "Bei 'Bedingt tauglich' sind die Einschränkungen/Auflagen anzugeben."
+      );
       return;
     }
 
@@ -2520,6 +2538,8 @@ p_sender_name: senderName,
         appointment_date: checkupFormData.appointment_date || null,
         status: checkupFormData.status,
         notes: checkupFormData.notes,
+        result: checkupFormData.result || null,
+        result_notes: checkupFormData.result_notes || null,
       };
 
       if (checkupFormData.completion_date) {
@@ -2571,12 +2591,12 @@ p_sender_name: senderName,
             notes: "Auto-scheduled 3 years after previous checkup",
           });
 
-          toast.success("Check-up created and next checkup scheduled in 3 years");
+          toast.success("Check-up erstellt und nächster Termin in 3 Jahren eingeplant.");
         } else {
-          toast.success("Check-up created successfully");
+          toast.success("Gesundheitsuntersuchung erstellt.");
         }
       } else {
-        toast.success("Check-up created successfully");
+        toast.success("Gesundheitsuntersuchung erstellt.");
       }
 
       setIsCheckupDialogOpen(false);
@@ -2588,6 +2608,8 @@ p_sender_name: senderName,
         completion_date: "",
         certificate_url: "",
         notes: "",
+        result: "",
+        result_notes: "",
       });
 
       await logActivity(
@@ -2604,7 +2626,7 @@ p_sender_name: senderName,
       fetchHealthCheckups();
     } catch (error) {
       console.error("Error creating checkup:", error);
-      toast.error("Failed to create checkup");
+      toast.error("Gesundheitsuntersuchung konnte nicht erstellt werden.");
     }
   };
 
@@ -2656,18 +2678,18 @@ p_sender_name: senderName,
         { checkupId, updates }
       );
 
-      toast.success("Check-up updated successfully");
+      toast.success("Check-Up erfolgreich aktualisiert.");
       fetchHealthCheckups();
     } catch (error) {
       console.error("Error updating checkup:", error);
-      toast.error("Failed to update checkup");
+      toast.error("Check-Up konnte nicht aktualisiert werden.");
     }
   };
 
   const handleDeleteCheckup = async (checkupId: string) => {
     // Check permission before allowing health examination deletion
     if (!hasDetailedPermission('health_examinations', 'delete')) {
-      toast.error("You do not have permission to delete health examinations");
+      toast.error("Keine Berechtigung zum Löschen von Gesundheitsuntersuchungen.");
       return;
     }
 
@@ -2688,11 +2710,11 @@ p_sender_name: senderName,
         { checkupId }
       );
 
-      toast.success("Check-up deleted successfully");
+      toast.success("Check-Up erfolgreich gelöscht.");
       fetchHealthCheckups();
     } catch (error) {
       console.error("Error deleting checkup:", error);
-      toast.error("Failed to delete checkup");
+      toast.error("Check-Up konnte nicht gelöscht werden.");
     }
   };
 
@@ -2730,10 +2752,10 @@ p_sender_name: senderName,
 
       await handleUpdateCheckup(checkupId, { certificate_url: signedUrlData.signedUrl });
 
-      toast.success("Certificate uploaded successfully");
+      toast.success("Zertifikat erfolgreich hochgeladen.");
     } catch (error: any) {
       console.error("Error uploading certificate:", error);
-      toast.error(error.message || "Failed to upload certificate");
+      toast.error(error.message || "Zertifikat konnte nicht hochgeladen werden.");
     }
   };
 
@@ -2773,11 +2795,11 @@ p_sender_name: senderName,
 
       if (insertError) throw insertError;
 
-      toast.success("Document uploaded successfully");
+      toast.success("Dokument erfolgreich hochgeladen.");
       fetchHealthCheckups();
     } catch (error) {
       console.error("Error uploading document:", error);
-      toast.error("Failed to upload document");
+      toast.error("Dokument konnte nicht hochgeladen werden.");
     } finally {
       setUploadingDocument(null);
     }
@@ -2803,11 +2825,11 @@ p_sender_name: senderName,
 
       if (deleteError) throw deleteError;
 
-      toast.success("Document deleted successfully");
+      toast.success("Dokument erfolgreich gelöscht.");
       fetchHealthCheckups();
     } catch (error) {
       console.error("Error deleting document:", error);
-      toast.error("Failed to delete document");
+      toast.error("Dokument konnte nicht gelöscht werden.");
     }
   };
 
@@ -2822,7 +2844,7 @@ p_sender_name: senderName,
       return data.signedUrl;
     } catch (error) {
       console.error("Error generating signed URL:", error);
-      toast.error("Failed to generate preview link");
+      toast.error("Vorschau-Link konnte nicht generiert werden.");
       return null;
     }
   };
@@ -2848,7 +2870,7 @@ p_sender_name: senderName,
       <div className="min-h-screen flex items-center justify-center">
         <Card>
           <CardContent className="pt-6">
-            <p>Employee not found</p>
+            <p>Mitarbeiter nicht gefunden</p>
             <Button onClick={() => navigate("/employees")} className="mt-4">
               Back to Employees
             </Button>
@@ -2908,12 +2930,12 @@ p_sender_name: senderName,
                     .update({ [field]: val })
                     .eq("id", id);
                   if (error) throw error;
-                  toast.success("Updated successfully");
+                  toast.success("Erfolgreich aktualisiert.");
                   setEditMode({ ...editMode, [field]: false });
                   fetchEmployeeData();
                 } catch (e) {
                   console.error(e);
-                  toast.error("Failed to update");
+                  toast.error("Aktualisierung fehlgeschlagen.");
                 }
               }}
               placeholder={`Select ${label}`}
@@ -2952,7 +2974,7 @@ p_sender_name: senderName,
                       if (updateError) throw updateError;
 
                       toast.success(
-                        `${label} "${newValue}" created and assigned`
+                        `${label} "${newValue}" erstellt und zugewiesen.`
                       );
                       setEditMode({ ...editMode, [field]: false });
                       fetchEmployeeData();
@@ -2961,7 +2983,7 @@ p_sender_name: senderName,
                   }
                 } catch (e) {
                   console.error(e);
-                  toast.error(`Failed to create ${label}`);
+                  toast.error(`${label} konnte nicht erstellt werden.`);
                 }
               }}
             />
@@ -3096,7 +3118,7 @@ p_sender_name: senderName,
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 overflow-x-auto flex-nowrap no-scrollbar">
             <TabsTrigger value="overview" className="px-4 py-2">
-              Overview
+              Übersicht
             </TabsTrigger>
             {hasPermission("healthCheckups") && (
               <TabsTrigger value="checkups" className="px-4 py-2">
@@ -3105,11 +3127,23 @@ p_sender_name: senderName,
             )}
             {hasPermission("documents") && (
               <TabsTrigger value="documents" className="px-4 py-2">
-                Documents
+                Dokumente
               </TabsTrigger>
             )}
+            <TabsTrigger value="workplace_briefings" className="px-4 py-2">
+              Unterweisungen
+            </TabsTrigger>
+            <TabsTrigger value="qualifications" className="px-4 py-2">
+              Qualifikationen
+            </TabsTrigger>
+            <TabsTrigger value="core_trainings" className="px-4 py-2">
+              Kernschulungen
+            </TabsTrigger>
+            <TabsTrigger value="training_certs" className="px-4 py-2">
+              Schulungen & Zertifikate
+            </TabsTrigger>
             <TabsTrigger value="activity" className="px-4 py-2">
-              Activity
+              Aktivität
             </TabsTrigger>
           </TabsList>
 
@@ -3121,9 +3155,9 @@ p_sender_name: senderName,
                 {/* 1. Employee Details & Records Card - FIRST */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Employee Details & Records</CardTitle>
+                    <CardTitle>Mitarbeiterdaten & Unterlagen</CardTitle>
                     <CardDescription>
-                      Click on any field to edit. Press Enter to save.
+                      Auf ein Feld klicken zum Bearbeiten. Enter zum Speichern.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -3157,21 +3191,21 @@ p_sender_name: senderName,
                       {renderEditableField(
                         "department_id",
                         t("employees.department"),
-                        employee.departments?.name || "No Department",
+                        employee.departments?.name || "Keine Abteilung",
                         "select",
                         departments
                       )}
                       {renderEditableField(
                         "job_role_id",
                         t("employees.jobRole"),
-                        employee.job_roles?.title || "No Job Role",
+                        employee.job_roles?.title || "Keine Stelle",
                         "select",
                         jobRoles
                       )}
                       {renderEditableField(
                         "exposure_group_id",
-                        "Exposure Group",
-                        employee.exposure_groups?.name || "No Exposure Group",
+                        "Expositionsgruppe",
+                        employee.exposure_groups?.name || "Keine Expositionsgruppe",
                         "select",
                         exposureGroups
                       )}
@@ -3224,7 +3258,7 @@ p_sender_name: senderName,
 {/* 3. Contact Card - THIRD */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Contact</CardTitle>
+                    <CardTitle className="text-lg">Kontakt</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -3244,76 +3278,11 @@ p_sender_name: senderName,
                   </CardContent>
                 </Card>
 
-                {/* 3.4. Trainings & Zertifikate Card */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <GraduationCap className="w-4 h-4" />
-                      Schulungen & Zertifikate
-                    </CardTitle>
-                    <CardDescription>
-                      Zugewiesene Kurse, Fortschritt und ausgestellte Zertifikate
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {loadingCourses ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                      </div>
-                    ) : courseProgressList.length === 0 ? (
-                      <p className="text-center text-muted-foreground text-sm py-4">
-                        Keine Kurse zugewiesen
-                      </p>
-                    ) : (
-                      <div className="space-y-4">
-                        {courseProgressList.map((course) => (
-                          <div key={course.course_id} className="p-3 border rounded-lg space-y-2">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="font-medium text-sm">{course.course_name}</p>
-                              {course.certificate ? (
-                                <Badge
-                                  className="bg-amber-100 text-amber-700 border-amber-200 text-xs cursor-pointer hover:bg-amber-200 transition-colors flex-shrink-0"
-                                  onClick={() =>
-                                    downloadCertificateForEmployee(
-                                      employee?.full_name || "Teilnehmer",
-                                      course.course_name,
-                                      course.certificate
-                                    )
-                                  }
-                                >
-                                  <Download className="w-3 h-3 mr-1" />
-                                  Zertifikat
-                                </Badge>
-                              ) : (
-                                <span className="text-xs text-muted-foreground flex-shrink-0">
-                                  {course.completed_lessons}/{course.total_lessons} Lektionen
-                                </span>
-                              )}
-                            </div>
-                            <Progress
-                              value={course.percent}
-                              className={`h-2 ${course.percent === 100 ? "[&>div]:bg-green-500" : ""}`}
-                            />
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>{course.percent}% abgeschlossen</span>
-                              {course.certificate?.issued_at && (
-                                <span>
-                                  Ausgestellt am {new Date(course.certificate.issued_at).toLocaleDateString("de-DE")}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
                 {/* 3.5. Unified Profile Fields Card */}
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Profile Fields</CardTitle>
+                      <CardTitle className="text-lg">Profilfelder</CardTitle>
 
                       {/* Action buttons on the right */}
                       <div className="flex items-center gap-2">
@@ -3326,7 +3295,7 @@ p_sender_name: senderName,
                           disabled={profileFieldTemplates.length === 0}
                         >
                           <FileText className="w-3 h-3 mr-1" />
-                          Use Template
+                          Vorlage verwenden
                         </Button>
 
                         {/* Add profile field button */}
@@ -3340,7 +3309,7 @@ p_sender_name: senderName,
                             }
                           >
                             <Plus className="w-3 h-3 mr-1" />
-                            Add profile field
+                            Profilfeld hinzufügen
                             <ChevronDown className="w-3 h-3 ml-1" />
                           </Button>
 
@@ -3458,7 +3427,7 @@ p_sender_name: senderName,
                                     }
                                   >
                                     <Save className="w-3 h-3 mr-1" />
-                                    Save
+                                    Speichern
                                   </Button>
                                   <Button
                                     size="sm"
@@ -3468,7 +3437,7 @@ p_sender_name: senderName,
                                     }
                                   >
                                     <X className="w-3 h-3 mr-1" />
-                                    Cancel
+                                    Abbrechen
                                   </Button>
                                 </div>
                               </div>
@@ -3524,7 +3493,7 @@ p_sender_name: senderName,
                                     onClick={() => handleSpecialFieldSave("skills")}
                                   >
                                     <Save className="w-3 h-3 mr-1" />
-                                    Save
+                                    Speichern
                                   </Button>
                                   <Button
                                     size="sm"
@@ -3534,7 +3503,7 @@ p_sender_name: senderName,
                                     }
                                   >
                                     <X className="w-3 h-3 mr-1" />
-                                    Cancel
+                                    Abbrechen
                                   </Button>
                                 </div>
                               </div>
@@ -3591,7 +3560,7 @@ p_sender_name: senderName,
                                     onClick={() => handleSpecialFieldSave("salary")}
                                   >
                                     <Save className="w-3 h-3 mr-1" />
-                                    Save
+                                    Speichern
                                   </Button>
                                   <Button
                                     size="sm"
@@ -3601,7 +3570,7 @@ p_sender_name: senderName,
                                     }
                                   >
                                     <X className="w-3 h-3 mr-1" />
-                                    Cancel
+                                    Abbrechen
                                   </Button>
                                 </div>
                               </div>
@@ -3682,7 +3651,7 @@ p_sender_name: senderName,
                                     }
                                   />
                                   <span className="text-sm text-muted-foreground">
-                                    {customFieldEditValue ? "Yes" : "No"}
+                                    {customFieldEditValue ? "Ja" : "Nein"}
                                   </span>
                                 </div>
                               ) : field.type === "Date" ? (
@@ -3735,7 +3704,7 @@ p_sender_name: senderName,
                                   onChange={(e) =>
                                     setCustomFieldEditValue(e.target.value)
                                   }
-                                  placeholder="Enter text"
+                                  placeholder="Text eingeben"
                                   className="text-sm min-h-[80px]"
                                   autoFocus
                                 />
@@ -3746,7 +3715,7 @@ p_sender_name: senderName,
                                   onChange={(e) =>
                                     setCustomFieldEditValue(e.target.value)
                                   }
-                                  placeholder="Enter text"
+                                  placeholder="Text eingeben"
                                   className="text-sm"
                                   autoFocus
                                 />
@@ -3763,7 +3732,7 @@ p_sender_name: senderName,
                                   }}
                                 >
                                   <Save className="w-3 h-3 mr-1" />
-                                  Save
+                                  Speichern
                                 </Button>
                                 <Button
                                   size="sm"
@@ -3774,7 +3743,7 @@ p_sender_name: senderName,
                                   }}
                                 >
                                   <X className="w-3 h-3 mr-1" />
-                                  Cancel
+                                  Abbrechen
                                 </Button>
                               </div>
                             </div>
@@ -3787,8 +3756,8 @@ p_sender_name: senderName,
                               }}
                             >
                               {field.type === "Yes/No"
-                                ? (field.value ? "Yes" : "No")
-                                : (field.value || `No ${field.label.toLowerCase()} specified`)
+                                ? (field.value ? "Ja" : "Nein")
+                                : (field.value || `Kein ${field.label.toLowerCase()} angegeben`)
                               }
                             </p>
                           )}
@@ -3799,7 +3768,7 @@ p_sender_name: senderName,
                       {profileFields.length === 0 && (
                         <div className="border-t pt-4">
                           <div className="text-center py-4 text-muted-foreground text-xs border border-dashed rounded-lg">
-                            No custom fields yet. Click "Add profile field" to create one.
+                            Noch keine Profilfelder. Klicke auf "Profilfeld hinzufügen".
                           </div>
                         </div>
                       )}
@@ -3821,9 +3790,9 @@ p_sender_name: senderName,
                 }}>
                   <DialogContent className="sm:max-w-[600px]">
                     <DialogHeader>
-                      <DialogTitle>Use Profile Field Template</DialogTitle>
+                      <DialogTitle>Profilfeld-Vorlage verwenden</DialogTitle>
                       <DialogDescription>
-                        Select which profile fields from Settings to apply to this employee.
+                        Wähle, welche Profilfelder aus den Einstellungen auf diesen Mitarbeiter angewendet werden sollen.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
@@ -3897,14 +3866,14 @@ p_sender_name: senderName,
                           setTemplatePreviewFields([]);
                         }}
                       >
-                        Cancel
+                        Abbrechen
                       </Button>
                       <Button
                         onClick={applyTemplate}
                         disabled={!selectedTemplateId}
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Apply Template
+                        Vorlage anwenden
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -3967,7 +3936,7 @@ p_sender_name: senderName,
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <ClipboardList className="w-4 h-4" />
-                      Tasks
+                      Aufgaben
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -3977,7 +3946,7 @@ p_sender_name: senderName,
                         <div className="flex gap-2">
                           <div className="relative flex-1">
                             <Input
-                              placeholder="Add a task..."
+                              placeholder="Aufgabe hinzufügen..."
                               value={newTaskTitle}
                               onChange={(e) => {
                                 const value = e.target.value;
@@ -4071,7 +4040,7 @@ p_sender_name: senderName,
                                 <CalendarIcon className="w-3 h-3 mr-1" />
                                 {newTaskDueDate
                                   ? format(newTaskDueDate, "MMM d")
-                                  : "Set due date"}
+                                  : "Fälligkeitsdatum"}
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent
@@ -4174,7 +4143,7 @@ p_sender_name: senderName,
                         <div className="space-y-2 pr-4">
                           {tasks.length === 0 ? (
                             <p className="text-center text-muted-foreground text-xs py-4">
-                              No tasks assigned
+                              Keine Aufgaben zugewiesen
                             </p>
                           ) : (
                             <>
@@ -4263,7 +4232,7 @@ p_sender_name: senderName,
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <StickyNote className="w-4 h-4" />
-                      Notes
+                      Notizen
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -4318,7 +4287,7 @@ p_sender_name: senderName,
                               </PopoverTrigger>
                               <PopoverContent className="w-72 p-3" align="start">
                                 <div className="space-y-2">
-                                  <p className="text-sm font-medium">Insert Link</p>
+                                  <p className="text-sm font-medium">Link einfügen</p>
                                   <Input
                                     placeholder="https://example.com"
                                     value={linkUrl}
@@ -4334,8 +4303,8 @@ p_sender_name: senderName,
                                     onKeyDown={(e) => e.key === 'Enter' && handleInsertLink()}
                                   />
                                   <div className="flex justify-end gap-2">
-                                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setShowLinkPopover(false); setLinkUrl(''); setLinkLabel(''); }}>Cancel</Button>
-                                    <Button size="sm" className="h-7 text-xs" onClick={handleInsertLink} disabled={!linkUrl.trim()}>Insert</Button>
+                                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setShowLinkPopover(false); setLinkUrl(''); setLinkLabel(''); }}>Abbrechen</Button>
+                                    <Button size="sm" className="h-7 text-xs" onClick={handleInsertLink} disabled={!linkUrl.trim()}>Einfügen</Button>
                                   </div>
                                 </div>
                               </PopoverContent>
@@ -4545,7 +4514,7 @@ p_sender_name: senderName,
                             size="sm"
                             className="text-xs h-7"
                           >
-                            Cancel
+                            Abbrechen
                           </Button>
 
                           <Button
@@ -4553,7 +4522,7 @@ p_sender_name: senderName,
                             size="sm"
                             className="text-xs h-7"
                           >
-                            Save
+                            Speichern
                           </Button>
                         </div>
                       </div>
@@ -4735,14 +4704,14 @@ p_sender_name: senderName,
                                                   setReplyText("");
                                                 }}
                                               >
-                                                Cancel
+                                                Abbrechen
                                               </Button>
                                               <Button
                                                 size="sm"
                                                 className="text-xs h-7"
                                                 onClick={() => handleSaveReply(note.id)}
                                               >
-                                                Save
+                                                Speichern
                                               </Button>
                                             </div>
                                           </div>
@@ -4780,22 +4749,22 @@ p_sender_name: senderName,
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <CalendarCheck className="w-5 h-5" />
-                      Health Check-Ups
+                      Gesundheits-Check-Ups
                     </CardTitle>
                     <CardDescription>
-                      Manage health examinations and G-Investigations
+                      Gesundheitsuntersuchungen und G-Untersuchungen verwalten
                     </CardDescription>
                   </div>
                   <Button onClick={() => setIsCheckupDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Check-Up
+                    Check-Up hinzufügen
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 {healthCheckups.length === 0 ? (
                   <p className="text-center text-muted-foreground py-8">
-                    No check-ups scheduled
+                    Keine Check-Ups geplant
                   </p>
                 ) : (
                   <div className="space-y-4">
@@ -4885,6 +4854,23 @@ p_sender_name: senderName,
                             </p>
                           )}
 
+                          {/* Result Badge (if any) */}
+                          {checkup.result && (
+                            <div className="flex flex-col gap-1">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium w-fit ${
+                                checkup.result === 'passed' ? 'bg-green-100 text-green-800' :
+                                checkup.result === 'conditionally_passed' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {checkup.result === 'passed' ? '✅ Bestanden' :
+                                 checkup.result === 'conditionally_passed' ? '⚠️ Bedingt tauglich' : '❌ Untauglich'}
+                              </span>
+                              {checkup.result_notes && (checkup.result === 'conditionally_passed' || checkup.result === 'failed') && (
+                                <p className="text-xs text-muted-foreground italic">{checkup.result_notes}</p>
+                              )}
+                            </div>
+                          )}
+
                           {/* Notes (if any) */}
                           {checkup.notes && (
                             <p className="text-xs text-muted-foreground italic">
@@ -4905,7 +4891,7 @@ p_sender_name: senderName,
                               className="text-xs"
                             >
                               <CalendarIcon className="w-3 h-3 mr-1" />
-                              Set Appointment
+                              Termin festlegen
                             </Button>
 
                             <Button
@@ -4928,7 +4914,7 @@ p_sender_name: senderName,
                               className="text-xs"
                             >
                               <CheckCircle className="w-3 h-3 mr-1" />
-                              Complete
+                              Abschließen
                             </Button>
 
                             <Button
@@ -4938,7 +4924,7 @@ p_sender_name: senderName,
                               className="text-xs"
                             >
                               <Trash2 className="w-3 h-3 mr-1" />
-                              Delete
+                              Löschen
                             </Button>
 
                             {/* Upload Document Button */}
@@ -4958,7 +4944,7 @@ p_sender_name: senderName,
                                 className="text-xs"
                               >
                                 <Upload className="w-3 h-3 mr-1" />
-                                {uploadingDocument === checkup.id ? 'Uploading...' : 'Upload Document'}
+                                {uploadingDocument === checkup.id ? 'Wird hochgeladen...' : 'Dokument hochladen'}
                               </Button>
                             </div>
                           </div>
@@ -5014,9 +5000,9 @@ p_sender_name: senderName,
             >
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Add Health Check-Up</DialogTitle>
+                  <DialogTitle>Gesundheits-Check-Up hinzufügen</DialogTitle>
                   <DialogDescription>
-                    Schedule a new health examination
+                    Neue Gesundheitsuntersuchung planen
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -5196,6 +5182,40 @@ p_sender_name: senderName,
                     </div>
                   )}
 
+                  {/* Ergebnis - nur zeigen wenn Status "done" */}
+                  {checkupFormData.status === 'done' && (
+                    <div>
+                      <Label className="text-sm font-medium">Ergebnis der Untersuchung</Label>
+                      <Select
+                        value={checkupFormData.result || ''}
+                        onValueChange={(v) => setCheckupFormData(prev => ({ ...prev, result: v as "" | "passed" | "conditionally_passed" | "failed" }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Ergebnis wählen..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="passed">✅ Bestanden</SelectItem>
+                          <SelectItem value="conditionally_passed">⚠️ Bedingt tauglich</SelectItem>
+                          <SelectItem value="failed">❌ Untauglich</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {/* Notizfeld bei Bedingt tauglich oder Untauglich */}
+                  {(checkupFormData.result === 'conditionally_passed' || checkupFormData.result === 'failed') && (
+                    <div>
+                      <Label className="text-sm font-medium">
+                        {checkupFormData.result === 'failed' ? 'Begründung (Pflicht)' : 'Einschränkungen / Auflagen'}
+                      </Label>
+                      <Textarea
+                        value={checkupFormData.result_notes || ''}
+                        onChange={(e) => setCheckupFormData(prev => ({ ...prev, result_notes: e.target.value }))}
+                        placeholder="Bitte Begründung oder Einschränkungen eintragen..."
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+
                   <div>
                     <Label>Notes</Label>
                     <Textarea
@@ -5215,11 +5235,11 @@ p_sender_name: senderName,
                     variant="outline"
                     onClick={() => setIsCheckupDialogOpen(false)}
                   >
-                    Cancel
+                    Abbrechen
                   </Button>
                   <Button onClick={handleCreateCheckup}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Check-Up
+                    Check-Up hinzufügen
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -5232,9 +5252,9 @@ p_sender_name: senderName,
             >
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Set Appointment Date</DialogTitle>
+                  <DialogTitle>Termin festlegen</DialogTitle>
                   <DialogDescription>
-                    Choose an appointment date for this health check-up
+                    Termindatum für diesen Gesundheits-Check-Up wählen
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -5270,7 +5290,7 @@ p_sender_name: senderName,
                     variant="outline"
                     onClick={() => setIsAppointmentDialogOpen(false)}
                   >
-                    Cancel
+                    Abbrechen
                   </Button>
                   <Button
                     onClick={() => {
@@ -5281,11 +5301,11 @@ p_sender_name: senderName,
                         });
                         setIsAppointmentDialogOpen(false);
                       } else {
-                        toast.error("Please select a date");
+                        toast.error("Bitte ein Datum auswählen.");
                       }
                     }}
                   >
-                    Save Appointment
+                    Termin speichern
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -5298,9 +5318,9 @@ p_sender_name: senderName,
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5" />
-                  Documents
+                  Dokumente
                 </CardTitle>
-                <CardDescription>Employee documents and files</CardDescription>
+                <CardDescription>Mitarbeiterdokumente und Dateien</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Drag and Drop Zone */}
@@ -5315,15 +5335,15 @@ p_sender_name: senderName,
                 >
                   <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-lg font-medium mb-2">
-                    Drag and drop files here
+                    Dateien hier ablegen
                   </p>
                   <p className="text-sm text-muted-foreground mb-4">
-                    or click the button below to select files
+                    oder auf die Schaltfläche unten klicken, um Dateien auszuwählen
                   </p>
                   <Button variant="outline" asChild>
                     <label htmlFor="file-upload" className="cursor-pointer">
                       <Upload className="w-4 h-4 mr-2" />
-                      Upload Document
+                      Dokument hochladen
                       <input
                         id="file-upload"
                         type="file"
@@ -5338,7 +5358,7 @@ p_sender_name: senderName,
                 {/* Documents List */}
                 {documents.length === 0 ? (
                   <p className="text-center text-muted-foreground py-4">
-                    No documents uploaded yet
+                    Noch keine Dokumente hochgeladen
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -5437,10 +5457,10 @@ p_sender_name: senderName,
                                   document.body.removeChild(a);
                                   URL.revokeObjectURL(url);
 
-                                  toast.success("Document downloaded");
+                                  toast.success("Dokument heruntergeladen.");
                                 } catch (error: any) {
                                   console.error("Error downloading:", error);
-                                  toast.error("Failed to download document");
+                                  toast.error("Dokument konnte nicht heruntergeladen werden.");
                                 }
                               }}
                               title="Download document"
@@ -5476,12 +5496,12 @@ p_sender_name: senderName,
                                     }
                                   );
 
-                                  toast.success("Document deleted");
+                                  toast.success("Dokument gelöscht.");
                                   fetchDocuments();
                                   fetchActivityLogs();
                                 } catch (error: any) {
                                   console.error("Error deleting:", error);
-                                  toast.error("Failed to delete document");
+                                  toast.error("Dokument konnte nicht gelöscht werden.");
                                 }
                               }}
                               title="Dokument löschen"
@@ -5566,7 +5586,7 @@ p_sender_name: senderName,
                                 document.body.appendChild(a);
                                 a.click();
                                 document.body.removeChild(a);
-                                toast.success("Document downloaded");
+                                toast.success("Dokument heruntergeladen.");
                               }}
                             >
                               <Download className="w-4 h-4 mr-2" />
@@ -5580,7 +5600,7 @@ p_sender_name: senderName,
 
                 <DialogFooter>
                   <Button variant="outline" onClick={handleClosePreview}>
-                    Close
+                    Schließen
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -5593,10 +5613,10 @@ p_sender_name: senderName,
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="w-5 h-5" />
-                  Activity Log
+                  Aktivitätsprotokoll
                 </CardTitle>
                 <CardDescription>
-                  Complete history of all changes and actions for this employee
+                  Vollständiger Verlauf aller Änderungen und Aktionen für diesen Mitarbeiter
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -5604,10 +5624,10 @@ p_sender_name: senderName,
                   <div className="text-center py-12">
                     <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground font-medium mb-1">
-                      No activities tracked yet
+                      Noch keine Aktivitäten erfasst
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      All actions related to this employee will appear here
+                      Alle Aktionen zu diesem Mitarbeiter werden hier angezeigt
                     </p>
                   </div>
                 ) : (
@@ -5735,6 +5755,110 @@ p_sender_name: senderName,
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Workplace Briefings Tab */}
+          <TabsContent value="workplace_briefings">
+            {employee && companyId && (
+              <WorkplaceBriefingsTab
+                employeeId={employee.id}
+                companyId={companyId}
+                canEdit={hasPermission("employees") || hasDetailedPermission("employees", "write")}
+              />
+            )}
+          </TabsContent>
+
+          {/* Qualifications Tab */}
+          <TabsContent value="qualifications">
+            {employee && companyId && (
+              <QualificationsTab
+                employeeId={employee.id}
+                companyId={companyId}
+                canEdit={hasPermission("employees") || hasDetailedPermission("employees", "write")}
+              />
+            )}
+          </TabsContent>
+
+          {/* Core Trainings Tab */}
+          <TabsContent value="core_trainings">
+            {employee && companyId && (
+              <CoreTrainingsTab
+                employeeId={employee.id}
+                employeeNumber={employee.employee_number ?? undefined}
+                companyId={companyId}
+                canEdit={hasPermission("trainings") || hasDetailedPermission("trainings", "write")}
+                canUploadDocuments={hasPermission("documents")}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="training_certs">
+            <div className="space-y-4">
+              {/* 3.4. Trainings & Zertifikate Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <GraduationCap className="w-4 h-4" />
+                    Schulungen & Zertifikate
+                  </CardTitle>
+                  <CardDescription>
+                    Zugewiesene Kurse, Fortschritt und ausgestellte Zertifikate
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingCourses ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
+                  ) : courseProgressList.length === 0 ? (
+                    <p className="text-center text-muted-foreground text-sm py-4">
+                      Keine Kurse zugewiesen
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {courseProgressList.map((course) => (
+                        <div key={course.course_id} className="p-3 border rounded-lg space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="font-medium text-sm">{course.course_name}</p>
+                            {course.certificate ? (
+                              <Badge
+                                className="bg-amber-100 text-amber-700 border-amber-200 text-xs cursor-pointer hover:bg-amber-200 transition-colors flex-shrink-0"
+                                onClick={() =>
+                                  downloadCertificateForEmployee(
+                                    employee?.full_name || "Teilnehmer",
+                                    course.course_name,
+                                    course.certificate
+                                  )
+                                }
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Zertifikat
+                              </Badge>
+                            ) : (
+                              <span className="text-xs text-muted-foreground flex-shrink-0">
+                                {course.completed_lessons}/{course.total_lessons} Lektionen
+                              </span>
+                            )}
+                          </div>
+                          <Progress
+                            value={course.percent}
+                            className={`h-2 ${course.percent === 100 ? "[&>div]:bg-green-500" : ""}`}
+                          />
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{course.percent}% abgeschlossen</span>
+                            {course.certificate?.issued_at && (
+                              <span>
+                                Ausgestellt am {new Date(course.certificate.issued_at).toLocaleDateString("de-DE")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

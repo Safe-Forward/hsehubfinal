@@ -1,139 +1,216 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscriptionLimits } from "@/hooks/useSubscriptionLimits";
-import { Users, FileText, ShieldAlert, ArrowRight, CheckCircle2, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  CheckCircle2,
+  Circle,
+  Users,
+  Building2,
+  BookOpen,
+  FileText,
+  ShieldAlert,
+  Settings,
+  ArrowRight,
+  Loader2,
+  X,
+} from "lucide-react";
 
 const STORAGE_KEY = (id: string) => `sf_onboarding_done_${id}`;
+const SETTINGS_VISITED_KEY = "hse_onboarding_settings_visited";
+const SESSION_DISMISS_KEY = "hse_onboarding_dismissed";
+
+interface OnboardingStep {
+  label: string;
+  route: string;
+  done: boolean;
+  icon: React.ElementType;
+}
 
 export function OnboardingWizard() {
   const { companyId, userRole } = useAuth();
-  const { loading } = useSubscriptionLimits();
   const navigate = useNavigate();
-  const [step, setStep] = useState(0);
-  const [open, setOpen] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [steps, setSteps] = useState<OnboardingStep[]>([
+    { label: "Ersten Mitarbeiter anlegen", route: "/employees", done: false, icon: Users },
+    { label: "Abteilung anlegen", route: "/settings?tab=organisation", done: false, icon: Building2 },
+    { label: "Erste Schulung erstellen", route: "/training", done: false, icon: BookOpen },
+    { label: "Dokument hochladen", route: "/documents", done: false, icon: FileText },
+    { label: "Ersten Vorfall erfassen", route: "/incidents", done: false, icon: ShieldAlert },
+    { label: "Einstellungen konfigurieren", route: "/settings", done: false, icon: Settings },
+  ]);
+
+  const checkSteps = useCallback(async (cId: string) => {
+    setLoading(true);
+    try {
+      const [
+        employeesRes,
+        departmentsRes,
+        trainingTypesRes,
+        coursesRes,
+        documentsRes,
+        incidentsRes,
+      ] = await Promise.all([
+        supabase
+          .from("employees")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", cId)
+          .eq("is_active", true),
+        supabase
+          .from("departments")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", cId),
+        supabase
+          .from("training_types")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", cId),
+        supabase
+          .from("courses")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", cId),
+        supabase
+          .from("documents")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", cId),
+        supabase
+          .from("incidents")
+          .select("id", { count: "exact", head: true })
+          .eq("company_id", cId),
+      ]);
+
+      const settingsVisited = localStorage.getItem(SETTINGS_VISITED_KEY) === "true";
+      const trainingDone =
+        (trainingTypesRes.count ?? 0) > 0 || (coursesRes.count ?? 0) > 0;
+
+      setSteps([
+        { label: "Ersten Mitarbeiter anlegen", route: "/employees", done: (employeesRes.count ?? 0) > 0, icon: Users },
+        { label: "Abteilung anlegen", route: "/settings?tab=organisation", done: (departmentsRes.count ?? 0) > 0, icon: Building2 },
+        { label: "Erste Schulung erstellen", route: "/training", done: trainingDone, icon: BookOpen },
+        { label: "Dokument hochladen", route: "/documents", done: (documentsRes.count ?? 0) > 0, icon: FileText },
+        { label: "Ersten Vorfall erfassen", route: "/incidents", done: (incidentsRes.count ?? 0) > 0, icon: ShieldAlert },
+        { label: "Einstellungen konfigurieren", route: "/settings", done: settingsVisited, icon: Settings },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (loading || !companyId || userRole !== "company_admin") return;
-    if (!localStorage.getItem(STORAGE_KEY(companyId))) {
-      setOpen(true);
+    if (!companyId || userRole !== "company_admin") return;
+    // Permanently done — never show again
+    if (localStorage.getItem(STORAGE_KEY(companyId))) return;
+    // Dismissed for this session
+    if (sessionStorage.getItem(SESSION_DISMISS_KEY) === "true") {
+      setDismissed(true);
+      return;
     }
-  }, [companyId, userRole, loading]);
+    setVisible(true);
+    checkSteps(companyId);
+  }, [companyId, userRole, checkSteps]);
 
-  const dismiss = () => {
-    if (companyId) localStorage.setItem(STORAGE_KEY(companyId), "1");
-    setOpen(false);
+  // Auto-hide when all steps done (sets localStorage permanent flag)
+  useEffect(() => {
+    if (!visible || loading) return;
+    const completedCount = steps.filter((s) => s.done).length;
+    if (completedCount >= 6 && companyId) {
+      localStorage.setItem(STORAGE_KEY(companyId), "1");
+      setVisible(false);
+    }
+  }, [steps, visible, loading, companyId]);
+
+  const handleDismiss = () => {
+    sessionStorage.setItem(SESSION_DISMISS_KEY, "true");
+    setDismissed(true);
   };
 
-  const goTo = (path: string) => {
-    dismiss();
-    navigate(path);
+  const handleGoTo = (route: string) => {
+    if (route === "/settings" || route.startsWith("/settings")) {
+      localStorage.setItem(SETTINGS_VISITED_KEY, "true");
+    }
+    navigate(route);
   };
 
-  const steps = [
-    {
-      title: "Willkommen bei Safe Forward!",
-      content: (
-        <div className="space-y-4">
-          <p className="text-muted-foreground">
-            Ihr kostenloses 7-Tage-Testkonto ist aktiv. Hier sind die drei ersten
-            Schritte, um das Beste aus Safe Forward herauszuholen:
-          </p>
-          <div className="grid gap-3">
-            {[
-              { icon: Users, label: "Mitarbeiter anlegen", desc: "Importieren oder manuell hinzufügen" },
-              { icon: FileText, label: "Dokumente hochladen", desc: "Unterweisungen, Betriebsanweisungen" },
-              { icon: ShieldAlert, label: "Vorfälle erfassen", desc: "Beinahe-Unfälle und Meldungen verwalten" },
-            ].map(({ icon: Icon, label, desc }) => (
-              <div key={label} className="flex items-start gap-3 p-3 rounded-lg bg-muted">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <div className="font-medium text-sm">{label}</div>
-                  <div className="text-xs text-muted-foreground">{desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-      actions: (
-        <Button className="gap-2" onClick={() => setStep(1)}>
-          Weiter <ArrowRight className="w-4 h-4" />
-        </Button>
-      ),
-    },
-    {
-      title: "Was möchten Sie zuerst tun?",
-      content: (
-        <div className="grid gap-3">
-          {[
-            { icon: Users, label: "Ersten Mitarbeiter anlegen", path: "/employees" },
-            { icon: FileText, label: "Dokument hochladen", path: "/documents" },
-            { icon: ShieldAlert, label: "Vorfall erfassen", path: "/incidents" },
-          ].map(({ icon: Icon, label, path }) => (
-            <button
-              key={path}
-              onClick={() => goTo(path)}
-              className="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted transition-colors text-left w-full"
-            >
-              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Icon className="w-4 h-4 text-primary" />
-              </div>
-              <span className="font-medium text-sm">{label}</span>
-              <ArrowRight className="w-4 h-4 ml-auto text-muted-foreground" />
-            </button>
-          ))}
-        </div>
-      ),
-      actions: (
-        <Button variant="outline" onClick={dismiss} className="gap-2">
-          <CheckCircle2 className="w-4 h-4" /> Überspringen
-        </Button>
-      ),
-    },
-  ];
+  const completedCount = steps.filter((s) => s.done).length;
+  const progressPercent = Math.round((completedCount / 6) * 100);
 
-  const current = steps[step];
+  if (userRole !== "company_admin") return null;
+  if (!visible || dismissed) return null;
 
   return (
-    <Dialog open={open} onOpenChange={dismiss}>
-      <DialogContent className="max-w-md p-0 overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white relative">
-          <button
-            onClick={dismiss}
-            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          <div className="flex gap-1 mb-3">
-            {steps.map((_, i) => (
-              <div
-                key={i}
-                className={`h-1 flex-1 rounded-full transition-colors ${
-                  i <= step ? "bg-white" : "bg-white/30"
-                }`}
-              />
-            ))}
+    <Card className="mt-8 border border-border/60 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-5 text-white">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-lg font-semibold">Setup abschließen</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-white/90">
+              {completedCount}/6 · {progressPercent}%
+            </span>
+            <button
+              onClick={handleDismiss}
+              aria-label="Ausblenden"
+              className="rounded-md p-1 hover:bg-white/20 transition-colors"
+            >
+              <X className="w-4 h-4 text-white" />
+            </button>
           </div>
-          <h2 className="text-xl font-semibold">{current.title}</h2>
         </div>
+        <Progress
+          value={progressPercent}
+          className="h-2 bg-white/30 [&>div]:bg-white"
+        />
+      </div>
 
-        {/* Body */}
-        <div className="p-6">{current.content}</div>
-
-        {/* Footer */}
-        <div className="px-6 pb-6 flex justify-between items-center">
-          <span className="text-xs text-muted-foreground">
-            Schritt {step + 1} von {steps.length}
-          </span>
-          {current.actions}
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Body */}
+      <div className="p-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            <span className="text-sm">Lade Fortschritt…</span>
+          </div>
+        ) : (
+          <ul className="space-y-1">
+            {steps.map((step) => {
+              const Icon = step.icon;
+              return (
+                <li key={step.label}>
+                  <button
+                    onClick={() => handleGoTo(step.route)}
+                    className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-left hover:bg-muted transition-colors group"
+                  >
+                    {step.done ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-muted-foreground shrink-0" />
+                    )}
+                    <Icon
+                      className={`w-4 h-4 shrink-0 ${
+                        step.done ? "text-green-600" : "text-muted-foreground"
+                      }`}
+                    />
+                    <span
+                      className={`text-sm flex-1 ${
+                        step.done
+                          ? "line-through text-muted-foreground"
+                          : "text-foreground"
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+                    {!step.done && (
+                      <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </Card>
   );
 }

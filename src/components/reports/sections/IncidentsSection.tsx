@@ -3,7 +3,7 @@ import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GripVertical, AlertTriangle, CheckCircle } from "lucide-react";
+import { RotateCcw, GripVertical, AlertTriangle, CheckCircle, ShieldAlert } from "lucide-react";
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
@@ -22,16 +22,18 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
   const lastSavedLayoutRef = useRef<string>('');
   const defaultLayout = {
     lg: [
-      { i: "incident-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "incident-open", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "incident-closed", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-total", x: 0, y: 0, w: 4, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-open", x: 4, y: 0, w: 4, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-closed", x: 8, y: 0, w: 4, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-reportable", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-trend-chart", x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3, static: false },
       { i: "incident-type-chart", x: 6, y: 4, w: 6, h: 4, minW: 4, minH: 3, static: false },
     ],
     md: [
-      { i: "incident-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
-      { i: "incident-open", x: 5, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
-      { i: "incident-closed", x: 0, y: 2, w: 5, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-total", x: 0, y: 0, w: 4, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-open", x: 4, y: 0, w: 3, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-closed", x: 7, y: 0, w: 3, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-reportable", x: 0, y: 2, w: 5, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-trend-chart", x: 0, y: 4, w: 5, h: 4, minW: 4, minH: 3, static: false },
       { i: "incident-type-chart", x: 5, y: 4, w: 5, h: 4, minW: 4, minH: 3, static: false },
     ],
@@ -39,8 +41,9 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
       { i: "incident-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-open", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
       { i: "incident-closed", x: 0, y: 4, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "incident-trend-chart", x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3, static: false },
-      { i: "incident-type-chart", x: 0, y: 10, w: 6, h: 4, minW: 4, minH: 3, static: false },
+      { i: "incident-reportable", x: 0, y: 6, w: 6, h: 2, minW: 2, minH: 2, static: false },
+      { i: "incident-trend-chart", x: 0, y: 8, w: 6, h: 4, minW: 4, minH: 3, static: false },
+      { i: "incident-type-chart", x: 0, y: 12, w: 6, h: 4, minW: 4, minH: 3, static: false },
     ],
   };
 
@@ -161,6 +164,15 @@ export function IncidentsSection({ stats, chartData, incidentTypeData }: { stats
             value={stats.totalIncidents - stats.openIncidents}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+          />
+        </div>
+        <div key="incident-reportable">
+          <DraggableCard
+            title="Meldepflichtige Vorfälle"
+            subtitle={`§ 193 SGB VII / DGUV — ${stats.totalIncidents > 0 ? Math.round((stats.reportableIncidents / stats.totalIncidents) * 100) : 0}% aller Vorfälle`}
+            value={`${stats.reportableIncidents} / ${stats.totalIncidents}`}
+            icon={<ShieldAlert className="w-5 h-5" />}
+            color="bg-orange-50 text-orange-600"
           />
         </div>
         <div key="incident-trend-chart" data-grid={{ x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3 }}>

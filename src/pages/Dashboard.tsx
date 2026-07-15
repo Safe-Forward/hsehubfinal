@@ -79,7 +79,7 @@ const ALL_KPI_IDS = [
 ];
 
 // Virtual widgets — appear in "Kacheln anpassen" but render no KPI card
-const SIDEBAR_WIDGET_IDS = ["sidebarMeasuresBadge"];
+const SIDEBAR_WIDGET_IDS = ["sidebarMeasuresBadge", "sidebarTrainingBadge"];
 
 const DEFAULT_KPI_IDS = [
   "employees",
@@ -101,6 +101,7 @@ export default function Dashboard() {
 
   const sidebarWidgetLabels: Record<string, string> = {
     sidebarMeasuresBadge: t("dashboard.sidebarMeasuresBadge"),
+    sidebarTrainingBadge: "Schulungs-Badge in Sidebar",
   };
 
   const [stats, setStats] = useState({

@@ -21,6 +21,9 @@ import {
   Building2,
 } from "lucide-react";
 import "react-grid-layout/css/styles.css";
+import { Responsive as ResponsiveGrid, WidthProvider } from "react-grid-layout/legacy";
+
+const ResponsiveGridLayout = WidthProvider(ResponsiveGrid);
 
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +56,7 @@ import { TrainingsSection } from "@/components/reports/sections/TrainingsSection
 import { MeasuresSection } from "@/components/reports/sections/MeasuresSection";
 import { TasksSection } from "@/components/reports/sections/TasksSection";
 import { CheckupsSection } from "@/components/reports/sections/CheckupsSection";
+import { AccidentKPISection } from "@/components/reports/sections/AccidentKPISection";
 import {
   ReportStats,
   TrainingStatus,
@@ -88,6 +92,7 @@ export default function Reports() {
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showAddReportDialog, setShowAddReportDialog] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const [stats, setStats] = useState<ReportStats>({
     totalEmployees: 0,
@@ -103,6 +108,7 @@ export default function Reports() {
     completedMeasures: 0,
     completedCheckUps: 0,
     openIncidents: 0,
+    reportableIncidents: 0,
     trainingCompliance: 0,
   });
 
@@ -456,6 +462,7 @@ export default function Reports() {
         completedRiskMeasuresRes,
         completedCheckUpsRes,
         openIncidentsRes,
+        reportableIncidentsRes,
       ] = await Promise.all([
         withDept(
           supabase
@@ -593,6 +600,16 @@ export default function Reports() {
           ),
           "incident_date"
         ),
+        inRange(
+          withDept(
+            supabase
+              .from("incidents" as any)
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("is_reportable", true)
+          ),
+          "incident_date"
+        ),
       ]);
 
       setStats({
@@ -609,6 +626,7 @@ export default function Reports() {
         completedMeasures: (completedMeasuresRes.count || 0) + (completedRiskMeasuresRes.count || 0),
         completedCheckUps: completedCheckUpsRes.count || 0,
         openIncidents: openIncidentsRes.count || 0,
+        reportableIncidents: reportableIncidentsRes.count || 0,
         trainingCompliance: 0,
       });
 
@@ -1371,6 +1389,37 @@ export default function Reports() {
           return Object.entries(grouped)
             .sort(([a], [b]) => a.localeCompare(b))
             .map(([name, value]) => ({ name, value }));
+        } else if (groupBy === "tag") {
+          // Tags are stored as a string[] column on the employees table
+          const { data, error } = await supabase
+            .from("employees")
+            .select("tags")
+            .eq("company_id", companyId)
+            .gte("created_at", startDate)
+            .lte("created_at", endDate);
+
+          if (error) {
+            console.error("Error fetching employee tags:", error);
+            return [];
+          }
+
+          // Each employee can have multiple tags — count per tag
+          const tagCounts: Record<string, number> = {};
+          (data || []).forEach((item: any) => {
+            const tags: string[] = Array.isArray(item.tags) ? item.tags : [];
+            if (tags.length === 0) {
+              const key = t("reports.fallback.noTag") || "Kein Tag";
+              tagCounts[key] = (tagCounts[key] || 0) + 1;
+            } else {
+              tags.forEach((tag) => {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+              });
+            }
+          });
+
+          return Object.entries(tagCounts)
+            .sort(([, a], [, b]) => b - a)
+            .map(([name, value]) => ({ name, value }));
         }
       }
 
@@ -1500,6 +1549,26 @@ export default function Reports() {
             const grouped = (data || []).reduce((acc: Record<string, number>, item: any) => {
               const key = item.location || t("reports.fallback.unknown");
               acc[key] = (acc[key] || 0) + 1;
+              return acc;
+            }, {});
+            return Object.entries(grouped).map(([name, value]) => ({ name, value }));
+          }
+          if (groupBy === "department") {
+            // Group incidents by department name via join
+            const { data, error } = await (supabase as any)
+              .from("incidents")
+              .select("department_id, departments(name)")
+              .eq("company_id", companyId)
+              .gte("incident_date", startDate)
+              .lte("incident_date", endDate);
+
+            if (error) {
+              console.error("Error fetching incidents by department:", error);
+              return [];
+            }
+            const grouped = (data || []).reduce((acc: Record<string, number>, item: any) => {
+              const name = item.departments?.name || t("reports.fallback.unassigned");
+              acc[name] = (acc[name] || 0) + 1;
               return acc;
             }, {});
             return Object.entries(grouped).map(([name, value]) => ({ name, value }));
@@ -1831,10 +1900,13 @@ export default function Reports() {
     let updatedReports;
 
     if (existingIndex >= 0) {
-      // Update existing
+      // Update existing — keep targetSection from original creation, don't change it on edit
+      const preserved = { ...config };
+      if (!preserved.targetSection && customReports[existingIndex]?.targetSection) {
+        preserved.targetSection = customReports[existingIndex].targetSection;
+      }
       updatedReports = [...customReports];
-      updatedReports[existingIndex] = config;
-      // Layout doesn't need to change for edits
+      updatedReports[existingIndex] = preserved;
       setCustomReports(updatedReports);
       saveCustomReports(updatedReports);
 
@@ -1843,8 +1915,9 @@ export default function Reports() {
         description: t("reports.toast.reportUpdatedDesc").replace("{title}", config.title),
       });
     } else {
-      // Add new - INSERT AT BEGINNING (Latest First)
-      updatedReports = [config, ...customReports];
+      // Add new — stamp targetSection so report stays in the section where it was created
+      const configWithSection: ReportConfig = { ...config, targetSection: activeSection };
+      updatedReports = [configWithSection, ...customReports];
 
       // Update data immediately
       setCustomReports(updatedReports);
@@ -2068,14 +2141,21 @@ export default function Reports() {
   }, []);
 
   const sectionCustomReports = useMemo(() => {
+    if (activeSection === "overview") return [];
     const metric = getMetricForSection(activeSection);
-    if (!metric) return [];
-    return customReports.filter((report) => report.metric === metric);
+    return customReports.filter((report) =>
+      report.targetSection
+        ? report.targetSection === activeSection
+        : report.metric === metric
+    );
   }, [activeSection, customReports, getMetricForSection]);
 
   const overviewCustomReports = useMemo(() => {
     const sectionMetrics = ["risks", "audits", "incidents", "trainings", "measures", "tasks", "checkups"];
-    return customReports.filter((report) => !sectionMetrics.includes(report.metric));
+    return customReports.filter((report) => {
+      if (report.targetSection) return report.targetSection === "overview";
+      return !sectionMetrics.includes(report.metric);
+    });
   }, [customReports]);
 
   if (loading) {
@@ -2208,7 +2288,12 @@ export default function Reports() {
             <AuditsSection stats={stats} chartData={chartData} auditStatusData={auditStatusData} />
           )}
           {activeSection === "incidents" && (
-            <IncidentsSection stats={stats} chartData={chartData} incidentTypeData={incidentTypeData} />
+            <div className="space-y-8">
+              {companyId && (
+                <AccidentKPISection companyId={companyId} selectedYear={selectedYear} />
+              )}
+              <IncidentsSection stats={stats} chartData={chartData} incidentTypeData={incidentTypeData} />
+            </div>
           )}
           {activeSection === "trainings" && (
             <TrainingsSection stats={stats} trainingMatrix={trainingMatrix} chartData={chartData} />
@@ -2224,17 +2309,20 @@ export default function Reports() {
           )}
 
           {activeSection !== "overview" && sectionCustomReports.length > 0 && (
-            <div className="mt-8 space-y-4">
-              <div>
-                <h3 className="text-xl font-semibold">{t("reports.customReports.title")}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {t("reports.customReports.subtitle")}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="mt-6">
+              <ResponsiveGridLayout
+                className="layout"
+                layouts={customReportsLayouts}
+                breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+                cols={{ lg: 2, md: 2, sm: 1, xs: 1, xxs: 1 }}
+                rowHeight={160}
+                margin={[16, 16]}
+                isDraggable
+                isResizable
+                onLayoutChange={handleCustomReportsLayoutChange}
+              >
                 {sectionCustomReports.map((report) => (
-                  <div key={`section-report-${report.id}`} className="min-h-[320px]">
+                  <div key={report.id} className="min-h-[320px]">
                     <ReportWidget
                       config={report}
                       onEdit={handleEditReport}
@@ -2244,7 +2332,7 @@ export default function Reports() {
                     />
                   </div>
                 ))}
-              </div>
+              </ResponsiveGridLayout>
             </div>
           )}
         </div>

@@ -30,6 +30,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -90,6 +91,7 @@ interface Incident {
   immediate_actions: string | null;
   investigation_status: string;
   investigation_completed_date: string | null;
+  is_reportable?: boolean;
   created_at: string;
   updated_at: string;
   affected_employee?: { full_name: string };
@@ -172,6 +174,7 @@ export default function Incidents() {
     root_cause: "",
     immediate_actions: "",
     investigation_status: "open",
+    is_reportable: false,
   });
 
   useEffect(() => {
@@ -320,6 +323,7 @@ export default function Incidents() {
         root_cause: formData.root_cause || null,
         immediate_actions: formData.immediate_actions || null,
         investigation_status: formData.investigation_status,
+        is_reportable: formData.is_reportable || false,
       };
 
       if (editingIncident) {
@@ -528,6 +532,7 @@ export default function Incidents() {
       root_cause: incident.root_cause || "",
       immediate_actions: incident.immediate_actions || "",
       investigation_status: incident.investigation_status,
+      is_reportable: incident.is_reportable || false,
     });
     setIsDialogOpen(true);
   };
@@ -546,6 +551,7 @@ export default function Incidents() {
       root_cause: "",
       immediate_actions: "",
       investigation_status: "open",
+      is_reportable: false,
     });
     setEditingIncident(null);
   };
@@ -1032,6 +1038,18 @@ export default function Incidents() {
                     </div>
                   </div>
 
+                  <div className="flex items-center gap-3 py-2">
+                    <Switch
+                      id="is_reportable"
+                      checked={formData.is_reportable || false}
+                      onCheckedChange={(v) => setFormData(prev => ({...prev, is_reportable: v}))}
+                    />
+                    <label htmlFor="is_reportable" className="text-sm font-medium cursor-pointer">
+                      <span>Meldepflichtig</span>
+                      <span className="block text-xs text-muted-foreground">§ 193 SGB VII / DGUV – meldepflichtiger Arbeitsunfall</span>
+                    </label>
+                  </div>
+
                   <div>
                     <Label htmlFor="description">
                       {t("incidents.description")}
@@ -1271,7 +1289,14 @@ export default function Incidents() {
                       </div>
                       <div>
                         <p className="text-muted-foreground">Schweregrad</p>
-                        <div>{getSeverityBadge(viewingIncident.severity)}</div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {getSeverityBadge(viewingIncident.severity)}
+                          {viewingIncident.is_reportable && (
+                            <Badge className="bg-orange-100 text-orange-800 border border-orange-200 text-xs">
+                              Meldepflichtig
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Datum</p>
@@ -1552,7 +1577,14 @@ export default function Incidents() {
                         {getTypeBadge(incident.incident_type, true)}
                       </TableCell>
                       <TableCell>
-                        {getSeverityBadge(incident.severity, true)}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {getSeverityBadge(incident.severity, true)}
+                          {incident.is_reportable && (
+                            <Badge className="bg-orange-100 text-orange-800 border border-orange-200 text-xs">
+                              Meldepflichtig
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {format(

@@ -31,6 +31,7 @@ import {
   ChevronRight,
   Headphones,
   Receipt,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -104,6 +105,8 @@ import { ConfigurationTab } from "@/components/settings/tabs/ConfigurationTab";
 import { ProfileFieldsTab } from "@/components/settings/tabs/ProfileFieldsTab";
 import { CatalogsTab } from "@/components/settings/tabs/CatalogsTab";
 import { IntervalsTab } from "@/components/settings/tabs/IntervalsTab";
+import { PositionTrainingCatalogTab } from "@/components/settings/tabs/PositionTrainingCatalogTab";
+import { QualificationCatalogTab } from "@/components/settings/tabs/QualificationCatalogTab";
 import { InvoicesBillingTab } from "@/components/settings/tabs/InvoicesBillingTab";
 import { DangerZoneTab } from "@/components/settings/tabs/DangerZoneTab";
 import {
@@ -3392,6 +3395,38 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    onClick={() => setActiveTab("position-training")}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "position-training"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted text-muted-foreground"
+                      }`}
+                  >
+                    <Target className="w-4 h-4" />
+                    <div className="text-left">
+                      <div>Stellen &amp; Schulungen</div>
+                      <div className="text-xs opacity-80">
+                        Stellen und Pflicht-Schulungen
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("qualification-catalog")}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "qualification-catalog"
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted text-muted-foreground"
+                      }`}
+                  >
+                    <Award className="w-4 h-4" />
+                    <div className="text-left">
+                      <div>Qualifikationskatalog</div>
+                      <div className="text-xs opacity-80">
+                        Innerbetriebliche Qualifikationen
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
                     onClick={() => setActiveTab("medical-care")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "medical-care"
                       ? "bg-primary text-primary-foreground"
@@ -3531,6 +3566,16 @@ const handleUpdateManager = async (
               {/* Tab 5: Intervals and Deadlines */}
               <TabsContent value="intervals">
                 <IntervalsTab onNavigateToTab={setActiveTab} />
+              </TabsContent>
+
+              {/* Stellen & Schulungskatalog */}
+              <TabsContent value="position-training">
+                {companyId && <PositionTrainingCatalogTab companyId={companyId} />}
+              </TabsContent>
+
+              {/* Qualifikationskatalog */}
+              <TabsContent value="qualification-catalog">
+                {companyId && <QualificationCatalogTab companyId={companyId} />}
               </TabsContent>
 
               {/* Tab 6: Occupational Medical Care */}

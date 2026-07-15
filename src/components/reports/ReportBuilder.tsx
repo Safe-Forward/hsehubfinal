@@ -41,9 +41,11 @@ export interface ReportConfig {
   };
   chartType: 'pie' | 'bar' | 'line';
   sortBy: string;
-  data?: any[]; // Optional data from fetched results
+  displayMode?: 'chart' | 'table' | 'summary';
+  data?: any[];
   incidentType?: string;
   auditTemplate?: string;
+  targetSection?: string; // section where the report should appear (overrides metric-based routing)
 }
 
 interface ReportBuilderProps {
@@ -78,6 +80,7 @@ export default function ReportBuilder({
       },
       chartType: "bar",
       sortBy: "value",
+      displayMode: "chart",
     }
   );
 
@@ -142,6 +145,7 @@ export default function ReportBuilder({
         return [
           { value: 'department', label: t("reports.builder.groupBy.department") },
           { value: 'created_at', label: t("reports.builder.groupBy.hireDate") },
+          { value: 'tag', label: t("reports.builder.groupBy.tag") || "Tag" },
         ];
       case 'incidents':
         return [
@@ -150,6 +154,7 @@ export default function ReportBuilder({
           { value: 'severity', label: t("reports.builder.groupBy.severity") },
           { value: 'location', label: t("reports.builder.groupBy.location") },
           { value: 'created_at', label: t("reports.builder.groupBy.date") },
+          { value: 'department', label: t("reports.builder.groupBy.department") },
         ];
       case 'audits':
         return [
@@ -173,6 +178,7 @@ export default function ReportBuilder({
         return [
           { value: 'status', label: t("reports.builder.groupBy.status") },
           { value: 'department', label: t("reports.builder.groupBy.department") },
+          { value: 'tag', label: t("reports.builder.groupBy.tag") || "Tag" },
         ];
       case 'checkups':
         return [
@@ -434,7 +440,11 @@ export default function ReportBuilder({
           </div>
 
           {/* Preview Tabs */}
-          <Tabs defaultValue="chart" className="w-full">
+          <Tabs
+            value={config.displayMode || 'chart'}
+            onValueChange={(v) => setConfig(prev => ({ ...prev, displayMode: v as 'chart' | 'table' | 'summary' }))}
+            className="w-full"
+          >
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="chart">{t("reports.builder.tabs.chart")}</TabsTrigger>
               <TabsTrigger value="table">{t("reports.builder.tabs.table")}</TabsTrigger>
