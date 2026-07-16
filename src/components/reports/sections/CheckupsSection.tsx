@@ -3,19 +3,20 @@ import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GripVertical, Stethoscope, CheckCircle } from "lucide-react";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { RotateCcw, GripVertical, Stethoscope, CheckCircle, Pencil } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { TileEditPopover } from "@/components/reports/TileEditPopover";
-import { getTileConfig } from "@/components/reports/TileConfigStore";
-import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
+import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
+import type { ReportConfig } from "@/components/reports/ReportBuilder";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_ID = "checkups";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportStats; checkUpsStatusData: any[] }) {
+export function CheckupsSection({ stats, checkUpsStatusData, onEditTile }: { stats: ReportStats; checkUpsStatusData: any[]; onEditTile?: OnEditTile }) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
@@ -112,6 +113,53 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
     toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.checkupsLayoutResetDesc") });
   }, [toast, t]);
 
+  // Chart overrides
+  const [chartOverrides, setChartOverrides] = useState<Record<string, { data: any[]; chartType: string; title?: string }>>(() => {
+    const result: Record<string, { data: any[]; chartType: string; title?: string }> = {};
+    const stored = getChartConfig(SECTION_ID, "checkups-status-chart");
+    if (stored) result["checkups-status-chart"] = { data: [], chartType: stored.chartType, title: stored.title };
+    return result;
+  });
+
+  const handleEditChartTile = (tileId: string, defaultConfig: ReportConfig) => {
+    if (!onEditTile) return;
+    onEditTile(tileId, defaultConfig, (cfg, data) => {
+      setChartOverrides((prev) => ({ ...prev, [tileId]: { data, chartType: cfg.chartType, title: cfg.title } }));
+    });
+  };
+
+  const renderCheckupsChart = (tileId: string, defaultData: any[], defaultChartType: string) => {
+    const override = chartOverrides[tileId];
+    const data = override?.data?.length ? override.data : defaultData;
+    const chartType = override?.chartType || defaultChartType;
+    if (data.length === 0) return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.checkups.noDataForRange")}</div>;
+    if (chartType === "bar") {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis allowDecimals={false} />
+            <Tooltip formatter={(v: any, n: any) => [v, formatStatusLabel(String(n))]} />
+            <Legend formatter={(v: any) => formatStatusLabel(String(v))} />
+            <Bar dataKey="value" fill="#0d9488" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      );
+    }
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="40%" outerRadius="75%">
+            {data.map((entry: any, index: number) => <Cell key={`checkup-cell-${index}`} fill={getStatusColor(entry.name, index)} />)}
+          </Pie>
+          <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+          <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -150,7 +198,7 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
             value={stats.totalCheckUps}
             icon={<Stethoscope className="w-5 h-5" />}
             color="bg-teal-50 text-teal-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="checkups-total" defaultTitle={t("reports.checkups.totalTitle")} defaultSubtitle={t("reports.checkups.totalSubtitle")} onSave={(cfg) => updateTileLabel("checkups-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("checkups-total")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="checkups-total" defaultTitle={t("reports.checkups.totalTitle")} defaultSubtitle={t("reports.checkups.totalSubtitle")} onSave={(cfg) => updateTileLabel("checkups-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("checkups-total")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("checkups-total", { id: "checkups-total", title: t("reports.checkups.totalTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("checkups-total", cfg.title, tileLabels["checkups-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="checkups-completed">
@@ -160,36 +208,29 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
             value={stats.completedCheckUps}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="checkups-completed" defaultTitle={t("reports.checkups.completedTitle")} defaultSubtitle={t("reports.checkups.completedSubtitle")} onSave={(cfg) => updateTileLabel("checkups-completed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("checkups-completed")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="checkups-completed" defaultTitle={t("reports.checkups.completedTitle")} defaultSubtitle={t("reports.checkups.completedSubtitle")} onSave={(cfg) => updateTileLabel("checkups-completed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("checkups-completed")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("checkups-completed", { id: "checkups-completed", title: t("reports.checkups.completedTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("checkups-completed", cfg.title, tileLabels["checkups-completed"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="checkups-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
           <Card className="dashboard-grid-card border shadow-sm h-full group">
-            <div className="drag-handle border-b flex items-center px-3 py-1">
+            <div className="drag-handle border-b flex items-center justify-between px-3 py-1">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
+              {onEditTile && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleEditChartTile("checkups-status-chart", { id: "checkups-status-chart", title: chartOverrides["checkups-status-chart"]?.title || t("reports.checkups.statusChartTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: (chartOverrides["checkups-status-chart"]?.chartType as any) || "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }}
+                  className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
+                  title="Diagramm bearbeiten"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              )}
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">{t("reports.checkups.statusChartTitle")}</CardTitle>
+              <CardTitle className="text-base">{chartOverrides["checkups-status-chart"]?.title || t("reports.checkups.statusChartTitle")}</CardTitle>
               <CardDescription>{t("reports.checkups.statusChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
-              {checkUpsStatusData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  {t("reports.checkups.noDataForRange")}
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={checkUpsStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="40%" outerRadius="75%">
-                      {checkUpsStatusData.map((entry, index) => (
-                        <Cell key={`checkup-cell-${index}`} fill={getStatusColor(entry.name, index)} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
-                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
+              {renderCheckupsChart("checkups-status-chart", checkUpsStatusData, "pie")}
             </CardContent>
           </Card>
         </div>

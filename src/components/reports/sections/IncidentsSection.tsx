@@ -4,14 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GripVertical, AlertTriangle, CheckCircle, ShieldAlert, ShieldCheck, Users } from "lucide-react";
+import { RotateCcw, GripVertical, AlertTriangle, CheckCircle, ShieldAlert, ShieldCheck, Users, Pencil } from "lucide-react";
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { TileEditPopover } from "@/components/reports/TileEditPopover";
-import { getTileConfig } from "@/components/reports/TileConfigStore";
-import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
+import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
+import type { ReportConfig } from "@/components/reports/ReportBuilder";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -69,6 +70,7 @@ export function IncidentsSection({
   companyId,
   selectedYear,
   departmentFilter = "all",
+  onEditTile,
 }: {
   stats: ReportStats;
   chartData: any[];
@@ -76,6 +78,7 @@ export function IncidentsSection({
   companyId: string;
   selectedYear: number;
   departmentFilter?: string;
+  onEditTile?: OnEditTile;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -103,6 +106,23 @@ export function IncidentsSection({
   };
   const resetTileLabel = (id: string) => {
     setTileLabels((prev) => ({ ...prev, [id]: { title: "", subtitle: "" } }));
+  };
+
+  // Chart overrides from ReportBuilder
+  const [chartOverrides, setChartOverrides] = useState<Record<string, { data: any[]; chartType: string; title?: string }>>(() => {
+    const result: Record<string, { data: any[]; chartType: string; title?: string }> = {};
+    for (const tileId of ["incident-trend-chart", "incident-type-chart"]) {
+      const stored = getChartConfig(SECTION_ID, tileId);
+      if (stored) result[tileId] = { data: [], chartType: stored.chartType, title: stored.title };
+    }
+    return result;
+  });
+
+  const handleEditChartTile = (tileId: string, defaultConfig: ReportConfig) => {
+    if (!onEditTile) return;
+    onEditTile(tileId, defaultConfig, (cfg, data) => {
+      setChartOverrides((prev) => ({ ...prev, [tileId]: { data, chartType: cfg.chartType, title: cfg.title } }));
+    });
   };
 
   // ── Accident KPI state ──────────────────────────────────────────────────────
@@ -367,7 +387,7 @@ export function IncidentsSection({
             value={stats.totalIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-red-50 text-red-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="incident-total" defaultTitle={t("reports.incidents.totalTitle")} defaultSubtitle={t("reports.incidents.totalSubtitle")} onSave={(cfg) => updateTileLabel("incident-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-total")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="incident-total" defaultTitle={t("reports.incidents.totalTitle")} defaultSubtitle={t("reports.incidents.totalSubtitle")} onSave={(cfg) => updateTileLabel("incident-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-total")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("incident-total", { id: "incident-total", title: t("reports.incidents.totalTitle"), metric: "incidents", groupBy: "investigation_status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("incident-total", cfg.title, tileLabels["incident-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="incident-open">
@@ -377,7 +397,7 @@ export function IncidentsSection({
             value={stats.openIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="incident-open" defaultTitle={t("reports.incidents.openTitle")} defaultSubtitle={t("reports.incidents.openSubtitle")} onSave={(cfg) => updateTileLabel("incident-open", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-open")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="incident-open" defaultTitle={t("reports.incidents.openTitle")} defaultSubtitle={t("reports.incidents.openSubtitle")} onSave={(cfg) => updateTileLabel("incident-open", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-open")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("incident-open", { id: "incident-open", title: t("reports.incidents.openTitle"), metric: "incidents", groupBy: "investigation_status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("incident-open", cfg.title, tileLabels["incident-open"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="incident-closed">
@@ -387,7 +407,7 @@ export function IncidentsSection({
             value={stats.totalIncidents - stats.openIncidents}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="incident-closed" defaultTitle={t("reports.incidents.closedTitle")} defaultSubtitle={t("reports.incidents.closedSubtitle")} onSave={(cfg) => updateTileLabel("incident-closed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-closed")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="incident-closed" defaultTitle={t("reports.incidents.closedTitle")} defaultSubtitle={t("reports.incidents.closedSubtitle")} onSave={(cfg) => updateTileLabel("incident-closed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-closed")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("incident-closed", { id: "incident-closed", title: t("reports.incidents.closedTitle"), metric: "incidents", groupBy: "investigation_status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("incident-closed", cfg.title, tileLabels["incident-closed"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="incident-reportable">
@@ -397,64 +417,72 @@ export function IncidentsSection({
             value={`${stats.reportableIncidents} / ${stats.totalIncidents}`}
             icon={<ShieldAlert className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="incident-reportable" defaultTitle="Meldepflichtige Vorfälle" defaultSubtitle={`§ 193 SGB VII / DGUV — ${stats.totalIncidents > 0 ? Math.round((stats.reportableIncidents / stats.totalIncidents) * 100) : 0}% aller Vorfälle`} onSave={(cfg) => updateTileLabel("incident-reportable", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-reportable")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="incident-reportable" defaultTitle="Meldepflichtige Vorfälle" defaultSubtitle={`§ 193 SGB VII / DGUV`} onSave={(cfg) => updateTileLabel("incident-reportable", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-reportable")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("incident-reportable", { id: "incident-reportable", title: "Meldepflichtige Vorfälle", metric: "incidents", groupBy: "investigation_status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("incident-reportable", cfg.title, tileLabels["incident-reportable"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="incident-trend-chart" data-grid={{ x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3 }}>
           <Card className="dashboard-grid-card border shadow-sm h-full group">
-            <div className="drag-handle border-b flex items-center px-3 py-1">
+            <div className="drag-handle border-b flex items-center justify-between px-3 py-1">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
+              {onEditTile && (
+                <button onClick={(e) => { e.stopPropagation(); handleEditChartTile("incident-trend-chart", { id: "incident-trend-chart", title: t("reports.incidents.trendChartTitle"), metric: "incidents", groupBy: "investigation_status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+              )}
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">{t("reports.incidents.trendChartTitle")}</CardTitle>
+              <CardTitle className="text-base">{chartOverrides["incident-trend-chart"]?.title || t("reports.incidents.trendChartTitle")}</CardTitle>
               <CardDescription>{t("reports.incidents.trendChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
-              {chartData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  {t("reports.incidents.noDataForRange")}
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="month" stroke="#888" fontSize={12} />
-                    <YAxis stroke="#888" fontSize={12} allowDecimals={false} />
-                    <Tooltip />
-                    <Bar dataKey="incidents" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
+              {(() => {
+                const override = chartOverrides["incident-trend-chart"];
+                const data = override?.data?.length ? override.data : chartData;
+                if (data.length === 0) return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.incidents.noDataForRange")}</div>;
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey={data[0]?.month !== undefined ? "month" : "name"} stroke="#888" fontSize={12} />
+                      <YAxis stroke="#888" fontSize={12} allowDecimals={false} />
+                      <Tooltip />
+                      <Bar dataKey={data[0]?.incidents !== undefined ? "incidents" : "value"} fill="#ef4444" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
         <div key="incident-type-chart" data-grid={{ x: 6, y: 4, w: 6, h: 4, minW: 4, minH: 3 }}>
           <Card className="dashboard-grid-card border shadow-sm h-full group">
-            <div className="drag-handle border-b flex items-center px-3 py-1">
+            <div className="drag-handle border-b flex items-center justify-between px-3 py-1">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
+              {onEditTile && (
+                <button onClick={(e) => { e.stopPropagation(); handleEditChartTile("incident-type-chart", { id: "incident-type-chart", title: t("reports.incidents.typeChartTitle"), metric: "incidents", groupBy: "incident_type", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+              )}
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">{t("reports.incidents.typeChartTitle")}</CardTitle>
+              <CardTitle className="text-base">{chartOverrides["incident-type-chart"]?.title || t("reports.incidents.typeChartTitle")}</CardTitle>
               <CardDescription>{t("reports.incidents.typeChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
-              {incidentTypeData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  {t("reports.incidents.noDataForRange")}
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={incidentTypeData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="75%">
-                      {incidentTypeData.map((entry, index) => (
-                        <Cell key={`incident-type-cell-${index}`} fill={getStatusColor(entry.name, index)} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
-                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
+              {(() => {
+                const override = chartOverrides["incident-type-chart"];
+                const data = override?.data?.length ? override.data : incidentTypeData;
+                if (data.length === 0) return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.incidents.noDataForRange")}</div>;
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="75%">
+                        {data.map((entry: any, index: number) => (
+                          <Cell key={`incident-type-cell-${index}`} fill={getStatusColor(entry.name, index)} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+                      <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
@@ -467,7 +495,7 @@ export function IncidentsSection({
             value={kpiLoading ? "…" : (accidentKPI?.accidentFreeDaysGlobal ?? "∞")}
             icon={<ShieldCheck className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="accident-free" defaultTitle="Tage unfallfrei" defaultSubtitle="Kein meldepflichtiger Unfall erfasst" onSave={(cfg) => updateTileLabel("accident-free", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("accident-free")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="accident-free" defaultTitle="Tage unfallfrei" defaultSubtitle="Kein meldepflichtiger Unfall erfasst" onSave={(cfg) => updateTileLabel("accident-free", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("accident-free")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("accident-free", { id: "accident-free", title: "Tage unfallfrei", metric: "incidents", groupBy: "investigation_status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("accident-free", cfg.title, tileLabels["accident-free"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="teur-rate">
@@ -477,7 +505,7 @@ export function IncidentsSection({
             value={kpiLoading ? "…" : (accidentKPI?.teurRate ?? 0)}
             icon={<Users className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="teur-rate" defaultTitle="Unfälle je 1.000 MA" defaultSubtitle="Tausend-Mitarbeiter-Quote (TEUR)" onSave={(cfg) => updateTileLabel("teur-rate", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("teur-rate")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="teur-rate" defaultTitle="Unfälle je 1.000 MA" defaultSubtitle="Tausend-Mitarbeiter-Quote (TEUR)" onSave={(cfg) => updateTileLabel("teur-rate", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("teur-rate")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("teur-rate", { id: "teur-rate", title: "Unfälle je 1.000 MA", metric: "incidents", groupBy: "severity", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("teur-rate", cfg.title, tileLabels["teur-rate"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="dept-table">

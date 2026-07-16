@@ -1,3 +1,11 @@
+import type { ReportConfig } from "@/components/reports/ReportBuilder";
+
+export type OnEditTile = (
+  tileId: string,
+  defaultConfig: ReportConfig,
+  onSaved: (config: ReportConfig, data: any[]) => void
+) => void;
+
 export interface ReportStats {
   totalEmployees: number;
   totalRiskAssessments: number;

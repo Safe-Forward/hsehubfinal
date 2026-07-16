@@ -48,6 +48,7 @@ import { useAuditLog } from "@/hooks/useAuditLog";
 import ReportBuilder, { ReportConfig } from "@/components/reports/ReportBuilder";
 import ReportLibrary from "@/components/reports/ReportLibrary";
 import ReportWidget from "@/components/reports/ReportWidget";
+import { getChartConfig, saveChartConfig } from "@/components/reports/TileConfigStore";
 import { OverviewSection } from "@/components/reports/sections/OverviewSection";
 import { RiskAssessmentsSection } from "@/components/reports/sections/RiskAssessmentsSection";
 import { AuditsSection } from "@/components/reports/sections/AuditsSection";
@@ -127,6 +128,11 @@ export default function Reports() {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportConfig | null>(null);
   const [reportToDelete, setReportToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [pendingTileEdit, setPendingTileEdit] = useState<{
+    sectionId: string;
+    tileId: string;
+    onSaved: (config: ReportConfig, data: any[]) => void;
+  } | null>(null);
 
   // Layout state for custom reports (lifted from OverviewSection)
   const CUSTOM_REPORTS_LAYOUT_KEY = "hse_custom_reports_grid_layout_v3_2col";
@@ -1338,15 +1344,32 @@ export default function Reports() {
       query.gte(column, startDate).lte(column, endDate);
 
     try {
+      // Tag-Filter: Employee-IDs mit passenden Tags holen
+      let tagFilteredEmpIds: string[] | null = null;
+      if (template.tagFilters && template.tagFilters.length > 0) {
+        const orFilter = template.tagFilters
+          .map((tag) => `tags.cs.{"${tag}"}`)
+          .join(',');
+        const { data: taggedEmps } = await supabase
+          .from("employees")
+          .select("id")
+          .eq("company_id", companyId)
+          .or(orFilter);
+        tagFilteredEmpIds = (taggedEmps || []).map((e: any) => e.id);
+        if (tagFilteredEmpIds.length === 0) return [];
+      }
+
       // Special handling for employees with department/location joins
       if (metric === "employees") {
         if (groupBy === "department") {
-          const { data, error } = await supabase
+          let q = supabase
             .from("employees")
             .select("department_id, departments(name)")
             .eq("company_id", companyId)
             .gte("created_at", startDate)
             .lte("created_at", endDate);
+          if (tagFilteredEmpIds !== null) q = (q as any).in("id", tagFilteredEmpIds);
+          const { data, error } = await q;
 
           if (error) {
             console.error("Error fetching employee data:", error);
@@ -1365,12 +1388,14 @@ export default function Reports() {
           console.warn("Employees table does not have a location field");
           return [{ name: t("reports.fallback.noLocationData"), value: 0 }];
         } else if (groupBy === "created_at") {
-          const { data, error } = await supabase
+          let q2 = supabase
             .from("employees")
             .select("created_at")
             .eq("company_id", companyId)
             .gte("created_at", startDate)
             .lte("created_at", endDate);
+          if (tagFilteredEmpIds !== null) q2 = (q2 as any).in("id", tagFilteredEmpIds);
+          const { data, error } = await q2;
 
           if (error) {
             console.error("Error fetching employee time data:", error);
@@ -1390,12 +1415,14 @@ export default function Reports() {
             .map(([name, value]) => ({ name, value }));
         } else if (groupBy === "tag") {
           // Tags are stored as a string[] column on the employees table
-          const { data, error } = await supabase
+          let q3 = supabase
             .from("employees")
             .select("tags")
             .eq("company_id", companyId)
             .gte("created_at", startDate)
             .lte("created_at", endDate);
+          if (tagFilteredEmpIds !== null) q3 = (q3 as any).in("id", tagFilteredEmpIds);
+          const { data, error } = await q3;
 
           if (error) {
             console.error("Error fetching employee tags:", error);
@@ -1621,12 +1648,14 @@ export default function Reports() {
             // Echte Trainingsdaten aus training_participations (nicht das leere training_records)
             if (groupBy === "employee_id") {
               // Training Compliance by Employee
-              const { data, error } = await supabase
+              let tpQ = supabase
                 .from("training_participations")
                 .select("employee_id, employees(full_name), status")
                 .eq("company_id", companyId)
                 .gte("created_at", startDate)
                 .lte("created_at", endDate);
+              if (tagFilteredEmpIds !== null) tpQ = (tpQ as any).in("employee_id", tagFilteredEmpIds);
+              const { data, error } = await tpQ;
 
               if (error) {
                 console.error("Error fetching training by employee:", error);
@@ -1653,12 +1682,14 @@ export default function Reports() {
               }));
             } else if (groupBy === "status") {
               // Training by status
-              const { data, error } = await supabase
+              let tpStatusQ = supabase
                 .from("training_participations")
                 .select("status")
                 .eq("company_id", companyId)
                 .gte("created_at", startDate)
                 .lte("created_at", endDate);
+              if (tagFilteredEmpIds !== null) tpStatusQ = (tpStatusQ as any).in("employee_id", tagFilteredEmpIds);
+              const { data, error } = await tpStatusQ;
 
               if (error) {
                 console.error("Error fetching training by status:", error);
@@ -1674,12 +1705,14 @@ export default function Reports() {
               return Object.entries(grouped).map(([name, value]) => ({ name, value }));
             } else if (groupBy === "created_at") {
               // Training trends over time
-              const { data, error } = await supabase
+              let tpTimeQ = supabase
                 .from("training_participations")
                 .select("created_at")
                 .eq("company_id", companyId)
                 .gte("created_at", startDate)
                 .lte("created_at", endDate);
+              if (tagFilteredEmpIds !== null) tpTimeQ = (tpTimeQ as any).in("employee_id", tagFilteredEmpIds);
+              const { data, error } = await tpTimeQ;
 
               if (error) {
                 console.error("Error fetching training trends:", error);
@@ -1707,14 +1740,14 @@ export default function Reports() {
             const promises = [];
 
             // Main measures table
-            promises.push(
-              supabase
-                .from("measures" as any)
-                .select("status")
-                .eq("company_id", companyId)
-                .gte("created_at", startDate)
-                .lte("created_at", endDate)
-            );
+            let mQ = supabase
+              .from("measures" as any)
+              .select("status")
+              .eq("company_id", companyId)
+              .gte("created_at", startDate)
+              .lte("created_at", endDate);
+            if (tagFilteredEmpIds !== null) mQ = mQ.in("responsible_person_id", tagFilteredEmpIds);
+            promises.push(mQ);
 
             // Risk assessment measures table
             promises.push(
@@ -1761,12 +1794,14 @@ export default function Reports() {
           {
             if (groupBy === "status") {
               // Checkups by status
-              const { data, error } = await supabase
+              let cuQ = supabase
                 .from("health_checkups")
                 .select("status")
                 .eq("company_id", companyId)
                 .gte("created_at", startDate)
                 .lte("created_at", endDate);
+              if (tagFilteredEmpIds !== null) cuQ = (cuQ as any).in("employee_id", tagFilteredEmpIds);
+              const { data, error } = await cuQ;
 
               if (error) {
                 console.error("Error fetching health checkups data:", error);
@@ -1782,12 +1817,14 @@ export default function Reports() {
               return Object.entries(grouped).map(([name, value]) => ({ name, value }));
             } else if (groupBy === "created_at") {
               // Checkups over time
-              const { data, error } = await supabase
+              let cuTimeQ = supabase
                 .from("health_checkups")
                 .select("created_at")
                 .eq("company_id", companyId)
                 .gte("created_at", startDate)
                 .lte("created_at", endDate);
+              if (tagFilteredEmpIds !== null) cuTimeQ = (cuTimeQ as any).in("employee_id", tagFilteredEmpIds);
+              const { data, error } = await cuTimeQ;
 
               if (error) {
                 console.error("Error fetching checkups over time:", error);
@@ -1894,7 +1931,26 @@ export default function Reports() {
     }
   };
 
-  const handleSaveReport = (config: ReportConfig) => {
+  const handleSaveReport = async (config: ReportConfig) => {
+    // Wenn Standard-Kachel bearbeitet wird: speichern und zurückkehren
+    if (pendingTileEdit) {
+      const { sectionId, tileId, onSaved } = pendingTileEdit;
+      const freshData = await fetchTemplateData(config).catch(() => config.data || []);
+      saveChartConfig(sectionId, tileId, {
+        metric: config.metric,
+        groupBy: config.groupBy,
+        chartType: config.chartType,
+        dateRange: config.dateRange,
+        tagFilters: config.tagFilters,
+        title: config.title,
+      });
+      onSaved(config, freshData);
+      setPendingTileEdit(null);
+      setIsBuilderOpen(false);
+      setSelectedReport(null);
+      return;
+    }
+
     const existingIndex = customReports.findIndex(r => r.id === config.id);
     let updatedReports;
 
@@ -1939,10 +1995,35 @@ export default function Reports() {
     setSelectedReport(null);
   };
 
-  const handleEditReport = (config: ReportConfig) => {
-    setSelectedReport(config);
+  const handleEditReport = async (config: ReportConfig) => {
+    const freshData = await fetchTemplateData(config).catch(() => config.data || []);
+    setSelectedReport({ ...config, data: freshData });
     setIsBuilderOpen(true);
   };
+
+  const handleEditStandardTile = useCallback(async (
+    tileId: string,
+    defaultConfig: ReportConfig,
+    onSaved: (config: ReportConfig, data: any[]) => void
+  ) => {
+    const stored = getChartConfig(activeSection, tileId);
+    const initConfig: ReportConfig = stored ? {
+      ...defaultConfig,
+      metric: stored.metric,
+      groupBy: stored.groupBy,
+      chartType: stored.chartType,
+      dateRange: stored.dateRange,
+      tagFilters: stored.tagFilters,
+      title: stored.title || defaultConfig.title,
+    } : defaultConfig;
+
+    const freshData = await fetchTemplateData(initConfig).catch(() => []);
+
+    setPendingTileEdit({ sectionId: activeSection, tileId, onSaved });
+    setSelectedReport({ ...initConfig, data: freshData });
+    setIsBuilderOpen(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection]);
 
   const handleDuplicateReport = (config: ReportConfig) => {
     const duplicate = {
@@ -2278,13 +2359,24 @@ export default function Reports() {
                 setSelectedReport(report);
                 setIsBuilderOpen(true);
               }}
+              onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
             />
           )}
           {activeSection === "risk-assessments" && (
-            <RiskAssessmentsSection stats={stats} chartData={chartData} riskLevelData={riskLevelData} />
+            <RiskAssessmentsSection
+              stats={stats}
+              chartData={chartData}
+              riskLevelData={riskLevelData}
+              onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+            />
           )}
           {activeSection === "audits" && (
-            <AuditsSection stats={stats} chartData={chartData} auditStatusData={auditStatusData} />
+            <AuditsSection
+              stats={stats}
+              chartData={chartData}
+              auditStatusData={auditStatusData}
+              onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+            />
           )}
           {activeSection === "incidents" && (
             <IncidentsSection
@@ -2294,19 +2386,38 @@ export default function Reports() {
               companyId={companyId || ""}
               selectedYear={selectedYear}
               departmentFilter={departmentFilter}
+              onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
             />
           )}
           {activeSection === "trainings" && (
-            <TrainingsSection stats={stats} trainingMatrix={trainingMatrix} chartData={chartData} />
+            <TrainingsSection
+              stats={stats}
+              trainingMatrix={trainingMatrix}
+              chartData={chartData}
+              onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+            />
           )}
           {activeSection === "measures" && (
-            <MeasuresSection stats={stats} chartData={chartData} measuresStatusData={measuresStatusData} />
+            <MeasuresSection
+              stats={stats}
+              chartData={chartData}
+              measuresStatusData={measuresStatusData}
+              onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+            />
           )}
           {activeSection === "tasks" && (
-            <TasksSection stats={stats} chartData={chartData} />
+            <TasksSection
+              stats={stats}
+              chartData={chartData}
+              onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+            />
           )}
           {activeSection === "checkups" && (
-            <CheckupsSection stats={stats} checkUpsStatusData={checkUpsStatusData} />
+            <CheckupsSection
+              stats={stats}
+              checkUpsStatusData={checkUpsStatusData}
+              onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+            />
           )}
 
           {activeSection !== "overview" && sectionCustomReports.length > 0 && (
@@ -2345,6 +2456,7 @@ export default function Reports() {
         onClose={() => {
           setIsBuilderOpen(false);
           setSelectedReport(null);
+          setPendingTileEdit(null);
         }}
         onSave={handleSaveReport}
         initialConfig={selectedReport}

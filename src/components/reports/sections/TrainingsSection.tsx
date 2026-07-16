@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GraduationCap, CheckCircle } from "lucide-react";
+import { RotateCcw, GraduationCap, CheckCircle, Pencil } from "lucide-react";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { TileEditPopover } from "@/components/reports/TileEditPopover";
 import { getTileConfig } from "@/components/reports/TileConfigStore";
-import { ReportStats, TrainingStatus } from "@/components/reports/types";
+import { ReportStats, TrainingStatus, OnEditTile } from "@/components/reports/types";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_ID = "trainings";
@@ -20,10 +20,12 @@ export function TrainingsSection({
   stats,
   trainingMatrix,
   chartData,
+  onEditTile,
 }: {
   stats: ReportStats;
   trainingMatrix: TrainingStatus[];
   chartData: any[];
+  onEditTile?: OnEditTile;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -170,7 +172,7 @@ export function TrainingsSection({
             value={stats.totalTrainings}
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="training-total" defaultTitle={t("reports.trainings.totalTitle")} defaultSubtitle={t("reports.trainings.totalSubtitle")} onSave={(cfg) => updateTileLabel("training-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("training-total")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="training-total" defaultTitle={t("reports.trainings.totalTitle")} defaultSubtitle={t("reports.trainings.totalSubtitle")} onSave={(cfg) => updateTileLabel("training-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("training-total")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("training-total", { id: "training-total", title: t("reports.trainings.totalTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("training-total", cfg.title, tileLabels["training-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="training-compliance">
@@ -180,7 +182,7 @@ export function TrainingsSection({
             value={`${stats.trainingCompliance}%`}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="training-compliance" defaultTitle={t("reports.trainings.complianceTitle")} defaultSubtitle={t("reports.trainings.complianceSubtitle")} onSave={(cfg) => updateTileLabel("training-compliance", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("training-compliance")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="training-compliance" defaultTitle={t("reports.trainings.complianceTitle")} defaultSubtitle={t("reports.trainings.complianceSubtitle")} onSave={(cfg) => updateTileLabel("training-compliance", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("training-compliance")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("training-compliance", { id: "training-compliance", title: t("reports.trainings.complianceTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("training-compliance", cfg.title, tileLabels["training-compliance"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
       </ResponsiveGridLayout>

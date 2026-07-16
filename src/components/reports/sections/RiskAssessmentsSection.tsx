@@ -3,19 +3,30 @@ import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GripVertical, Shield } from "lucide-react";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { RotateCcw, GripVertical, Shield, Pencil } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { TileEditPopover } from "@/components/reports/TileEditPopover";
-import { getTileConfig } from "@/components/reports/TileConfigStore";
-import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
+import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
+import type { ReportConfig } from "@/components/reports/ReportBuilder";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_ID = "risk-assessments";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { stats: ReportStats; chartData: any[]; riskLevelData: any[] }) {
+export function RiskAssessmentsSection({
+  stats,
+  chartData,
+  riskLevelData,
+  onEditTile,
+}: {
+  stats: ReportStats;
+  chartData: any[];
+  riskLevelData: any[];
+  onEditTile?: OnEditTile;
+}) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
@@ -32,6 +43,14 @@ export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { st
   const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
   const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
   const resetTileLabel = (id: string) => setTileLabels((p) => ({ ...p, [id]: { title: "", subtitle: "" } }));
+
+  // Chart overrides
+  const [chartOverrides, setChartOverrides] = useState<Record<string, { data: any[]; chartType: string; title?: string }>>(() => {
+    const result: Record<string, { data: any[]; chartType: string; title?: string }> = {};
+    const stored = getChartConfig(SECTION_ID, "risk-level-chart");
+    if (stored) result["risk-level-chart"] = { data: [], chartType: stored.chartType, title: stored.title };
+    return result;
+  });
 
   const defaultLayout = {
     lg: [
@@ -109,6 +128,52 @@ export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { st
     toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.riskAssessmentsLayoutResetDesc") });
   }, [toast, t]);
 
+  const handleEditChartTile = (tileId: string, defaultConfig: ReportConfig) => {
+    if (!onEditTile) return;
+    onEditTile(tileId, defaultConfig, (cfg, data) => {
+      setChartOverrides((prev) => ({ ...prev, [tileId]: { data, chartType: cfg.chartType, title: cfg.title } }));
+    });
+  };
+
+  const renderChart = (tileId: string, defaultData: any[], defaultChartType: string) => {
+    const override = chartOverrides[tileId];
+    const data = override?.data?.length ? override.data : defaultData;
+    const chartType = override?.chartType || defaultChartType;
+
+    if (data.length === 0) {
+      return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.riskAssessments.noDataForRange")}</div>;
+    }
+
+    if (chartType === "bar") {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis allowDecimals={false} />
+            <Tooltip formatter={(v: any, n: any) => [v, formatStatusLabel(String(n))]} />
+            <Legend formatter={(v: any) => formatStatusLabel(String(v))} />
+            <Bar dataKey="value" fill="#f97316" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      );
+    }
+
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="75%">
+            {data.map((entry: any, index: number) => (
+              <Cell key={`risk-cell-${index}`} fill={getStatusColor(entry.name, index)} />
+            ))}
+          </Pie>
+          <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+          <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -147,36 +212,36 @@ export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { st
             value={stats.totalRiskAssessments}
             icon={<Shield className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="risk-total" defaultTitle={t("reports.riskAssessments.totalTitle")} defaultSubtitle={t("reports.riskAssessments.totalSubtitle")} onSave={(cfg) => updateTileLabel("risk-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("risk-total")} />}
+            editSlot={
+              <>
+                <TileEditPopover sectionId={SECTION_ID} tileId="risk-total" defaultTitle={t("reports.riskAssessments.totalTitle")} defaultSubtitle={t("reports.riskAssessments.totalSubtitle")} onSave={(cfg) => updateTileLabel("risk-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("risk-total")} />
+                {onEditTile && (
+                  <button onClick={(e) => { e.stopPropagation(); onEditTile("risk-total", { id: "risk-total", title: t("reports.riskAssessments.totalTitle"), metric: "risks", groupBy: "risk_level", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _data) => { if (cfg.title) updateTileLabel("risk-total", cfg.title, tileLabels["risk-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+                )}
+              </>
+            }
           />
         </div>
         <div key="risk-level-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
           <Card className="dashboard-grid-card border shadow-sm h-full group">
-            <div className="drag-handle border-b flex items-center px-3 py-1">
+            <div className="drag-handle border-b flex items-center justify-between px-3 py-1">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
+              {onEditTile && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleEditChartTile("risk-level-chart", { id: "risk-level-chart", title: t("reports.riskAssessments.levelChartTitle"), metric: "risks", groupBy: "risk_level", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }}
+                  className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
+                  title="Diagramm bearbeiten"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              )}
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">{t("reports.riskAssessments.levelChartTitle")}</CardTitle>
+              <CardTitle className="text-base">{chartOverrides["risk-level-chart"]?.title || t("reports.riskAssessments.levelChartTitle")}</CardTitle>
               <CardDescription>{t("reports.riskAssessments.levelChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
-              {riskLevelData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  {t("reports.riskAssessments.noDataForRange")}
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={riskLevelData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="75%">
-                      {riskLevelData.map((entry, index) => (
-                        <Cell key={`risk-cell-${index}`} fill={getStatusColor(entry.name, index)} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
-                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
+              {renderChart("risk-level-chart", riskLevelData, "pie")}
             </CardContent>
           </Card>
         </div>

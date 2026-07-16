@@ -3,19 +3,20 @@ import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GripVertical, CheckCircle, TrendingUp } from "lucide-react";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { RotateCcw, GripVertical, CheckCircle, TrendingUp, Pencil } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { TileEditPopover } from "@/components/reports/TileEditPopover";
-import { getTileConfig } from "@/components/reports/TileConfigStore";
-import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
+import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
+import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
+import type { ReportConfig } from "@/components/reports/ReportBuilder";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_ID = "measures";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-export function MeasuresSection({ stats, chartData, measuresStatusData }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[] }) {
+export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTile }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[]; onEditTile?: OnEditTile }) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
@@ -115,6 +116,53 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
     toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.measuresLayoutResetDesc") });
   }, [toast, t]);
 
+  // Chart overrides
+  const [chartOverrides, setChartOverrides] = useState<Record<string, { data: any[]; chartType: string; title?: string }>>(() => {
+    const result: Record<string, { data: any[]; chartType: string; title?: string }> = {};
+    const stored = getChartConfig(SECTION_ID, "measures-status-chart");
+    if (stored) result["measures-status-chart"] = { data: [], chartType: stored.chartType, title: stored.title };
+    return result;
+  });
+
+  const handleEditChartTile = (tileId: string, defaultConfig: ReportConfig) => {
+    if (!onEditTile) return;
+    onEditTile(tileId, defaultConfig, (cfg, data) => {
+      setChartOverrides((prev) => ({ ...prev, [tileId]: { data, chartType: cfg.chartType, title: cfg.title } }));
+    });
+  };
+
+  const renderMeasuresChart = (tileId: string, defaultData: any[], defaultChartType: string) => {
+    const override = chartOverrides[tileId];
+    const data = override?.data?.length ? override.data : defaultData;
+    const chartType = override?.chartType || defaultChartType;
+    if (data.length === 0) return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.measures.noDataForRange")}</div>;
+    if (chartType === "bar") {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis allowDecimals={false} />
+            <Tooltip formatter={(v: any, n: any) => [v, formatStatusLabel(String(n))]} />
+            <Legend formatter={(v: any) => formatStatusLabel(String(v))} />
+            <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      );
+    }
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="40%" outerRadius="75%">
+            {data.map((entry: any, index: number) => <Cell key={`measures-cell-${index}`} fill={getStatusColor(entry.name, index)} />)}
+          </Pie>
+          <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
+          <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -153,7 +201,7 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
             value={stats.totalMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-purple-50 text-purple-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="measures-total" defaultTitle={t("reports.measures.totalTitle")} defaultSubtitle={t("reports.measures.totalSubtitle")} onSave={(cfg) => updateTileLabel("measures-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-total")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="measures-total" defaultTitle={t("reports.measures.totalTitle")} defaultSubtitle={t("reports.measures.totalSubtitle")} onSave={(cfg) => updateTileLabel("measures-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-total")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("measures-total", { id: "measures-total", title: t("reports.measures.totalTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("measures-total", cfg.title, tileLabels["measures-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="measures-completed">
@@ -163,7 +211,7 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
             value={stats.completedMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="measures-completed" defaultTitle={t("reports.measures.completedTitle")} defaultSubtitle={t("reports.measures.completedSubtitle")} onSave={(cfg) => updateTileLabel("measures-completed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-completed")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="measures-completed" defaultTitle={t("reports.measures.completedTitle")} defaultSubtitle={t("reports.measures.completedSubtitle")} onSave={(cfg) => updateTileLabel("measures-completed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-completed")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("measures-completed", { id: "measures-completed", title: t("reports.measures.completedTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("measures-completed", cfg.title, tileLabels["measures-completed"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="measures-progress">
@@ -173,36 +221,23 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
             value={stats.totalMeasures - stats.completedMeasures}
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
-            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="measures-progress" defaultTitle={t("reports.measures.inProgressTitle")} defaultSubtitle={t("reports.measures.inProgressSubtitle")} onSave={(cfg) => updateTileLabel("measures-progress", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-progress")} />}
+            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="measures-progress" defaultTitle={t("reports.measures.inProgressTitle")} defaultSubtitle={t("reports.measures.inProgressSubtitle")} onSave={(cfg) => updateTileLabel("measures-progress", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-progress")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("measures-progress", { id: "measures-progress", title: t("reports.measures.inProgressTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("measures-progress", cfg.title, tileLabels["measures-progress"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
           />
         </div>
         <div key="measures-status-chart" data-grid={{ x: 0, y: 4, w: 12, h: 4, minW: 4, minH: 3 }}>
           <Card className="dashboard-grid-card border shadow-sm h-full group">
-            <div className="drag-handle border-b flex items-center px-3 py-1">
+            <div className="drag-handle border-b flex items-center justify-between px-3 py-1">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
+              {onEditTile && (
+                <button onClick={(e) => { e.stopPropagation(); handleEditChartTile("measures-status-chart", { id: "measures-status-chart", title: t("reports.measures.statusChartTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+              )}
             </div>
             <CardHeader className="py-3 pb-2">
-              <CardTitle className="text-base">{t("reports.measures.statusChartTitle")}</CardTitle>
+              <CardTitle className="text-base">{chartOverrides["measures-status-chart"]?.title || t("reports.measures.statusChartTitle")}</CardTitle>
               <CardDescription>{t("reports.measures.statusChartDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
-              {measuresStatusData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  {t("reports.measures.noDataForRange")}
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={measuresStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius="40%" outerRadius="75%">
-                      {measuresStatusData.map((entry, index) => (
-                        <Cell key={`measures-cell-${index}`} fill={getStatusColor(entry.name, index)} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: any, name: any) => [value, formatStatusLabel(String(name))]} />
-                    <Legend formatter={(value: any) => formatStatusLabel(String(value))} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
+              {renderMeasuresChart("measures-status-chart", measuresStatusData, "pie")}
             </CardContent>
           </Card>
         </div>

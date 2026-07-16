@@ -8,11 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
   Settings2, Shield, ClipboardCheck, AlertTriangle, GraduationCap, TrendingUp,
-  ListChecks, GripVertical, EyeOff, Eye, BarChart3, RotateCcw,
+  ListChecks, GripVertical, EyeOff, Eye, BarChart3, RotateCcw, Pencil,
 } from "lucide-react";
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
-import { ReportStats } from "@/components/reports/types";
+import { ReportStats, OnEditTile } from "@/components/reports/types";
 import ReportWidget, { ReportConfig } from "@/components/reports/ReportWidget";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -28,6 +28,7 @@ export function OverviewSection({
   onDeleteReport,
   onExportReport,
   onViewReport,
+  onEditTile,
 }: {
   stats: ReportStats;
   chartData: any[];
@@ -40,6 +41,7 @@ export function OverviewSection({
   onDeleteReport: (id: string) => void;
   onExportReport: (config: ReportConfig) => void;
   onViewReport: (config: ReportConfig) => void;
+  onEditTile?: OnEditTile;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -475,6 +477,7 @@ export function OverviewSection({
             icon={<Shield className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
             onHide={() => toggleCardVisibility("risk-assessments")}
+            editSlot={onEditTile ? <button onClick={(e) => { e.stopPropagation(); onEditTile("risk-assessments", { id: "risk-assessments", title: t("reports.overview.card.riskAssessments"), metric: "risks", groupBy: "risk_level", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button> : undefined}
           />
         </div>}
 
@@ -486,6 +489,7 @@ export function OverviewSection({
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
             onHide={() => toggleCardVisibility("safety-audits")}
+            editSlot={onEditTile ? <button onClick={(e) => { e.stopPropagation(); onEditTile("safety-audits", { id: "safety-audits", title: t("reports.overview.card.safetyAudits"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button> : undefined}
           />
         </div>}
 
@@ -497,6 +501,7 @@ export function OverviewSection({
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-red-50 text-red-600"
             onHide={() => toggleCardVisibility("incidents")}
+            editSlot={onEditTile ? <button onClick={(e) => { e.stopPropagation(); onEditTile("incidents", { id: "incidents", title: t("reports.overview.card.incidents"), metric: "incidents", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button> : undefined}
           />
         </div>}
 
@@ -508,6 +513,7 @@ export function OverviewSection({
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
             onHide={() => toggleCardVisibility("training-compliance")}
+            editSlot={onEditTile ? <button onClick={(e) => { e.stopPropagation(); onEditTile("training-compliance", { id: "training-compliance", title: t("reports.overview.card.trainingCompliance"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button> : undefined}
           />
         </div>}
 
@@ -515,13 +521,16 @@ export function OverviewSection({
           <Card className="dashboard-grid-card border shadow-sm h-full group">
             <div className="drag-handle border-b flex items-center justify-between px-3">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleCardVisibility("incident-trends"); }}
-                className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-                title={t("reports.draggableCard.hide")}
-              >
-                <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
+              <div className="flex items-center gap-1">
+                {onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("incident-trends", { id: "incident-trends", title: t("reports.overview.card.incidentTrends"), metric: "incidents", groupBy: "month", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "line", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleCardVisibility("incident-trends"); }}
+                  className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
+                  title={t("reports.draggableCard.hide")}
+                >
+                  <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
             </div>
             <CardHeader className="py-4 pb-3">
               <CardTitle className="text-lg">{t("reports.overview.card.incidentTrends")}</CardTitle>
@@ -558,13 +567,16 @@ export function OverviewSection({
           <Card className="dashboard-grid-card border shadow-sm h-full overflow-hidden group">
             <div className="drag-handle border-b flex items-center justify-between px-3">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleCardVisibility("audit-completion"); }}
-                className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-                title={t("reports.draggableCard.hide")}
-              >
-                <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
+              <div className="flex items-center gap-1">
+                {onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("audit-completion", { id: "audit-completion", title: t("reports.overview.card.auditCompletion"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleCardVisibility("audit-completion"); }}
+                  className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
+                  title={t("reports.draggableCard.hide")}
+                >
+                  <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
             </div>
             <CardHeader className="py-2 pb-1 px-4">
               <CardTitle className="text-sm flex items-center gap-2">
@@ -597,13 +609,16 @@ export function OverviewSection({
           <Card className="dashboard-grid-card border shadow-sm h-full overflow-hidden group">
             <div className="drag-handle border-b flex items-center justify-between px-3">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleCardVisibility("task-completion"); }}
-                className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-                title={t("reports.draggableCard.hide")}
-              >
-                <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
+              <div className="flex items-center gap-1">
+                {onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("task-completion", { id: "task-completion", title: t("reports.overview.card.taskCompletion"), metric: "tasks", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleCardVisibility("task-completion"); }}
+                  className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
+                  title={t("reports.draggableCard.hide")}
+                >
+                  <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+              </div>
             </div>
             <CardHeader className="py-2 pb-1 px-4">
               <CardTitle className="text-sm flex items-center gap-2">
