@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -12,6 +11,7 @@ import {
   BriefcaseBusiness,
   X,
   CheckCircle,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Position {
   id: string;
@@ -78,6 +79,141 @@ interface Props {
 
 const emptyPositionForm = { name: "", description: "" };
 
+const POSITION_CATALOG = [
+  {
+    key: "gabelstaplerfahrer",
+    name: "Gabelstaplerfahrer",
+    description: "Betrieb von Flurförderzeugen im Lager und auf dem Betriebsgelände",
+    icon: "🏗️",
+    trainings: [
+      { name: "Gabelstapler-Fahrerlaubnis (DGUV G 308-001)", durationHours: 16, validityMonths: 36 },
+      { name: "Sicherheitsunterweisung Flurförderzeuge", durationHours: 2, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "elektriker",
+    name: "Elektriker / Elektrofachkraft",
+    description: "Elektrotechnische Arbeiten, Installation und Prüfung elektrischer Anlagen",
+    icon: "⚡",
+    trainings: [
+      { name: "Elektrosicherheit (BGV A3 / DGUV V3)", durationHours: 8, validityMonths: 48 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Erste Hilfe", durationHours: 16, validityMonths: 24 },
+    ],
+  },
+  {
+    key: "schlosser",
+    name: "Schlosser / Metallbearbeiter",
+    description: "Metallverarbeitung, Maschinenwartung und mechanische Reparaturen",
+    icon: "🔧",
+    trainings: [
+      { name: "Maschinensicherheit PSA", durationHours: 4, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Lärm- und Vibrations-Schutz", durationHours: 2, validityMonths: 24 },
+    ],
+  },
+  {
+    key: "schweisser",
+    name: "Schweißer",
+    description: "Schweiß- und Schneidarbeiten an Metall- und Stahlkonstruktionen",
+    icon: "🔥",
+    trainings: [
+      { name: "Schweißerlaubnis / Qualifikation (DVS)", durationHours: 24, validityMonths: 24 },
+      { name: "Feuerschutz und Heißarbeiten", durationHours: 4, validityMonths: 12 },
+      { name: "Gasprüfung und Druckbehälter", durationHours: 4, validityMonths: 12 },
+      { name: "PSA Augenschutz", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "buero",
+    name: "Bürokraft / Verwaltung",
+    description: "Büroarbeiten, Sachbearbeitung und administrative Tätigkeiten",
+    icon: "💼",
+    trainings: [
+      { name: "Bildschirmarbeitsplatz-Unterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Datenschutz (DSGVO)", durationHours: 2, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "lager",
+    name: "Lagerarbeiter",
+    description: "Warenannahme, Einlagerung, Kommissionierung und Versand",
+    icon: "📦",
+    trainings: [
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Rückengerechtes Heben und Tragen", durationHours: 2, validityMonths: 24 },
+      { name: "Sicherheit in der Logistik", durationHours: 4, validityMonths: 24 },
+    ],
+  },
+  {
+    key: "chemikant",
+    name: "Chemikant / Chemiefachkraft",
+    description: "Bedienung und Überwachung chemischer Produktionsanlagen",
+    icon: "🧪",
+    trainings: [
+      { name: "Gefahrstoffunterweisung (GefStoffV)", durationHours: 4, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "PSA für chemische Gefährdung", durationHours: 2, validityMonths: 12 },
+      { name: "Erste Hilfe", durationHours: 16, validityMonths: 24 },
+    ],
+  },
+  {
+    key: "sicherheitsbeauftragter",
+    name: "Sicherheitsbeauftragter",
+    description: "Unterstützung des Arbeitgebers bei der Umsetzung von Arbeitsschutzmaßnahmen",
+    icon: "🛡️",
+    trainings: [
+      { name: "Sicherheitsbeauftragten-Ausbildung (DGUV R 114-017)", durationHours: 16, validityMonths: null },
+      { name: "Auffrischungsschulung Sicherheitsbeauftragter", durationHours: 8, validityMonths: 36 },
+      { name: "Erste Hilfe", durationHours: 16, validityMonths: 24 },
+    ],
+  },
+  {
+    key: "ersthelfer",
+    name: "Ersthelfer",
+    description: "Erste Hilfe bei Betriebsunfällen und medizinischen Notfällen",
+    icon: "🚑",
+    trainings: [
+      { name: "Erste Hilfe Grundkurs (DGUV P 304-001)", durationHours: 16, validityMonths: 24 },
+      { name: "Erste Hilfe Auffrischung", durationHours: 8, validityMonths: 24 },
+    ],
+  },
+  {
+    key: "kranfuehrer",
+    name: "Kranführer",
+    description: "Bedienung von Kran- und Hebezeugeinrichtungen",
+    icon: "🏗️",
+    trainings: [
+      { name: "Kranführer-Ausbildung (DGUV G 309-003)", durationHours: 32, validityMonths: 60 },
+      { name: "Lastensicherung / Anschläger", durationHours: 8, validityMonths: 24 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "brandschutz",
+    name: "Brandschutzhelfer",
+    description: "Unterstützung bei der Brandverhütung und Evakuierung im Brandfall",
+    icon: "🔥",
+    trainings: [
+      { name: "Brandschutzhelfer-Ausbildung (ASR A2.2)", durationHours: 4, validityMonths: 36 },
+      { name: "Evakuierungsübung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "maler",
+    name: "Maler und Lackierer",
+    description: "Oberflächen- und Beschichtungsarbeiten an Gebäuden und Bauteilen",
+    icon: "🎨",
+    trainings: [
+      { name: "Gefahrstoffunterweisung Farben/Lacke", durationHours: 4, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Leitererlass und Gerüstsicherheit", durationHours: 4, validityMonths: 24 },
+    ],
+  },
+];
+
 export function PositionTrainingCatalogTab({ companyId }: Props) {
   const { toast } = useToast();
 
@@ -101,6 +237,11 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
 
   // Delete
   const [deletePositionId, setDeletePositionId] = useState<string | null>(null);
+
+  // Catalog tab
+  const [activeTab, setActiveTab] = useState("own");
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [addingKey, setAddingKey] = useState<string | null>(null);
 
   useEffect(() => {
     if (companyId) {
@@ -322,6 +463,77 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
     }
   }
 
+  // Catalog helpers
+  function isAlreadyAdded(entry: typeof POSITION_CATALOG[0]) {
+    return positions.some((p) => p.name.toLowerCase() === entry.name.toLowerCase());
+  }
+
+  async function handleAddFromCatalog(entry: typeof POSITION_CATALOG[0]) {
+    setAddingKey(entry.key);
+    try {
+      // 1. Position erstellen
+      const { data: posData, error: posErr } = await supabase
+        .from("company_positions")
+        .insert([{ company_id: companyId, name: entry.name, description: entry.description, is_active: true }])
+        .select("id")
+        .single();
+      if (posErr) throw posErr;
+
+      // 2. Für jede Schulung
+      for (const t of entry.trainings) {
+        // a. Schulungstyp suchen
+        const { data: existing } = await supabase
+          .from("training_types")
+          .select("id")
+          .eq("company_id", companyId)
+          .eq("name", t.name)
+          .maybeSingle();
+
+        let typeId = existing?.id;
+
+        // b. Erstellen falls nicht vorhanden
+        if (!typeId) {
+          const { data: newType, error: typeErr } = await supabase
+            .from("training_types")
+            .insert([{
+              company_id: companyId,
+              name: t.name,
+              description: "",
+              duration_hours: t.durationHours,
+              validity_months: t.validityMonths,
+            }])
+            .select("id")
+            .single();
+          if (typeErr) throw typeErr;
+          typeId = newType.id;
+        }
+
+        // c. Anforderung zuweisen
+        await supabase
+          .from("position_training_requirements")
+          .insert([{ position_id: posData.id, training_type_id: typeId, is_mandatory: true }]);
+      }
+
+      toast({
+        title: `"${entry.name}" hinzugefügt`,
+        description: `${entry.trainings.length} Pflicht-Schulungen wurden zugewiesen.`,
+      });
+      await fetchAll();
+      setActiveTab("own");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+      toast({ title: "Fehler", description: message, variant: "destructive" });
+    } finally {
+      setAddingKey(null);
+    }
+  }
+
+  const filteredCatalog = POSITION_CATALOG.filter(
+    (e) =>
+      e.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+      e.description.toLowerCase().includes(catalogSearch.toLowerCase())
+  );
+
   const activePositions = positions.filter((p) => p.is_active);
   const inactivePositions = positions.filter((p) => !p.is_active);
 
@@ -341,187 +553,275 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="text-sm text-muted-foreground py-8 text-center">Lade Stellen...</div>
-      ) : positions.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <BriefcaseBusiness className="h-10 w-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm font-medium">Noch keine Stellen definiert</p>
-            <p className="text-xs mt-1">
-              Erstelle Stellen und weise ihnen Pflicht-Schulungen zu.
-            </p>
-            <Button onClick={openCreatePosition} variant="outline" size="sm" className="mt-4 gap-1">
-              <Plus className="h-4 w-4" />
-              Erste Stelle erstellen
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {/* Active positions */}
-          {activePositions.map((position) => {
-            const isExpanded = expandedPositions.has(position.id);
-            const reqs = requirements[position.id] || [];
-            return (
-              <Card key={position.id} className="overflow-hidden">
-                <CardHeader className="py-3 px-4">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => toggleExpand(position.id)}
-                    >
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm">{position.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {reqs.length} Schulung{reqs.length !== 1 ? "en" : ""}
-                        </Badge>
-                      </div>
-                      {position.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                          {position.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="flex items-center gap-1.5">
-                        <Switch
-                          checked={position.is_active}
-                          onCheckedChange={() => handleToggleActive(position)}
-                          className="scale-75"
-                        />
-                        <span className="text-xs text-muted-foreground">Aktiv</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => openEditPosition(position)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => setDeletePositionId(position.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="own">Eigene Stellen</TabsTrigger>
+          <TabsTrigger value="catalog">Aus Katalog</TabsTrigger>
+        </TabsList>
 
-                {isExpanded && (
-                  <CardContent className="pt-0 pb-4 px-4 border-t">
-                    <div className="mt-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                          Zugeordnete Schulungen
-                        </span>
+        {/* Tab: Eigene Stellen */}
+        <TabsContent value="own">
+          {loading ? (
+            <div className="text-sm text-muted-foreground py-8 text-center">Lade Stellen...</div>
+          ) : positions.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <BriefcaseBusiness className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-medium">Noch keine Stellen definiert</p>
+                <p className="text-xs mt-1">
+                  Erstelle Stellen manuell oder füge sie aus dem Katalog hinzu.
+                </p>
+                <div className="flex gap-2 justify-center mt-4">
+                  <Button onClick={openCreatePosition} variant="outline" size="sm" className="gap-1">
+                    <Plus className="h-4 w-4" />
+                    Stelle erstellen
+                  </Button>
+                  <Button onClick={() => setActiveTab("catalog")} variant="default" size="sm" className="gap-1">
+                    Aus Katalog wählen
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {/* Active positions */}
+              {activePositions.map((position) => {
+                const isExpanded = expandedPositions.has(position.id);
+                const reqs = requirements[position.id] || [];
+                return (
+                  <Card key={position.id} className="overflow-hidden">
+                    <CardHeader className="py-3 px-4">
+                      <div className="flex items-center gap-2">
                         <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs gap-1"
-                          onClick={() => openTrainingDialog(position.id)}
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={() => toggleExpand(position.id)}
                         >
-                          <Plus className="h-3 w-3" />
-                          Schulung zuordnen
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
                         </Button>
-                      </div>
-
-                      {reqs.length === 0 ? (
-                        <p className="text-xs text-muted-foreground py-3 text-center">
-                          Noch keine Schulungen zugeordnet.
-                        </p>
-                      ) : (
-                        <div className="space-y-1.5">
-                          {reqs.map((req) => (
-                            <div
-                              key={req.id}
-                              className="flex items-center justify-between gap-2 rounded-md bg-muted/50 px-3 py-2"
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <BookOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                <span className="text-sm truncate">
-                                  {req.training_type?.name || "Unbekannte Schulung"}
-                                </span>
-                                {req.is_mandatory && (
-                                  <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-                                    Pflicht
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                {req.training_type?.validity_months && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {req.training_type.validity_months} Mon.
-                                  </span>
-                                )}
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                                  onClick={() => handleRemoveTraining(position.id, req.id)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-medium text-sm">{position.name}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {reqs.length} Schulung{reqs.length !== 1 ? "en" : ""}
+                            </Badge>
+                          </div>
+                          {position.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                              {position.description}
+                            </p>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            );
-          })}
-
-          {/* Inactive positions */}
-          {inactivePositions.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-4">
-                Deaktivierte Stellen
-              </p>
-              {inactivePositions.map((position) => (
-                <Card key={position.id} className="opacity-60">
-                  <CardContent className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium flex-1">{position.name}</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Switch
-                          checked={position.is_active}
-                          onCheckedChange={() => handleToggleActive(position)}
-                          className="scale-75"
-                        />
-                        <span className="text-xs text-muted-foreground">Aktiv</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              checked={position.is_active}
+                              onCheckedChange={() => handleToggleActive(position)}
+                              className="scale-75"
+                            />
+                            <span className="text-xs text-muted-foreground">Aktiv</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => openEditPosition(position)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => setDeletePositionId(position.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => setDeletePositionId(position.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardHeader>
+
+                    {isExpanded && (
+                      <CardContent className="pt-0 pb-4 px-4 border-t">
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                              Zugeordnete Schulungen
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              onClick={() => openTrainingDialog(position.id)}
+                            >
+                              <Plus className="h-3 w-3" />
+                              Schulung zuordnen
+                            </Button>
+                          </div>
+
+                          {reqs.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-3 text-center">
+                              Noch keine Schulungen zugeordnet.
+                            </p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {reqs.map((req) => (
+                                <div
+                                  key={req.id}
+                                  className="flex items-center justify-between gap-2 rounded-md bg-muted/50 px-3 py-2"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <BookOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                    <span className="text-sm truncate">
+                                      {req.training_type?.name || "Unbekannte Schulung"}
+                                    </span>
+                                    {req.is_mandatory && (
+                                      <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-200">
+                                        Pflicht
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {req.training_type?.validity_months && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {req.training_type.validity_months} Mon.
+                                      </span>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                      onClick={() => handleRemoveTraining(position.id, req.id)}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+
+              {/* Inactive positions */}
+              {inactivePositions.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mt-4">
+                    Deaktivierte Stellen
+                  </p>
+                  {inactivePositions.map((position) => (
+                    <Card key={position.id} className="opacity-60">
+                      <CardContent className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium flex-1">{position.name}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Switch
+                              checked={position.is_active}
+                              onCheckedChange={() => handleToggleActive(position)}
+                              className="scale-75"
+                            />
+                            <span className="text-xs text-muted-foreground">Aktiv</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            onClick={() => setDeletePositionId(position.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
+        </TabsContent>
+
+        {/* Tab: Aus Katalog */}
+        <TabsContent value="catalog">
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Katalog durchsuchen..."
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {filteredCatalog.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Keine Einträge gefunden.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCatalog.map((entry) => {
+                  const added = isAlreadyAdded(entry);
+                  return (
+                    <Card key={entry.key} className="flex flex-col">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl">{entry.icon}</span>
+                              <CardTitle className="text-base">{entry.name}</CardTitle>
+                            </div>
+                            <CardDescription className="mt-1">{entry.description}</CardDescription>
+                          </div>
+                          {added && <Badge variant="secondary">Vorhanden</Badge>}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1">
+                        <div className="text-xs text-muted-foreground font-medium mb-2">
+                          Typische Pflicht-Schulungen:
+                        </div>
+                        <ul className="space-y-1">
+                          {entry.trainings.map((t) => (
+                            <li key={t.name} className="text-xs flex items-start gap-1">
+                              <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                              <span>
+                                {t.name}
+                                {t.validityMonths ? ` (${t.validityMonths} Mon.)` : ""}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                      <div className="p-4 pt-0">
+                        <Button
+                          className="w-full"
+                          size="sm"
+                          disabled={added || addingKey === entry.key}
+                          onClick={() => handleAddFromCatalog(entry)}
+                        >
+                          {addingKey === entry.key
+                            ? "Wird hinzugefügt..."
+                            : added
+                            ? "Bereits vorhanden"
+                            : "+ Hinzufügen"}
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Position Add/Edit Dialog */}
       <Dialog open={positionDialogOpen} onOpenChange={setPositionDialogOpen}>
