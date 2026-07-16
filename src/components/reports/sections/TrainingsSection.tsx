@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, GraduationCap, CheckCircle, Pencil } from "lucide-react";
 import { DraggableCard } from "@/components/reports/DraggableCard";
-import { TileEditPopover } from "@/components/reports/TileEditPopover";
 import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, TrainingStatus, OnEditTile } from "@/components/reports/types";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -42,7 +41,6 @@ export function TrainingsSection({
   });
   const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
   const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
-  const resetTileLabel = (id: string) => setTileLabels((p) => ({ ...p, [id]: { title: "", subtitle: "" } }));
 
   const [matrixPage, setMatrixPage] = useState(1);
   const matrixPageSize = 10;
@@ -172,7 +170,7 @@ export function TrainingsSection({
             value={stats.totalTrainings}
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="training-total" defaultTitle={t("reports.trainings.totalTitle")} defaultSubtitle={t("reports.trainings.totalSubtitle")} onSave={(cfg) => updateTileLabel("training-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("training-total")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("training-total", { id: "training-total", title: t("reports.trainings.totalTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("training-total", cfg.title, tileLabels["training-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
+            editSlot={onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("training-total", { id: "training-total", title: t("reports.trainings.totalTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("training-total", cfg.title, tileLabels["training-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
           />
         </div>
         <div key="training-compliance">
@@ -182,7 +180,7 @@ export function TrainingsSection({
             value={`${stats.trainingCompliance}%`}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
-            editSlot={<><TileEditPopover sectionId={SECTION_ID} tileId="training-compliance" defaultTitle={t("reports.trainings.complianceTitle")} defaultSubtitle={t("reports.trainings.complianceSubtitle")} onSave={(cfg) => updateTileLabel("training-compliance", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("training-compliance")} />{onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("training-compliance", { id: "training-compliance", title: t("reports.trainings.complianceTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("training-compliance", cfg.title, tileLabels["training-compliance"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>}
+            editSlot={onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("training-compliance", { id: "training-compliance", title: t("reports.trainings.complianceTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("training-compliance", cfg.title, tileLabels["training-compliance"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
           />
         </div>
       </ResponsiveGridLayout>

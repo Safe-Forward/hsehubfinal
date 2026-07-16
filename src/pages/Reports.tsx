@@ -1996,9 +1996,18 @@ export default function Reports() {
   };
 
   const handleEditReport = async (config: ReportConfig) => {
-    const freshData = await fetchTemplateData(config).catch(() => config.data || []);
-    setSelectedReport({ ...config, data: freshData });
+    // Sofort öffnen mit vorhandenen Daten
+    setSelectedReport(config);
     setIsBuilderOpen(true);
+    // Daten im Hintergrund nachladen
+    try {
+      const freshData = await fetchTemplateData(config);
+      if (freshData && freshData.length > 0) {
+        setSelectedReport(prev => prev ? { ...prev, data: freshData } : prev);
+      }
+    } catch {
+      // Ignorieren - vorhandene Daten bleiben
+    }
   };
 
   const handleEditStandardTile = useCallback(async (

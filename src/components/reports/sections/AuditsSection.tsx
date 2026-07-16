@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, GripVertical, ClipboardCheck, CheckCircle, Pencil } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
-import { TileEditPopover } from "@/components/reports/TileEditPopover";
 import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
 import type { ReportConfig } from "@/components/reports/ReportBuilder";
@@ -42,7 +41,6 @@ export function AuditsSection({
   });
   const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
   const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
-  const resetTileLabel = (id: string) => setTileLabels((p) => ({ ...p, [id]: { title: "", subtitle: "" } }));
 
   // Chart overrides (from ReportBuilder edits)
   const [chartOverrides, setChartOverrides] = useState<Record<string, { data: any[]; chartType: string; title?: string }>>(() => {
@@ -216,14 +214,9 @@ export function AuditsSection({
             value={stats.totalAudits}
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
-            editSlot={
-              <>
-                <TileEditPopover sectionId={SECTION_ID} tileId="audit-total" defaultTitle={t("reports.audits.totalTitle")} defaultSubtitle={t("reports.audits.totalSubtitle")} onSave={(cfg) => updateTileLabel("audit-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("audit-total")} />
-                {onEditTile && (
-                  <button onClick={(e) => { e.stopPropagation(); onEditTile("audit-total", { id: "audit-total", title: t("reports.audits.totalTitle"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, data) => { if (cfg.title) updateTileLabel("audit-total", cfg.title, tileLabels["audit-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-                )}
-              </>
-            }
+            editSlot={onEditTile && (
+              <button onClick={(e) => { e.stopPropagation(); onEditTile("audit-total", { id: "audit-total", title: t("reports.audits.totalTitle"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, data) => { if (cfg.title) updateTileLabel("audit-total", cfg.title, tileLabels["audit-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            )}
           />
         </div>
         <div key="audit-completed">
@@ -233,14 +226,9 @@ export function AuditsSection({
             value={stats.completedAudits}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={
-              <>
-                <TileEditPopover sectionId={SECTION_ID} tileId="audit-completed" defaultTitle={t("reports.audits.completedTitle")} defaultSubtitle={t("reports.audits.completedSubtitle")} onSave={(cfg) => updateTileLabel("audit-completed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("audit-completed")} />
-                {onEditTile && (
-                  <button onClick={(e) => { e.stopPropagation(); onEditTile("audit-completed", { id: "audit-completed", title: t("reports.audits.completedTitle"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, data) => { if (cfg.title) updateTileLabel("audit-completed", cfg.title, tileLabels["audit-completed"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-                )}
-              </>
-            }
+            editSlot={onEditTile && (
+              <button onClick={(e) => { e.stopPropagation(); onEditTile("audit-completed", { id: "audit-completed", title: t("reports.audits.completedTitle"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, data) => { if (cfg.title) updateTileLabel("audit-completed", cfg.title, tileLabels["audit-completed"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            )}
           />
         </div>
         <div key="audit-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
