@@ -737,21 +737,29 @@ export default function ReportBuilder({
               </div>
               <div className="flex-1 space-y-1">
                 <label className="text-xs font-medium text-muted-foreground">Wert</label>
-                <input
-                  type="text"
-                  list="pf-value-suggestions"
-                  value={pfValueInput}
-                  onChange={(e) => setPfValueInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddProfileFieldFilter(); } }}
-                  placeholder={pfFieldInput ? "z.B. Klasse B" : "Erst Feldname wählen"}
-                  disabled={!pfFieldInput}
-                  className="w-full border rounded-md px-3 py-2 text-sm bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                />
-                <datalist id="pf-value-suggestions">
-                  {pfValueSuggestions.map((val) => (
-                    <option key={val} value={val} />
-                  ))}
-                </datalist>
+                {pfValueSuggestions.length > 0 ? (
+                  <select
+                    value={pfValueInput}
+                    onChange={(e) => setPfValueInput(e.target.value)}
+                    disabled={!pfFieldInput}
+                    className="w-full border rounded-md px-3 py-2 text-sm bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">Wert auswählen…</option>
+                    {pfValueSuggestions.map((val) => (
+                      <option key={val} value={val}>{val}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={pfValueInput}
+                    onChange={(e) => setPfValueInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddProfileFieldFilter(); } }}
+                    placeholder={pfFieldInput ? "Wert eingeben…" : "Erst Feldname wählen"}
+                    disabled={!pfFieldInput}
+                    className="w-full border rounded-md px-3 py-2 text-sm bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                )}
               </div>
               <div className="flex items-end">
                 <Button
@@ -794,8 +802,8 @@ export default function ReportBuilder({
           <Button variant="outline" onClick={onClose}>
             {t("reports.builder.cancel")}
           </Button>
-          <Button onClick={handleSave}>
-            {initialConfig ? t("reports.builder.saveReport") : t("reports.builder.addReport")}
+          <Button onClick={handleSave} disabled={isLoading}>
+            {isLoading ? "Lädt…" : (initialConfig ? t("reports.builder.saveReport") : t("reports.builder.addReport"))}
           </Button>
         </div>
       </div>

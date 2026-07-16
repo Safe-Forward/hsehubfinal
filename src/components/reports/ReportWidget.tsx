@@ -315,7 +315,7 @@ export default function ReportWidget({
             </div>
           </TabsContent>
 
-          <TabsContent value="table" className="px-4 pb-4 mt-2">
+          <TabsContent value="table" className="px-4 pb-4 mt-2 overflow-y-auto" style={{ maxHeight: 280 }}>
             {chartData.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Keine Daten verfügbar</div>
             ) : (
