@@ -55,7 +55,7 @@ export interface ReportConfig {
 interface ReportBuilderProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (config: ReportConfig) => void;
+  onSave: (config: ReportConfig) => void | Promise<void>;
   initialConfig?: ReportConfig | null;
   data?: any[];
   onRefreshData?: (config: Partial<ReportConfig>) => Promise<any[]>;
@@ -92,6 +92,7 @@ export default function ReportBuilder({
   // Local chart data state that can be refreshed
   const [chartData, setChartData] = useState<any[]>(data);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Tag filter state
   const [tagFilters, setTagFilters] = useState<string[]>(initialConfig?.tagFilters || []);
@@ -277,15 +278,19 @@ export default function ReportBuilder({
   
   const getGroupByOptions = () => getGroupByOptionsForMetric(config.metric);
 
-  const handleSave = () => {
-    // Ensure data is included in the saved config
+  const handleSave = async () => {
     const configWithData = {
       ...config,
       data: chartData && chartData.length > 0 ? chartData : config.data || [],
       tagFilters: tagFilters.length > 0 ? tagFilters : undefined,
       profileFieldFilters: profileFieldFilters.length > 0 ? profileFieldFilters : undefined,
     };
-    onSave(configWithData);
+    setIsSaving(true);
+    try {
+      await onSave(configWithData);
+    } finally {
+      setIsSaving(false);
+    }
     onClose();
   };
 
@@ -802,8 +807,8 @@ export default function ReportBuilder({
           <Button variant="outline" onClick={onClose}>
             {t("reports.builder.cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading ? "Lädt…" : (initialConfig ? t("reports.builder.saveReport") : t("reports.builder.addReport"))}
+          <Button onClick={handleSave} disabled={isLoading || isSaving}>
+            {isSaving ? "Speichert…" : isLoading ? "Lädt…" : (initialConfig ? t("reports.builder.saveReport") : t("reports.builder.addReport"))}
           </Button>
         </div>
       </div>
