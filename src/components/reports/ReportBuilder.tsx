@@ -97,6 +97,7 @@ export default function ReportBuilder({
   const [tagFilters, setTagFilters] = useState<string[]>(initialConfig?.tagFilters || []);
   const [tagInput, setTagInput] = useState("");
   const tagInputRef = useRef<HTMLInputElement>(null);
+  const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
 
   // Profilfeld-Filter state
   const [profileFieldFilters, setProfileFieldFilters] = useState<Array<{ field_name: string; value: string }>>(
@@ -105,6 +106,7 @@ export default function ReportBuilder({
   const [availableProfileFields, setAvailableProfileFields] = useState<string[]>([]);
   const [pfFieldInput, setPfFieldInput] = useState("");
   const [pfValueInput, setPfValueInput] = useState("");
+  const [pfValueSuggestions, setPfValueSuggestions] = useState<string[]>([]);
 
   // Sync config when initialConfig changes (e.g., when editing different reports)
   useEffect(() => {
@@ -131,7 +133,37 @@ export default function ReportBuilder({
         }
       })
       .catch(() => {/* Tabelle existiert evtl. noch nicht */});
+
+    // Lade unique Tags aus employees
+    supabase
+      .from("employees")
+      .select("tags")
+      .eq("company_id", companyId)
+      .then(({ data: tagEmps }) => {
+        const allTags = new Set<string>();
+        (tagEmps || []).forEach((e: any) => (e.tags || []).forEach((t: string) => allTags.add(t)));
+        setTagSuggestions([...allTags]);
+      })
+      .catch(() => {});
   }, [companyId, isOpen]);
+
+  // Lade Werte für ein gewähltes Profilfeld aus employees
+  const loadPfValueSuggestions = async (fieldName: string) => {
+    if (!fieldName || !companyId) { setPfValueSuggestions([]); return; }
+    const { data: emps } = await supabase
+      .from("employees")
+      .select("profile_fields")
+      .eq("company_id", companyId)
+      .not("profile_fields", "is", null);
+    const values = new Set<string>();
+    (emps || []).forEach((emp: any) => {
+      const fields = Array.isArray(emp.profile_fields) ? emp.profile_fields : [];
+      fields
+        .filter((f: any) => f.field_name === fieldName && f.value)
+        .forEach((f: any) => values.add(String(f.value)));
+    });
+    setPfValueSuggestions([...values]);
+  };
 
   // Sync chart data when data prop changes
   useEffect(() => {
@@ -254,27 +286,49 @@ export default function ReportBuilder({
     const val = pfValueInput.trim();
     if (!field || !val) return;
     if (!profileFieldFilters.some((f) => f.field_name === field && f.value === val)) {
-      setProfileFieldFilters((prev) => [...prev, { field_name: field, value: val }]);
+      const newPf = [...profileFieldFilters, { field_name: field, value: val }];
+      setProfileFieldFilters(newPf);
+      refreshWithFilters(tagFilters, newPf);
     }
     setPfFieldInput("");
     setPfValueInput("");
+    setPfValueSuggestions([]);
   };
 
   const handleRemoveProfileFieldFilter = (idx: number) => {
-    setProfileFieldFilters((prev) => prev.filter((_, i) => i !== idx));
+    const newPf = profileFieldFilters.filter((_, i) => i !== idx);
+    setProfileFieldFilters(newPf);
+    refreshWithFilters(tagFilters, newPf);
+  };
+
+  const refreshWithFilters = async (newTagFilters: string[], newPfFilters: Array<{ field_name: string; value: string }>) => {
+    if (!onRefreshData) return;
+    setIsLoading(true);
+    try {
+      const newData = await onRefreshData({ ...config, tagFilters: newTagFilters, profileFieldFilters: newPfFilters });
+      setChartData(newData || []);
+    } catch (e) {
+      console.error("Error refreshing data with filters:", e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAddTag = () => {
     const trimmed = tagInput.trim();
     if (trimmed && !tagFilters.includes(trimmed)) {
-      setTagFilters((prev) => [...prev, trimmed]);
+      const newTags = [...tagFilters, trimmed];
+      setTagFilters(newTags);
+      refreshWithFilters(newTags, profileFieldFilters);
     }
     setTagInput("");
     tagInputRef.current?.focus();
   };
 
   const handleRemoveTag = (tag: string) => {
-    setTagFilters((prev) => prev.filter((t) => t !== tag));
+    const newTags = tagFilters.filter((t) => t !== tag);
+    setTagFilters(newTags);
+    refreshWithFilters(newTags, profileFieldFilters);
   };
 
   const hasData = chartData.length > 0;
@@ -586,19 +640,28 @@ export default function ReportBuilder({
               <span className="text-sm font-semibold">Tag-Filter</span>
             </div>
             <div className="flex gap-2">
-              <Input
-                ref={tagInputRef}
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                placeholder="Tag eingeben …"
-                className="flex-1"
-              />
+              <div className="flex-1">
+                <input
+                  ref={tagInputRef}
+                  type="text"
+                  list="tag-suggestions"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="Tag eingeben …"
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                />
+                <datalist id="tag-suggestions">
+                  {tagSuggestions.map((t) => (
+                    <option key={t} value={t} />
+                  ))}
+                </datalist>
+              </div>
               <Button type="button" variant="outline" size="sm" onClick={handleAddTag}>
                 <Plus className="w-4 h-4 mr-1" />
                 Hinzufügen
@@ -633,32 +696,40 @@ export default function ReportBuilder({
               <span className="text-sm font-semibold">Profilfeld-Filter</span>
             </div>
             <div className="flex gap-2">
-              {availableProfileFields.length > 0 ? (
-                <select
+              <div className="flex-1">
+                <input
+                  type="text"
+                  list="pf-field-suggestions"
                   value={pfFieldInput}
-                  onChange={(e) => setPfFieldInput(e.target.value)}
-                  className="flex-1 border rounded-md px-3 py-2 text-sm bg-white"
-                >
-                  <option value="">Feldname wählen …</option>
-                  {availableProfileFields.map((f) => (
-                    <option key={f} value={f}>{f}</option>
-                  ))}
-                </select>
-              ) : (
-                <Input
-                  value={pfFieldInput}
-                  onChange={(e) => setPfFieldInput(e.target.value)}
+                  onChange={(e) => {
+                    setPfFieldInput(e.target.value);
+                    loadPfValueSuggestions(e.target.value);
+                  }}
                   placeholder="Feldname (z.B. Führerscheinklasse)"
-                  className="flex-1"
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
                 />
-              )}
-              <Input
-                value={pfValueInput}
-                onChange={(e) => setPfValueInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddProfileFieldFilter(); } }}
-                placeholder="Wert (z.B. Stapler)"
-                className="flex-1"
-              />
+                <datalist id="pf-field-suggestions">
+                  {availableProfileFields.map((f) => (
+                    <option key={f} value={f} />
+                  ))}
+                </datalist>
+              </div>
+              <div className="flex-1">
+                <input
+                  type="text"
+                  list="pf-value-suggestions"
+                  value={pfValueInput}
+                  onChange={(e) => setPfValueInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddProfileFieldFilter(); } }}
+                  placeholder="Wert (z.B. Stapler)"
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                />
+                <datalist id="pf-value-suggestions">
+                  {pfValueSuggestions.map((val) => (
+                    <option key={val} value={val} />
+                  ))}
+                </datalist>
+              </div>
               <Button type="button" variant="outline" size="sm" onClick={handleAddProfileFieldFilter}>
                 <Plus className="w-4 h-4 mr-1" />
                 Hinzufügen

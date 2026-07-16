@@ -173,10 +173,9 @@ export function IncidentsSection({
 
         let allIncidentsQ = (supabase as any)
           .from("incidents")
-          .select("incident_date, severity, incident_type, department_id")
+          .select("incident_date, severity, incident_type, department_id, is_reportable")
           .eq("company_id", companyId)
-          .in("severity", REPORTABLE_SEVERITIES)
-          .eq("incident_type", "injury")
+          .eq("is_reportable", true)
           .order("incident_date", { ascending: false });
         if (deptActive) allIncidentsQ = allIncidentsQ.eq("department_id", departmentFilter);
 
@@ -189,7 +188,7 @@ export function IncidentsSection({
 
         let yearIncidentsQ = (supabase as any)
           .from("incidents")
-          .select("id, severity, incident_type, department_id, incident_date")
+          .select("id, severity, incident_type, department_id, incident_date, is_reportable")
           .eq("company_id", companyId)
           .gte("incident_date", yearStart)
           .lte("incident_date", yearEnd);
@@ -206,9 +205,9 @@ export function IncidentsSection({
           yearIncidentsQ,
         ]);
 
-        const allReportable: Array<{ incident_date: string; severity: string; incident_type: string; department_id: string | null }> =
+        const allReportable: Array<{ incident_date: string; severity: string; incident_type: string; department_id: string | null; is_reportable: boolean }> =
           allIncidentsRes.data || [];
-        const yearIncidents: Array<{ id: string; severity: string; incident_type: string; department_id: string | null; incident_date: string }> =
+        const yearIncidents: Array<{ id: string; severity: string; incident_type: string; department_id: string | null; incident_date: string; is_reportable: boolean }> =
           yearIncidentsRes.data || [];
         const employees: Array<{ id: string; department_id: string | null }> = employeesRes.data || [];
         const departments: Array<{ id: string; name: string }> = departmentsRes.data || [];
@@ -217,9 +216,7 @@ export function IncidentsSection({
         const lastGlobal = allReportable[0]?.incident_date ?? null;
         const accidentFreeDaysGlobal = daysSince(lastGlobal);
 
-        const reportableInYear = yearIncidents.filter(
-          (i) => REPORTABLE_SEVERITIES.includes(i.severity as any) && i.incident_type === "injury"
-        );
+        const reportableInYear = yearIncidents.filter((i) => i.is_reportable === true);
         const fatalInYear = yearIncidents.filter((i) => i.severity === "fatal");
         const nearMissInYear = yearIncidents.filter((i) => i.incident_type === "near_miss");
         const seriousInjuryInYear = reportableInYear.filter((i) => i.severity !== "fatal");

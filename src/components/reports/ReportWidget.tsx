@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   MoreVertical,
   Edit,
@@ -6,8 +7,9 @@ import {
   Download,
   GripVertical
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,6 +80,7 @@ export default function ReportWidget({
   onExport,
 }: ReportWidgetProps) {
   const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState<'chart' | 'table' | 'summary'>(config.displayMode || 'chart');
   // Use provided data or config data
   const chartData = (data && data.length > 0) ? data : (config.data || []);
 
@@ -295,10 +298,80 @@ export default function ReportWidget({
         </DropdownMenu>
       </CardHeader>
 
-      {/* Chart Content */}
-      <CardContent className="flex-1 px-4 pb-4 min-h-[120px]">
-        {renderChart()}
-      </CardContent>
+      {/* Tab Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col">
+          <div className="px-4 pt-2">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="chart">Diagramm</TabsTrigger>
+              <TabsTrigger value="table">Datentabelle</TabsTrigger>
+              <TabsTrigger value="summary">Zusammenfassung</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="chart" className="flex-1 px-4 pb-4 mt-2">
+            <div className="h-full min-h-[150px]">
+              {renderChart()}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="table" className="px-4 pb-4 mt-2">
+            {chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Keine Daten verfügbar</div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left p-3 font-medium">Name</th>
+                      <th className="text-right p-3 font-medium">Wert</th>
+                      <th className="text-right p-3 font-medium">Anteil</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chartData.map((item, index) => {
+                      const total = chartData.reduce((s, d) => s + (d.value || 0), 0);
+                      const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0.0";
+                      return (
+                        <tr key={index} className="border-t hover:bg-muted/30">
+                          <td className="p-3">{item.name}</td>
+                          <td className="p-3 text-right font-medium">{item.value}</td>
+                          <td className="p-3 text-right text-muted-foreground">{pct}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="summary" className="px-4 pb-4 mt-2">
+            {chartData.length === 0 ? (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Keine Daten verfügbar</div>
+            ) : (() => {
+              const total = chartData.reduce((s, d) => s + (d.value || 0), 0);
+              const avg = chartData.length > 0 ? (total / chartData.length) : 0;
+              return (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-blue-50 p-3 rounded-lg text-center">
+                    <div className="text-xs text-muted-foreground mb-1">Gesamtanzahl</div>
+                    <div className="text-2xl font-bold">{total}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-lg text-center">
+                    <div className="text-xs text-muted-foreground mb-1">Durchschnitt</div>
+                    <div className="text-2xl font-bold">{avg.toFixed(1)}</div>
+                  </div>
+                  <div className="bg-purple-50 p-3 rounded-lg text-center">
+                    <div className="text-xs text-muted-foreground mb-1">Kategorien</div>
+                    <div className="text-2xl font-bold">{chartData.length}</div>
+                  </div>
+                </div>
+              );
+            })()}
+          </TabsContent>
+        </Tabs>
+      </div>
     </Card>
   );
 }
