@@ -462,7 +462,8 @@ export function IncidentsSection({
               {(() => {
                 const override = chartOverrides["incident-trend-chart"];
                 const data = override?.data?.length ? override.data : chartData;
-                const chartType = override?.data?.length && override.chartType ? override.chartType : "bar";
+                // chartType gilt IMMER wenn override vorhanden, auch ohne Daten-Override
+                const chartType = override?.chartType || "bar";
                 if (data.length === 0) return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.incidents.noDataForRange")}</div>;
                 return (
                   <ResponsiveContainer width="100%" height="100%">
@@ -489,7 +490,8 @@ export function IncidentsSection({
               {(() => {
                 const override = chartOverrides["incident-type-chart"];
                 const data = override?.data?.length ? override.data : incidentTypeData;
-                const chartType = override?.data?.length && override.chartType ? override.chartType : "pie";
+                // chartType gilt IMMER wenn override vorhanden, auch ohne Daten-Override
+                const chartType = override?.chartType || "pie";
                 if (data.length === 0) return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.incidents.noDataForRange")}</div>;
                 return (
                   <ResponsiveContainer width="100%" height="100%">

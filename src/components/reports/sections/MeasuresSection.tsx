@@ -33,22 +33,22 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
 
   const defaultLayout = {
     lg: [
-      { i: "measures-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-completed", x: 6, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-progress", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-status-chart", x: 0, y: 4, w: 12, h: 4, minW: 4, minH: 3, static: false },
+      { i: "measures-total", x: 0, y: 0, w: 6, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-completed", x: 6, y: 0, w: 6, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-progress", x: 0, y: 3, w: 6, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-status-chart", x: 0, y: 6, w: 12, h: 4, minW: 4, minH: 3, static: false },
     ],
     md: [
-      { i: "measures-total", x: 0, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-completed", x: 5, y: 0, w: 5, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-progress", x: 0, y: 2, w: 5, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-status-chart", x: 0, y: 4, w: 10, h: 4, minW: 4, minH: 3, static: false },
+      { i: "measures-total", x: 0, y: 0, w: 5, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-completed", x: 5, y: 0, w: 5, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-progress", x: 0, y: 3, w: 5, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-status-chart", x: 0, y: 6, w: 10, h: 4, minW: 4, minH: 3, static: false },
     ],
     sm: [
-      { i: "measures-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-completed", x: 0, y: 2, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-progress", x: 0, y: 4, w: 6, h: 2, minW: 2, minH: 2, static: false },
-      { i: "measures-status-chart", x: 0, y: 6, w: 6, h: 4, minW: 4, minH: 3, static: false },
+      { i: "measures-total", x: 0, y: 0, w: 6, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-completed", x: 0, y: 3, w: 6, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-progress", x: 0, y: 6, w: 6, h: 3, minW: 2, minH: 3, static: false },
+      { i: "measures-status-chart", x: 0, y: 9, w: 6, h: 4, minW: 4, minH: 3, static: false },
     ],
   };
 

@@ -122,17 +122,24 @@ export default function ReportBuilder({
   // Lade verfügbare Profilfeld-Namen
   useEffect(() => {
     if (!companyId || !isOpen) return;
+    // Lade unique Profilfeld-Labels direkt aus employees.profile_fields
+    // (profile_fields ist ein JSONB-Array: [{ id, label, type, value, ... }])
     supabase
-      .from("profile_field_templates" as any)
-      .select("field_name")
+      .from("employees")
+      .select("profile_fields")
       .eq("company_id", companyId)
-      .then(({ data: pfData }) => {
-        if (pfData) {
-          const unique = [...new Set((pfData as any[]).map((r: any) => r.field_name as string))];
-          setAvailableProfileFields(unique);
-        }
+      .not("profile_fields", "is", null)
+      .then(({ data: empPfData }) => {
+        const uniqueLabels = new Set<string>();
+        (empPfData || []).forEach((emp: any) => {
+          const fields = Array.isArray(emp.profile_fields) ? emp.profile_fields : [];
+          fields.forEach((f: any) => {
+            if (f.label) uniqueLabels.add(String(f.label));
+          });
+        });
+        setAvailableProfileFields([...uniqueLabels]);
       })
-      .catch(() => {/* Tabelle existiert evtl. noch nicht */});
+      .catch(() => {/* Fehlertolerant */});
 
     // Lade unique Tags aus employees
     supabase
@@ -159,7 +166,8 @@ export default function ReportBuilder({
     (emps || []).forEach((emp: any) => {
       const fields = Array.isArray(emp.profile_fields) ? emp.profile_fields : [];
       fields
-        .filter((f: any) => f.field_name === fieldName && f.value)
+        // profile_fields Objekte haben "label" als Feldname-Key (nicht "field_name")
+        .filter((f: any) => (f.label === fieldName || f.field_name === fieldName) && f.value)
         .forEach((f: any) => values.add(String(f.value)));
     });
     setPfValueSuggestions([...values]);
@@ -661,8 +669,19 @@ export default function ReportBuilder({
                     <option key={t} value={t} />
                   ))}
                 </datalist>
+                {tagInput && tagSuggestions.length > 0 && !tagSuggestions.includes(tagInput) && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Hinweis: Wähle einen vorhandenen Tag aus den Vorschlägen für präzises Filtern.
+                  </p>
+                )}
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={handleAddTag}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddTag}
+                disabled={!tagInput || (tagSuggestions.length > 0 && !tagSuggestions.includes(tagInput))}
+              >
                 <Plus className="w-4 h-4 mr-1" />
                 Hinzufügen
               </Button>
@@ -695,8 +714,10 @@ export default function ReportBuilder({
               <Tag className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-semibold">Profilfeld-Filter</span>
             </div>
+            <p className="text-xs text-muted-foreground">Filtere nach Mitarbeitern mit einem bestimmten Profilfeld-Wert.</p>
             <div className="flex gap-2">
-              <div className="flex-1">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Feldname</label>
                 <input
                   type="text"
                   list="pf-field-suggestions"
@@ -705,7 +726,7 @@ export default function ReportBuilder({
                     setPfFieldInput(e.target.value);
                     loadPfValueSuggestions(e.target.value);
                   }}
-                  placeholder="Feldname (z.B. Führerscheinklasse)"
+                  placeholder="z.B. Führerscheinklasse"
                   className="w-full border rounded-md px-3 py-2 text-sm bg-white"
                 />
                 <datalist id="pf-field-suggestions">
@@ -714,15 +735,17 @@ export default function ReportBuilder({
                   ))}
                 </datalist>
               </div>
-              <div className="flex-1">
+              <div className="flex-1 space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Wert</label>
                 <input
                   type="text"
                   list="pf-value-suggestions"
                   value={pfValueInput}
                   onChange={(e) => setPfValueInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddProfileFieldFilter(); } }}
-                  placeholder="Wert (z.B. Stapler)"
-                  className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                  placeholder={pfFieldInput ? "z.B. Klasse B" : "Erst Feldname wählen"}
+                  disabled={!pfFieldInput}
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <datalist id="pf-value-suggestions">
                   {pfValueSuggestions.map((val) => (
@@ -730,10 +753,18 @@ export default function ReportBuilder({
                   ))}
                 </datalist>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={handleAddProfileFieldFilter}>
-                <Plus className="w-4 h-4 mr-1" />
-                Hinzufügen
-              </Button>
+              <div className="flex items-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddProfileFieldFilter}
+                  disabled={!pfFieldInput || !pfValueInput}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Hinzufügen
+                </Button>
+              </div>
             </div>
             {profileFieldFilters.length > 0 && (
               <div className="flex flex-wrap gap-2">

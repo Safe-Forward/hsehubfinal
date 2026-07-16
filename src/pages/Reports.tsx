@@ -1366,15 +1366,25 @@ export default function Reports() {
       }
 
       // Profilfeld-Filter: Employee-IDs mit passenden Profilfeldern holen
+      // Client-seitige Filterung — robust unabhängig vom genauen Key-Namen (label vs. field_name)
       let profileFieldFilteredEmpIds: string[] | null = null;
       if (template.profileFieldFilters && template.profileFieldFilters.length > 0) {
-        let query = (supabase as any).from("employees").select("id").eq("company_id", companyId);
-        for (const pf of template.profileFieldFilters) {
-          // employees.profile_fields ist ein JSONB-Array: [{ field_name, value, ... }]
-          query = query.contains("profile_fields", [{ field_name: pf.field_name, value: pf.value }]);
-        }
-        const { data: pfEmps } = await query;
-        profileFieldFilteredEmpIds = (pfEmps || []).map((e: any) => e.id);
+        const { data: allEmps } = await (supabase as any)
+          .from("employees")
+          .select("id, profile_fields")
+          .eq("company_id", companyId)
+          .not("profile_fields", "is", null);
+        profileFieldFilteredEmpIds = (allEmps || [])
+          .filter((emp: any) => {
+            const fields = Array.isArray(emp.profile_fields) ? emp.profile_fields : [];
+            return template.profileFieldFilters!.every(pf =>
+              fields.some((f: any) =>
+                (f.label === pf.field_name || f.field_name === pf.field_name) &&
+                (String(f.value) === pf.value || String(f.field_value) === pf.value)
+              )
+            );
+          })
+          .map((emp: any) => emp.id);
         if (profileFieldFilteredEmpIds.length === 0) return [];
       }
 
@@ -1969,7 +1979,7 @@ export default function Reports() {
     // Wenn Standard-Kachel bearbeitet wird: speichern und zurückkehren
     if (pendingTileEdit) {
       const { sectionId, tileId, onSaved } = pendingTileEdit;
-      const freshData = await fetchTemplateData(config).catch(() => config.data || []);
+      const freshData = await fetchTemplateData(config).catch(() => []);
       saveChartConfig(sectionId, tileId, {
         metric: config.metric,
         groupBy: config.groupBy,
@@ -1979,6 +1989,7 @@ export default function Reports() {
         profileFieldFilters: config.profileFieldFilters,
         title: config.title,
       });
+      // Wenn freshData leer: übergebe trotzdem config, damit chartType-Override greift
       onSaved(config, freshData);
       setPendingTileEdit(null);
       setIsBuilderOpen(false);
@@ -1999,6 +2010,18 @@ export default function Reports() {
       updatedReports[existingIndex] = preserved;
       setCustomReports(updatedReports);
       saveCustomReports(updatedReports);
+
+      // Frische Daten im Hintergrund laden und sofort anzeigen
+      fetchTemplateData(preserved)
+        .then(freshData => {
+          if (freshData && freshData.length > 0) {
+            const withFreshData = [...updatedReports];
+            withFreshData[existingIndex] = { ...preserved, data: freshData };
+            setCustomReports(withFreshData);
+            saveCustomReports(withFreshData);
+          }
+        })
+        .catch(() => {}); // Ignorieren — alte Daten bleiben sichtbar
 
       toast({
         title: t("reports.toast.reportUpdatedTitle"),
