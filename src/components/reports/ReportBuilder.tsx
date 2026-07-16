@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { X, BarChart3, PieChart, TrendingUp, Plus, Tag } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -47,6 +49,7 @@ export interface ReportConfig {
   auditTemplate?: string;
   targetSection?: string; // section where the report should appear (overrides metric-based routing)
   tagFilters?: string[];
+  profileFieldFilters?: Array<{ field_name: string; value: string }>;
 }
 
 interface ReportBuilderProps {
@@ -69,6 +72,7 @@ export default function ReportBuilder({
   onRefreshData,
 }: ReportBuilderProps) {
   const { t } = useLanguage();
+  const { companyId } = useAuth();
   const [config, setConfig] = useState<ReportConfig>(
     initialConfig || {
       id: Date.now().toString(),
@@ -94,6 +98,14 @@ export default function ReportBuilder({
   const [tagInput, setTagInput] = useState("");
   const tagInputRef = useRef<HTMLInputElement>(null);
 
+  // Profilfeld-Filter state
+  const [profileFieldFilters, setProfileFieldFilters] = useState<Array<{ field_name: string; value: string }>>(
+    initialConfig?.profileFieldFilters || []
+  );
+  const [availableProfileFields, setAvailableProfileFields] = useState<string[]>([]);
+  const [pfFieldInput, setPfFieldInput] = useState("");
+  const [pfValueInput, setPfValueInput] = useState("");
+
   // Sync config when initialConfig changes (e.g., when editing different reports)
   useEffect(() => {
     if (initialConfig) {
@@ -101,8 +113,25 @@ export default function ReportBuilder({
       // Also update chart data from initial config
       setChartData(initialConfig.data || data || []);
       setTagFilters(initialConfig.tagFilters || []);
+      setProfileFieldFilters(initialConfig.profileFieldFilters || []);
     }
   }, [initialConfig]);
+
+  // Lade verfügbare Profilfeld-Namen
+  useEffect(() => {
+    if (!companyId || !isOpen) return;
+    supabase
+      .from("profile_field_templates" as any)
+      .select("field_name")
+      .eq("company_id", companyId)
+      .then(({ data: pfData }) => {
+        if (pfData) {
+          const unique = [...new Set((pfData as any[]).map((r: any) => r.field_name as string))];
+          setAvailableProfileFields(unique);
+        }
+      })
+      .catch(() => {/* Tabelle existiert evtl. noch nicht */});
+  }, [companyId, isOpen]);
 
   // Sync chart data when data prop changes
   useEffect(() => {
@@ -214,9 +243,25 @@ export default function ReportBuilder({
       ...config,
       data: chartData && chartData.length > 0 ? chartData : config.data || [],
       tagFilters: tagFilters.length > 0 ? tagFilters : undefined,
+      profileFieldFilters: profileFieldFilters.length > 0 ? profileFieldFilters : undefined,
     };
     onSave(configWithData);
     onClose();
+  };
+
+  const handleAddProfileFieldFilter = () => {
+    const field = pfFieldInput.trim();
+    const val = pfValueInput.trim();
+    if (!field || !val) return;
+    if (!profileFieldFilters.some((f) => f.field_name === field && f.value === val)) {
+      setProfileFieldFilters((prev) => [...prev, { field_name: field, value: val }]);
+    }
+    setPfFieldInput("");
+    setPfValueInput("");
+  };
+
+  const handleRemoveProfileFieldFilter = (idx: number) => {
+    setProfileFieldFilters((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const handleAddTag = () => {
@@ -534,11 +579,11 @@ export default function ReportBuilder({
               </div>
             </TabsContent>
           </Tabs>
-          {/* Tag / Profile-field filters */}
+          {/* Tag-Filter */}
           <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
             <div className="flex items-center gap-2">
               <Tag className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-semibold">Profilfelder &amp; Tags filtern</span>
+              <span className="text-sm font-semibold">Tag-Filter</span>
             </div>
             <div className="flex gap-2">
               <Input
@@ -572,6 +617,66 @@ export default function ReportBuilder({
                       onClick={() => handleRemoveTag(tag)}
                       className="ml-1 rounded-full hover:bg-blue-200 p-0.5 transition-colors"
                       aria-label={`Tag "${tag}" entfernen`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Profilfeld-Filter */}
+          <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
+            <div className="flex items-center gap-2">
+              <Tag className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-semibold">Profilfeld-Filter</span>
+            </div>
+            <div className="flex gap-2">
+              {availableProfileFields.length > 0 ? (
+                <select
+                  value={pfFieldInput}
+                  onChange={(e) => setPfFieldInput(e.target.value)}
+                  className="flex-1 border rounded-md px-3 py-2 text-sm bg-white"
+                >
+                  <option value="">Feldname wählen …</option>
+                  {availableProfileFields.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  value={pfFieldInput}
+                  onChange={(e) => setPfFieldInput(e.target.value)}
+                  placeholder="Feldname (z.B. Führerscheinklasse)"
+                  className="flex-1"
+                />
+              )}
+              <Input
+                value={pfValueInput}
+                onChange={(e) => setPfValueInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddProfileFieldFilter(); } }}
+                placeholder="Wert (z.B. Stapler)"
+                className="flex-1"
+              />
+              <Button type="button" variant="outline" size="sm" onClick={handleAddProfileFieldFilter}>
+                <Plus className="w-4 h-4 mr-1" />
+                Hinzufügen
+              </Button>
+            </div>
+            {profileFieldFilters.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {profileFieldFilters.map((pf, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1 rounded-full bg-purple-100 text-purple-800 px-3 py-1 text-sm font-medium"
+                  >
+                    {pf.field_name}: {pf.value}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveProfileFieldFilter(idx)}
+                      className="ml-1 rounded-full hover:bg-purple-200 p-0.5 transition-colors"
+                      aria-label={`Filter "${pf.field_name}: ${pf.value}" entfernen`}
                     >
                       <X className="w-3 h-3" />
                     </button>

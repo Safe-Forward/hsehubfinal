@@ -40,7 +40,6 @@ export function AuditsSection({
     return result;
   });
   const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
-  const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
 
   // Chart overrides (from ReportBuilder edits)
   const [chartOverrides, setChartOverrides] = useState<Record<string, { data: any[]; chartType: string; title?: string }>>(() => {
@@ -214,9 +213,6 @@ export function AuditsSection({
             value={stats.totalAudits}
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
-            editSlot={onEditTile && (
-              <button onClick={(e) => { e.stopPropagation(); onEditTile("audit-total", { id: "audit-total", title: t("reports.audits.totalTitle"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, data) => { if (cfg.title) updateTileLabel("audit-total", cfg.title, tileLabels["audit-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            )}
           />
         </div>
         <div key="audit-completed">
@@ -226,9 +222,6 @@ export function AuditsSection({
             value={stats.completedAudits}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={onEditTile && (
-              <button onClick={(e) => { e.stopPropagation(); onEditTile("audit-completed", { id: "audit-completed", title: t("reports.audits.completedTitle"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, data) => { if (cfg.title) updateTileLabel("audit-completed", cfg.title, tileLabels["audit-completed"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            )}
           />
         </div>
         <div key="audit-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>

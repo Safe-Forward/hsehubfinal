@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, ListChecks, CheckCircle, Pencil } from "lucide-react";
+import { RotateCcw, ListChecks, CheckCircle } from "lucide-react";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, OnEditTile } from "@/components/reports/types";
@@ -27,7 +27,6 @@ export function TasksSection({ stats, chartData, onEditTile }: { stats: ReportSt
     return result;
   });
   const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
-  const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
 
   const defaultLayout = {
     lg: [
@@ -143,7 +142,6 @@ export function TasksSection({ stats, chartData, onEditTile }: { stats: ReportSt
             value={stats.totalTasks}
             icon={<ListChecks className="w-5 h-5" />}
             color="bg-indigo-50 text-indigo-600"
-            editSlot={onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("tasks-total", { id: "tasks-total", title: t("reports.tasks.totalTitle"), metric: "tasks", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("tasks-total", cfg.title, tileLabels["tasks-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
           />
         </div>
         <div key="tasks-completed">
@@ -153,7 +151,6 @@ export function TasksSection({ stats, chartData, onEditTile }: { stats: ReportSt
             value={stats.completedTasks}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("tasks-completed", { id: "tasks-completed", title: t("reports.tasks.completedTitle"), metric: "tasks", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("tasks-completed", cfg.title, tileLabels["tasks-completed"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
           />
         </div>
       </ResponsiveGridLayout>

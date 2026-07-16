@@ -1347,8 +1347,14 @@ export default function Reports() {
       // Tag-Filter: Employee-IDs mit passenden Tags holen
       let tagFilteredEmpIds: string[] | null = null;
       if (template.tagFilters && template.tagFilters.length > 0) {
+        // PostgREST cs (contains) Syntax für text[]:
+        // Einfache Strings: tags=cs.{value}, mit Leerzeichen/Komma: tags=cs.{"value"}
         const orFilter = template.tagFilters
-          .map((tag) => `tags.cs.{"${tag}"}`)
+          .map((tag) =>
+            tag.includes(' ') || tag.includes(',') || tag.includes('"')
+              ? `tags.cs.{"${tag}"}`
+              : `tags.cs.{${tag}}`
+          )
           .join(',');
         const { data: taggedEmps } = await supabase
           .from("employees")
@@ -1358,6 +1364,34 @@ export default function Reports() {
         tagFilteredEmpIds = (taggedEmps || []).map((e: any) => e.id);
         if (tagFilteredEmpIds.length === 0) return [];
       }
+
+      // Profilfeld-Filter: Employee-IDs mit passenden Profilfeldern holen
+      let profileFieldFilteredEmpIds: string[] | null = null;
+      if (template.profileFieldFilters && template.profileFieldFilters.length > 0) {
+        let query = (supabase as any).from("employees").select("id").eq("company_id", companyId);
+        for (const pf of template.profileFieldFilters) {
+          // employees.profile_fields ist ein JSONB-Array: [{ field_name, value, ... }]
+          query = query.contains("profile_fields", [{ field_name: pf.field_name, value: pf.value }]);
+        }
+        const { data: pfEmps } = await query;
+        profileFieldFilteredEmpIds = (pfEmps || []).map((e: any) => e.id);
+        if (profileFieldFilteredEmpIds.length === 0) return [];
+      }
+
+      // Kombiniere Tag-Filter und Profilfeld-Filter (Schnittmenge)
+      let combinedEmpIds: string[] | null = null;
+      if (tagFilteredEmpIds !== null && profileFieldFilteredEmpIds !== null) {
+        const tagSet = new Set(tagFilteredEmpIds);
+        combinedEmpIds = profileFieldFilteredEmpIds.filter((id) => tagSet.has(id));
+      } else if (tagFilteredEmpIds !== null) {
+        combinedEmpIds = tagFilteredEmpIds;
+      } else if (profileFieldFilteredEmpIds !== null) {
+        combinedEmpIds = profileFieldFilteredEmpIds;
+      }
+      if (combinedEmpIds !== null && combinedEmpIds.length === 0) return [];
+
+      // Alias für Abwärtskompatibilität mit dem restlichen Code
+      tagFilteredEmpIds = combinedEmpIds;
 
       // Special handling for employees with department/location joins
       if (metric === "employees") {
@@ -1942,6 +1976,7 @@ export default function Reports() {
         chartType: config.chartType,
         dateRange: config.dateRange,
         tagFilters: config.tagFilters,
+        profileFieldFilters: config.profileFieldFilters,
         title: config.title,
       });
       onSaved(config, freshData);

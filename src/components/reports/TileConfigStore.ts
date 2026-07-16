@@ -13,6 +13,7 @@ export interface ChartConfig {
   chartType: 'pie' | 'bar' | 'line';
   dateRange: { type: string; startDate?: string; endDate?: string };
   tagFilters?: string[];
+  profileFieldFilters?: Array<{ field_name: string; value: string }>;
   title?: string;
 }
 

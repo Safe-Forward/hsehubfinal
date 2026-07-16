@@ -30,7 +30,6 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
     return result;
   });
   const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
-  const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
 
   const defaultLayout = {
     lg: [
@@ -199,7 +198,6 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.totalMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-purple-50 text-purple-600"
-            editSlot={onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("measures-total", { id: "measures-total", title: t("reports.measures.totalTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("measures-total", cfg.title, tileLabels["measures-total"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
           />
         </div>
         <div key="measures-completed">
@@ -209,7 +207,6 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.completedMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("measures-completed", { id: "measures-completed", title: t("reports.measures.completedTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("measures-completed", cfg.title, tileLabels["measures-completed"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
           />
         </div>
         <div key="measures-progress">
@@ -219,7 +216,6 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.totalMeasures - stats.completedMeasures}
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
-            editSlot={onEditTile && <button onClick={(e) => { e.stopPropagation(); onEditTile("measures-progress", { id: "measures-progress", title: t("reports.measures.inProgressTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }, (cfg, _d) => { if (cfg.title) updateTileLabel("measures-progress", cfg.title, tileLabels["measures-progress"]?.subtitle ?? ""); }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
           />
         </div>
         <div key="measures-status-chart" data-grid={{ x: 0, y: 4, w: 12, h: 4, minW: 4, minH: 3 }}>
