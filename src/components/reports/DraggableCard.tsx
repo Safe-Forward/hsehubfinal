@@ -9,7 +9,7 @@ export function DraggableCard({
   icon,
   color,
   onHide,
-  onEdit,
+  editSlot,
 }: {
   title: string;
   subtitle: string;
@@ -17,7 +17,7 @@ export function DraggableCard({
   icon: React.ReactNode;
   color: string;
   onHide?: () => void;
-  onEdit?: () => void;
+  editSlot?: React.ReactNode;
 }) {
   const { t } = useLanguage();
   return (
@@ -25,15 +25,7 @@ export function DraggableCard({
       <div className="drag-handle border-b cursor-grab active:cursor-grabbing flex-shrink-0 flex items-center justify-between px-2">
         <GripVertical className="w-4 h-4 text-muted-foreground" />
         <div className="flex items-center gap-0.5">
-          {onEdit && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onEdit(); }}
-              className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-              title="Kachel bearbeiten"
-            >
-              <svg className="w-3.5 h-3.5 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
-            </button>
-          )}
+          {editSlot}
           {onHide && (
             <button
               onClick={(e) => { e.stopPropagation(); onHide(); }}

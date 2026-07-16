@@ -7,8 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, GraduationCap, CheckCircle } from "lucide-react";
 import { DraggableCard } from "@/components/reports/DraggableCard";
+import { TileEditPopover } from "@/components/reports/TileEditPopover";
+import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, TrainingStatus } from "@/components/reports/types";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+const SECTION_ID = "trainings";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -27,6 +31,17 @@ export function TrainingsSection({
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
+
+  const [tileLabels, setTileLabels] = useState<Record<string, { title: string; subtitle: string }>>(() => {
+    const ids = ["training-total", "training-compliance"];
+    const result: Record<string, { title: string; subtitle: string }> = {};
+    ids.forEach((id) => { const cfg = getTileConfig(SECTION_ID, id); result[id] = { title: cfg.title ?? "", subtitle: cfg.subtitle ?? "" }; });
+    return result;
+  });
+  const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
+  const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
+  const resetTileLabel = (id: string) => setTileLabels((p) => ({ ...p, [id]: { title: "", subtitle: "" } }));
+
   const [matrixPage, setMatrixPage] = useState(1);
   const matrixPageSize = 10;
   const matrixPageCount = Math.max(1, Math.ceil(trainingMatrix.length / matrixPageSize));
@@ -150,20 +165,22 @@ export function TrainingsSection({
       >
         <div key="training-total">
           <DraggableCard
-            title={t("reports.trainings.totalTitle")}
-            subtitle={t("reports.trainings.totalSubtitle")}
+            title={getTileLabel("training-total", t("reports.trainings.totalTitle"), t("reports.trainings.totalSubtitle")).title}
+            subtitle={getTileLabel("training-total", t("reports.trainings.totalTitle"), t("reports.trainings.totalSubtitle")).subtitle}
             value={stats.totalTrainings}
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="training-total" defaultTitle={t("reports.trainings.totalTitle")} defaultSubtitle={t("reports.trainings.totalSubtitle")} onSave={(cfg) => updateTileLabel("training-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("training-total")} />}
           />
         </div>
         <div key="training-compliance">
           <DraggableCard
-            title={t("reports.trainings.complianceTitle")}
-            subtitle={t("reports.trainings.complianceSubtitle")}
+            title={getTileLabel("training-compliance", t("reports.trainings.complianceTitle"), t("reports.trainings.complianceSubtitle")).title}
+            subtitle={getTileLabel("training-compliance", t("reports.trainings.complianceTitle"), t("reports.trainings.complianceSubtitle")).subtitle}
             value={`${stats.trainingCompliance}%`}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="training-compliance" defaultTitle={t("reports.trainings.complianceTitle")} defaultSubtitle={t("reports.trainings.complianceSubtitle")} onSave={(cfg) => updateTileLabel("training-compliance", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("training-compliance")} />}
           />
         </div>
       </ResponsiveGridLayout>

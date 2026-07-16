@@ -6,8 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, GripVertical, Stethoscope, CheckCircle } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
+import { TileEditPopover } from "@/components/reports/TileEditPopover";
+import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+const SECTION_ID = "checkups";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -18,6 +22,17 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
+
+  const [tileLabels, setTileLabels] = useState<Record<string, { title: string; subtitle: string }>>(() => {
+    const ids = ["checkups-total", "checkups-completed"];
+    const result: Record<string, { title: string; subtitle: string }> = {};
+    ids.forEach((id) => { const cfg = getTileConfig(SECTION_ID, id); result[id] = { title: cfg.title ?? "", subtitle: cfg.subtitle ?? "" }; });
+    return result;
+  });
+  const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
+  const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
+  const resetTileLabel = (id: string) => setTileLabels((p) => ({ ...p, [id]: { title: "", subtitle: "" } }));
+
   const defaultLayout = {
     lg: [
       { i: "checkups-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
@@ -130,20 +145,22 @@ export function CheckupsSection({ stats, checkUpsStatusData }: { stats: ReportSt
       >
         <div key="checkups-total">
           <DraggableCard
-            title={t("reports.checkups.totalTitle")}
-            subtitle={t("reports.checkups.totalSubtitle")}
+            title={getTileLabel("checkups-total", t("reports.checkups.totalTitle"), t("reports.checkups.totalSubtitle")).title}
+            subtitle={getTileLabel("checkups-total", t("reports.checkups.totalTitle"), t("reports.checkups.totalSubtitle")).subtitle}
             value={stats.totalCheckUps}
             icon={<Stethoscope className="w-5 h-5" />}
             color="bg-teal-50 text-teal-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="checkups-total" defaultTitle={t("reports.checkups.totalTitle")} defaultSubtitle={t("reports.checkups.totalSubtitle")} onSave={(cfg) => updateTileLabel("checkups-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("checkups-total")} />}
           />
         </div>
         <div key="checkups-completed">
           <DraggableCard
-            title={t("reports.checkups.completedTitle")}
-            subtitle={t("reports.checkups.completedSubtitle")}
+            title={getTileLabel("checkups-completed", t("reports.checkups.completedTitle"), t("reports.checkups.completedSubtitle")).title}
+            subtitle={getTileLabel("checkups-completed", t("reports.checkups.completedTitle"), t("reports.checkups.completedSubtitle")).subtitle}
             value={stats.completedCheckUps}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="checkups-completed" defaultTitle={t("reports.checkups.completedTitle")} defaultSubtitle={t("reports.checkups.completedSubtitle")} onSave={(cfg) => updateTileLabel("checkups-completed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("checkups-completed")} />}
           />
         </div>
         <div key="checkups-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>

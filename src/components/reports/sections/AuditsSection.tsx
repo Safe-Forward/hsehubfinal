@@ -6,8 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, GripVertical, ClipboardCheck, CheckCircle } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
+import { TileEditPopover } from "@/components/reports/TileEditPopover";
+import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+const SECTION_ID = "audits";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -18,6 +22,17 @@ export function AuditsSection({ stats, chartData, auditStatusData }: { stats: Re
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
+
+  const [tileLabels, setTileLabels] = useState<Record<string, { title: string; subtitle: string }>>(() => {
+    const ids = ["audit-total", "audit-completed"];
+    const result: Record<string, { title: string; subtitle: string }> = {};
+    ids.forEach((id) => { const cfg = getTileConfig(SECTION_ID, id); result[id] = { title: cfg.title ?? "", subtitle: cfg.subtitle ?? "" }; });
+    return result;
+  });
+  const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
+  const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
+  const resetTileLabel = (id: string) => setTileLabels((p) => ({ ...p, [id]: { title: "", subtitle: "" } }));
+
   const defaultLayout = {
     lg: [
       { i: "audit-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
@@ -130,20 +145,22 @@ export function AuditsSection({ stats, chartData, auditStatusData }: { stats: Re
       >
         <div key="audit-total">
           <DraggableCard
-            title={t("reports.audits.totalTitle")}
-            subtitle={t("reports.audits.totalSubtitle")}
+            title={getTileLabel("audit-total", t("reports.audits.totalTitle"), t("reports.audits.totalSubtitle")).title}
+            subtitle={getTileLabel("audit-total", t("reports.audits.totalTitle"), t("reports.audits.totalSubtitle")).subtitle}
             value={stats.totalAudits}
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="audit-total" defaultTitle={t("reports.audits.totalTitle")} defaultSubtitle={t("reports.audits.totalSubtitle")} onSave={(cfg) => updateTileLabel("audit-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("audit-total")} />}
           />
         </div>
         <div key="audit-completed">
           <DraggableCard
-            title={t("reports.audits.completedTitle")}
-            subtitle={t("reports.audits.completedSubtitle")}
+            title={getTileLabel("audit-completed", t("reports.audits.completedTitle"), t("reports.audits.completedSubtitle")).title}
+            subtitle={getTileLabel("audit-completed", t("reports.audits.completedTitle"), t("reports.audits.completedSubtitle")).subtitle}
             value={stats.completedAudits}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="audit-completed" defaultTitle={t("reports.audits.completedTitle")} defaultSubtitle={t("reports.audits.completedSubtitle")} onSave={(cfg) => updateTileLabel("audit-completed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("audit-completed")} />}
           />
         </div>
         <div key="audit-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>

@@ -6,8 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, GripVertical, CheckCircle, TrendingUp } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
+import { TileEditPopover } from "@/components/reports/TileEditPopover";
+import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+const SECTION_ID = "measures";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -18,6 +22,17 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
+
+  const [tileLabels, setTileLabels] = useState<Record<string, { title: string; subtitle: string }>>(() => {
+    const ids = ["measures-total", "measures-completed", "measures-progress"];
+    const result: Record<string, { title: string; subtitle: string }> = {};
+    ids.forEach((id) => { const cfg = getTileConfig(SECTION_ID, id); result[id] = { title: cfg.title ?? "", subtitle: cfg.subtitle ?? "" }; });
+    return result;
+  });
+  const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
+  const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
+  const resetTileLabel = (id: string) => setTileLabels((p) => ({ ...p, [id]: { title: "", subtitle: "" } }));
+
   const defaultLayout = {
     lg: [
       { i: "measures-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
@@ -133,29 +148,32 @@ export function MeasuresSection({ stats, chartData, measuresStatusData }: { stat
       >
         <div key="measures-total">
           <DraggableCard
-            title={t("reports.measures.totalTitle")}
-            subtitle={t("reports.measures.totalSubtitle")}
+            title={getTileLabel("measures-total", t("reports.measures.totalTitle"), t("reports.measures.totalSubtitle")).title}
+            subtitle={getTileLabel("measures-total", t("reports.measures.totalTitle"), t("reports.measures.totalSubtitle")).subtitle}
             value={stats.totalMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-purple-50 text-purple-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="measures-total" defaultTitle={t("reports.measures.totalTitle")} defaultSubtitle={t("reports.measures.totalSubtitle")} onSave={(cfg) => updateTileLabel("measures-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-total")} />}
           />
         </div>
         <div key="measures-completed">
           <DraggableCard
-            title={t("reports.measures.completedTitle")}
-            subtitle={t("reports.measures.completedSubtitle")}
+            title={getTileLabel("measures-completed", t("reports.measures.completedTitle"), t("reports.measures.completedSubtitle")).title}
+            subtitle={getTileLabel("measures-completed", t("reports.measures.completedTitle"), t("reports.measures.completedSubtitle")).subtitle}
             value={stats.completedMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="measures-completed" defaultTitle={t("reports.measures.completedTitle")} defaultSubtitle={t("reports.measures.completedSubtitle")} onSave={(cfg) => updateTileLabel("measures-completed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-completed")} />}
           />
         </div>
         <div key="measures-progress">
           <DraggableCard
-            title={t("reports.measures.inProgressTitle")}
-            subtitle={t("reports.measures.inProgressSubtitle")}
+            title={getTileLabel("measures-progress", t("reports.measures.inProgressTitle"), t("reports.measures.inProgressSubtitle")).title}
+            subtitle={getTileLabel("measures-progress", t("reports.measures.inProgressTitle"), t("reports.measures.inProgressSubtitle")).subtitle}
             value={stats.totalMeasures - stats.completedMeasures}
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="measures-progress" defaultTitle={t("reports.measures.inProgressTitle")} defaultSubtitle={t("reports.measures.inProgressSubtitle")} onSave={(cfg) => updateTileLabel("measures-progress", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("measures-progress")} />}
           />
         </div>
         <div key="measures-status-chart" data-grid={{ x: 0, y: 4, w: 12, h: 4, minW: 4, minH: 3 }}>

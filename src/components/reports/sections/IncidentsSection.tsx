@@ -362,38 +362,42 @@ export function IncidentsSection({
       >
         <div key="incident-total">
           <DraggableCard
-            title={t("reports.incidents.totalTitle")}
-            subtitle={t("reports.incidents.totalSubtitle")}
+            title={getTileLabel("incident-total", t("reports.incidents.totalTitle"), t("reports.incidents.totalSubtitle")).title}
+            subtitle={getTileLabel("incident-total", t("reports.incidents.totalTitle"), t("reports.incidents.totalSubtitle")).subtitle}
             value={stats.totalIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-red-50 text-red-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="incident-total" defaultTitle={t("reports.incidents.totalTitle")} defaultSubtitle={t("reports.incidents.totalSubtitle")} onSave={(cfg) => updateTileLabel("incident-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-total")} />}
           />
         </div>
         <div key="incident-open">
           <DraggableCard
-            title={t("reports.incidents.openTitle")}
-            subtitle={t("reports.incidents.openSubtitle")}
+            title={getTileLabel("incident-open", t("reports.incidents.openTitle"), t("reports.incidents.openSubtitle")).title}
+            subtitle={getTileLabel("incident-open", t("reports.incidents.openTitle"), t("reports.incidents.openSubtitle")).subtitle}
             value={stats.openIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="incident-open" defaultTitle={t("reports.incidents.openTitle")} defaultSubtitle={t("reports.incidents.openSubtitle")} onSave={(cfg) => updateTileLabel("incident-open", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-open")} />}
           />
         </div>
         <div key="incident-closed">
           <DraggableCard
-            title={t("reports.incidents.closedTitle")}
-            subtitle={t("reports.incidents.closedSubtitle")}
+            title={getTileLabel("incident-closed", t("reports.incidents.closedTitle"), t("reports.incidents.closedSubtitle")).title}
+            subtitle={getTileLabel("incident-closed", t("reports.incidents.closedTitle"), t("reports.incidents.closedSubtitle")).subtitle}
             value={stats.totalIncidents - stats.openIncidents}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="incident-closed" defaultTitle={t("reports.incidents.closedTitle")} defaultSubtitle={t("reports.incidents.closedSubtitle")} onSave={(cfg) => updateTileLabel("incident-closed", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-closed")} />}
           />
         </div>
         <div key="incident-reportable">
           <DraggableCard
-            title="Meldepflichtige Vorfälle"
-            subtitle={`§ 193 SGB VII / DGUV — ${stats.totalIncidents > 0 ? Math.round((stats.reportableIncidents / stats.totalIncidents) * 100) : 0}% aller Vorfälle`}
+            title={getTileLabel("incident-reportable", "Meldepflichtige Vorfälle", `§ 193 SGB VII / DGUV — ${stats.totalIncidents > 0 ? Math.round((stats.reportableIncidents / stats.totalIncidents) * 100) : 0}% aller Vorfälle`).title}
+            subtitle={getTileLabel("incident-reportable", "Meldepflichtige Vorfälle", `§ 193 SGB VII / DGUV — ${stats.totalIncidents > 0 ? Math.round((stats.reportableIncidents / stats.totalIncidents) * 100) : 0}% aller Vorfälle`).subtitle}
             value={`${stats.reportableIncidents} / ${stats.totalIncidents}`}
             icon={<ShieldAlert className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="incident-reportable" defaultTitle="Meldepflichtige Vorfälle" defaultSubtitle={`§ 193 SGB VII / DGUV — ${stats.totalIncidents > 0 ? Math.round((stats.reportableIncidents / stats.totalIncidents) * 100) : 0}% aller Vorfälle`} onSave={(cfg) => updateTileLabel("incident-reportable", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("incident-reportable")} />}
           />
         </div>
         <div key="incident-trend-chart" data-grid={{ x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3 }}>
@@ -458,32 +462,22 @@ export function IncidentsSection({
         {/* ── Accident KPI tiles ── */}
         <div key="accident-free">
           <DraggableCard
-            title="Tage unfallfrei"
-            subtitle={
-              kpiLoading
-                ? "Lade …"
-                : accidentKPI?.lastAccidentDateGlobal
-                ? `Letzter Unfall: ${formatDate(accidentKPI.lastAccidentDateGlobal)}`
-                : "Kein meldepflichtiger Unfall erfasst"
-            }
+            title={getTileLabel("accident-free", "Tage unfallfrei", kpiLoading ? "Lade …" : accidentKPI?.lastAccidentDateGlobal ? `Letzter Unfall: ${formatDate(accidentKPI.lastAccidentDateGlobal)}` : "Kein meldepflichtiger Unfall erfasst").title}
+            subtitle={getTileLabel("accident-free", "Tage unfallfrei", kpiLoading ? "Lade …" : accidentKPI?.lastAccidentDateGlobal ? `Letzter Unfall: ${formatDate(accidentKPI.lastAccidentDateGlobal)}` : "Kein meldepflichtiger Unfall erfasst").subtitle}
             value={kpiLoading ? "…" : (accidentKPI?.accidentFreeDaysGlobal ?? "∞")}
             icon={<ShieldCheck className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="accident-free" defaultTitle="Tage unfallfrei" defaultSubtitle="Kein meldepflichtiger Unfall erfasst" onSave={(cfg) => updateTileLabel("accident-free", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("accident-free")} />}
           />
         </div>
         <div key="teur-rate">
           <DraggableCard
-            title="Unfälle je 1.000 MA"
-            subtitle={
-              kpiLoading
-                ? "Lade …"
-                : accidentKPI
-                ? `${accidentKPI.reportableTotal} Unfälle / ${accidentKPI.totalEmployees} MA`
-                : "Tausend-Mitarbeiter-Quote (TEUR)"
-            }
+            title={getTileLabel("teur-rate", "Unfälle je 1.000 MA", "Tausend-Mitarbeiter-Quote (TEUR)").title}
+            subtitle={getTileLabel("teur-rate", "Unfälle je 1.000 MA", "Tausend-Mitarbeiter-Quote (TEUR)").subtitle}
             value={kpiLoading ? "…" : (accidentKPI?.teurRate ?? 0)}
             icon={<Users className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="teur-rate" defaultTitle="Unfälle je 1.000 MA" defaultSubtitle="Tausend-Mitarbeiter-Quote (TEUR)" onSave={(cfg) => updateTileLabel("teur-rate", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("teur-rate")} />}
           />
         </div>
         <div key="dept-table">

@@ -6,8 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { RotateCcw, GripVertical, Shield } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
+import { TileEditPopover } from "@/components/reports/TileEditPopover";
+import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel } from "@/components/reports/types";
 import { useLanguage } from "@/contexts/LanguageContext";
+
+const SECTION_ID = "risk-assessments";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -18,6 +22,17 @@ export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { st
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
+
+  const [tileLabels, setTileLabels] = useState<Record<string, { title: string; subtitle: string }>>(() => {
+    const ids = ["risk-total"];
+    const result: Record<string, { title: string; subtitle: string }> = {};
+    ids.forEach((id) => { const cfg = getTileConfig(SECTION_ID, id); result[id] = { title: cfg.title ?? "", subtitle: cfg.subtitle ?? "" }; });
+    return result;
+  });
+  const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
+  const updateTileLabel = (id: string, title: string, subtitle: string) => setTileLabels((p) => ({ ...p, [id]: { title, subtitle } }));
+  const resetTileLabel = (id: string) => setTileLabels((p) => ({ ...p, [id]: { title: "", subtitle: "" } }));
+
   const defaultLayout = {
     lg: [
       { i: "risk-total", x: 0, y: 0, w: 6, h: 2, minW: 2, minH: 2, static: false },
@@ -127,11 +142,12 @@ export function RiskAssessmentsSection({ stats, chartData, riskLevelData }: { st
       >
         <div key="risk-total">
           <DraggableCard
-            title={t("reports.riskAssessments.totalTitle")}
-            subtitle={t("reports.riskAssessments.totalSubtitle")}
+            title={getTileLabel("risk-total", t("reports.riskAssessments.totalTitle"), t("reports.riskAssessments.totalSubtitle")).title}
+            subtitle={getTileLabel("risk-total", t("reports.riskAssessments.totalTitle"), t("reports.riskAssessments.totalSubtitle")).subtitle}
             value={stats.totalRiskAssessments}
             icon={<Shield className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={<TileEditPopover sectionId={SECTION_ID} tileId="risk-total" defaultTitle={t("reports.riskAssessments.totalTitle")} defaultSubtitle={t("reports.riskAssessments.totalSubtitle")} onSave={(cfg) => updateTileLabel("risk-total", cfg.title ?? "", cfg.subtitle ?? "")} onReset={() => resetTileLabel("risk-total")} />}
           />
         </div>
         <div key="risk-level-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
