@@ -183,7 +183,7 @@ export default function DrillDownModal({
 
         let q = supabase
           .from("employees")
-          .select("id, full_name, position, department_id, created_at")
+          .select("id, full_name, job_roles(title), department_id, created_at")
           .eq("company_id", companyId)
           .order("full_name", { ascending: true })
           .limit(200);
@@ -492,7 +492,7 @@ export default function DrillDownModal({
   const getHeaders = (): string[] => {
     switch (config.metric) {
       case "incidents": return ["Titel", "Datum", "Status", "Schweregrad", "Ort"];
-      case "employees": return ["Name", "Abteilung", "Position"];
+      case "employees": return ["Name", "Abteilung", "Rolle"];
       case "audits": return ["Titel", "Geplant", "Status", "ISO-Code"];
       case "risks": return ["Titel", "Datum", "Risikoniveau", "Genehmigung"];
       case "measures": return ["Titel", "Fällig", "Status", "Typ"];
@@ -530,7 +530,7 @@ export default function DrillDownModal({
               </span>
             </td>
             <td className="p-3 text-muted-foreground">{row._deptName || "—"}</td>
-            <td className="p-3 text-muted-foreground">{row.position || "—"}</td>
+            <td className="p-3 text-muted-foreground">{(row.job_roles as any)?.title || "—"}</td>
           </tr>
         );
       case "audits":
