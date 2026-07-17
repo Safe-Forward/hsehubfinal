@@ -643,6 +643,7 @@ export function IncidentsSection({
                             <Badge
                               variant={dept.reportableCount > 0 ? "destructive" : "secondary"}
                               className="cursor-pointer hover:opacity-80"
+                              data-testid={`dept-reportable-${dept.id}`}
                               onClick={() => openDrillDown({ metric: "incidents", groupBy: "department_reportable" } as ReportConfig, dept.name, `Meldepfl. Vorfälle – ${dept.name}`)}
                             >
                               {dept.reportableCount}
@@ -650,6 +651,7 @@ export function IncidentsSection({
                           </td>
                           <td
                             className="px-4 py-3 text-right text-muted-foreground cursor-pointer hover:text-primary hover:underline"
+                            data-testid={`dept-employees-${dept.id}`}
                             onClick={() => openDrillDown({ metric: "employees", groupBy: "department" } as ReportConfig, dept.name, `Mitarbeiter – ${dept.name}`)}
                           >
                             {dept.employeeCount}

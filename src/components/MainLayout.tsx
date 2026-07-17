@@ -313,14 +313,14 @@ export default function MainLayout({ children }: Props) {
             /* Regular Company User Menu */
             <div className="space-y-0.5">
               {hasPermission("dashboard") && (
-                <Link to="/dashboard" className={getLinkClasses("/dashboard")}>
+                <Link to="/dashboard" className={getLinkClasses("/dashboard")} data-testid="nav-dashboard">
                   <BarChart className="w-4 h-4" />
                   <span>{t("nav.dashboard")}</span>
                 </Link>
               )}
 
               {hasPermission("employees") && (
-                <Link to="/employees" className={getLinkClasses("/employees")}>
+                <Link to="/employees" className={getLinkClasses("/employees")} data-testid="nav-employees">
                   <Users className="w-4 h-4" />
                   <span>{t("nav.employees")}</span>
                 </Link>
@@ -330,6 +330,7 @@ export default function MainLayout({ children }: Props) {
                 <Link
                   to="/investigations"
                   className={getLinkClasses("/investigations")}
+                  data-testid="nav-investigations"
                 >
                   <Shield className="w-4 h-4" />
                   <span>{t("nav.investigations")}</span>
@@ -340,6 +341,7 @@ export default function MainLayout({ children }: Props) {
                 <Link
                   to="/risk-assessments"
                   className={getLinkClasses("/risk-assessments")}
+                  data-testid="nav-risk-assessments"
                 >
                   <AlertTriangle className="w-4 h-4" />
                   <span>{t("nav.riskAssessments")}</span>
@@ -347,7 +349,7 @@ export default function MainLayout({ children }: Props) {
               )}
 
               {hasPermission("trainings") && canAccessFeature("trainings") && (
-                <Link to="/training" className={getLinkClasses("/training")}>
+                <Link to="/training" className={getLinkClasses("/training")} data-testid="nav-training">
                   <CheckCircle className="w-4 h-4" />
                   <span>{t("nav.trainings")}</span>
                   {showTrainingBadge && incompleteTrainingCount > 0 && (
@@ -359,14 +361,14 @@ export default function MainLayout({ children }: Props) {
               )}
 
               {hasPermission("incidents") && canAccessFeature("incidents") && (
-                <Link to="/incidents" className={getLinkClasses("/incidents")}>
+                <Link to="/incidents" className={getLinkClasses("/incidents")} data-testid="nav-incidents">
                   <AlertTriangle className="w-4 h-4" />
                   <span>{t("nav.incidents")}</span>
                 </Link>
               )}
 
               {hasPermission("riskAssessments") && canAccessFeature("riskAssessments") && (
-                <Link to="/measures" className={getLinkClasses("/measures")}>
+                <Link to="/measures" className={getLinkClasses("/measures")} data-testid="nav-measures">
                   <ClipboardList className="w-4 h-4" />
                   <span>Maßnahmen</span>
                   {showMeasuresBadge && openMeasuresCount > 0 && (
@@ -378,14 +380,14 @@ export default function MainLayout({ children }: Props) {
               )}
 
               {hasPermission("audits") && canAccessFeature("audits") && (
-                <Link to="/audits" className={getLinkClasses("/audits")}>
+                <Link to="/audits" className={getLinkClasses("/audits")} data-testid="nav-audits">
                   <FileCheck className="w-4 h-4" />
                   <span>{t("nav.audits")}</span>
                 </Link>
               )}
 
               {hasPermission("reports") && (
-                <Link to="/reports" className={getLinkClasses("/reports")}>
+                <Link to="/reports" className={getLinkClasses("/reports")} data-testid="nav-reports">
                   <BarChart className="w-4 h-4" />
                   <span>{t("nav.reports")}</span>
                 </Link>
@@ -393,7 +395,7 @@ export default function MainLayout({ children }: Props) {
 
               {hasPermission("settings") && (
                 <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-800">
-                  <Link to="/settings" className={getLinkClasses("/settings")}>
+                  <Link to="/settings" className={getLinkClasses("/settings")} data-testid="nav-settings">
                     <Settings className="w-4 h-4" />
                     <span>{t("nav.settings")}</span>
                   </Link>

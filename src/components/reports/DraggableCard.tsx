@@ -11,6 +11,7 @@ export function DraggableCard({
   onHide,
   editSlot,
   onValueClick,
+  testId,
 }: {
   title: string;
   subtitle: string;
@@ -20,6 +21,7 @@ export function DraggableCard({
   onHide?: () => void;
   editSlot?: React.ReactNode;
   onValueClick?: () => void;
+  testId?: string;
 }) {
   const { t } = useLanguage();
   return (
@@ -50,11 +52,12 @@ export function DraggableCard({
             className="font-bold text-xl cursor-pointer text-primary hover:underline"
             onClick={(e) => { e.stopPropagation(); onValueClick(); }}
             title="Klicken für Details"
+            data-testid={testId}
           >
             {value}
           </p>
         ) : (
-          <p className="font-bold text-foreground text-xl">{value}</p>
+          <p className="font-bold text-foreground text-xl" data-testid={testId}>{value}</p>
         )}
       </CardContent>
     </Card>

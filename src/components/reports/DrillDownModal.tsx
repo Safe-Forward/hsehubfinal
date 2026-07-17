@@ -508,7 +508,7 @@ export default function DrillDownModal({
     switch (config.metric) {
       case "incidents":
         return (
-          <tr key={row.id ?? i} className="border-t hover:bg-muted/30">
+          <tr key={row.id ?? i} className="border-t hover:bg-muted/30" data-testid={`row-incident-${row.id ?? i}`}>
             <td className="p-3 font-medium">{row.title || "—"}</td>
             <td className="p-3 text-muted-foreground">{formatDate(row.incident_date)}</td>
             <td className="p-3">{label(row.investigation_status)}</td>
@@ -521,6 +521,7 @@ export default function DrillDownModal({
           <tr
             key={row.id ?? i}
             className="border-t hover:bg-muted/30 cursor-pointer"
+            data-testid={`row-employee-${row.id ?? i}`}
             onClick={() => { onClose(); navigate(`/employees/${row.id}`); }}
           >
             <td className="p-3 font-medium text-primary">
@@ -599,28 +600,28 @@ export default function DrillDownModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col" data-testid="drill-down-modal">
         <DialogHeader>
-          <DialogTitle>{getTitle()}</DialogTitle>
+          <DialogTitle data-testid="drill-down-title">{getTitle()}</DialogTitle>
           {!loading && !error && (
-            <p className="text-sm text-muted-foreground">{rows.length} Einträge</p>
+            <p className="text-sm text-muted-foreground" data-testid="drill-down-count">{rows.length} Einträge</p>
           )}
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-12" data-testid="drill-down-loading">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : error ? (
-            <div className="text-center py-8 text-destructive text-sm">{error}</div>
+            <div className="text-center py-8 text-destructive text-sm" data-testid="drill-down-error">{error}</div>
           ) : rows.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
+            <div className="text-center py-8 text-muted-foreground text-sm" data-testid="drill-down-empty">
               Keine Datensätze gefunden.
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm" data-testid="drill-down-table">
                 <thead className="bg-muted/50 sticky top-0">
                   <tr>
                     {getHeaders().map((h) => (

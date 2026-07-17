@@ -1357,7 +1357,7 @@ export default function Employees() {
                 {hasDetailedPermission('employees', 'manage') && (
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                      <Button>
+                      <Button data-testid="btn-add-employee">
                         <Plus className="w-4 h-4 mr-2" />
                         {t("employees.addEmployee")}
                       </Button>
@@ -1881,6 +1881,7 @@ export default function Employees() {
                     filteredEmployees.map((employee) => (
                       <TableRow
                         key={employee.id}
+                        data-testid={`employee-row-${employee.id}`}
                         className="hover:bg-muted/70 transition-all duration-200 border-b border-border/50 hover:shadow-sm group"
                       >
                         <TableCell onClick={(e) => e.stopPropagation()}>
