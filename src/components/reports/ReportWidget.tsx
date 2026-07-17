@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   MoreVertical,
   Edit,
@@ -8,6 +8,7 @@ import {
   GripVertical,
   BarChart2
 } from "lucide-react";
+import DrillDownModal from "./DrillDownModal";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -116,11 +117,14 @@ export default function ReportWidget({
   onExport,
 }: ReportWidgetProps) {
   const { t } = useLanguage();
+  const [drillDown, setDrillDown] = useState<{ raw: string; display: string } | null>(null);
+  const openDrillDown = (raw: string, display: string) => setDrillDown({ raw, display });
 
   const chartData = (data && data.length > 0) ? data : (config.data || []);
 
+  // rawName preserved for drill-down queries; name is the German display label
   const displayData = useMemo(
-    () => chartData.map(d => ({ ...d, name: VALUE_LABELS[d.name] ?? d.name })),
+    () => chartData.map(d => ({ ...d, rawName: d.rawName ?? d.name, name: VALUE_LABELS[d.name] ?? d.name })),
     [chartData]
   );
 
@@ -150,7 +154,8 @@ export default function ReportWidget({
       case 'line':
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} style={{ cursor: 'pointer' }}
+              onClick={(d: any) => { const p = d?.activePayload?.[0]?.payload; if (p) openDrillDown(p.rawName ?? p.name, p.name); }}>
               <defs>
                 <linearGradient id={`gradient-${config.id}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -169,12 +174,13 @@ export default function ReportWidget({
       case 'bar':
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <BarChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} style={{ cursor: 'pointer' }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={30} />
               <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
-              <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]}
+                onClick={(d: any) => openDrillDown(d.rawName ?? d.name, d.name)} />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -183,7 +189,9 @@ export default function ReportWidget({
         return (
           <ResponsiveContainer width="100%" height="100%">
             <RechartsPie margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-              <Pie data={displayData} cx="50%" cy="50%" innerRadius="40%" outerRadius="70%" paddingAngle={2} dataKey="value">
+              <Pie data={displayData} cx="50%" cy="50%" innerRadius="40%" outerRadius="70%" paddingAngle={2} dataKey="value"
+                style={{ cursor: 'pointer' }}
+                onClick={(d: any) => openDrillDown(d.rawName ?? d.name, d.name)}>
                 {displayData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -197,7 +205,8 @@ export default function ReportWidget({
       default:
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} style={{ cursor: 'pointer' }}
+              onClick={(d: any) => { const p = d?.activePayload?.[0]?.payload; if (p) openDrillDown(p.rawName ?? p.name, p.name); }}>
               <defs>
                 <linearGradient id={`gradient-default-${config.id}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -233,9 +242,10 @@ export default function ReportWidget({
               const total = displayData.reduce((s, d) => s + (d.value || 0), 0);
               const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0.0";
               return (
-                <tr key={index} className="border-t hover:bg-muted/30">
-                  <td className="p-3">{item.name}</td>
-                  <td className="p-3 text-right font-medium">{item.value}</td>
+                <tr key={index} className="border-t hover:bg-muted/30 cursor-pointer"
+                  onClick={() => openDrillDown(item.rawName ?? item.name, item.name)}>
+                  <td className="p-3 text-primary font-medium">{item.name}</td>
+                  <td className="p-3 text-right font-bold">{item.value}</td>
                   <td className="p-3 text-right text-muted-foreground">{pct}%</td>
                 </tr>
               );
@@ -344,6 +354,16 @@ export default function ReportWidget({
       <div className="flex-1 flex flex-col overflow-hidden mt-2">
         {renderContent()}
       </div>
+
+      {drillDown && (
+        <DrillDownModal
+          isOpen={!!drillDown}
+          onClose={() => setDrillDown(null)}
+          config={config}
+          rawFilterValue={drillDown.raw}
+          displayFilterValue={drillDown.display}
+        />
+      )}
     </Card>
   );
 }
