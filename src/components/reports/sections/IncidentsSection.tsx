@@ -73,6 +73,7 @@ export function IncidentsSection({
   selectedYear,
   departmentFilter = "all",
   onEditTile,
+  onAddTileAsReport,
   customReports,
   onEditReport,
   onDuplicateReport,

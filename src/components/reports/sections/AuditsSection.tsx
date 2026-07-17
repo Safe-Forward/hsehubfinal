@@ -21,6 +21,7 @@ export function AuditsSection({
   chartData,
   auditStatusData,
   onEditTile,
+  onAddTileAsReport,
   customReports,
   onEditReport,
   onDuplicateReport,

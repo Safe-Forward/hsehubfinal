@@ -2002,11 +2002,9 @@ export default function Reports() {
       if (!preserved.targetSection && customReports[existingIndex]?.targetSection) {
         preserved.targetSection = customReports[existingIndex].targetSection;
       }
-      // Frische Daten laden bevor State gesetzt wird → Widget zeigt sofort korrekte Daten
-      const freshData = await fetchTemplateData(preserved).catch(() => []);
-      const preservedWithData = { ...preserved, data: freshData.length > 0 ? freshData : (preserved.data || []) };
+      // Sofort mit Builder-Daten aktualisieren → Widget ändert sich direkt nach dem Schließen
       updatedReports = [...customReports];
-      updatedReports[existingIndex] = preservedWithData;
+      updatedReports[existingIndex] = preserved;
       setCustomReports(updatedReports);
       saveCustomReports(updatedReports);
 
@@ -2014,6 +2012,20 @@ export default function Reports() {
         title: t("reports.toast.reportUpdatedTitle"),
         description: t("reports.toast.reportUpdatedDesc").replace("{title}", config.title),
       });
+
+      // Hintergrund: frische DB-Daten nachladen und Widget still aktualisieren
+      fetchTemplateData(preserved).then(freshData => {
+        if (freshData && freshData.length > 0) {
+          setCustomReports(prev => {
+            const idx = prev.findIndex(r => r.id === preserved.id);
+            if (idx < 0) return prev;
+            const upd = [...prev];
+            upd[idx] = { ...preserved, data: freshData };
+            try { localStorage.setItem('hse_custom_reports', JSON.stringify(upd)); } catch {}
+            return upd;
+          });
+        }
+      }).catch(() => {});
     } else {
       // Add new — stamp targetSection so report stays in the section where it was created
       const configWithSection: ReportConfig = { ...config, targetSection: activeSection };
@@ -2040,19 +2052,10 @@ export default function Reports() {
     setSelectedReport(null);
   };
 
-  const handleEditReport = async (config: ReportConfig) => {
-    // Sofort öffnen mit vorhandenen Daten
+  const handleEditReport = (config: ReportConfig) => {
     setSelectedReport(config);
     setIsBuilderOpen(true);
-    // Daten im Hintergrund nachladen
-    try {
-      const freshData = await fetchTemplateData(config);
-      if (freshData && freshData.length > 0) {
-        setSelectedReport(prev => prev ? { ...prev, data: freshData } : prev);
-      }
-    } catch {
-      // Ignorieren - vorhandene Daten bleiben
-    }
+    // Kein Hintergrund-Reload: würde initialConfig ändern und Builder-State zurücksetzen
   };
 
   const handleEditStandardTile = useCallback(async (
