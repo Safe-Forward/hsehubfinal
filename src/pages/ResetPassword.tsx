@@ -143,6 +143,7 @@ export default function ResetPassword() {
                   <div className="relative">
                     <Input
                       id="password"
+                      data-testid="reset-password-input"
                       type={showPassword ? "text" : "password"}
                       placeholder="Mindestens 8 Zeichen"
                       value={password}
@@ -203,6 +204,7 @@ export default function ResetPassword() {
 
                 <Button
                   type="submit"
+                  data-testid="reset-password-submit"
                   className="w-full"
                   disabled={isLoading || (!!password && !!confirmPassword && password !== confirmPassword)}
                 >

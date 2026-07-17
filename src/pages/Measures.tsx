@@ -598,7 +598,7 @@ export default function Measures() {
               <Dialog open={isDialogOpen && canManageMeasures} onOpenChange={setIsDialogOpen}>
                 {canManageMeasures && (
                 <DialogTrigger asChild>
-                  <Button onClick={resetForm}>
+                  <Button data-testid="btn-add-measure" onClick={resetForm}>
                     <Plus className="w-4 h-4 mr-2" />
                     {t("measures.new")}
                   </Button>
@@ -893,7 +893,7 @@ export default function Measures() {
                   </TableRow>
                 ) : (
                   filteredMeasures.map((measure) => (
-                    <TableRow key={measure.id}>
+                    <TableRow key={measure.id} data-testid={`measure-row-${measure.id}`}>
                       <TableCell>
                         <div>
                           <div className="font-medium">{measure.title}</div>

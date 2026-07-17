@@ -1062,7 +1062,7 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="relative z-10 pb-3">
-                    <div className="text-3xl sm:text-5xl font-bold text-white tracking-tight">
+                    <div className="text-3xl sm:text-5xl font-bold text-white tracking-tight" data-testid={`dashboard-tile-${id}`}>
                       {config.value}
                     </div>
                     {config.context && (

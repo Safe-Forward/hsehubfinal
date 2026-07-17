@@ -88,6 +88,7 @@ export default function Auth() {
                 <Label htmlFor="login-email"><span>Email</span></Label>
                 <Input
                   id="login-email"
+                  data-testid="login-email"
                   type="email"
                   placeholder="name@company.com"
                   value={loginEmail}
@@ -100,6 +101,7 @@ export default function Auth() {
                 <div className="relative">
                   <Input
                     id="login-password"
+                    data-testid="login-password"
                     type={showPassword ? "text" : "password"}
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
@@ -122,7 +124,7 @@ export default function Auth() {
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" data-testid="login-submit" className="w-full" disabled={isLoading}>
                 <span>{isLoading ? "Signing in..." : "Sign In"}</span>
               </Button>
               <div className="text-center">

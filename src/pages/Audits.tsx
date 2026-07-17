@@ -470,7 +470,7 @@ export default function Audits() {
             </div>
           </div>
           {hasDetailedPermission('audits', 'create_edit') && (
-            <Button onClick={() => setIsDialogOpen(true)}>
+            <Button data-testid="btn-add-audit" onClick={() => setIsDialogOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               {t("audits.new")}
             </Button>
@@ -531,6 +531,7 @@ export default function Audits() {
                 filteredAudits.map((audit) => (
                   <div
                     key={audit.id}
+                    data-testid={`audit-row-${audit.id}`}
                     className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
                   >
                     {(() => {
@@ -704,7 +705,7 @@ export default function Audits() {
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 {t("common.cancel")}
               </Button>
-              <Button onClick={createAudit}>{t("audits.createAudit")}</Button>
+              <Button data-testid="audit-form-submit" onClick={createAudit}>{t("audits.createAudit")}</Button>
             </div>
           </div>
         </DialogContent>
@@ -726,8 +727,9 @@ export default function Audits() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel data-testid="cancel-delete-btn">{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
+              data-testid="confirm-delete-btn"
               onClick={handleDelete}
               className="bg-destructive"
             >

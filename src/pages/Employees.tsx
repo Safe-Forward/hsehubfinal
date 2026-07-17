@@ -1376,6 +1376,7 @@ export default function Employees() {
                           </Label>
                           <Input
                             id="employee_number"
+                            data-testid="employee-form-number"
                             className="h-11 border-2 focus:border-primary transition-colors"
                             value={formData.employee_number}
                             onChange={(e) =>
@@ -1393,6 +1394,7 @@ export default function Employees() {
                         </Label>
                         <Input
                           id="first_name"
+                          data-testid="employee-form-firstname"
                           className="h-11 border-2 focus:border-primary transition-colors"
                           value={formData.first_name}
                           onChange={(e) =>
@@ -1410,6 +1412,7 @@ export default function Employees() {
                         </Label>
                         <Input
                           id="last_name"
+                          data-testid="employee-form-lastname"
                           className="h-11 border-2 focus:border-primary transition-colors"
                           value={formData.last_name}
                           onChange={(e) =>
@@ -1427,6 +1430,7 @@ export default function Employees() {
                         </Label>
                         <Input
                           id="email"
+                          data-testid="employee-form-email"
                           type="email"
                           className="h-11 border-2 focus:border-primary transition-colors"
                           value={formData.email}
@@ -1487,7 +1491,7 @@ export default function Employees() {
                         />
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-2" data-testid="employee-form-department">
                         <Label htmlFor="department">
                           {t("employees.department")}
                         </Label>
@@ -1582,7 +1586,7 @@ export default function Employees() {
                         >
                           {t("common.cancel")}
                         </Button>
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button type="submit" data-testid="employee-form-submit" disabled={isSubmitting}>
                           {isSubmitting
                             ? t("employees.adding")
                             : t("employees.addEmployee")}

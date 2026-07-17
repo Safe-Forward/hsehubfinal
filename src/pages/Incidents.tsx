@@ -903,7 +903,7 @@ export default function Incidents() {
             <Dialog open={isDialogOpen && canManageIncidents} onOpenChange={setIsDialogOpen}>
               {canManageIncidents && (
               <DialogTrigger asChild>
-                <Button onClick={resetForm}>
+                <Button data-testid="btn-add-incident" onClick={resetForm}>
                   <Plus className="w-4 h-4 mr-2" />
                   {t("incidents.reportIncident")}
                 </Button>
@@ -929,6 +929,7 @@ export default function Incidents() {
                     </Label>
                     <Input
                       id="title"
+                      data-testid="incident-form-title"
                       value={formData.title}
                       onChange={(e) =>
                         setFormData({ ...formData, title: e.target.value })
@@ -1243,7 +1244,7 @@ export default function Incidents() {
                     >
                       {t("common.cancel")}
                     </Button>
-                    <Button type="submit">
+                    <Button type="submit" data-testid="incident-form-submit">
                       <span>
                         {editingIncident
                           ? t("common.update")
@@ -1554,6 +1555,7 @@ export default function Incidents() {
                   sortedIncidents.map((incident) => (
                     <TableRow
                       key={incident.id}
+                      data-testid={`incident-row-${incident.id}`}
                       className="hover:bg-muted/70 transition-all duration-200 border-b border-border/50 hover:shadow-sm group"
                     >
 
