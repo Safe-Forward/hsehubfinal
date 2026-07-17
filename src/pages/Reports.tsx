@@ -1955,9 +1955,13 @@ export default function Reports() {
       const data = await fetchTemplateData(template);
 
       setSelectedReport({
+        dateRange: { type: "last_30_days" },
+        dateProperty: "created_at",
+        sortBy: "value",
+        displayMode: "chart",
         ...template,
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        data, // Include actual fetched data
+        data,
       } as ReportConfig);
       setIsLibraryOpen(false);
       setIsBuilderOpen(true);

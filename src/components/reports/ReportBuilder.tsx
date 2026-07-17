@@ -73,8 +73,17 @@ export default function ReportBuilder({
 }: ReportBuilderProps) {
   const { t } = useLanguage();
   const { companyId } = useAuth();
+
+  const normalizeConfig = (cfg: ReportConfig): ReportConfig => ({
+    ...cfg,
+    dateRange: cfg.dateRange || { type: "last_30_days" },
+    dateProperty: cfg.dateProperty || "created_at",
+    sortBy: cfg.sortBy || "value",
+    displayMode: cfg.displayMode || "chart",
+  });
+
   const [config, setConfig] = useState<ReportConfig>(
-    initialConfig || {
+    normalizeConfig(initialConfig || {
       id: Date.now().toString(),
       title: t("reports.builder.newReportTitle"),
       metric: "employees",
@@ -86,7 +95,7 @@ export default function ReportBuilder({
       chartType: "bar",
       sortBy: "value",
       displayMode: "chart",
-    }
+    })
   );
 
   // Local chart data state that can be refreshed
@@ -111,7 +120,7 @@ export default function ReportBuilder({
   // Sync config when initialConfig changes (e.g., when editing different reports)
   useEffect(() => {
     if (initialConfig) {
-      setConfig(initialConfig);
+      setConfig(normalizeConfig(initialConfig));
       // Also update chart data from initial config
       setChartData(initialConfig.data || data || []);
       setTagFilters(initialConfig.tagFilters || []);
