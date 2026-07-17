@@ -183,6 +183,5 @@ export default function ReportLibrary({
           </div>
         </div>
       </div>
-    </div>
   );
 }
