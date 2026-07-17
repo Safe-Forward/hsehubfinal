@@ -21,6 +21,7 @@ export interface ReportStats {
   completedCheckUps: number;
   openIncidents: number;
   closedIncidents: number;
+  inProgressMeasures: number;
   reportableIncidents: number;
   trainingCompliance: number;
 }

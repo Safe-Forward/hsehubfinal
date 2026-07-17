@@ -503,10 +503,15 @@ export function IncidentsSection({
             <CardContent className="flex-1 pb-4 pt-0">
               {(() => {
                 const override = chartOverrides["incident-trend-chart"];
-                const data = override?.data?.length ? override.data : chartData;
+                const rawData = override?.data?.length ? override.data : chartData;
+                // Normalize to { name, value } so renderChart works with both override data and chartData
+                const data = rawData.map((d: any) => ({
+                  name: d.name ?? d.month ?? d.label ?? "",
+                  value: d.value ?? d.incidents ?? 0,
+                }));
                 // chartType gilt IMMER wenn override vorhanden, auch ohne Daten-Override
                 const chartType = override?.chartType || "bar";
-                if (data.length === 0) return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.incidents.noDataForRange")}</div>;
+                if (data.length === 0 || data.every((d: any) => d.value === 0)) return <div className="flex items-center justify-center h-full text-muted-foreground text-sm">{t("reports.incidents.noDataForRange")}</div>;
                 return (
                   <ResponsiveContainer width="100%" height="100%">
                     {renderChart(data, chartType)}
@@ -565,7 +570,7 @@ export function IncidentsSection({
             value={kpiLoading ? "…" : (accidentKPI?.teurRate ?? 0)}
             icon={<Users className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
-            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "" } as ReportConfig, "", "Alle Vorfälle (TEUR-Basis)")}
+            onValueClick={undefined}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("teur-rate", { id: "teur-rate", title: "Unfälle je 1.000 MA", metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "teur-rate", title: getTileLabel("teur-rate", "Unfälle je 1.000 MA", "").title, metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>

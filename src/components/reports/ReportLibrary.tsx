@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Grid3x3, Users, AlertTriangle, ClipboardCheck, GraduationCap, Shield, Activity, CheckSquare, ListChecks, Copy, ChevronRight } from "lucide-react";
+import { Users, AlertTriangle, ClipboardCheck, GraduationCap, Shield, Activity, CheckSquare, ListChecks, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -103,12 +102,9 @@ export default function ReportLibrary({
   isOpen,
   onClose,
   onSelectTemplate,
-  existingReports = [],
-  onDuplicateReport,
 }: ReportLibraryProps) {
   const { t } = useLanguage();
   const REPORT_TEMPLATES = useReportTemplates(t);
-  const [activeTab, setActiveTab] = useState<"templates" | "duplicate">("templates");
 
   if (!isOpen) return null;
 
@@ -135,48 +131,21 @@ export default function ReportLibrary({
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b p-6 z-10">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">Bericht hinzufügen</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Wähle eine Vorlage oder dupliziere einen bestehenden Bericht
+                Wähle eine Vorlage aus ({REPORT_TEMPLATES.reduce((s, c) => s + c.reports.length, 0)} verfügbar)
               </p>
             </div>
             <Button variant="ghost" onClick={onClose}>Schließen</Button>
-          </div>
-          {/* Tabs */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab("templates")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                activeTab === "templates"
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              Vorlagen ({REPORT_TEMPLATES.reduce((s, c) => s + c.reports.length, 0)})
-            </button>
-            {existingReports.length > 0 && onDuplicateReport && (
-              <button
-                onClick={() => setActiveTab("duplicate")}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                  activeTab === "duplicate"
-                    ? "bg-primary text-white"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                <Copy className="w-3.5 h-3.5" />
-                Duplizieren ({existingReports.length})
-              </button>
-            )}
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === "templates" ? (
-            <div className="space-y-8">
-              {REPORT_TEMPLATES.map((category) => (
+          <div className="space-y-8">
+            {REPORT_TEMPLATES.map((category) => (
                 <div key={category.category}>
                   <div className="flex items-center gap-2 mb-4">
                     <div className={`w-8 h-8 rounded-lg ${category.color} flex items-center justify-center`}>
@@ -211,36 +180,7 @@ export default function ReportLibrary({
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground mb-4">
-                Klicke auf einen Bericht, um ihn als Kopie neu zu erstellen:
-              </p>
-              {existingReports.map((report) => (
-                <Card
-                  key={report.id}
-                  className="cursor-pointer hover:shadow-md transition-all border hover:border-primary group"
-                  onClick={() => {
-                    onDuplicateReport?.(report);
-                    onClose();
-                  }}
-                >
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-sm">{report.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {report.metric} · {report.groupBy || "Gesamt"} · {chartTypeLabel(report.chartType || "bar")}diagramm
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground group-hover:text-primary transition-colors">
-                      <Copy className="w-4 h-4" />
-                      <span className="text-xs font-medium">Duplizieren</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

@@ -236,7 +236,7 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
           <DraggableCard
             title={getTileLabel("measures-progress", t("reports.measures.inProgressTitle"), t("reports.measures.inProgressSubtitle")).title}
             subtitle={getTileLabel("measures-progress", t("reports.measures.inProgressTitle"), t("reports.measures.inProgressSubtitle")).subtitle}
-            value={stats.totalMeasures - stats.completedMeasures}
+            value={stats.inProgressMeasures}
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
             onValueClick={() => openDrillDown({ metric: "measures", groupBy: "status" } as ReportConfig, "in_progress", "Maßnahmen in Bearbeitung")}

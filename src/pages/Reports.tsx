@@ -105,6 +105,7 @@ export default function Reports() {
     completedCheckUps: 0,
     openIncidents: 0,
     closedIncidents: 0,
+    inProgressMeasures: 0,
     reportableIncidents: 0,
     trainingCompliance: 0,
   });
@@ -466,6 +467,8 @@ export default function Reports() {
         openIncidentsRes,
         closedIncidentsRes,
         reportableIncidentsRes,
+        inProgressMeasuresRes,
+        inProgressRiskMeasuresRes,
       ] = await Promise.all([
         withDept(
           supabase
@@ -623,6 +626,27 @@ export default function Reports() {
           ),
           "incident_date"
         ),
+        inRange(
+          withEmpScope(
+            supabase
+              .from("measures" as any)
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("status", "in_progress"),
+            "responsible_person_id"
+          ),
+          "created_at"
+        ),
+        inRange(
+          withRiskScope(
+            supabase
+              .from("risk_assessment_measures")
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .eq("progress_status", "in_progress")
+          ),
+          "created_at"
+        ),
       ]);
 
       setStats({
@@ -640,6 +664,7 @@ export default function Reports() {
         completedCheckUps: completedCheckUpsRes.count || 0,
         openIncidents: openIncidentsRes.count || 0,
         closedIncidents: closedIncidentsRes.count || 0,
+        inProgressMeasures: (inProgressMeasuresRes.count || 0) + (inProgressRiskMeasuresRes.count || 0),
         reportableIncidents: reportableIncidentsRes.count || 0,
         trainingCompliance: 0,
       });
@@ -1087,7 +1112,7 @@ export default function Reports() {
           [t("reports.pdf.kpi.trainingCompliance"), `${stats.trainingCompliance}%`],
           [t("reports.pdf.kpi.measures"), stats.totalMeasures],
           [t("reports.pdf.kpi.completedMeasures"), stats.completedMeasures],
-          [t("reports.pdf.kpi.inProgressMeasures"), stats.totalMeasures - stats.completedMeasures],
+          [t("reports.pdf.kpi.inProgressMeasures"), stats.inProgressMeasures],
           [t("reports.pdf.kpi.tasks"), stats.totalTasks],
           [t("reports.pdf.kpi.completedTasks"), stats.completedTasks],
           [t("reports.pdf.kpi.healthCheckups"), stats.totalCheckUps],
@@ -1223,7 +1248,7 @@ export default function Reports() {
         body: [
           [t("reports.pdf.totalMeasures"), stats.totalMeasures],
           [t("reports.pdf.completed"), stats.completedMeasures],
-          [t("reports.pdf.inProgress"), stats.totalMeasures - stats.completedMeasures],
+          [t("reports.pdf.inProgress"), stats.inProgressMeasures],
           [t("reports.pdf.completionRate"), `${completionRate}%`],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
@@ -2095,22 +2120,19 @@ export default function Reports() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
 
-  const handleDuplicateReport = (config: ReportConfig) => {
+  const handleDuplicateReport = async (config: ReportConfig) => {
+    const dupId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const duplicate = {
       ...config,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: dupId,
       title: t("reports.duplicateReportTitle").replace("{title}", config.title),
       data: config.data ? [...config.data] : [],
     };
 
-    // Add Duplicate to BEGINNING (Latest First)
     const updatedReports = [duplicate, ...customReports];
-
-    // Update data immediately
     setCustomReports(updatedReports);
     saveCustomReports(updatedReports);
 
-    // Wrap layout calculation in startTransition for smoother rendering
     startTransition(() => {
       const newLayouts = recalculateLayouts(updatedReports);
       setCustomReportsLayouts(newLayouts);
@@ -2121,12 +2143,26 @@ export default function Reports() {
       title: t("reports.toast.reportDuplicatedTitle"),
       description: t("reports.toast.reportDuplicatedDesc").replace("{title}", config.title),
     });
+
+    // Refresh data for the duplicate in background
+    try {
+      const freshData = await fetchTemplateData(duplicate);
+      setCustomReports(prev => {
+        const idx = prev.findIndex(r => r.id === dupId);
+        if (idx < 0) return prev;
+        const upd = [...prev];
+        upd[idx] = { ...upd[idx], data: freshData };
+        try { localStorage.setItem('hse_custom_reports', JSON.stringify(upd)); } catch {}
+        return upd;
+      });
+    } catch {}
   };
 
-  const handleAddFromStandardTile = (config: ReportConfig) => {
+  const handleAddFromStandardTile = async (config: ReportConfig) => {
+    const newId = `${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     const newReport: ReportConfig = {
       ...config,
-      id: `${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
+      id: newId,
       data: [],
     };
     const updated = [newReport, ...customReports];
@@ -2141,6 +2177,19 @@ export default function Reports() {
       title: "Bericht hinzugefügt",
       description: `"${config.title}" wurde als neue Kachel hinzugefügt.`,
     });
+
+    // Populate data in background
+    try {
+      const freshData = await fetchTemplateData(newReport);
+      setCustomReports(prev => {
+        const idx = prev.findIndex(r => r.id === newId);
+        if (idx < 0) return prev;
+        const upd = [...prev];
+        upd[idx] = { ...upd[idx], data: freshData };
+        try { localStorage.setItem('hse_custom_reports', JSON.stringify(upd)); } catch {}
+        return upd;
+      });
+    } catch {}
   };
 
   const handleDeleteReport = (id: string) => {

@@ -177,15 +177,19 @@ export default function DrillDownModal({
       }
 
       case "employees": {
+        // Skip created_at date filter when listing all employees of a specific department —
+        // date filter hides employees hired outside the dashboard period (they still belong to the dept).
+        const isDeptFilter = groupBy === "department" && hasFilter && !isMonth;
+
         let q = supabase
           .from("employees")
-          .select("id, first_name, last_name, position, department_id, departments(name), created_at")
+          .select("id, first_name, last_name, position, department_id, created_at")
           .eq("company_id", companyId)
           .order("last_name", { ascending: true })
           .limit(200);
 
-        if (dateBounds) q = (q as any).gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
-        if (deptId) q = (q as any).eq("department_id", deptId);
+        if (dateBounds && !isDeptFilter) q = (q as any).gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
+        if (deptId && !isDeptFilter) q = (q as any).eq("department_id", deptId);
 
         if (hasFilter) {
           if (isMonth) {
@@ -205,7 +209,16 @@ export default function DrillDownModal({
 
         const { data, error: e } = await q;
         if (e) throw e;
-        setRows(data || []);
+
+        const empData = data || [];
+        const deptIds = [...new Set(empData.map((r: any) => r.department_id).filter(Boolean))];
+        let deptNameMap: Record<string, string> = {};
+        if (deptIds.length > 0) {
+          const { data: depts } = await supabase
+            .from("departments").select("id, name").in("id", deptIds as string[]);
+          (depts || []).forEach((d: any) => { deptNameMap[d.id] = d.name; });
+        }
+        setRows(empData.map((r: any) => ({ ...r, _deptName: deptNameMap[r.department_id] || "—" })));
         break;
       }
 
@@ -439,6 +452,27 @@ export default function DrillDownModal({
         break;
       }
 
+      case "courses": {
+        let q: any = supabase
+          .from("courses")
+          .select("id, name, description, created_at")
+          .eq("company_id", companyId)
+          .order("created_at", { ascending: false })
+          .limit(200);
+
+        if (dateBounds) q = q.gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
+
+        if (hasFilter && isMonth) {
+          const { start, end } = monthRange(rawFilterValue);
+          q = q.gte("created_at", start).lt("created_at", end);
+        }
+
+        const { data, error: e } = await q;
+        if (e) throw e;
+        setRows(data || []);
+        break;
+      }
+
       default:
         setRows([]);
     }
@@ -448,7 +482,7 @@ export default function DrillDownModal({
     const metricLabel: Record<string, string> = {
       incidents: "Vorfälle", employees: "Mitarbeiter", audits: "Audits",
       risks: "Risikobewertungen", measures: "Maßnahmen", trainings: "Schulungen",
-      tasks: "Aufgaben", checkups: "Gesundheitschecks",
+      tasks: "Aufgaben", checkups: "Gesundheitschecks", courses: "Kurse",
     };
     const m = metricLabel[config.metric] || config.metric;
     if (!rawFilterValue) return `Alle ${m}`;
@@ -465,6 +499,7 @@ export default function DrillDownModal({
       case "trainings": return ["Mitarbeiter", "Status", "Datum"];
       case "checkups": return ["Mitarbeiter", "Status", "Datum"];
       case "tasks": return ["Titel", "Fällig", "Status"];
+      case "courses": return ["Kursname", "Beschreibung", "Erstellt"];
       default: return ["Daten"];
     }
   };
@@ -494,7 +529,7 @@ export default function DrillDownModal({
                 <ExternalLink className="w-3 h-3 shrink-0" />
               </span>
             </td>
-            <td className="p-3 text-muted-foreground">{(row.departments as any)?.name || "—"}</td>
+            <td className="p-3 text-muted-foreground">{row._deptName || "—"}</td>
             <td className="p-3 text-muted-foreground">{row.position || "—"}</td>
           </tr>
         );
@@ -547,6 +582,14 @@ export default function DrillDownModal({
             <td className="p-3 font-medium">{row.title || "—"}</td>
             <td className="p-3 text-muted-foreground">{formatDate(row.due_date)}</td>
             <td className="p-3">{label(row.status)}</td>
+          </tr>
+        );
+      case "courses":
+        return (
+          <tr key={row.id ?? i} className="border-t hover:bg-muted/30">
+            <td className="p-3 font-medium">{row.name || "—"}</td>
+            <td className="p-3 text-muted-foreground text-xs">{row.description || "—"}</td>
+            <td className="p-3 text-muted-foreground">{formatDate(row.created_at)}</td>
           </tr>
         );
       default:
