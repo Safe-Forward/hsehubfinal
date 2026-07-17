@@ -2006,22 +2006,13 @@ export default function Reports() {
       if (!preserved.targetSection && customReports[existingIndex]?.targetSection) {
         preserved.targetSection = customReports[existingIndex].targetSection;
       }
+      // Frische Daten laden bevor State gesetzt wird → Widget zeigt sofort korrekte Daten
+      const freshData = await fetchTemplateData(preserved).catch(() => []);
+      const preservedWithData = { ...preserved, data: freshData.length > 0 ? freshData : (preserved.data || []) };
       updatedReports = [...customReports];
-      updatedReports[existingIndex] = preserved;
+      updatedReports[existingIndex] = preservedWithData;
       setCustomReports(updatedReports);
       saveCustomReports(updatedReports);
-
-      // Frische Daten im Hintergrund laden und sofort anzeigen
-      fetchTemplateData(preserved)
-        .then(freshData => {
-          if (freshData && freshData.length > 0) {
-            const withFreshData = [...updatedReports];
-            withFreshData[existingIndex] = { ...preserved, data: freshData };
-            setCustomReports(withFreshData);
-            saveCustomReports(withFreshData);
-          }
-        })
-        .catch(() => {}); // Ignorieren — alte Daten bleiben sichtbar
 
       toast({
         title: t("reports.toast.reportUpdatedTitle"),
@@ -2488,7 +2479,7 @@ export default function Reports() {
           )}
 
           {activeSection !== "overview" && sectionCustomReports.length > 0 && (
-            <div className="mt-6">
+            <div className="mt-2">
               <ResponsiveGridLayout
                 className="layout"
                 layouts={customReportsLayouts}
@@ -2501,7 +2492,7 @@ export default function Reports() {
                 onLayoutChange={handleCustomReportsLayoutChange}
               >
                 {sectionCustomReports.map((report) => (
-                  <div key={report.id} className="min-h-[320px]">
+                  <div key={`report-${report.id}`} className="h-full">
                     <ReportWidget
                       config={report}
                       onEdit={handleEditReport}
