@@ -11,6 +11,7 @@ import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, TrainingStatus, OnEditTile } from "@/components/reports/types";
 import type { ReportConfig } from "@/components/reports/ReportBuilder";
 import ReportWidget from "@/components/reports/ReportWidget";
+import DrillDownModal from "@/components/reports/DrillDownModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_ID = "trainings";
@@ -54,6 +55,17 @@ export function TrainingsSection({
     return result;
   });
   const getTileLabel = (id: string, dt: string, ds: string) => ({ title: tileLabels[id]?.title || dt, subtitle: tileLabels[id]?.subtitle || ds });
+
+  const [drillDown, setDrillDown] = useState<{
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
+    raw: string;
+    display: string;
+  } | null>(null);
+  const openDrillDown = (
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>,
+    raw: string,
+    display: string
+  ) => setDrillDown({ config, raw, display });
 
   const [matrixPage, setMatrixPage] = useState(1);
   const matrixPageSize = 10;
@@ -190,6 +202,7 @@ export function TrainingsSection({
             value={stats.totalTrainings}
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            onValueClick={() => openDrillDown({ metric: "trainings", groupBy: "" } as ReportConfig, "", "Alle Schulungen")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("training-total", { id: "training-total", title: t("reports.trainings.totalTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "training-total", title: getTileLabel("training-total", t("reports.trainings.totalTitle"), t("reports.trainings.totalSubtitle")).title, metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -200,6 +213,7 @@ export function TrainingsSection({
             value={`${stats.trainingCompliance}%`}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
+            onValueClick={() => openDrillDown({ metric: "trainings", groupBy: "status" } as ReportConfig, "completed", "Abgeschlossene Schulungen")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("training-compliance", { id: "training-compliance", title: t("reports.trainings.complianceTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "training-compliance", title: getTileLabel("training-compliance", t("reports.trainings.complianceTitle"), t("reports.trainings.complianceSubtitle")).title, metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -309,6 +323,15 @@ export function TrainingsSection({
           )}
         </CardContent>
       </Card>
+      {drillDown && (
+        <DrillDownModal
+          isOpen={!!drillDown}
+          onClose={() => setDrillDown(null)}
+          config={drillDown.config}
+          rawFilterValue={drillDown.raw}
+          displayFilterValue={drillDown.display}
+        />
+      )}
     </div>
   );
 }

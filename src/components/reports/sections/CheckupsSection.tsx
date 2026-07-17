@@ -10,6 +10,7 @@ import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigSt
 import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
 import type { ReportConfig } from "@/components/reports/ReportBuilder";
 import ReportWidget from "@/components/reports/ReportWidget";
+import DrillDownModal from "@/components/reports/DrillDownModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_ID = "checkups";
@@ -119,6 +120,17 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTi
     return result;
   });
 
+  const [drillDown, setDrillDown] = useState<{
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
+    raw: string;
+    display: string;
+  } | null>(null);
+  const openDrillDown = (
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>,
+    raw: string,
+    display: string
+  ) => setDrillDown({ config, raw, display });
+
   const handleEditChartTile = (tileId: string, defaultConfig: ReportConfig) => {
     if (!onEditTile) return;
     onEditTile(tileId, defaultConfig, (cfg, data) => {
@@ -203,6 +215,7 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTi
             value={stats.totalCheckUps}
             icon={<Stethoscope className="w-5 h-5" />}
             color="bg-teal-50 text-teal-600"
+            onValueClick={() => openDrillDown({ metric: "checkups", groupBy: "" } as ReportConfig, "", "Alle Gesundheitschecks")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("checkups-total", { id: "checkups-total", title: t("reports.checkups.totalTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "checkups-total", title: getTileLabel("checkups-total", t("reports.checkups.totalTitle"), t("reports.checkups.totalSubtitle")).title, metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -213,6 +226,7 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTi
             value={stats.completedCheckUps}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            onValueClick={() => openDrillDown({ metric: "checkups", groupBy: "status" } as ReportConfig, "completed", "Abgeschlossene Checks")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("checkups-completed", { id: "checkups-completed", title: t("reports.checkups.completedTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "checkups-completed", title: getTileLabel("checkups-completed", t("reports.checkups.completedTitle"), t("reports.checkups.completedSubtitle")).title, metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -246,6 +260,15 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTi
           </div>
         ))}
       </ResponsiveGridLayout>
+      {drillDown && (
+        <DrillDownModal
+          isOpen={!!drillDown}
+          onClose={() => setDrillDown(null)}
+          config={drillDown.config}
+          rawFilterValue={drillDown.raw}
+          displayFilterValue={drillDown.display}
+        />
+      )}
     </div>
   );
 }

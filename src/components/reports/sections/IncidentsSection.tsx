@@ -15,6 +15,7 @@ import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigSt
 import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
 import type { ReportConfig } from "@/components/reports/ReportBuilder";
 import ReportWidget from "@/components/reports/ReportWidget";
+import DrillDownModal from "@/components/reports/DrillDownModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -96,6 +97,16 @@ export function IncidentsSection({
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const [drillDown, setDrillDown] = useState<{
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
+    raw: string;
+    display: string;
+  } | null>(null);
+  const openDrillDown = (
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>,
+    raw: string,
+    display: string
+  ) => setDrillDown({ config, raw, display });
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -437,6 +448,7 @@ export function IncidentsSection({
             value={stats.totalIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-red-50 text-red-600"
+            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "" } as ReportConfig, "", "Alle Vorfälle")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-total", { id: "incident-total", title: t("reports.incidents.totalTitle"), metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "incident-total", title: getTileLabel("incident-total", t("reports.incidents.totalTitle"), t("reports.incidents.totalSubtitle")).title, metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -447,6 +459,7 @@ export function IncidentsSection({
             value={stats.openIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "investigation_status" } as ReportConfig, "open", "Offene Fälle")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-open", { id: "incident-open", title: t("reports.incidents.openTitle"), metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "incident-open", title: getTileLabel("incident-open", t("reports.incidents.openTitle"), t("reports.incidents.openSubtitle")).title, metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -457,6 +470,7 @@ export function IncidentsSection({
             value={stats.totalIncidents - stats.openIncidents}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "investigation_status" } as ReportConfig, "not_open", "Abgeschlossene Fälle")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-closed", { id: "incident-closed", title: t("reports.incidents.closedTitle"), metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "incident-closed", title: getTileLabel("incident-closed", t("reports.incidents.closedTitle"), t("reports.incidents.closedSubtitle")).title, metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -467,6 +481,7 @@ export function IncidentsSection({
             value={`${stats.reportableIncidents} / ${stats.totalIncidents}`}
             icon={<ShieldAlert className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "is_reportable" } as ReportConfig, "true", "Meldepflichtige Vorfälle")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-reportable", { id: "incident-reportable", title: "Meldepflichtige Vorfälle", metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "incident-reportable", title: getTileLabel("incident-reportable", "Meldepflichtige Vorfälle", "").title, metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -537,6 +552,7 @@ export function IncidentsSection({
             value={kpiLoading ? "…" : (accidentKPI?.accidentFreeDaysGlobal ?? "∞")}
             icon={<ShieldCheck className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "is_reportable" } as ReportConfig, "true", "Meldepflichtige Unfälle")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("accident-free", { id: "accident-free", title: "Tage unfallfrei", metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "accident-free", title: getTileLabel("accident-free", "Tage unfallfrei", "").title, metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -547,6 +563,7 @@ export function IncidentsSection({
             value={kpiLoading ? "…" : (accidentKPI?.teurRate ?? 0)}
             icon={<Users className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "" } as ReportConfig, "", "Alle Vorfälle (TEUR-Basis)")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("teur-rate", { id: "teur-rate", title: "Unfälle je 1.000 MA", metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "teur-rate", title: getTileLabel("teur-rate", "Unfälle je 1.000 MA", "").title, metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -616,11 +633,20 @@ export function IncidentsSection({
                             {formatDate(dept.lastAccidentDate)}
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <Badge variant={dept.reportableCount > 0 ? "destructive" : "secondary"}>
+                            <Badge
+                              variant={dept.reportableCount > 0 ? "destructive" : "secondary"}
+                              className="cursor-pointer hover:opacity-80"
+                              onClick={() => openDrillDown({ metric: "incidents", groupBy: "department_reportable" } as ReportConfig, dept.name, `Meldepfl. Vorfälle – ${dept.name}`)}
+                            >
                               {dept.reportableCount}
                             </Badge>
                           </td>
-                          <td className="px-4 py-3 text-right text-muted-foreground">{dept.employeeCount}</td>
+                          <td
+                            className="px-4 py-3 text-right text-muted-foreground cursor-pointer hover:text-primary hover:underline"
+                            onClick={() => openDrillDown({ metric: "employees", groupBy: "department" } as ReportConfig, dept.name, `Mitarbeiter – ${dept.name}`)}
+                          >
+                            {dept.employeeCount}
+                          </td>
                           <td className="px-4 py-3 text-right font-mono text-sm">
                             {dept.teurRate.toFixed(2)}
                           </td>
@@ -645,6 +671,16 @@ export function IncidentsSection({
           </div>
         ))}
       </ResponsiveGridLayout>
+
+      {drillDown && (
+        <DrillDownModal
+          isOpen={!!drillDown}
+          onClose={() => setDrillDown(null)}
+          config={drillDown.config}
+          rawFilterValue={drillDown.raw}
+          displayFilterValue={drillDown.display}
+        />
+      )}
     </div>
   );
 }

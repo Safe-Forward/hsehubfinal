@@ -9,6 +9,7 @@ import { DraggableCard } from "@/components/reports/DraggableCard";
 import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
 import type { ReportConfig } from "@/components/reports/ReportBuilder";
+import DrillDownModal from "@/components/reports/DrillDownModal";
 import ReportWidget from "@/components/reports/ReportWidget";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -45,6 +46,17 @@ export function AuditsSection({
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
   const lastSavedLayoutRef = useRef<string>('');
+
+  const [drillDown, setDrillDown] = useState<{
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
+    raw: string;
+    display: string;
+  } | null>(null);
+  const openDrillDown = (
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>,
+    raw: string,
+    display: string
+  ) => setDrillDown({ config, raw, display });
 
   const [tileLabels, setTileLabels] = useState<Record<string, { title: string; subtitle: string }>>(() => {
     const ids = ["audit-total", "audit-completed"];
@@ -233,6 +245,7 @@ export function AuditsSection({
             value={stats.totalAudits}
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
+            onValueClick={() => openDrillDown({ metric: "audits", groupBy: "" } as ReportConfig, "", "Alle Audits")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("audit-total", { id: "audit-total", title: t("reports.audits.totalTitle"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "audit-total", title: getTileLabel("audit-total", t("reports.audits.totalTitle"), t("reports.audits.totalSubtitle")).title, metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -243,6 +256,7 @@ export function AuditsSection({
             value={stats.completedAudits}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            onValueClick={() => openDrillDown({ metric: "audits", groupBy: "status" } as ReportConfig, "completed", "Abgeschlossene Audits")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("audit-completed", { id: "audit-completed", title: t("reports.audits.completedTitle"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "audit-completed", title: getTileLabel("audit-completed", t("reports.audits.completedTitle"), t("reports.audits.completedSubtitle")).title, metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -276,6 +290,15 @@ export function AuditsSection({
           </div>
         ))}
       </ResponsiveGridLayout>
+      {drillDown && (
+        <DrillDownModal
+          isOpen={!!drillDown}
+          onClose={() => setDrillDown(null)}
+          config={drillDown.config}
+          rawFilterValue={drillDown.raw}
+          displayFilterValue={drillDown.display}
+        />
+      )}
     </div>
   );
 }

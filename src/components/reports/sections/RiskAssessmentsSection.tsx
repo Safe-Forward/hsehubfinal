@@ -9,6 +9,7 @@ import { DraggableCard } from "@/components/reports/DraggableCard";
 import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
 import type { ReportConfig } from "@/components/reports/ReportBuilder";
+import DrillDownModal from "@/components/reports/DrillDownModal";
 import ReportWidget from "@/components/reports/ReportWidget";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -41,6 +42,17 @@ export function RiskAssessmentsSection({
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
+
+  const [drillDown, setDrillDown] = useState<{
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
+    raw: string;
+    display: string;
+  } | null>(null);
+  const openDrillDown = (
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>,
+    raw: string,
+    display: string
+  ) => setDrillDown({ config, raw, display });
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -229,6 +241,7 @@ export function RiskAssessmentsSection({
             value={stats.totalRiskAssessments}
             icon={<Shield className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            onValueClick={() => openDrillDown({ metric: "risks", groupBy: "" } as ReportConfig, "", "Alle Risikobewertungen")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("risk-total", { id: "risk-total", title: t("reports.riskAssessments.totalTitle"), metric: "risks", groupBy: "risk_level", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "risk-total", title: getTileLabel("risk-total", t("reports.riskAssessments.totalTitle"), t("reports.riskAssessments.totalSubtitle")).title, metric: "risks", groupBy: "risk_level", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -262,6 +275,15 @@ export function RiskAssessmentsSection({
           </div>
         ))}
       </ResponsiveGridLayout>
+      {drillDown && (
+        <DrillDownModal
+          isOpen={!!drillDown}
+          onClose={() => setDrillDown(null)}
+          config={drillDown.config}
+          rawFilterValue={drillDown.raw}
+          displayFilterValue={drillDown.display}
+        />
+      )}
     </div>
   );
 }

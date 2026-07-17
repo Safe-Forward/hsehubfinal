@@ -10,6 +10,7 @@ export function DraggableCard({
   color,
   onHide,
   editSlot,
+  onValueClick,
 }: {
   title: string;
   subtitle: string;
@@ -18,6 +19,7 @@ export function DraggableCard({
   color: string;
   onHide?: () => void;
   editSlot?: React.ReactNode;
+  onValueClick?: () => void;
 }) {
   const { t } = useLanguage();
   return (
@@ -43,7 +45,17 @@ export function DraggableCard({
         </div>
         <h3 className="font-medium text-foreground text-sm leading-tight">{title}</h3>
         <p className="text-muted-foreground text-xs mb-1">{subtitle}</p>
-        <p className="font-bold text-foreground text-xl">{value}</p>
+        {onValueClick ? (
+          <p
+            className="font-bold text-xl cursor-pointer text-primary hover:underline"
+            onClick={(e) => { e.stopPropagation(); onValueClick(); }}
+            title="Klicken für Details"
+          >
+            {value}
+          </p>
+        ) : (
+          <p className="font-bold text-foreground text-xl">{value}</p>
+        )}
       </CardContent>
     </Card>
   );

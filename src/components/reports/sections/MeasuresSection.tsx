@@ -10,6 +10,7 @@ import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigSt
 import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
 import type { ReportConfig } from "@/components/reports/ReportBuilder";
 import ReportWidget from "@/components/reports/ReportWidget";
+import DrillDownModal from "@/components/reports/DrillDownModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_ID = "measures";
@@ -19,6 +20,16 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTile, onAddTileAsReport, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[]; onEditTile?: OnEditTile; onAddTileAsReport?: (config: ReportConfig) => void; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void }) {
   const { toast } = useToast();
   const { t } = useLanguage();
+  const [drillDown, setDrillDown] = useState<{
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
+    raw: string;
+    display: string;
+  } | null>(null);
+  const openDrillDown = (
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>,
+    raw: string,
+    display: string
+  ) => setDrillDown({ config, raw, display });
   const isInitialMountRef = useRef(true);
   const isDraggingRef = useRef(false);
   const pendingLayoutRef = useRef<{ [key: string]: any[] } | null>(null);
@@ -206,6 +217,7 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.totalMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-purple-50 text-purple-600"
+            onValueClick={() => openDrillDown({ metric: "measures", groupBy: "" } as ReportConfig, "", "Alle Maßnahmen")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-total", { id: "measures-total", title: t("reports.measures.totalTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "measures-total", title: getTileLabel("measures-total", t("reports.measures.totalTitle"), t("reports.measures.totalSubtitle")).title, metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -216,6 +228,7 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.completedMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            onValueClick={() => openDrillDown({ metric: "measures", groupBy: "status" } as ReportConfig, "completed", "Abgeschlossene Maßnahmen")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-completed", { id: "measures-completed", title: t("reports.measures.completedTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "measures-completed", title: getTileLabel("measures-completed", t("reports.measures.completedTitle"), t("reports.measures.completedSubtitle")).title, metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -226,6 +239,7 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.totalMeasures - stats.completedMeasures}
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            onValueClick={() => openDrillDown({ metric: "measures", groupBy: "status" } as ReportConfig, "in_progress", "Maßnahmen in Bearbeitung")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-progress", { id: "measures-progress", title: t("reports.measures.inProgressTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "measures-progress", title: getTileLabel("measures-progress", t("reports.measures.inProgressTitle"), t("reports.measures.inProgressSubtitle")).title, metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
@@ -259,6 +273,15 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
           </div>
         ))}
       </ResponsiveGridLayout>
+      {drillDown && (
+        <DrillDownModal
+          isOpen={!!drillDown}
+          onClose={() => setDrillDown(null)}
+          config={drillDown.config}
+          rawFilterValue={drillDown.raw}
+          displayFilterValue={drillDown.display}
+        />
+      )}
     </div>
   );
 }

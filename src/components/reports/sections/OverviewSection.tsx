@@ -14,6 +14,7 @@ import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContai
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { ReportStats, OnEditTile } from "@/components/reports/types";
 import ReportWidget, { ReportConfig } from "@/components/reports/ReportWidget";
+import DrillDownModal from "@/components/reports/DrillDownModal";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export function OverviewSection({
@@ -46,6 +47,17 @@ export function OverviewSection({
   const { toast } = useToast();
   const { t } = useLanguage();
   const UNIFIED_LAYOUT_KEY = "hse_unified_dashboard_layout_v5";
+
+  const [drillDown, setDrillDown] = useState<{
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
+    raw: string;
+    display: string;
+  } | null>(null);
+  const openDrillDown = (
+    config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>,
+    raw: string,
+    display: string
+  ) => setDrillDown({ config, raw, display });
 
   // Mounted state to suppress CSS transition glitch on first render
   const [isMounted, setIsMounted] = useState(false);
@@ -477,6 +489,7 @@ export function OverviewSection({
             icon={<Shield className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
             onHide={() => toggleCardVisibility("risk-assessments")}
+            onValueClick={() => openDrillDown({ metric: "risks", groupBy: "" } as ReportConfig, "", "Alle Risikobewertungen")}
             editSlot={onEditTile ? <button onClick={(e) => { e.stopPropagation(); onEditTile("risk-assessments", { id: "risk-assessments", title: t("reports.overview.card.riskAssessments"), metric: "risks", groupBy: "risk_level", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button> : undefined}
           />
         </div>}
@@ -489,6 +502,7 @@ export function OverviewSection({
             icon={<ClipboardCheck className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
             onHide={() => toggleCardVisibility("safety-audits")}
+            onValueClick={() => openDrillDown({ metric: "audits", groupBy: "" } as ReportConfig, "", "Alle Audits")}
             editSlot={onEditTile ? <button onClick={(e) => { e.stopPropagation(); onEditTile("safety-audits", { id: "safety-audits", title: t("reports.overview.card.safetyAudits"), metric: "audits", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button> : undefined}
           />
         </div>}
@@ -501,6 +515,7 @@ export function OverviewSection({
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-red-50 text-red-600"
             onHide={() => toggleCardVisibility("incidents")}
+            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "" } as ReportConfig, "", "Alle Vorfälle")}
             editSlot={onEditTile ? <button onClick={(e) => { e.stopPropagation(); onEditTile("incidents", { id: "incidents", title: t("reports.overview.card.incidents"), metric: "incidents", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button> : undefined}
           />
         </div>}
@@ -513,6 +528,7 @@ export function OverviewSection({
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
             onHide={() => toggleCardVisibility("training-compliance")}
+            onValueClick={() => openDrillDown({ metric: "trainings", groupBy: "" } as ReportConfig, "", "Alle Schulungen")}
             editSlot={onEditTile ? <button onClick={(e) => { e.stopPropagation(); onEditTile("training-compliance", { id: "training-compliance", title: t("reports.overview.card.trainingCompliance"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: "overview" }, (_cfg, _d) => {}); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button> : undefined}
           />
         </div>}
@@ -693,6 +709,16 @@ export function OverviewSection({
             ))}
           </div>
         </div>
+      )}
+
+      {drillDown && (
+        <DrillDownModal
+          isOpen={!!drillDown}
+          onClose={() => setDrillDown(null)}
+          config={drillDown.config}
+          rawFilterValue={drillDown.raw}
+          displayFilterValue={drillDown.display}
+        />
       )}
     </div>
   );

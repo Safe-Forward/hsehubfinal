@@ -14,7 +14,7 @@ import { ReportConfig } from "./ReportBuilder";
 interface DrillDownModalProps {
   isOpen: boolean;
   onClose: () => void;
-  config: ReportConfig;
+  config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
   rawFilterValue: string; // "" = alle Datensätze anzeigen
   displayFilterValue: string;
 }
@@ -115,7 +115,18 @@ export default function DrillDownModal({
           } else if (groupBy === "category" || groupBy === "incident_type") {
             q = (q as any).eq("incident_type", rawFilterValue);
           } else if (groupBy === "investigation_status" || groupBy === "status") {
-            q = (q as any).eq("investigation_status", rawFilterValue);
+            if (rawFilterValue === "not_open") {
+              q = (q as any).neq("investigation_status", "open");
+            } else {
+              q = (q as any).eq("investigation_status", rawFilterValue);
+            }
+          } else if (groupBy === "is_reportable") {
+            q = (q as any).eq("is_reportable", true);
+          } else if (groupBy === "department_reportable") {
+            const { data: depts } = await supabase
+              .from("departments").select("id").eq("name", rawFilterValue).eq("company_id", companyId);
+            const deptId = depts?.[0]?.id;
+            if (deptId) q = (q as any).eq("department_id", deptId).eq("is_reportable", true);
           } else if (groupBy === "severity") {
             q = (q as any).eq("severity", rawFilterValue);
           } else if (groupBy) {
