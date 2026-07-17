@@ -456,7 +456,7 @@ export default function Tasks() {
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button data-testid="btn-add-task">
                     <Plus className="w-4 h-4 mr-2" />
                     New Task
                   </Button>
@@ -680,7 +680,7 @@ export default function Tasks() {
                         >
                           Cancel
                         </Button>
-                        <Button type="submit">Create Task</Button>
+                        <Button type="submit" data-testid="task-form-submit">Create Task</Button>
                       </div>
                     </form>
                   </Form>
@@ -724,7 +724,7 @@ export default function Tasks() {
                     </TableRow>
                   ) : (
                     filteredTasks.map((task) => (
-                      <TableRow key={task.id}>
+                      <TableRow key={task.id} data-testid={`task-row-${task.id}`}>
                         <TableCell className="font-medium">
                           {task.title}
                         </TableCell>

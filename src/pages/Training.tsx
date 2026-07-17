@@ -1103,7 +1103,7 @@ export default function Training() {
               {isAdmin && (
                 <Dialog open={isCourseDialogOpen} onOpenChange={setIsCourseDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"><Plus className="w-4 h-4 mr-2" />Neuen Kurs erstellen</Button>
+                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" data-testid="btn-add-course"><Plus className="w-4 h-4 mr-2" />Neuen Kurs erstellen</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
@@ -1189,6 +1189,7 @@ export default function Training() {
                   return (
                     <div
                       key={course.id}
+                      data-testid={`course-card-${course.id}`}
                       className="group rounded-2xl border-2 border-border hover:border-primary/40 hover:shadow-xl transition-all duration-300 overflow-hidden bg-card cursor-pointer"
                       onClick={() => navigate(`/training/${course.id}`)}
                     >

@@ -1419,7 +1419,7 @@ export default function Investigations() {
               <Dialog open={isDialogOpen && canManageInvestigations} onOpenChange={setIsDialogOpen}>
                 {canManageInvestigations && (
                 <DialogTrigger asChild>
-                  <Button onClick={resetForm}>
+                  <Button onClick={resetForm} data-testid="btn-add-investigation">
                     <Plus className="w-4 h-4 mr-2" />
                     {t("investigations.newInvestigation")}
                   </Button>
@@ -1677,7 +1677,7 @@ export default function Investigations() {
                       >
                         {t("investigations.cancel")}
                       </Button>
-                      <Button type="submit">
+                      <Button type="submit" data-testid="investigation-form-submit">
                         {editingInvestigation
                           ? t("investigations.update")
                           : t("investigations.create")}
@@ -1897,7 +1897,7 @@ export default function Investigations() {
                       const firstName = nameParts.slice(0, -1).join(" ");
 
                       return (
-                        <TableRow key={item.employee.id}>
+                        <TableRow key={item.employee.id} data-testid={`investigation-employee-row-${item.employee.id}`}>
 
                           <TableCell className="font-medium">
                             {firstName}

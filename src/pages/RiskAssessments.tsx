@@ -1041,7 +1041,7 @@ export default function RiskAssessments() {
                 <Dialog open={isDialogOpen && canManageRisk} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingRiskId(null); resetForm(); } }}>
                   {canManageRisk && (
                   <DialogTrigger asChild>
-                    <Button className="whitespace-nowrap">
+                    <Button className="whitespace-nowrap" data-testid="btn-add-risk">
                       <Plus className="w-4 h-4 mr-2" />
                       {language === "de"
                         ? "Neue Bewertung"
@@ -1946,7 +1946,7 @@ export default function RiskAssessments() {
                             >
                               {t("risks.back")}
                             </Button>
-                            <Button type="submit">
+                            <Button type="submit" data-testid="risk-form-submit">
                               <Save className="w-4 h-4 mr-2" />
                               {t("common.create")}
                             </Button>
@@ -2078,6 +2078,7 @@ export default function RiskAssessments() {
                     filteredRisks.map((risk) => (
                       <TableRow
                         key={risk.id}
+                        data-testid={`risk-row-${risk.id}`}
                         className="hover:bg-muted/70 transition-all duration-200 border-b border-border/50 hover:shadow-sm group"
                       >
                         <TableCell>

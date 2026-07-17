@@ -106,9 +106,10 @@ export default function ForgotPassword() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoFocus
+                    data-testid="forgot-password-email"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full" disabled={isLoading} data-testid="forgot-password-submit">
                   {isLoading ? "Senden..." : "Reset-Link senden"}
                 </Button>
                 <Button

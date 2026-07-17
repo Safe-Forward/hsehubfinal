@@ -328,6 +328,7 @@ export default function CompanyRegistration() {
             {subscriptionPlans.map((plan) => (
               <Card
                 key={plan.tier}
+                data-testid={`reg-plan-${plan.tier}`}
                 className={`cursor-pointer transition-all ${
                   selectedTier === plan.tier
                     ? "ring-2 ring-primary shadow-lg scale-105"
@@ -386,6 +387,7 @@ export default function CompanyRegistration() {
                         id="companyName"
                         {...register("companyName")}
                         placeholder="Mustermann GmbH"
+                        data-testid="reg-company-name"
                       />
                       {errors.companyName && (
                         <p className="text-sm text-destructive mt-1">
@@ -402,6 +404,7 @@ export default function CompanyRegistration() {
                           type="email"
                           {...register("companyEmail")}
                           placeholder="buchhaltung@unternehmen.de"
+                          data-testid="reg-company-email"
                         />
                         {errors.companyEmail && (
                           <p className="text-sm text-destructive mt-1">
@@ -438,6 +441,7 @@ export default function CompanyRegistration() {
                         id="adminName"
                         {...register("adminName")}
                         placeholder="Max Mustermann"
+                        data-testid="reg-admin-name"
                       />
                       {errors.adminName && (
                         <p className="text-sm text-destructive mt-1">
@@ -453,6 +457,7 @@ export default function CompanyRegistration() {
                         type="email"
                         {...register("adminEmail")}
                         placeholder="max@unternehmen.de"
+                        data-testid="reg-admin-email"
                       />
                       {errors.adminEmail && (
                         <p className="text-sm text-destructive mt-1">
@@ -471,6 +476,7 @@ export default function CompanyRegistration() {
                             {...register("password")}
                             placeholder="........"
                             className="pr-10"
+                            data-testid="reg-password"
                           />
                           <button
                             type="button"
@@ -500,6 +506,7 @@ export default function CompanyRegistration() {
                             {...register("confirmPassword")}
                             placeholder="........"
                             className="pr-10"
+                            data-testid="reg-confirm-password"
                           />
                           <button
                             type="button"
@@ -544,7 +551,7 @@ export default function CompanyRegistration() {
                   </div>
 
                   <div className="flex flex-col gap-4">
-                    <Button type="submit" size="lg" disabled={loading || !agreedToAvv} className="w-full">
+                    <Button type="submit" size="lg" disabled={loading || !agreedToAvv} className="w-full" data-testid="reg-submit">
                       {loading ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />

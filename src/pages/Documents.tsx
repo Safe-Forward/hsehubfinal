@@ -516,7 +516,7 @@ export default function Documents() {
             or click the button below to select files
           </p>
           {hasDetailedPermission('documents', 'upload') && (
-            <Button onClick={() => setShowUploadDialog(true)}>
+            <Button onClick={() => setShowUploadDialog(true)} data-testid="btn-upload-document">
               <Upload className="h-4 w-4 mr-2" />
               Upload Document
             </Button>
@@ -569,7 +569,7 @@ export default function Documents() {
                   : "Laden Sie Ihr erstes Dokument hoch, um zu beginnen"}
               </p>
               {!searchQuery && categoryFilter === "all" && hasDetailedPermission('documents', 'upload') && (
-                <Button onClick={() => setShowUploadDialog(true)}>
+                <Button onClick={() => setShowUploadDialog(true)} data-testid="btn-upload-document-empty">
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Document
                 </Button>
@@ -579,7 +579,7 @@ export default function Documents() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredDocuments.map((doc) => (
-              <Card key={doc.id} className="hover:shadow-lg transition-shadow">
+              <Card key={doc.id} data-testid={`document-card-${doc.id}`} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <FileIcon className="h-8 w-8 text-primary flex-shrink-0" />
@@ -794,7 +794,7 @@ export default function Documents() {
             >
               Cancel
             </Button>
-            <Button onClick={handleUpload} disabled={uploading || !uploadFile}>
+            <Button onClick={handleUpload} disabled={uploading || !uploadFile} data-testid="document-upload-submit">
               {uploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
