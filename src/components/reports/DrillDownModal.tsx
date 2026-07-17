@@ -183,9 +183,9 @@ export default function DrillDownModal({
 
         let q = supabase
           .from("employees")
-          .select("id, first_name, last_name, position, department_id, created_at")
+          .select("id, full_name, position, department_id, created_at")
           .eq("company_id", companyId)
-          .order("last_name", { ascending: true })
+          .order("full_name", { ascending: true })
           .limit(200);
 
         if (dateBounds && !isDeptFilter) q = (q as any).gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
@@ -417,13 +417,13 @@ export default function DrillDownModal({
         if (empIds.length > 0) {
           const { data: emps } = await supabase
             .from("employees")
-            .select("id, first_name, last_name")
+            .select("id, full_name")
             .in("id", empIds as string[]);
           (emps || []).forEach((e: any) => {
-            empNameMap[e.id] = `${e.first_name || ""} ${e.last_name || ""}`.trim();
+            empNameMap[e.id] = e.full_name || "";
           });
         }
-        setRows(rawCheckups.map((r: any) => ({ ...r, _empName: empNameMap[r.employee_id] || r.employee_id || "—" })));
+        setRows(rawCheckups.map((r: any) => ({ ...r, _empName: empNameMap[r.employee_id] || "—" })));
         break;
       }
 
@@ -525,7 +525,7 @@ export default function DrillDownModal({
           >
             <td className="p-3 font-medium text-primary">
               <span className="flex items-center gap-1">
-                {`${row.first_name || ""} ${row.last_name || ""}`.trim() || "—"}
+                {row.full_name || "—"}
                 <ExternalLink className="w-3 h-3 shrink-0" />
               </span>
             </td>
