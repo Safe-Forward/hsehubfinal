@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   MoreVertical,
   Edit,
@@ -58,6 +58,31 @@ const DATE_RANGE_LABELS: Record<string, string> = {
   custom: "benutzerdefinierter Zeitraum",
 };
 
+const VALUE_LABELS: Record<string, string> = {
+  // Vorfalls-/Untersuchungsstatus
+  open: "Offen",
+  closed: "Geschlossen",
+  completed: "Abgeschlossen",
+  in_progress: "In Bearbeitung",
+  pending: "Ausstehend",
+  under_investigation: "Unter Untersuchung",
+  resolved: "Gelöst",
+  // Auditstatus
+  draft: "Entwurf",
+  scheduled: "Geplant",
+  active: "Aktiv",
+  not_applicable: "Nicht zutreffend",
+  cancelled: "Abgebrochen",
+  // Risikostufen
+  low: "Niedrig",
+  medium: "Mittel",
+  high: "Hoch",
+  critical: "Kritisch",
+  // Sonstige
+  other: "Sonstige",
+  unknown: "Unbekannt",
+};
+
 const GROUP_BY_LABELS: Record<string, string> = {
   status: "Status",
   type: "Typ",
@@ -99,8 +124,20 @@ export default function ReportWidget({
   // Use provided data or config data
   const chartData = (data && data.length > 0) ? data : (config.data || []);
 
+  // Translate raw DB enum values to German labels for display
+  const displayData = useMemo(
+    () => chartData.map(d => ({ ...d, name: VALUE_LABELS[d.name] ?? d.name })),
+    [chartData]
+  );
+
+  // Key changes whenever data content or chart type changes → forces Recharts remount
+  const chartKey = useMemo(() => {
+    const hash = displayData.map(d => `${d.name}:${d.value}`).join('|');
+    return `${config.id}-${config.chartType}-${hash}`;
+  }, [config.id, config.chartType, displayData]);
+
   // Check if there's actual data (non-zero totals) and not just empty categories
-  const hasData = chartData && chartData.length > 0 && chartData.some(d => d.value > 0);
+  const hasData = displayData.length > 0 && displayData.some(d => d.value > 0);
   const subtitle = getSubtitle(config);
 
   const renderChart = () => {
@@ -120,7 +157,7 @@ export default function ReportWidget({
         // Area chart like Incident Trends
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id={`gradient-${config.id}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -162,7 +199,7 @@ export default function ReportWidget({
       case 'bar':
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <BarChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis
                 dataKey="name"
@@ -193,7 +230,7 @@ export default function ReportWidget({
           <ResponsiveContainer width="100%" height="100%">
             <RechartsPie margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
               <Pie
-                data={chartData}
+                data={displayData}
                 cx="50%"
                 cy="50%"
                 innerRadius="40%"
@@ -201,7 +238,7 @@ export default function ReportWidget({
                 paddingAngle={2}
                 dataKey="value"
               >
-                {chartData.map((entry, index) => (
+                {displayData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -220,7 +257,7 @@ export default function ReportWidget({
         // Default to area chart
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id={`gradient-default-${config.id}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -325,13 +362,13 @@ export default function ReportWidget({
           </div>
 
           <TabsContent value="chart" className="flex-1 px-4 pb-4 mt-2">
-            <div className="h-full min-h-[150px]">
+            <div key={chartKey} className="h-full min-h-[150px]">
               {renderChart()}
             </div>
           </TabsContent>
 
           <TabsContent value="table" className="px-4 pb-4 mt-2 overflow-y-auto" style={{ maxHeight: 280 }}>
-            {chartData.length === 0 ? (
+            {displayData.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Keine Daten verfügbar</div>
             ) : (
               <div className="border rounded-lg overflow-hidden">
@@ -344,8 +381,8 @@ export default function ReportWidget({
                     </tr>
                   </thead>
                   <tbody>
-                    {chartData.map((item, index) => {
-                      const total = chartData.reduce((s, d) => s + (d.value || 0), 0);
+                    {displayData.map((item, index) => {
+                      const total = displayData.reduce((s, d) => s + (d.value || 0), 0);
                       const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : "0.0";
                       return (
                         <tr key={index} className="border-t hover:bg-muted/30">
@@ -362,11 +399,11 @@ export default function ReportWidget({
           </TabsContent>
 
           <TabsContent value="summary" className="px-4 pb-4 mt-2">
-            {chartData.length === 0 ? (
+            {displayData.length === 0 ? (
               <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Keine Daten verfügbar</div>
             ) : (() => {
-              const total = chartData.reduce((s, d) => s + (d.value || 0), 0);
-              const avg = chartData.length > 0 ? (total / chartData.length) : 0;
+              const total = displayData.reduce((s, d) => s + (d.value || 0), 0);
+              const avg = displayData.length > 0 ? (total / displayData.length) : 0;
               return (
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-blue-50 p-3 rounded-lg text-center">
@@ -379,7 +416,7 @@ export default function ReportWidget({
                   </div>
                   <div className="bg-purple-50 p-3 rounded-lg text-center">
                     <div className="text-xs text-muted-foreground mb-1">Kategorien</div>
-                    <div className="text-2xl font-bold">{chartData.length}</div>
+                    <div className="text-2xl font-bold">{displayData.length}</div>
                   </div>
                 </div>
               );
