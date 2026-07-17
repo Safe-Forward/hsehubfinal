@@ -2437,6 +2437,8 @@ export default function Reports() {
                 setIsBuilderOpen(true);
               }}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              selectedDateRange={dateRange}
+              activeDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
             />
           )}
           {activeSection === "risk-assessments" && (
@@ -2451,6 +2453,8 @@ export default function Reports() {
               onDuplicateReport={handleDuplicateReport}
               onDeleteReport={handleDeleteReport}
               onExportReport={handleExportReport}
+              selectedDateRange={dateRange}
+              activeDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
             />
           )}
           {activeSection === "audits" && (
@@ -2465,6 +2469,8 @@ export default function Reports() {
               onDuplicateReport={handleDuplicateReport}
               onDeleteReport={handleDeleteReport}
               onExportReport={handleExportReport}
+              selectedDateRange={dateRange}
+              activeDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
             />
           )}
           {activeSection === "incidents" && (
@@ -2482,6 +2488,8 @@ export default function Reports() {
               onDuplicateReport={handleDuplicateReport}
               onDeleteReport={handleDeleteReport}
               onExportReport={handleExportReport}
+              selectedDateRange={dateRange}
+              activeDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
             />
           )}
           {activeSection === "trainings" && (
@@ -2496,6 +2504,8 @@ export default function Reports() {
               onDuplicateReport={handleDuplicateReport}
               onDeleteReport={handleDeleteReport}
               onExportReport={handleExportReport}
+              selectedDateRange={dateRange}
+              activeDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
             />
           )}
           {activeSection === "measures" && (
@@ -2510,6 +2520,8 @@ export default function Reports() {
               onDuplicateReport={handleDuplicateReport}
               onDeleteReport={handleDeleteReport}
               onExportReport={handleExportReport}
+              selectedDateRange={dateRange}
+              activeDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
             />
           )}
           {activeSection === "tasks" && (
@@ -2523,6 +2535,8 @@ export default function Reports() {
               onDuplicateReport={handleDuplicateReport}
               onDeleteReport={handleDeleteReport}
               onExportReport={handleExportReport}
+              selectedDateRange={dateRange}
+              activeDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
             />
           )}
           {activeSection === "checkups" && (
@@ -2536,6 +2550,8 @@ export default function Reports() {
               onDuplicateReport={handleDuplicateReport}
               onDeleteReport={handleDeleteReport}
               onExportReport={handleExportReport}
+              selectedDateRange={dateRange}
+              activeDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
             />
           )}
         </div>

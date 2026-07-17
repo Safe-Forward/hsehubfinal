@@ -30,6 +30,8 @@ export function OverviewSection({
   onExportReport,
   onViewReport,
   onEditTile,
+  selectedDateRange,
+  activeDepartmentId,
 }: {
   stats: ReportStats;
   chartData: any[];
@@ -43,6 +45,8 @@ export function OverviewSection({
   onExportReport: (config: ReportConfig) => void;
   onViewReport: (config: ReportConfig) => void;
   onEditTile?: OnEditTile;
+  selectedDateRange?: string;
+  activeDepartmentId?: string;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -718,6 +722,8 @@ export function OverviewSection({
           config={drillDown.config}
           rawFilterValue={drillDown.raw}
           displayFilterValue={drillDown.display}
+          filterDateRange={selectedDateRange}
+          filterDepartmentId={activeDepartmentId}
         />
       )}
     </div>

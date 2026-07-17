@@ -29,6 +29,8 @@ export function TrainingsSection({
   onDuplicateReport,
   onDeleteReport,
   onExportReport,
+  selectedDateRange,
+  activeDepartmentId,
 }: {
   stats: ReportStats;
   trainingMatrix: TrainingStatus[];
@@ -40,6 +42,8 @@ export function TrainingsSection({
   onDuplicateReport?: (c: ReportConfig) => void;
   onDeleteReport?: (id: string) => void;
   onExportReport?: (c: ReportConfig) => void;
+  selectedDateRange?: string;
+  activeDepartmentId?: string;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -330,6 +334,8 @@ export function TrainingsSection({
           config={drillDown.config}
           rawFilterValue={drillDown.raw}
           displayFilterValue={drillDown.display}
+          filterDateRange={selectedDateRange}
+          filterDepartmentId={activeDepartmentId}
         />
       )}
     </div>

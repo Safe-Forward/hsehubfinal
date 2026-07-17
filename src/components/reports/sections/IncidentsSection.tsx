@@ -73,6 +73,7 @@ export function IncidentsSection({
   companyId,
   selectedYear,
   departmentFilter = "all",
+  selectedDateRange,
   onEditTile,
   onAddTileAsReport,
   customReports,
@@ -87,6 +88,7 @@ export function IncidentsSection({
   companyId: string;
   selectedYear: number;
   departmentFilter?: string;
+  selectedDateRange?: string;
   onEditTile?: OnEditTile;
   onAddTileAsReport?: (config: ReportConfig) => void;
   customReports?: ReportConfig[];
@@ -679,6 +681,8 @@ export function IncidentsSection({
           config={drillDown.config}
           rawFilterValue={drillDown.raw}
           displayFilterValue={drillDown.display}
+          filterDateRange={selectedDateRange}
+          filterDepartmentId={departmentFilter !== "all" ? departmentFilter : undefined}
         />
       )}
     </div>

@@ -17,7 +17,7 @@ const SECTION_ID = "measures";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTile, onAddTileAsReport, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[]; onEditTile?: OnEditTile; onAddTileAsReport?: (config: ReportConfig) => void; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void }) {
+export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTile, onAddTileAsReport, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport, selectedDateRange, activeDepartmentId }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[]; onEditTile?: OnEditTile; onAddTileAsReport?: (config: ReportConfig) => void; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void; selectedDateRange?: string; activeDepartmentId?: string }) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const [drillDown, setDrillDown] = useState<{
@@ -280,6 +280,8 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
           config={drillDown.config}
           rawFilterValue={drillDown.raw}
           displayFilterValue={drillDown.display}
+          filterDateRange={selectedDateRange}
+          filterDepartmentId={activeDepartmentId}
         />
       )}
     </div>

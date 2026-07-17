@@ -28,6 +28,8 @@ export function RiskAssessmentsSection({
   onDuplicateReport,
   onDeleteReport,
   onExportReport,
+  selectedDateRange,
+  activeDepartmentId,
 }: {
   stats: ReportStats;
   chartData: any[];
@@ -39,6 +41,8 @@ export function RiskAssessmentsSection({
   onDuplicateReport?: (c: ReportConfig) => void;
   onDeleteReport?: (id: string) => void;
   onExportReport?: (c: ReportConfig) => void;
+  selectedDateRange?: string;
+  activeDepartmentId?: string;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -282,6 +286,8 @@ export function RiskAssessmentsSection({
           config={drillDown.config}
           rawFilterValue={drillDown.raw}
           displayFilterValue={drillDown.display}
+          filterDateRange={selectedDateRange}
+          filterDepartmentId={activeDepartmentId}
         />
       )}
     </div>

@@ -17,6 +17,10 @@ interface DrillDownModalProps {
   config: Pick<ReportConfig, "metric"> & Partial<ReportConfig>;
   rawFilterValue: string; // "" = alle Datensätze anzeigen
   displayFilterValue: string;
+  /** Zeitraum-Filter aus dem Dashboard (z.B. "last-30-days", "this-year") */
+  filterDateRange?: string;
+  /** Abteilungs-UUID aus dem Dashboard-Filter, "all" = alle */
+  filterDepartmentId?: string;
 }
 
 const VALUE_LABELS: Record<string, string> = {
@@ -34,6 +38,28 @@ const label = (v: string | null | undefined) => (v ? (VALUE_LABELS[v] ?? v) : "�
 const formatDate = (v: string | null | undefined) => {
   if (!v) return "—";
   try { return new Date(v).toLocaleDateString("de-DE"); } catch { return v; }
+};
+
+// Convert dashboard dateRange string → ISO start/end bounds
+const getDateBoundsFromType = (type: string): { start: string; end: string } | null => {
+  if (!type || type === "all_time" || type === "all-time") return null;
+  const end = new Date();
+  const start = new Date(end);
+  switch (type) {
+    case "last-7-days": start.setDate(end.getDate() - 6); break;
+    case "last-30-days": start.setDate(end.getDate() - 29); break;
+    case "last-90-days": start.setDate(end.getDate() - 89); break;
+    case "this-month": start.setDate(1); break;
+    case "last-month": {
+      const lm = new Date(end.getFullYear(), end.getMonth() - 1, 1);
+      const lmEnd = new Date(end.getFullYear(), end.getMonth(), 0, 23, 59, 59, 999);
+      return { start: lm.toISOString(), end: lmEnd.toISOString() };
+    }
+    case "this-year": start.setMonth(0, 1); start.setHours(0, 0, 0, 0); break;
+    default: return null;
+  }
+  start.setHours(0, 0, 0, 0);
+  return { start: start.toISOString(), end: end.toISOString() };
 };
 
 // "YYYY-MM" → true
@@ -60,6 +86,7 @@ const progressToStatus: Record<string, string> = {
 
 export default function DrillDownModal({
   isOpen, onClose, config, rawFilterValue, displayFilterValue,
+  filterDateRange, filterDepartmentId,
 }: DrillDownModalProps) {
   const { companyId } = useAuth();
   const navigate = useNavigate();
@@ -92,6 +119,10 @@ export default function DrillDownModal({
     const isMonth = isMonthKey(rawFilterValue);
     const hasFilter = !!rawFilterValue;
 
+    // Apply dashboard date range + department filter
+    const dateBounds = filterDateRange ? getDateBoundsFromType(filterDateRange) : null;
+    const deptId = filterDepartmentId && filterDepartmentId !== "all" ? filterDepartmentId : null;
+
     switch (config.metric) {
       case "incidents": {
         let q = supabase
@@ -100,6 +131,9 @@ export default function DrillDownModal({
           .eq("company_id", companyId)
           .order("incident_date", { ascending: false })
           .limit(200);
+
+        if (dateBounds) q = (q as any).gte("incident_date", dateBounds.start).lte("incident_date", dateBounds.end);
+        if (deptId) q = (q as any).eq("department_id", deptId);
 
         if (hasFilter) {
           if (isMonth) {
@@ -148,6 +182,9 @@ export default function DrillDownModal({
           .order("last_name", { ascending: true })
           .limit(200);
 
+        if (dateBounds) q = (q as any).gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
+        if (deptId) q = (q as any).eq("department_id", deptId);
+
         if (hasFilter) {
           if (isMonth) {
             const { start, end } = monthRange(rawFilterValue);
@@ -155,8 +192,8 @@ export default function DrillDownModal({
           } else if (groupBy === "department") {
             const { data: depts } = await supabase
               .from("departments").select("id").eq("name", rawFilterValue).eq("company_id", companyId);
-            const deptId = depts?.[0]?.id;
-            if (deptId) q = (q as any).eq("department_id", deptId);
+            const resolvedDeptId = depts?.[0]?.id;
+            if (resolvedDeptId) q = (q as any).eq("department_id", resolvedDeptId);
           } else if (groupBy === "tag") {
             const tagFilter = rawFilterValue.includes(" ") || rawFilterValue.includes(",")
               ? `tags.cs.{"${rawFilterValue}"}` : `tags.cs.{${rawFilterValue}}`;
@@ -183,6 +220,9 @@ export default function DrillDownModal({
           .order("scheduled_date", { ascending: false })
           .limit(200);
 
+        if (dateBounds) q = (q as any).gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
+        if (deptId) q = (q as any).eq("department_id", deptId);
+
         if (hasFilter) {
           if (isMonth) {
             const { start, end } = monthRange(rawFilterValue);
@@ -206,6 +246,9 @@ export default function DrillDownModal({
           .order("assessment_date", { ascending: false })
           .limit(200);
 
+        if (dateBounds) q = (q as any).gte("assessment_date", dateBounds.start).lte("assessment_date", dateBounds.end);
+        if (deptId) q = (q as any).eq("department_id", deptId);
+
         if (hasFilter) {
           if (isMonth) {
             const { start, end } = monthRange(rawFilterValue);
@@ -213,8 +256,8 @@ export default function DrillDownModal({
           } else if (groupBy === "department") {
             const { data: depts } = await supabase
               .from("departments").select("id").eq("name", rawFilterValue).eq("company_id", companyId);
-            const deptId = depts?.[0]?.id;
-            if (deptId) q = (q as any).eq("department_id", deptId);
+            const resolvedDeptId = depts?.[0]?.id;
+            if (resolvedDeptId) q = (q as any).eq("department_id", resolvedDeptId);
           } else {
             q = (q as any).eq(groupBy || "risk_level", rawFilterValue);
           }
@@ -241,6 +284,11 @@ export default function DrillDownModal({
           .eq("company_id", companyId)
           .order("created_at", { ascending: false })
           .limit(100);
+
+        if (dateBounds) {
+          mQ = mQ.gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
+          ramQ = ramQ.gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
+        }
 
         if (hasFilter) {
           if (isMonth) {
@@ -300,6 +348,8 @@ export default function DrillDownModal({
           .order("created_at", { ascending: false })
           .limit(200);
 
+        if (dateBounds) q = q.gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
+
         if (hasFilter) {
           if (isMonth) {
             const { start, end } = monthRange(rawFilterValue);
@@ -323,12 +373,15 @@ export default function DrillDownModal({
       }
 
       case "checkups": {
+        // health_checkups is untyped; avoid FK join that may not be configured
         let q: any = supabase
           .from("health_checkups" as any)
-          .select("id, status, employee_id, employees(full_name), created_at")
+          .select("id, status, employee_id, created_at")
           .eq("company_id", companyId)
           .order("created_at", { ascending: false })
           .limit(200);
+
+        if (dateBounds) q = q.gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
 
         if (hasFilter) {
           if (isMonth) {
@@ -339,9 +392,23 @@ export default function DrillDownModal({
           }
         }
 
-        const { data, error: e } = await q;
-        if (e) throw e;
-        setRows(data || []);
+        const { data: checkupData, error: checkupErr } = await q;
+        if (checkupErr) throw checkupErr;
+
+        // Fetch employee names separately
+        const rawCheckups = checkupData || [];
+        const empIds = [...new Set(rawCheckups.map((r: any) => r.employee_id).filter(Boolean))];
+        let empNameMap: Record<string, string> = {};
+        if (empIds.length > 0) {
+          const { data: emps } = await supabase
+            .from("employees")
+            .select("id, first_name, last_name")
+            .in("id", empIds as string[]);
+          (emps || []).forEach((e: any) => {
+            empNameMap[e.id] = `${e.first_name || ""} ${e.last_name || ""}`.trim();
+          });
+        }
+        setRows(rawCheckups.map((r: any) => ({ ...r, _empName: empNameMap[r.employee_id] || r.employee_id || "—" })));
         break;
       }
 
@@ -352,6 +419,8 @@ export default function DrillDownModal({
           .eq("company_id", companyId)
           .order("created_at", { ascending: false })
           .limit(200);
+
+        if (dateBounds) q = q.gte("created_at", dateBounds.start).lte("created_at", dateBounds.end);
 
         if (hasFilter) {
           if (isMonth) {
@@ -465,7 +534,7 @@ export default function DrillDownModal({
       case "checkups":
         return (
           <tr key={row.id ?? i} className="border-t hover:bg-muted/30">
-            <td className="p-3 font-medium">{(row.employees as any)?.full_name || row.employee_id || "—"}</td>
+            <td className="p-3 font-medium">{row._empName || row.employee_id || "—"}</td>
             <td className="p-3">{label(row.status)}</td>
             <td className="p-3 text-muted-foreground">{formatDate(row.created_at)}</td>
           </tr>

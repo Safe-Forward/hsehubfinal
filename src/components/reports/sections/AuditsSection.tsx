@@ -28,6 +28,8 @@ export function AuditsSection({
   onDuplicateReport,
   onDeleteReport,
   onExportReport,
+  selectedDateRange,
+  activeDepartmentId,
 }: {
   stats: ReportStats;
   chartData: any[];
@@ -39,6 +41,8 @@ export function AuditsSection({
   onDuplicateReport?: (c: ReportConfig) => void;
   onDeleteReport?: (id: string) => void;
   onExportReport?: (c: ReportConfig) => void;
+  selectedDateRange?: string;
+  activeDepartmentId?: string;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -297,6 +301,8 @@ export function AuditsSection({
           config={drillDown.config}
           rawFilterValue={drillDown.raw}
           displayFilterValue={drillDown.display}
+          filterDateRange={selectedDateRange}
+          filterDepartmentId={activeDepartmentId}
         />
       )}
     </div>

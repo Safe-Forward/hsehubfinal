@@ -17,7 +17,7 @@ const SECTION_ID = "checkups";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTileAsReport, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport }: { stats: ReportStats; checkUpsStatusData: any[]; onEditTile?: OnEditTile; onAddTileAsReport?: (config: ReportConfig) => void; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void }) {
+export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTileAsReport, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport, selectedDateRange, activeDepartmentId }: { stats: ReportStats; checkUpsStatusData: any[]; onEditTile?: OnEditTile; onAddTileAsReport?: (config: ReportConfig) => void; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void; selectedDateRange?: string; activeDepartmentId?: string }) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
@@ -267,6 +267,8 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTi
           config={drillDown.config}
           rawFilterValue={drillDown.raw}
           displayFilterValue={drillDown.display}
+          filterDateRange={selectedDateRange}
+          filterDepartmentId={activeDepartmentId}
         />
       )}
     </div>
