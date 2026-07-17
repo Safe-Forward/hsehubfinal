@@ -151,6 +151,8 @@ export default function DrillDownModal({
           } else if (groupBy === "investigation_status" || groupBy === "status") {
             if (rawFilterValue === "not_open") {
               q = (q as any).neq("investigation_status", "open");
+            } else if (rawFilterValue === "closed_or_resolved") {
+              q = (q as any).in("investigation_status", ["closed", "resolved"]);
             } else {
               q = (q as any).eq("investigation_status", rawFilterValue);
             }

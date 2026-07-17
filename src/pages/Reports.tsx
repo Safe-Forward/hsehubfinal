@@ -104,6 +104,7 @@ export default function Reports() {
     completedMeasures: 0,
     completedCheckUps: 0,
     openIncidents: 0,
+    closedIncidents: 0,
     reportableIncidents: 0,
     trainingCompliance: 0,
   });
@@ -463,6 +464,7 @@ export default function Reports() {
         completedRiskMeasuresRes,
         completedCheckUpsRes,
         openIncidentsRes,
+        closedIncidentsRes,
         reportableIncidentsRes,
       ] = await Promise.all([
         withDept(
@@ -603,6 +605,16 @@ export default function Reports() {
         ),
         inRange(
           withDept(
+            (supabase as any)
+              .from("incidents")
+              .select("id", { count: "exact", head: true })
+              .eq("company_id", companyId)
+              .in("investigation_status", ["closed", "resolved"])
+          ),
+          "incident_date"
+        ),
+        inRange(
+          withDept(
             supabase
               .from("incidents" as any)
               .select("id", { count: "exact", head: true })
@@ -627,6 +639,7 @@ export default function Reports() {
         completedMeasures: (completedMeasuresRes.count || 0) + (completedRiskMeasuresRes.count || 0),
         completedCheckUps: completedCheckUpsRes.count || 0,
         openIncidents: openIncidentsRes.count || 0,
+        closedIncidents: closedIncidentsRes.count || 0,
         reportableIncidents: reportableIncidentsRes.count || 0,
         trainingCompliance: 0,
       });
@@ -1069,7 +1082,7 @@ export default function Reports() {
           [t("reports.pdf.kpi.completedAudits"), stats.completedAudits],
           [t("reports.pdf.kpi.incidents"), stats.totalIncidents],
           [t("reports.pdf.kpi.openIncidents"), stats.openIncidents],
-          [t("reports.pdf.kpi.closedIncidents"), stats.totalIncidents - stats.openIncidents],
+          [t("reports.pdf.kpi.closedIncidents"), stats.closedIncidents],
           [t("reports.pdf.kpi.trainingCourses"), stats.totalTrainings],
           [t("reports.pdf.kpi.trainingCompliance"), `${stats.trainingCompliance}%`],
           [t("reports.pdf.kpi.measures"), stats.totalMeasures],
@@ -1143,7 +1156,7 @@ export default function Reports() {
         body: [
           [t("reports.pdf.totalIncidents"), stats.totalIncidents],
           [t("reports.pdf.openUnderInvestigation"), stats.openIncidents],
-          [t("reports.pdf.closedResolved"), stats.totalIncidents - stats.openIncidents],
+          [t("reports.pdf.closedResolved"), stats.closedIncidents],
         ],
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [220, 38, 38], textColor: 255, fontStyle: "bold" },
@@ -2578,6 +2591,8 @@ export default function Reports() {
         isOpen={isLibraryOpen}
         onClose={() => setIsLibraryOpen(false)}
         onSelectTemplate={handleSelectTemplate}
+        existingReports={customReports}
+        onDuplicateReport={handleDuplicateReport}
       />
 
       {/* Delete Confirmation Dialog */}

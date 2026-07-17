@@ -469,10 +469,10 @@ export function IncidentsSection({
           <DraggableCard
             title={getTileLabel("incident-closed", t("reports.incidents.closedTitle"), t("reports.incidents.closedSubtitle")).title}
             subtitle={getTileLabel("incident-closed", t("reports.incidents.closedTitle"), t("reports.incidents.closedSubtitle")).subtitle}
-            value={stats.totalIncidents - stats.openIncidents}
+            value={stats.closedIncidents}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "investigation_status" } as ReportConfig, "not_open", "Abgeschlossene Fälle")}
+            onValueClick={() => openDrillDown({ metric: "incidents", groupBy: "investigation_status" } as ReportConfig, "closed_or_resolved", "Geschlossene & Gelöste Fälle")}
             editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-closed", { id: "incident-closed", title: t("reports.incidents.closedTitle"), metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "incident-closed", title: getTileLabel("incident-closed", t("reports.incidents.closedTitle"), t("reports.incidents.closedSubtitle")).title, metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
