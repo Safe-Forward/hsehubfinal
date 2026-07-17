@@ -126,6 +126,13 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, customR
     });
   };
 
+  const handleEditKPITile = (tileId: string, defaultConfig: ReportConfig) => {
+    if (!onEditTile) return;
+    onEditTile(tileId, defaultConfig, (cfg) => {
+      if (cfg.title) setTileLabels((prev) => ({ ...prev, [tileId]: { title: cfg.title!, subtitle: prev[tileId]?.subtitle ?? "" } }));
+    });
+  };
+
   const renderCheckupsChart = (tileId: string, defaultData: any[], defaultChartType: string) => {
     const override = chartOverrides[tileId];
     const data = override?.data?.length ? override.data : defaultData;
@@ -196,6 +203,9 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, customR
             value={stats.totalCheckUps}
             icon={<Stethoscope className="w-5 h-5" />}
             color="bg-teal-50 text-teal-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("checkups-total", { id: "checkups-total", title: t("reports.checkups.totalTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="checkups-completed">
@@ -205,6 +215,9 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, customR
             value={stats.completedCheckUps}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("checkups-completed", { id: "checkups-completed", title: t("reports.checkups.completedTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="checkups-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>

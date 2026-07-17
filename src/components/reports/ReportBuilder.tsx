@@ -92,7 +92,6 @@ export default function ReportBuilder({
   // Local chart data state that can be refreshed
   const [chartData, setChartData] = useState<any[]>(data);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   // Tag filter state
   const [tagFilters, setTagFilters] = useState<string[]>(initialConfig?.tagFilters || []);
@@ -278,20 +277,15 @@ export default function ReportBuilder({
   
   const getGroupByOptions = () => getGroupByOptionsForMetric(config.metric);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const configWithData = {
       ...config,
       data: chartData && chartData.length > 0 ? chartData : config.data || [],
       tagFilters: tagFilters.length > 0 ? tagFilters : undefined,
       profileFieldFilters: profileFieldFilters.length > 0 ? profileFieldFilters : undefined,
     };
-    setIsSaving(true);
-    try {
-      await onSave(configWithData);
-    } finally {
-      setIsSaving(false);
-    }
     onClose();
+    Promise.resolve(onSave(configWithData)).catch(() => {});
   };
 
   const handleAddProfileFieldFilter = () => {
@@ -807,8 +801,8 @@ export default function ReportBuilder({
           <Button variant="outline" onClick={onClose}>
             {t("reports.builder.cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={isLoading || isSaving}>
-            {isSaving ? "Speichert…" : isLoading ? "Lädt…" : (initialConfig ? t("reports.builder.saveReport") : t("reports.builder.addReport"))}
+          <Button onClick={handleSave} disabled={isLoading}>
+            {isLoading ? "Lädt…" : (initialConfig ? t("reports.builder.saveReport") : t("reports.builder.addReport"))}
           </Button>
         </div>
       </div>

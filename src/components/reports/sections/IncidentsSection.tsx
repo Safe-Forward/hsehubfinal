@@ -132,6 +132,13 @@ export function IncidentsSection({
     });
   };
 
+  const handleEditKPITile = (tileId: string, defaultConfig: ReportConfig) => {
+    if (!onEditTile) return;
+    onEditTile(tileId, defaultConfig, (cfg) => {
+      if (cfg.title) setTileLabels((prev) => ({ ...prev, [tileId]: { title: cfg.title!, subtitle: prev[tileId]?.subtitle ?? "" } }));
+    });
+  };
+
   const renderChart = (data: any[], chartType: string) => {
     if (chartType === "pie") {
       return (
@@ -428,6 +435,9 @@ export function IncidentsSection({
             value={stats.totalIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-red-50 text-red-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-total", { id: "incident-total", title: t("reports.incidents.totalTitle"), metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="incident-open">
@@ -437,6 +447,9 @@ export function IncidentsSection({
             value={stats.openIncidents}
             icon={<AlertTriangle className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-open", { id: "incident-open", title: t("reports.incidents.openTitle"), metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="incident-closed">
@@ -446,6 +459,9 @@ export function IncidentsSection({
             value={stats.totalIncidents - stats.openIncidents}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-closed", { id: "incident-closed", title: t("reports.incidents.closedTitle"), metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="incident-reportable">
@@ -455,6 +471,9 @@ export function IncidentsSection({
             value={`${stats.reportableIncidents} / ${stats.totalIncidents}`}
             icon={<ShieldAlert className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("incident-reportable", { id: "incident-reportable", title: "Meldepflichtige Vorfälle", metric: "incidents", groupBy: "status", dateProperty: "incident_date", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="incident-trend-chart" data-grid={{ x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3 }}>

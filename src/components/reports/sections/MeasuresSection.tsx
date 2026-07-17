@@ -129,6 +129,13 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
     });
   };
 
+  const handleEditKPITile = (tileId: string, defaultConfig: ReportConfig) => {
+    if (!onEditTile) return;
+    onEditTile(tileId, defaultConfig, (cfg) => {
+      if (cfg.title) setTileLabels((prev) => ({ ...prev, [tileId]: { title: cfg.title!, subtitle: prev[tileId]?.subtitle ?? "" } }));
+    });
+  };
+
   const renderMeasuresChart = (tileId: string, defaultData: any[], defaultChartType: string) => {
     const override = chartOverrides[tileId];
     const data = override?.data?.length ? override.data : defaultData;
@@ -199,6 +206,9 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.totalMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-purple-50 text-purple-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-total", { id: "measures-total", title: t("reports.measures.totalTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="measures-completed">
@@ -208,6 +218,9 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.completedMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-completed", { id: "measures-completed", title: t("reports.measures.completedTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="measures-progress">
@@ -217,6 +230,9 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.totalMeasures - stats.completedMeasures}
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-progress", { id: "measures-progress", title: t("reports.measures.inProgressTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="measures-status-chart" data-grid={{ x: 0, y: 4, w: 12, h: 4, minW: 4, minH: 3 }}>

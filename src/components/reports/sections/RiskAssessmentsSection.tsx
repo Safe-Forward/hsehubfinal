@@ -143,6 +143,13 @@ export function RiskAssessmentsSection({
     });
   };
 
+  const handleEditKPITile = (tileId: string, defaultConfig: ReportConfig) => {
+    if (!onEditTile) return;
+    onEditTile(tileId, defaultConfig, (cfg) => {
+      if (cfg.title) setTileLabels((prev) => ({ ...prev, [tileId]: { title: cfg.title!, subtitle: prev[tileId]?.subtitle ?? "" } }));
+    });
+  };
+
   const renderChart = (tileId: string, defaultData: any[], defaultChartType: string) => {
     const override = chartOverrides[tileId];
     const data = override?.data?.length ? override.data : defaultData;
@@ -220,6 +227,9 @@ export function RiskAssessmentsSection({
             value={stats.totalRiskAssessments}
             icon={<Shield className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
+            editSlot={onEditTile ? (
+              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("risk-total", { id: "risk-total", title: t("reports.riskAssessments.totalTitle"), metric: "risks", groupBy: "risk_level", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
+            ) : undefined}
           />
         </div>
         <div key="risk-level-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
