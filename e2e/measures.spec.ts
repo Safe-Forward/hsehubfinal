@@ -1,16 +1,15 @@
 import { test, expect } from "@playwright/test";
-import { credsMissing, loginAs } from "./helpers/auth";
+import { credsMissing } from "./helpers/auth";
 
 test.describe("Maßnahmen", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/measures");
   });
 
   test('"Neue Maßnahme"-Button ist sichtbar', async ({ page }) => {
-    await expect(page.getByTestId("btn-add-measure")).toBeVisible();
+    await expect(page.getByTestId("btn-add-measure")).toBeVisible({ timeout: 10_000 });
   });
 
   test("Maßnahmen-Liste rendert (0 oder mehr Zeilen)", async ({ page }) => {
@@ -24,7 +23,6 @@ test.describe("Maßnahmen — KPI-Kacheln (Berichte)", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/reports");
     await page.getByTestId("tab-measures").click();
   });

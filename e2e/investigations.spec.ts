@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { credsMissing, loginAs } from "./helpers/auth";
+import { credsMissing } from "./helpers/auth";
 
 test.describe("G-Untersuchungen — Liste & Formular", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/investigations");
   });
 
@@ -29,7 +28,6 @@ test.describe("G-Untersuchungen — KPI-Kacheln (Berichte)", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/reports");
     await page.getByTestId("tab-checkups").click();
   });

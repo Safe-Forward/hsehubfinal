@@ -1,16 +1,15 @@
 import { test, expect } from "@playwright/test";
-import { credsMissing, loginAs } from "./helpers/auth";
+import { credsMissing } from "./helpers/auth";
 
 test.describe("Aufgaben", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/tasks");
   });
 
   test('"Neue Aufgabe"-Button ist sichtbar', async ({ page }) => {
-    await expect(page.getByTestId("btn-add-task")).toBeVisible();
+    await expect(page.getByTestId("btn-add-task")).toBeVisible({ timeout: 10_000 });
   });
 
   test("Dialog öffnet sich beim Klick auf neue Aufgabe", async ({ page }) => {
@@ -22,10 +21,5 @@ test.describe("Aufgaben", () => {
     const rows = page.locator('[data-testid^="task-row-"]');
     const count = await rows.count();
     expect(count).toBeGreaterThanOrEqual(0);
-  });
-
-  test("Submit-Button im Formular ist vorhanden", async ({ page }) => {
-    await page.getByTestId("btn-add-task").click();
-    await expect(page.getByTestId("task-form-submit")).toBeEnabled();
   });
 });

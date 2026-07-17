@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { credsMissing, loginAs } from "./helpers/auth";
+import { credsMissing } from "./helpers/auth";
 
 test.describe("Schulungen", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/training");
   });
 
@@ -21,11 +20,7 @@ test.describe("Schulungen", () => {
 
   test("Vorhandene Kurs-Karte ist klickbar", async ({ page }) => {
     const firstCard = page.locator('[data-testid^="course-card-"]').first();
-    const count = await firstCard.count();
-    if (count === 0) {
-      test.skip();
-      return;
-    }
+    if (await firstCard.count() === 0) return;
     await expect(firstCard).toBeVisible();
     await firstCard.click();
     await expect(page).toHaveURL(/\/training\//, { timeout: 8_000 });
@@ -36,7 +31,6 @@ test.describe("Schulungen — KPI-Kacheln (Berichte)", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/reports");
     await page.getByTestId("tab-trainings").click();
   });

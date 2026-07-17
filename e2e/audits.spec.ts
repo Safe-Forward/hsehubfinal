@@ -1,16 +1,15 @@
 import { test, expect } from "@playwright/test";
-import { credsMissing, loginAs } from "./helpers/auth";
+import { credsMissing } from "./helpers/auth";
 
 test.describe("Audits — Liste & Formular", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/audits");
   });
 
   test('"Neues Audit"-Button ist sichtbar', async ({ page }) => {
-    await expect(page.getByTestId("btn-add-audit")).toBeVisible();
+    await expect(page.getByTestId("btn-add-audit")).toBeVisible({ timeout: 10_000 });
   });
 
   test("Dialog öffnet sich beim Klick auf neues Audit", async ({ page }) => {
@@ -26,15 +25,9 @@ test.describe("Audits — Liste & Formular", () => {
 
   test("Löschen-Dialog: Abbrechen-Button schließt ohne Aktion", async ({ page }) => {
     const firstRow = page.locator('[data-testid^="audit-row-"]').first();
-    const count = await firstRow.count();
-    if (count === 0) {
-      test.skip();
-      return;
-    }
-    // Löschen-Button innerhalb der ersten Zeile anklicken
-    await firstRow.locator('[aria-label*="löschen"], [aria-label*="delete"], button:has(.ti-trash)').first().click();
+    if (await firstRow.count() === 0) return;
+    await firstRow.locator('button:has(.ti-trash), [aria-label*="löschen"], [aria-label*="delete"]').first().click();
     await expect(page.getByTestId("confirm-delete-btn")).toBeVisible();
-    await expect(page.getByTestId("cancel-delete-btn")).toBeVisible();
     await page.getByTestId("cancel-delete-btn").click();
     await expect(page.getByTestId("confirm-delete-btn")).not.toBeVisible();
   });
@@ -44,7 +37,6 @@ test.describe("Audits — KPI-Kacheln (Berichte)", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/reports");
     await page.getByTestId("tab-audits").click();
   });

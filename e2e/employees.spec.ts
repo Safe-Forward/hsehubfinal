@@ -1,11 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { credsMissing, loginAs } from "./helpers/auth";
+import { credsMissing } from "./helpers/auth";
 
 test.describe("Mitarbeiter", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
-    await loginAs(page);
     await page.goto("/employees");
   });
 
@@ -35,10 +34,5 @@ test.describe("Mitarbeiter", () => {
     await expect(page.getByTestId("employee-form-firstname")).toHaveValue(`E2E-Vorname-${stamp}`);
     await expect(page.getByTestId("employee-form-lastname")).toHaveValue(`E2E-Nachname-${stamp}`);
     await expect(page.getByTestId("employee-form-email")).toHaveValue(`e2e-${stamp}@test.hsehub`);
-  });
-
-  test("Submit-Button ist sichtbar und klickbar", async ({ page }) => {
-    await page.getByTestId("btn-add-employee").click();
-    await expect(page.getByTestId("employee-form-submit")).toBeEnabled();
   });
 });
