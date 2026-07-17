@@ -21,9 +21,6 @@ import {
   Building2,
 } from "lucide-react";
 import "react-grid-layout/css/styles.css";
-import { Responsive as ResponsiveGrid, WidthProvider } from "react-grid-layout/legacy";
-
-const ResponsiveGridLayout = WidthProvider(ResponsiveGrid);
 
 import { Button } from "@/components/ui/button";
 import {
@@ -47,7 +44,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import ReportBuilder, { ReportConfig } from "@/components/reports/ReportBuilder";
 import ReportLibrary from "@/components/reports/ReportLibrary";
-import ReportWidget from "@/components/reports/ReportWidget";
 import { getChartConfig, saveChartConfig } from "@/components/reports/TileConfigStore";
 import { OverviewSection } from "@/components/reports/sections/OverviewSection";
 import { RiskAssessmentsSection } from "@/components/reports/sections/RiskAssessmentsSection";
@@ -2426,6 +2422,11 @@ export default function Reports() {
               chartData={chartData}
               riskLevelData={riskLevelData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              customReports={sectionCustomReports}
+              onEditReport={handleEditReport}
+              onDuplicateReport={handleDuplicateReport}
+              onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
             />
           )}
           {activeSection === "audits" && (
@@ -2434,6 +2435,11 @@ export default function Reports() {
               chartData={chartData}
               auditStatusData={auditStatusData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              customReports={sectionCustomReports}
+              onEditReport={handleEditReport}
+              onDuplicateReport={handleDuplicateReport}
+              onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
             />
           )}
           {activeSection === "incidents" && (
@@ -2445,6 +2451,11 @@ export default function Reports() {
               selectedYear={selectedYear}
               departmentFilter={departmentFilter}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              customReports={sectionCustomReports}
+              onEditReport={handleEditReport}
+              onDuplicateReport={handleDuplicateReport}
+              onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
             />
           )}
           {activeSection === "trainings" && (
@@ -2453,6 +2464,11 @@ export default function Reports() {
               trainingMatrix={trainingMatrix}
               chartData={chartData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              customReports={sectionCustomReports}
+              onEditReport={handleEditReport}
+              onDuplicateReport={handleDuplicateReport}
+              onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
             />
           )}
           {activeSection === "measures" && (
@@ -2461,6 +2477,11 @@ export default function Reports() {
               chartData={chartData}
               measuresStatusData={measuresStatusData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              customReports={sectionCustomReports}
+              onEditReport={handleEditReport}
+              onDuplicateReport={handleDuplicateReport}
+              onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
             />
           )}
           {activeSection === "tasks" && (
@@ -2468,6 +2489,11 @@ export default function Reports() {
               stats={stats}
               chartData={chartData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              customReports={sectionCustomReports}
+              onEditReport={handleEditReport}
+              onDuplicateReport={handleDuplicateReport}
+              onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
             />
           )}
           {activeSection === "checkups" && (
@@ -2475,35 +2501,12 @@ export default function Reports() {
               stats={stats}
               checkUpsStatusData={checkUpsStatusData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              customReports={sectionCustomReports}
+              onEditReport={handleEditReport}
+              onDuplicateReport={handleDuplicateReport}
+              onDeleteReport={handleDeleteReport}
+              onExportReport={handleExportReport}
             />
-          )}
-
-          {activeSection !== "overview" && sectionCustomReports.length > 0 && (
-            <div className="mt-2">
-              <ResponsiveGridLayout
-                className="layout"
-                layouts={customReportsLayouts}
-                breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 2, md: 2, sm: 1, xs: 1, xxs: 1 }}
-                rowHeight={160}
-                margin={[16, 16]}
-                isDraggable
-                isResizable
-                onLayoutChange={handleCustomReportsLayoutChange}
-              >
-                {sectionCustomReports.map((report) => (
-                  <div key={`report-${report.id}`} className="h-full">
-                    <ReportWidget
-                      config={report}
-                      onEdit={handleEditReport}
-                      onDuplicate={handleDuplicateReport}
-                      onDelete={handleDeleteReport}
-                      onExport={handleExportReport}
-                    />
-                  </div>
-                ))}
-              </ResponsiveGridLayout>
-            </div>
           )}
         </div>
       </main>

@@ -45,30 +45,45 @@ interface ReportWidgetProps {
 
 const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#6366f1'];
 
-// Get subtitle based on report configuration
-const getSubtitle = (config: ReportConfig, t: (key: string) => string) => {
-  if (config.metric === 'incidents') {
-    return config.incidentType
-      ? t("reports.widget.subtitleIncidentTypeOverTime").replace("{type}", config.incidentType)
-      : t("reports.widget.subtitleIncidentsDefault");
-  }
-  if (config.metric === 'audits') {
-    return config.auditTemplate
-      ? t("reports.widget.subtitleAuditTemplate").replace("{template}", config.auditTemplate)
-      : t("reports.widget.subtitleAuditsDefault");
-  }
-  if (config.metric === 'trainings') {
-    return t("reports.widget.subtitleTrainings");
-  }
-  if (config.metric === 'employees') {
-    return config.groupBy
-      ? t("reports.widget.subtitleEmployeesByGroup").replace("{groupBy}", config.groupBy)
-      : t("reports.widget.subtitleEmployeesDefault");
-  }
+const DATE_RANGE_LABELS: Record<string, string> = {
+  last_7_days: "letzte 7 Tage",
+  last_30_days: "letzte 30 Tage",
+  last_90_days: "letzte 90 Tage",
+  last_6_months: "letzte 6 Monate",
+  last_12_months: "letzte 12 Monate",
+  this_month: "diesen Monat",
+  last_month: "letzten Monat",
+  this_year: "dieses Jahr",
+  last_year: "letztes Jahr",
+  custom: "benutzerdefinierter Zeitraum",
+};
+
+const GROUP_BY_LABELS: Record<string, string> = {
+  status: "Status",
+  type: "Typ",
+  department: "Abteilung",
+  month: "Monat",
+  week: "Woche",
+  employee: "Mitarbeiter",
+  category: "Kategorie",
+  severity: "Schweregrad",
+  risk_level: "Risikoniveau",
+  incident_type: "Vorfallsart",
+  investigation_status: "Untersuchungsstatus",
+};
+
+const getSubtitle = (config: ReportConfig) => {
+  const parts: string[] = [];
   if (config.groupBy) {
-    return t("reports.widget.subtitleGroupedBy").replace("{groupBy}", config.groupBy);
+    parts.push(`nach ${GROUP_BY_LABELS[config.groupBy] || config.groupBy}`);
   }
-  return t("reports.widget.subtitleDefault");
+  const rangeType = config.dateRange?.type;
+  if (rangeType && rangeType !== "custom") {
+    parts.push(DATE_RANGE_LABELS[rangeType] || rangeType);
+  } else if (rangeType === "custom" && config.dateRange?.startDate && config.dateRange?.endDate) {
+    parts.push(`${config.dateRange.startDate} – ${config.dateRange.endDate}`);
+  }
+  return parts.join(" · ") || "Benutzerdefinierter Bericht";
 };
 
 export default function ReportWidget({
@@ -86,7 +101,7 @@ export default function ReportWidget({
 
   // Check if there's actual data (non-zero totals) and not just empty categories
   const hasData = chartData && chartData.length > 0 && chartData.some(d => d.value > 0);
-  const subtitle = getSubtitle(config, t);
+  const subtitle = getSubtitle(config);
 
   const renderChart = () => {
     if (!hasData) {

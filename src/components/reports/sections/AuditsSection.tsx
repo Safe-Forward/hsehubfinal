@@ -9,6 +9,7 @@ import { DraggableCard } from "@/components/reports/DraggableCard";
 import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, getStatusColor, formatStatusLabel, OnEditTile } from "@/components/reports/types";
 import type { ReportConfig } from "@/components/reports/ReportBuilder";
+import ReportWidget from "@/components/reports/ReportWidget";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SECTION_ID = "audits";
@@ -20,11 +21,21 @@ export function AuditsSection({
   chartData,
   auditStatusData,
   onEditTile,
+  customReports,
+  onEditReport,
+  onDuplicateReport,
+  onDeleteReport,
+  onExportReport,
 }: {
   stats: ReportStats;
   chartData: any[];
   auditStatusData: any[];
   onEditTile?: OnEditTile;
+  customReports?: ReportConfig[];
+  onEditReport?: (c: ReportConfig) => void;
+  onDuplicateReport?: (c: ReportConfig) => void;
+  onDeleteReport?: (id: string) => void;
+  onExportReport?: (c: ReportConfig) => void;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -247,6 +258,17 @@ export function AuditsSection({
             </CardContent>
           </Card>
         </div>
+        {customReports && customReports.map((report) => (
+          <div key={`report-${report.id}`} data-grid={{ x: 0, y: 999, w: 6, h: 3, minW: 3, minH: 2 }} className="h-full">
+            <ReportWidget
+              config={report}
+              onEdit={onEditReport || (() => {})}
+              onDuplicate={onDuplicateReport || (() => {})}
+              onDelete={onDeleteReport || (() => {})}
+              onExport={onExportReport || (() => {})}
+            />
+          </div>
+        ))}
       </ResponsiveGridLayout>
     </div>
   );
