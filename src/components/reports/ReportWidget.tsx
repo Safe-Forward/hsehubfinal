@@ -263,18 +263,44 @@ export default function ReportWidget({
     const total = displayData.reduce((s, d) => s + (d.value || 0), 0);
     const avg = displayData.length > 0 ? total / displayData.length : 0;
     return (
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-blue-50 p-3 rounded-lg text-center">
-          <div className="text-xs text-muted-foreground mb-1">Gesamtanzahl</div>
-          <div className="text-2xl font-bold">{total}</div>
+      <div className="space-y-3">
+        <div className="grid grid-cols-3 gap-3">
+          {/* Gesamtanzahl: klickbar → alle Datensätze */}
+          <div
+            className="bg-blue-50 p-3 rounded-lg text-center cursor-pointer hover:bg-blue-100 transition-colors"
+            onClick={() => openDrillDown("", "Alle")}
+          >
+            <div className="text-xs text-muted-foreground mb-1">Gesamtanzahl</div>
+            <div className="text-2xl font-bold text-blue-700">{total}</div>
+          </div>
+          <div className="bg-green-50 p-3 rounded-lg text-center">
+            <div className="text-xs text-muted-foreground mb-1">Durchschnitt</div>
+            <div className="text-2xl font-bold">{avg.toFixed(1)}</div>
+          </div>
+          <div className="bg-purple-50 p-3 rounded-lg text-center">
+            <div className="text-xs text-muted-foreground mb-1">Kategorien</div>
+            <div className="text-2xl font-bold">{displayData.length}</div>
+          </div>
         </div>
-        <div className="bg-green-50 p-3 rounded-lg text-center">
-          <div className="text-xs text-muted-foreground mb-1">Durchschnitt</div>
-          <div className="text-2xl font-bold">{avg.toFixed(1)}</div>
-        </div>
-        <div className="bg-purple-50 p-3 rounded-lg text-center">
-          <div className="text-xs text-muted-foreground mb-1">Kategorien</div>
-          <div className="text-2xl font-bold">{displayData.length}</div>
+        {/* Aufschlüsselung: jede Gruppe ist anklickbar */}
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody>
+              {displayData.map((item, idx) => (
+                <tr
+                  key={idx}
+                  className="border-t first:border-t-0 hover:bg-muted/40 cursor-pointer"
+                  onClick={() => openDrillDown(item.rawName ?? item.name, item.name)}
+                >
+                  <td className="px-3 py-2 text-primary font-medium">{item.name}</td>
+                  <td className="px-3 py-2 text-right font-bold">{item.value}</td>
+                  <td className="px-3 py-2 text-right text-muted-foreground">
+                    {total > 0 ? `${((item.value / total) * 100).toFixed(0)}%` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );
@@ -290,7 +316,7 @@ export default function ReportWidget({
         );
       case 'summary':
         return (
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-4 overflow-y-auto" style={{ maxHeight: 300 }}>
             {renderSummary()}
           </div>
         );
