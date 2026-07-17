@@ -3,7 +3,7 @@ import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GripVertical, CheckCircle, TrendingUp, Pencil } from "lucide-react";
+import { RotateCcw, GripVertical, CheckCircle, TrendingUp, Pencil, Copy } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
@@ -16,7 +16,7 @@ const SECTION_ID = "measures";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTile, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[]; onEditTile?: OnEditTile; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void }) {
+export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTile, onAddTileAsReport, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport }: { stats: ReportStats; chartData: any[]; measuresStatusData: any[]; onEditTile?: OnEditTile; onAddTileAsReport?: (config: ReportConfig) => void; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void }) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
@@ -206,9 +206,7 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.totalMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-purple-50 text-purple-600"
-            editSlot={onEditTile ? (
-              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-total", { id: "measures-total", title: t("reports.measures.totalTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            ) : undefined}
+            editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-total", { id: "measures-total", title: t("reports.measures.totalTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "measures-total", title: getTileLabel("measures-total", t("reports.measures.totalTitle"), t("reports.measures.totalSubtitle")).title, metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
         <div key="measures-completed">
@@ -218,9 +216,7 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.completedMeasures}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={onEditTile ? (
-              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-completed", { id: "measures-completed", title: t("reports.measures.completedTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            ) : undefined}
+            editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-completed", { id: "measures-completed", title: t("reports.measures.completedTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "measures-completed", title: getTileLabel("measures-completed", t("reports.measures.completedTitle"), t("reports.measures.completedSubtitle")).title, metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
         <div key="measures-progress">
@@ -230,18 +226,17 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
             value={stats.totalMeasures - stats.completedMeasures}
             icon={<TrendingUp className="w-5 h-5" />}
             color="bg-orange-50 text-orange-600"
-            editSlot={onEditTile ? (
-              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-progress", { id: "measures-progress", title: t("reports.measures.inProgressTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            ) : undefined}
+            editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("measures-progress", { id: "measures-progress", title: t("reports.measures.inProgressTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "measures-progress", title: getTileLabel("measures-progress", t("reports.measures.inProgressTitle"), t("reports.measures.inProgressSubtitle")).title, metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
         <div key="measures-status-chart" data-grid={{ x: 0, y: 4, w: 12, h: 4, minW: 4, minH: 3 }}>
           <Card className="dashboard-grid-card border shadow-sm h-full group">
             <div className="drag-handle border-b flex items-center justify-between px-3 py-1">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
-              {onEditTile && (
-                <button onClick={(e) => { e.stopPropagation(); handleEditChartTile("measures-status-chart", { id: "measures-status-chart", title: t("reports.measures.statusChartTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-              )}
+              <div className="flex items-center gap-0.5">
+                {onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditChartTile("measures-status-chart", { id: "measures-status-chart", title: t("reports.measures.statusChartTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+                {onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); const ov = chartOverrides["measures-status-chart"]; onAddTileAsReport({ id: "measures-status-chart", title: ov?.title || t("reports.measures.statusChartTitle"), metric: "measures", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: (ov?.chartType as any) || "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+              </div>
             </div>
             <CardHeader className="py-3 pb-2">
               <CardTitle className="text-base">{chartOverrides["measures-status-chart"]?.title || t("reports.measures.statusChartTitle")}</CardTitle>

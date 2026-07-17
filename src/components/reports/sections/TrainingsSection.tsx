@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GraduationCap, CheckCircle, Pencil } from "lucide-react";
+import { RotateCcw, GraduationCap, CheckCircle, Pencil, Copy } from "lucide-react";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { getTileConfig } from "@/components/reports/TileConfigStore";
 import { ReportStats, TrainingStatus, OnEditTile } from "@/components/reports/types";
@@ -22,6 +22,7 @@ export function TrainingsSection({
   trainingMatrix,
   chartData,
   onEditTile,
+  onAddTileAsReport,
   customReports,
   onEditReport,
   onDuplicateReport,
@@ -32,6 +33,7 @@ export function TrainingsSection({
   trainingMatrix: TrainingStatus[];
   chartData: any[];
   onEditTile?: OnEditTile;
+  onAddTileAsReport?: (config: ReportConfig) => void;
   customReports?: ReportConfig[];
   onEditReport?: (c: ReportConfig) => void;
   onDuplicateReport?: (c: ReportConfig) => void;
@@ -188,9 +190,7 @@ export function TrainingsSection({
             value={stats.totalTrainings}
             icon={<GraduationCap className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={onEditTile ? (
-              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("training-total", { id: "training-total", title: t("reports.trainings.totalTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            ) : undefined}
+            editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("training-total", { id: "training-total", title: t("reports.trainings.totalTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "training-total", title: getTileLabel("training-total", t("reports.trainings.totalTitle"), t("reports.trainings.totalSubtitle")).title, metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
         <div key="training-compliance">
@@ -200,9 +200,7 @@ export function TrainingsSection({
             value={`${stats.trainingCompliance}%`}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-blue-50 text-blue-600"
-            editSlot={onEditTile ? (
-              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("training-compliance", { id: "training-compliance", title: t("reports.trainings.complianceTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            ) : undefined}
+            editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("training-compliance", { id: "training-compliance", title: t("reports.trainings.complianceTitle"), metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "training-compliance", title: getTileLabel("training-compliance", t("reports.trainings.complianceTitle"), t("reports.trainings.complianceSubtitle")).title, metric: "trainings", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
         {customReports && customReports.map((report) => (

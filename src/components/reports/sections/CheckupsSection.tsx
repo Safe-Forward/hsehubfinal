@@ -3,7 +3,7 @@ import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, GripVertical, Stethoscope, CheckCircle, Pencil } from "lucide-react";
+import { RotateCcw, GripVertical, Stethoscope, CheckCircle, Pencil, Copy } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { DraggableCard } from "@/components/reports/DraggableCard";
 import { getTileConfig, getChartConfig } from "@/components/reports/TileConfigStore";
@@ -16,7 +16,7 @@ const SECTION_ID = "checkups";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport }: { stats: ReportStats; checkUpsStatusData: any[]; onEditTile?: OnEditTile; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void }) {
+export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTileAsReport, customReports, onEditReport, onDuplicateReport, onDeleteReport, onExportReport }: { stats: ReportStats; checkUpsStatusData: any[]; onEditTile?: OnEditTile; onAddTileAsReport?: (config: ReportConfig) => void; customReports?: ReportConfig[]; onEditReport?: (c: ReportConfig) => void; onDuplicateReport?: (c: ReportConfig) => void; onDeleteReport?: (id: string) => void; onExportReport?: (c: ReportConfig) => void }) {
   const { toast } = useToast();
   const { t } = useLanguage();
   const isInitialMountRef = useRef(true);
@@ -203,9 +203,7 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, customR
             value={stats.totalCheckUps}
             icon={<Stethoscope className="w-5 h-5" />}
             color="bg-teal-50 text-teal-600"
-            editSlot={onEditTile ? (
-              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("checkups-total", { id: "checkups-total", title: t("reports.checkups.totalTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            ) : undefined}
+            editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("checkups-total", { id: "checkups-total", title: t("reports.checkups.totalTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "checkups-total", title: getTileLabel("checkups-total", t("reports.checkups.totalTitle"), t("reports.checkups.totalSubtitle")).title, metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
         <div key="checkups-completed">
@@ -215,24 +213,17 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, customR
             value={stats.completedCheckUps}
             icon={<CheckCircle className="w-5 h-5" />}
             color="bg-green-50 text-green-600"
-            editSlot={onEditTile ? (
-              <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("checkups-completed", { id: "checkups-completed", title: t("reports.checkups.completedTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>
-            ) : undefined}
+            editSlot={(onEditTile || onAddTileAsReport) ? (<>{onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditKPITile("checkups-completed", { id: "checkups-completed", title: t("reports.checkups.completedTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Kachel bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}{onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); onAddTileAsReport({ id: "checkups-completed", title: getTileLabel("checkups-completed", t("reports.checkups.completedTitle"), t("reports.checkups.completedSubtitle")).title, metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: "bar", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}</>) : undefined}
           />
         </div>
         <div key="checkups-status-chart" data-grid={{ x: 0, y: 2, w: 12, h: 4, minW: 4, minH: 3 }}>
           <Card className="dashboard-grid-card border shadow-sm h-full group">
             <div className="drag-handle border-b flex items-center justify-between px-3 py-1">
               <GripVertical className="w-4 h-4 text-muted-foreground" />
-              {onEditTile && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleEditChartTile("checkups-status-chart", { id: "checkups-status-chart", title: chartOverrides["checkups-status-chart"]?.title || t("reports.checkups.statusChartTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: (chartOverrides["checkups-status-chart"]?.chartType as any) || "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }}
-                  className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100"
-                  title="Diagramm bearbeiten"
-                >
-                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                </button>
-              )}
+              <div className="flex items-center gap-0.5">
+                {onEditTile && <button onClick={(e) => { e.stopPropagation(); handleEditChartTile("checkups-status-chart", { id: "checkups-status-chart", title: chartOverrides["checkups-status-chart"]?.title || t("reports.checkups.statusChartTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: (chartOverrides["checkups-status-chart"]?.chartType as any) || "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Diagramm bearbeiten"><Pencil className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+                {onAddTileAsReport && <button onClick={(e) => { e.stopPropagation(); const ov = chartOverrides["checkups-status-chart"]; onAddTileAsReport({ id: "checkups-status-chart", title: ov?.title || t("reports.checkups.statusChartTitle"), metric: "checkups", groupBy: "status", dateProperty: "created_at", dateRange: { type: "last_30_days" }, chartType: (ov?.chartType as any) || "pie", sortBy: "value", displayMode: "chart", targetSection: SECTION_ID, data: [] }); }} className="p-0.5 hover:bg-muted rounded transition-colors opacity-0 group-hover:opacity-100" title="Als Bericht hinzufügen"><Copy className="w-3.5 h-3.5 text-muted-foreground" /></button>}
+              </div>
             </div>
             <CardHeader className="py-3 pb-2">
               <CardTitle className="text-base">{chartOverrides["checkups-status-chart"]?.title || t("reports.checkups.statusChartTitle")}</CardTitle>

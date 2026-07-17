@@ -2107,6 +2107,26 @@ export default function Reports() {
     });
   };
 
+  const handleAddFromStandardTile = (config: ReportConfig) => {
+    const newReport: ReportConfig = {
+      ...config,
+      id: `${Date.now()}${Math.random().toString(36).substr(2, 9)}`,
+      data: [],
+    };
+    const updated = [newReport, ...customReports];
+    setCustomReports(updated);
+    saveCustomReports(updated);
+    startTransition(() => {
+      const newLayouts = recalculateLayouts(updated);
+      setCustomReportsLayouts(newLayouts);
+      localStorage.setItem(CUSTOM_REPORTS_LAYOUT_KEY, JSON.stringify(newLayouts));
+    });
+    toast({
+      title: "Bericht hinzugefügt",
+      description: `"${config.title}" wurde als neue Kachel hinzugefügt.`,
+    });
+  };
+
   const handleDeleteReport = (id: string) => {
     const report = customReports.find(r => r.id === id);
     if (!report) return;
@@ -2422,6 +2442,7 @@ export default function Reports() {
               chartData={chartData}
               riskLevelData={riskLevelData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              onAddTileAsReport={handleAddFromStandardTile}
               customReports={sectionCustomReports}
               onEditReport={handleEditReport}
               onDuplicateReport={handleDuplicateReport}
@@ -2435,6 +2456,7 @@ export default function Reports() {
               chartData={chartData}
               auditStatusData={auditStatusData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              onAddTileAsReport={handleAddFromStandardTile}
               customReports={sectionCustomReports}
               onEditReport={handleEditReport}
               onDuplicateReport={handleDuplicateReport}
@@ -2451,6 +2473,7 @@ export default function Reports() {
               selectedYear={selectedYear}
               departmentFilter={departmentFilter}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              onAddTileAsReport={handleAddFromStandardTile}
               customReports={sectionCustomReports}
               onEditReport={handleEditReport}
               onDuplicateReport={handleDuplicateReport}
@@ -2464,6 +2487,7 @@ export default function Reports() {
               trainingMatrix={trainingMatrix}
               chartData={chartData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              onAddTileAsReport={handleAddFromStandardTile}
               customReports={sectionCustomReports}
               onEditReport={handleEditReport}
               onDuplicateReport={handleDuplicateReport}
@@ -2477,6 +2501,7 @@ export default function Reports() {
               chartData={chartData}
               measuresStatusData={measuresStatusData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              onAddTileAsReport={handleAddFromStandardTile}
               customReports={sectionCustomReports}
               onEditReport={handleEditReport}
               onDuplicateReport={handleDuplicateReport}
@@ -2489,6 +2514,7 @@ export default function Reports() {
               stats={stats}
               chartData={chartData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              onAddTileAsReport={handleAddFromStandardTile}
               customReports={sectionCustomReports}
               onEditReport={handleEditReport}
               onDuplicateReport={handleDuplicateReport}
@@ -2501,6 +2527,7 @@ export default function Reports() {
               stats={stats}
               checkUpsStatusData={checkUpsStatusData}
               onEditTile={(tileId, defaultConfig, onSaved) => handleEditStandardTile(tileId, defaultConfig, onSaved)}
+              onAddTileAsReport={handleAddFromStandardTile}
               customReports={sectionCustomReports}
               onEditReport={handleEditReport}
               onDuplicateReport={handleDuplicateReport}
