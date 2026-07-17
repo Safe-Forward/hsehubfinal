@@ -22,6 +22,7 @@ import {
   Area,
   BarChart,
   Bar,
+  LabelList,
   PieChart as RechartsPie,
   Pie,
   Cell,
@@ -33,6 +34,7 @@ import {
   Legend,
 } from "recharts";
 import { ReportConfig } from "./ReportBuilder";
+export type { ReportConfig };
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ReportWidgetProps {
@@ -135,6 +137,7 @@ export default function ReportWidget({
   }, [config.id, config.chartType, displayData]);
 
   const hasData = displayData.length > 0 && displayData.some(d => d.value > 0);
+  const totalCount = displayData.reduce((s, d) => s + (d.value || 0), 0);
   const subtitle = getSubtitle(config);
   const displayMode = config.displayMode || 'chart';
 
@@ -150,12 +153,18 @@ export default function ReportWidget({
       );
     }
 
+    const areaClick = (d: any) => {
+      const p = d?.activePayload?.[0]?.payload;
+      // Click near a data point → filter by that group; click elsewhere → show all
+      openDrillDown(p ? (p.rawName ?? p.name) : "", p ? p.name : "Alle");
+    };
+
     switch (config.chartType) {
       case 'line':
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} style={{ cursor: 'pointer' }}
-              onClick={(d: any) => { const p = d?.activePayload?.[0]?.payload; if (p) openDrillDown(p.rawName ?? p.name, p.name); }}>
+            <AreaChart data={displayData} margin={{ top: 16, right: 10, left: 0, bottom: 0 }}
+              style={{ cursor: 'pointer' }} onClick={areaClick}>
               <defs>
                 <linearGradient id={`gradient-${config.id}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -166,7 +175,9 @@ export default function ReportWidget({
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={30} />
               <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-              <Area type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={2} fill={`url(#gradient-${config.id})`} />
+              <Area type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={2} fill={`url(#gradient-${config.id})`}>
+                <LabelList dataKey="value" position="top" style={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
+              </Area>
             </AreaChart>
           </ResponsiveContainer>
         );
@@ -174,13 +185,16 @@ export default function ReportWidget({
       case 'bar':
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} style={{ cursor: 'pointer' }}>
+            <BarChart data={displayData} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
+              style={{ cursor: 'pointer' }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={30} />
               <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
               <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]}
-                onClick={(d: any) => openDrillDown(d.rawName ?? d.name, d.name)} />
+                onClick={(d: any) => openDrillDown(d.rawName ?? d.name, d.name)}>
+                <LabelList dataKey="value" position="top" style={{ fontSize: 12, fill: '#374151', fontWeight: 700 }} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         );
@@ -189,9 +203,12 @@ export default function ReportWidget({
         return (
           <ResponsiveContainer width="100%" height="100%">
             <RechartsPie margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-              <Pie data={displayData} cx="50%" cy="50%" innerRadius="40%" outerRadius="70%" paddingAngle={2} dataKey="value"
+              <Pie data={displayData} cx="50%" cy="50%" innerRadius="35%" outerRadius="65%"
+                paddingAngle={2} dataKey="value"
                 style={{ cursor: 'pointer' }}
-                onClick={(d: any) => openDrillDown(d.rawName ?? d.name, d.name)}>
+                onClick={(d: any) => openDrillDown(d.rawName ?? d.name, d.name)}
+                label={({ name, value }) => `${value}`}
+                labelLine={true}>
                 {displayData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -205,8 +222,8 @@ export default function ReportWidget({
       default:
         return (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} style={{ cursor: 'pointer' }}
-              onClick={(d: any) => { const p = d?.activePayload?.[0]?.payload; if (p) openDrillDown(p.rawName ?? p.name, p.name); }}>
+            <AreaChart data={displayData} margin={{ top: 16, right: 10, left: 0, bottom: 0 }}
+              style={{ cursor: 'pointer' }} onClick={areaClick}>
               <defs>
                 <linearGradient id={`gradient-default-${config.id}`} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
@@ -217,7 +234,9 @@ export default function ReportWidget({
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} tickLine={false} axisLine={false} width={30} />
               <Tooltip />
-              <Area type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={2} fill={`url(#gradient-default-${config.id})`} />
+              <Area type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={2} fill={`url(#gradient-default-${config.id})`}>
+                <LabelList dataKey="value" position="top" style={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
+              </Area>
             </AreaChart>
           </ResponsiveContainer>
         );
@@ -380,6 +399,18 @@ export default function ReportWidget({
       <div className="flex-1 flex flex-col overflow-hidden mt-2">
         {renderContent()}
       </div>
+
+      {/* Footer: immer sichtbarer Datensätze-Link */}
+      {totalCount > 0 && (
+        <div className="px-4 py-2 border-t flex justify-end">
+          <button
+            className="text-xs text-primary hover:underline cursor-pointer font-medium"
+            onClick={() => openDrillDown("", "Alle")}
+          >
+            {totalCount} Datensätze anzeigen →
+          </button>
+        </div>
+      )}
 
       {drillDown && (
         <DrillDownModal
