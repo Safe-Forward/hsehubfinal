@@ -57,9 +57,10 @@ test.describe("Passwort vergessen", () => {
 });
 
 test.describe("Passwort zurücksetzen", () => {
-  test("Reset-Seite lädt und zeigt Formularfelder", async ({ page }) => {
+  // Ohne gültigen Token aus der E-Mail zeigt die Seite immer "Ungültiger Link".
+  // Das Formular selbst (reset-password-input) ist nur mit echtem Token testbar.
+  test("Reset-Seite lädt und zeigt Ungültiger-Link-Zustand", async ({ page }) => {
     await page.goto("/reset-password");
-    await expect(page.getByTestId("reset-password-input")).toBeVisible();
-    await expect(page.getByTestId("reset-password-submit")).toBeVisible();
+    await expect(page.locator("text=Ungültiger Link")).toBeVisible({ timeout: 8_000 });
   });
 });
