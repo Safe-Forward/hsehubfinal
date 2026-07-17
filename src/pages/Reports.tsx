@@ -1972,10 +1972,9 @@ export default function Reports() {
   };
 
   const handleSaveReport = async (config: ReportConfig) => {
-    // Wenn Standard-Kachel bearbeitet wird: speichern und zurückkehren
+    // Wenn Standard-Kachel bearbeitet wird: speichern und sofort zurückkehren
     if (pendingTileEdit) {
       const { sectionId, tileId, onSaved } = pendingTileEdit;
-      const freshData = await fetchTemplateData(config).catch(() => []);
       saveChartConfig(sectionId, tileId, {
         metric: config.metric,
         groupBy: config.groupBy,
@@ -1985,11 +1984,8 @@ export default function Reports() {
         profileFieldFilters: config.profileFieldFilters,
         title: config.title,
       });
-      // Wenn freshData leer: übergebe trotzdem config, damit chartType-Override greift
-      onSaved(config, freshData);
-      setPendingTileEdit(null);
-      setIsBuilderOpen(false);
-      setSelectedReport(null);
+      // Sofort mit den Builder-Daten aktualisieren (kein zweiter Fetch nötig)
+      onSaved(config, config.data || []);
       return;
     }
 
