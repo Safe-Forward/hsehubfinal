@@ -9,18 +9,11 @@ test.describe("Aktivitätsgruppen", () => {
   });
 
   test("Seite lädt", async ({ page }) => {
-    const container = page.getByTestId("activity-groups-page");
-    if (await container.count() > 0) {
-      await expect(container).toBeVisible({ timeout: 10_000 });
-    } else {
-      await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: 10_000 });
-    }
+    await expect(page.getByTestId("activity-groups-page")).toBeVisible({ timeout: 10_000 });
   });
 
   test('"Neue Gruppe"-Button ist sichtbar', async ({ page }) => {
-    const btn = page.getByTestId("btn-add-activity-group");
-    if (await btn.count() === 0) return;
-    await expect(btn).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("btn-add-activity-group")).toBeVisible({ timeout: 10_000 });
   });
 
   test("Gruppen-Liste rendert (0 oder mehr)", async ({ page }) => {

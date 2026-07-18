@@ -6,17 +6,11 @@ test.describe("Unternehmens-Setup", () => {
 
   test("Seite ist erreichbar (Formular oder Weiterleitung zu Dashboard)", async ({ page }) => {
     await page.goto("/setup-company");
+    // Wait for React to settle (redirect or render)
+    await page.waitForLoadState("networkidle");
     // Authenticated user with existing company gets redirected to dashboard
-    // User without company sees the setup form
-    const isOnSetup = page.url().includes("/setup-company");
-    const isOnDashboard = page.url().includes("/dashboard");
-    if (isOnDashboard) return; // company already exists, redirect is correct behavior
-    // If still on setup-company, check form is visible
-    const setupPage = page.getByTestId("setup-company-page");
-    if (await setupPage.count() > 0) {
-      await expect(setupPage).toBeVisible({ timeout: 8_000 });
-    } else {
-      await expect(page.locator("h1, h2, form").first()).toBeVisible({ timeout: 8_000 });
-    }
+    if (page.url().includes("/dashboard")) return;
+    // Otherwise the setup form should be visible
+    await expect(page.getByTestId("setup-company-page")).toBeVisible({ timeout: 8_000 });
   });
 });

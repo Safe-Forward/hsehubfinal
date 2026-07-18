@@ -13,13 +13,7 @@ test.describe("Mitarbeiterprofil — Detailseite", () => {
     await rows.first().click();
     await expect(page).toHaveURL(/\/employees\//, { timeout: 8_000 });
     // Check profile page loaded
-    const profilePage = page.getByTestId("employee-profile-page");
-    if (await profilePage.count() > 0) {
-      await expect(profilePage).toBeVisible({ timeout: 8_000 });
-    } else {
-      // Fallback: just check page didn't crash
-      await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: 8_000 });
-    }
+    await expect(page.getByTestId("employee-profile-page")).toBeVisible({ timeout: 8_000 });
   });
 
   test("Zurück-Button navigiert zur Mitarbeiterliste", async ({ page }) => {

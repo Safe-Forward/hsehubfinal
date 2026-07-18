@@ -6,17 +6,13 @@ test.describe("Audit — Detailseite", () => {
 
   test("Klick auf Audit öffnet Detailseite", async ({ page }) => {
     await page.goto("/audits");
-    // Try clicking first audit row
+    // Navigation is triggered by the "Details"-Button inside the audit row, not the row itself
     const rows = page.locator('[data-testid^="audit-row-"]');
     await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
     if (await rows.count() === 0) return;
-    await rows.first().click();
+    // Click the first button inside the row (the "Details" / navigation button)
+    await rows.first().locator("button").first().click();
     await expect(page).toHaveURL(/\/audits\//, { timeout: 8_000 });
-    const detailPage = page.getByTestId("audit-details-page");
-    if (await detailPage.count() > 0) {
-      await expect(detailPage).toBeVisible({ timeout: 8_000 });
-    } else {
-      await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: 8_000 });
-    }
+    await expect(page.getByTestId("audit-details-page")).toBeVisible({ timeout: 8_000 });
   });
 });

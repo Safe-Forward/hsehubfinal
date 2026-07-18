@@ -9,12 +9,7 @@ test.describe("Rechnungen & Abonnement", () => {
   });
 
   test("Seite lädt", async ({ page }) => {
-    const container = page.getByTestId("invoices-page");
-    if (await container.count() > 0) {
-      await expect(container).toBeVisible({ timeout: 10_000 });
-    } else {
-      await expect(page.locator("h1, h2").first()).toBeVisible({ timeout: 10_000 });
-    }
+    await expect(page.getByTestId("invoices-page")).toBeVisible({ timeout: 10_000 });
   });
 
   test("Rechnungs-Tabelle oder Leer-Zustand wird angezeigt", async ({ page }) => {
