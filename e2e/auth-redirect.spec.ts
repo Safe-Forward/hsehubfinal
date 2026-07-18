@@ -4,6 +4,9 @@ import { test, expect } from "@playwright/test";
 // gated module - a regression here means a module is either unreachable
 // for real users or, worse, reachable without login.
 
+// These tests must run without a stored session — override globalSetup's storageState.
+test.use({ storageState: { cookies: [], origins: [] } });
+
 const protectedPaths = ["/dashboard", "/employees", "/settings", "/training", "/incidents"];
 
 for (const path of protectedPaths) {
