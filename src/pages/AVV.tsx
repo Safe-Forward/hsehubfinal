@@ -100,7 +100,7 @@ const AVV = () => {
                   <p className="font-semibold text-gray-800">Safe-Forward</p>
                   <p>Inhaber: Pavel Rohn</p>
                   <p>Angfurtener Str. 1B, 51674 Wiehl</p>
-                  <p>E-Mail: info@tech-forward.de</p>
+                  <p>E-Mail: info@safe-forward.de</p>
                 </div>
                 <p className="text-sm text-gray-500 mt-3">
                   (im Folgenden „<strong>Auftragsverarbeiter</strong>") geschlossen. Mit dem Abschluss der
@@ -238,7 +238,7 @@ const AVV = () => {
               <Note>
                 Dies ist ein strukturierter Vertragsentwurf, der die tatsächliche technische und
                 organisatorische Realität von HSE Hub abbildet. Bei Fragen wenden Sie sich an
-                info@tech-forward.de.
+                info@safe-forward.de.
               </Note>
 
             </div>

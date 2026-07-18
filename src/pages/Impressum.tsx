@@ -29,7 +29,7 @@ const Impressum = () => {
                   </div>
                   <div>
                     <p><span className="font-semibold">Telefon:</span> +49 163 760 5849</p>
-                    <p><span className="font-semibold">E-Mail:</span> info@tech-forward.de</p>
+                    <p><span className="font-semibold">E-Mail:</span> info@safe-forward.de</p>
                   </div>
                 </div>
               </section>

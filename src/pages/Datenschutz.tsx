@@ -130,7 +130,7 @@ const Datenschutz = () => {
                   <InfoCard label="Unternehmen" value="Safe-Forward" />
                   <InfoCard label="Anschrift" value="Angfurtener Str. 1B, 51674 Wiehl" />
                   <InfoCard label="Vertreten durch" value="Pavel Rohn" />
-                  <InfoCard label="E-Mail" value="info@tech-forward.de" />
+                  <InfoCard label="E-Mail" value="info@safe-forward.de" />
                   <InfoCard label="Telefon" value="+49 163 760 5849" />
                 </div>
                 <p className="mt-4 text-sm text-gray-500">
@@ -396,7 +396,7 @@ const Datenschutz = () => {
               <section>
                 <SectionHeading id="rechte" number="13" title="Ihre Rechte als betroffene Person" />
                 <p className="mb-6">
-                  Zur Geltendmachung Ihrer Rechte wenden Sie sich an: <a href="mailto:info@tech-forward.de" className="text-blue-600 hover:underline">info@tech-forward.de</a>. Wir antworten innerhalb von 30 Tagen (Art. 12 Abs. 3 DSGVO).
+                  Zur Geltendmachung Ihrer Rechte wenden Sie sich an: <a href="mailto:info@safe-forward.de" className="text-blue-600 hover:underline">info@safe-forward.de</a>. Wir antworten innerhalb von 30 Tagen (Art. 12 Abs. 3 DSGVO).
                 </p>
                 <div className="space-y-4">
                   <RightItem article="Art. 15" title="Auskunftsrecht" description="Sie können Auskunft über alle verarbeiteten Daten verlangen, einschließlich Zweck, Empfänger und Speicherdauer." />

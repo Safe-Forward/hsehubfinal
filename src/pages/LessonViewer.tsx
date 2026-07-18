@@ -378,7 +378,7 @@ export default function LessonViewer() {
     doc.setFontSize(9); doc.text("Schulungsplattform", width - 75, 200, { align: "center" });
     doc.setFillColor(15, 41, 66); doc.rect(8, height - 20, width - 16, 12, "F");
     doc.setFontSize(8); doc.setTextColor(255, 255, 255);
-    doc.text("www.safe-forward.de  |  info@tech-forward.de  |  HSE Hub", width / 2, height - 12, { align: "center" });
+    doc.text("www.safe-forward.de  |  info@safe-forward.de  |  HSE Hub", width / 2, height - 12, { align: "center" });
     doc.save(`Zertifikat_${course.name}_${userName}.pdf`);
   };
 
