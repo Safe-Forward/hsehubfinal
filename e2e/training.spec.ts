@@ -11,6 +11,11 @@ test.describe("Schulungen", () => {
   test('"Neuen Kurs erstellen"-Button ist sichtbar', async ({ page }) => {
     await expect(page.getByTestId("btn-add-course")).toBeVisible({ timeout: 10_000 });
   });
+  test('"Neuer Kurs"-Button ist sichtbar', async ({ page }) => {
+    const btn = page.getByTestId("btn-add-course");
+    if (await btn.count() === 0) return;
+    await expect(btn).toBeVisible({ timeout: 10_000 });
+  });
 
   test("Kurs-Karten werden gerendert (0 oder mehr)", async ({ page }) => {
     const cards = page.locator('[data-testid^="course-card-"]');

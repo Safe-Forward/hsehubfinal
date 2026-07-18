@@ -648,7 +648,7 @@ export default function AuditDetails() {
   }, {} as Record<string, any>);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5" data-testid="audit-details-page">
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -656,6 +656,7 @@ export default function AuditDetails() {
               variant="ghost"
               size="icon"
               onClick={() => navigate("/audits")}
+              data-testid="audit-details-back"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
@@ -825,11 +826,12 @@ export default function AuditDetails() {
               <RefreshCw className="w-4 h-4 mr-2" />
               Regenerate Checklist
             </Button>
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               size="sm"
               onClick={handleSelectAll}
               className="bg-green-600 hover:bg-green-700"
+              data-testid="audit-details-save"
             >
               Select All
             </Button>

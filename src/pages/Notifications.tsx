@@ -270,7 +270,7 @@ export default function Notifications() {
     }
 
     return (
-        <div className="p-8">
+        <div className="p-8" data-testid="notifications-page">
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-3xl font-bold">Notifications</h1>
@@ -279,7 +279,7 @@ export default function Notifications() {
                     </p>
                 </div>
                 {unreadCount > 0 && (
-                    <Button variant="outline" onClick={markAllAsRead}>
+                    <Button data-testid="notifications-mark-all-read" variant="outline" onClick={markAllAsRead}>
                         <CheckCheck className="w-4 h-4 mr-2" />
                         Mark all as read
                     </Button>
@@ -306,6 +306,7 @@ export default function Notifications() {
                                 {notifications.map((notification) => (
                                     <div
                                         key={notification.id}
+                                        data-testid={`notification-item-${notification.id}`}
                                         className={`flex items-start gap-4 p-4 rounded-lg border transition-colors hover:bg-muted/50 cursor-pointer ${!notification.is_read ? "bg-muted/30 border-primary/20" : ""
                                             }`}
                                         onClick={() => handleNotificationClick(notification)}

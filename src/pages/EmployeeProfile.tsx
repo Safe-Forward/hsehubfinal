@@ -3067,17 +3067,17 @@ p_sender_name: senderName,
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" data-testid="employee-profile-page">
       <div className="container mx-auto px-4 py-6 max-w-[1400px]">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate("/employees")}>
+            <Button variant="ghost" onClick={() => navigate("/employees")} data-testid="employee-profile-back">
               <ArrowLeft className="w-4 h-4 mr-2" />
               {t("common.back")}
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">{employee.full_name || "Employee Profile"}</h1>
+              <h1 className="text-3xl font-bold" data-testid="employee-profile-name">{employee.full_name || "Employee Profile"}</h1>
               <p className="text-muted-foreground">
                 {t("employees.employeeNumber")} #{employee.employee_number}
               </p>

@@ -354,7 +354,7 @@ export default function ActivityGroups() {
   }
 
   return (
-    <div className="p-4 sm:p-6 md:p-8">
+    <div className="p-4 sm:p-6 md:p-8" data-testid="activity-groups-page">
       <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start justify-between gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
           <Button
@@ -403,6 +403,7 @@ export default function ActivityGroups() {
                     <Button
                       onClick={resetForm}
                       className="w-full sm:w-auto text-sm"
+                      data-testid="btn-add-activity-group"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Tätigkeitsgruppe hinzufügen
@@ -539,7 +540,7 @@ export default function ActivityGroups() {
                       </TableRow>
                     ) : (
                       filteredActivityGroups.map((activity) => (
-                        <TableRow key={activity.id}>
+                        <TableRow key={activity.id} data-testid={`activity-group-row-${activity.id}`}>
                           <TableCell className="font-medium">
                             {activity.name}
                           </TableCell>

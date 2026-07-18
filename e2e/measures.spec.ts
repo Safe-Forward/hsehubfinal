@@ -11,6 +11,10 @@ test.describe("Maßnahmen", () => {
   test('"Neue Maßnahme"-Button ist sichtbar', async ({ page }) => {
     await expect(page.getByTestId("btn-add-measure")).toBeVisible({ timeout: 10_000 });
   });
+  test("Dialog öffnet sich beim Klick auf neue Maßnahme", async ({ page }) => {
+    await page.getByTestId("btn-add-measure").click();
+    await expect(page.locator("form, [role='dialog']").first()).toBeVisible();
+  });
 
   test("Maßnahmen-Liste rendert (0 oder mehr Zeilen)", async ({ page }) => {
     const rows = page.locator('[data-testid^="measure-row-"]');

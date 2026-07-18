@@ -271,7 +271,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5" data-testid="profile-page">
       <header className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -290,7 +290,7 @@ export default function Profile() {
             </div>
           </div>
           {isEditing && (
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button data-testid="profile-save-btn" onClick={handleSave} disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
               {isSaving ? "Saving..." : t("profile.saveChanges")}
             </Button>
@@ -349,6 +349,7 @@ export default function Profile() {
                     <Label htmlFor="firstName">{t("profile.firstName")}</Label>
                     <Input
                       id="firstName"
+                      data-testid="profile-first-name"
                       value={profileData.firstName}
                       onChange={(e) =>
                         setProfileData({
@@ -363,6 +364,7 @@ export default function Profile() {
                     <Label htmlFor="lastName">{t("profile.lastName")}</Label>
                     <Input
                       id="lastName"
+                      data-testid="profile-last-name"
                       value={profileData.lastName}
                       onChange={(e) =>
                         setProfileData({
@@ -402,7 +404,7 @@ export default function Profile() {
                 </div>
 
                 {!isEditing && (
-                  <Button onClick={() => setIsEditing(true)} className="w-full">
+                  <Button data-testid="profile-edit-btn" onClick={() => setIsEditing(true)} className="w-full">
                     {t("profile.editProfile")}
                   </Button>
                 )}

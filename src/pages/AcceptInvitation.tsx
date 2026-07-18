@@ -270,7 +270,7 @@ export default function AcceptInvitation() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-success/5 p-4 relative overflow-hidden">
         {backgroundElements}
         <div className="relative z-10 w-full max-w-md">
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm overflow-hidden">
+          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm overflow-hidden" data-testid="accept-invitation-error">
             <div className="h-2 bg-gradient-to-r from-red-500 to-orange-500" />
             <CardHeader className="text-center pb-4">
               <div className="relative inline-block mx-auto">
@@ -419,6 +419,7 @@ export default function AcceptInvitation() {
                     required
                     minLength={8}
                     className="pr-10 bg-white border-gray-200 focus:border-primary h-11"
+                    data-testid="accept-invitation-password"
                   />
                   <span 
                     className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer select-none"
@@ -464,11 +465,12 @@ export default function AcceptInvitation() {
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30" 
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30"
                 disabled={submitting}
                 size="lg"
+                data-testid="accept-invitation-submit"
               >
                 {submitting ? (
                   <>

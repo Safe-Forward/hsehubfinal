@@ -207,9 +207,9 @@ export default function Messages() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex gap-4 p-4">
+    <div className="h-[calc(100vh-4rem)] flex gap-4 p-4" data-testid="messages-page">
       {/* Sidebar */}
-      <Card className="w-80 flex flex-col border-0 shadow-xl">
+      <Card className="w-80 flex flex-col border-0 shadow-xl" data-testid="messages-channel-list">
         <CardHeader className="border-b">
           <CardTitle className="text-xl">{t("messages.title")}</CardTitle>
           <div className="relative mt-4">
@@ -378,6 +378,7 @@ export default function Messages() {
             <div className="border-t p-4">
               <div className="flex gap-2">
                 <Input
+                  data-testid="messages-input"
                   placeholder={`${t("messages.messagePlaceholder")} ${
                     activeChannel.name
                   }...`}
@@ -386,7 +387,7 @@ export default function Messages() {
                   onKeyPress={handleKeyPress}
                   className="flex-1"
                 />
-                <Button onClick={sendMessage} disabled={!messageInput.trim()}>
+                <Button data-testid="messages-send" onClick={sendMessage} disabled={!messageInput.trim()}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

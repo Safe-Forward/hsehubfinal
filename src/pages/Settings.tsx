@@ -3257,7 +3257,7 @@ const handleUpdateManager = async (
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5" data-testid="settings-page">
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -3286,6 +3286,7 @@ const handleUpdateManager = async (
               <CardContent className="p-4">
                 <nav className="space-y-1">
                   <button
+                    data-testid="settings-tab-team"
                     onClick={() => setActiveTab("team")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "team"
                       ? "bg-primary text-primary-foreground"
@@ -3302,6 +3303,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-organisation"
                     onClick={() => setActiveTab("organisation")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "organisation"
                       ? "bg-primary text-primary-foreground"
@@ -3316,6 +3318,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-user-roles"
                     onClick={() => setActiveTab("user-roles")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "user-roles"
                       ? "bg-primary text-primary-foreground"
@@ -3332,6 +3335,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-configuration"
                     onClick={() => setActiveTab("configuration")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "configuration"
                       ? "bg-primary text-primary-foreground"
@@ -3348,6 +3352,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-profile-fields"
                     onClick={() => setActiveTab("profile-fields")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "profile-fields"
                       ? "bg-primary text-primary-foreground"
@@ -3364,6 +3369,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-catalogs"
                     onClick={() => setActiveTab("catalogs")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "catalogs"
                       ? "bg-primary text-primary-foreground"

@@ -244,7 +244,7 @@ export default function SetupCompany() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5" data-testid="setup-company-page">
       <div className="container mx-auto px-4 py-4 sm:py-8">
         <div className="mb-4 sm:mb-6">
           <Button
@@ -280,6 +280,7 @@ export default function SetupCompany() {
                   onChange={(e) => setCompanyName(e.target.value)}
                   placeholder="Enter your company name"
                   className="h-10 sm:h-11 text-sm sm:text-base"
+                  data-testid="setup-company-name"
                 />
               </div>
 
@@ -287,6 +288,7 @@ export default function SetupCompany() {
                 onClick={handleCreateCompany}
                 disabled={isCreating || !companyName.trim()}
                 className="w-full h-10 sm:h-11 text-sm sm:text-base"
+                data-testid="setup-company-submit"
               >
                 {isCreating ? "Creating..." : "Create Company"}
               </Button>
