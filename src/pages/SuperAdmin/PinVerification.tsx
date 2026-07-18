@@ -215,6 +215,7 @@ export default function SuperAdminPinVerification() {
                     disabled={loading}
                     autoFocus
                     autoComplete="off"
+                    data-testid="superadmin-pin-input"
                   />
                 </div>
                 {attempts > 0 && (
@@ -228,6 +229,7 @@ export default function SuperAdminPinVerification() {
                 onClick={verifyPin}
                 className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
                 disabled={loading || !pin}
+                data-testid="superadmin-pin-submit"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -248,6 +250,7 @@ export default function SuperAdminPinVerification() {
                 size="sm"
                 className="w-full text-xs text-gray-400 hover:text-blue-500"
                 onClick={() => setShowForgotPin(true)}
+                data-testid="superadmin-forgot-pin"
               >
                 <KeyRound className="w-3 h-3 mr-1" />
                 PIN vergessen?
@@ -293,6 +296,7 @@ export default function SuperAdminPinVerification() {
               variant="ghost"
               onClick={handleLogout}
               className="w-full text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+              data-testid="superadmin-logout"
             >
               Cancel and Sign Out
             </Button>
