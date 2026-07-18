@@ -27,21 +27,21 @@ test.describe("SuperAdmin — Zugriffskontrolle (normaler Nutzer)", () => {
 
   test("Normaler Nutzer wird von /super-admin/verify zu /auth oder /dashboard umgeleitet", async ({ page }) => {
     await page.goto("/super-admin/verify");
-    await page.waitForURL(url => !url.includes("/super-admin/verify"), { timeout: 10_000 });
+    await page.waitForURL(url => !url.toString().includes("/super-admin/verify"), { timeout: 10_000 });
     const url = page.url();
     expect(url.includes("/auth") || url.includes("/dashboard")).toBe(true);
   });
 
   test("Normaler Nutzer wird von /super-admin/dashboard zu /auth oder /dashboard umgeleitet", async ({ page }) => {
     await page.goto("/super-admin/dashboard");
-    await page.waitForURL(url => !url.includes("/super-admin/dashboard"), { timeout: 10_000 });
+    await page.waitForURL(url => !url.toString().includes("/super-admin/dashboard"), { timeout: 10_000 });
     const url = page.url();
     expect(url.includes("/auth") || url.includes("/dashboard")).toBe(true);
   });
 
   test("Normaler Nutzer wird von /super-admin/companies umgeleitet", async ({ page }) => {
     await page.goto("/super-admin/companies");
-    await page.waitForURL(url => !url.includes("/super-admin/companies"), { timeout: 10_000 });
+    await page.waitForURL(url => !url.toString().includes("/super-admin/companies"), { timeout: 10_000 });
     const url = page.url();
     expect(url.includes("/auth") || url.includes("/dashboard")).toBe(true);
   });
