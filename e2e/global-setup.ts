@@ -1,12 +1,13 @@
 import { chromium, FullConfig } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.test.local" });
 
-// Logs in once before the full test suite and saves the session to disk.
-// All authenticated tests reuse this session instead of logging in individually.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 async function globalSetup(config: FullConfig) {
   const email = process.env.E2E_TEST_EMAIL;
   const password = process.env.E2E_TEST_PASSWORD;
