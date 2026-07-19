@@ -679,9 +679,9 @@ export default function SuperAdminDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Companies</CardTitle>
+                <CardTitle>Neue Registrierungen</CardTitle>
                 <CardDescription>
-                  Latest registered organizations
+                  Zuletzt registrierte Unternehmen
                 </CardDescription>
               </div>
               <Link
@@ -699,7 +699,15 @@ export default function SuperAdminDashboard() {
                   No companies registered yet
                 </p>
               ) : (
-                recentCompanies.map((company) => (
+                recentCompanies.map((company) => {
+                  const isNew = company.created_at &&
+                    (Date.now() - new Date(company.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000;
+                  const registeredAt = company.created_at
+                    ? new Date(company.created_at).toLocaleDateString("de-DE", {
+                        day: "2-digit", month: "2-digit", year: "numeric",
+                      })
+                    : "–";
+                  return (
                   <div
                     key={company.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
@@ -709,9 +717,14 @@ export default function SuperAdminDashboard() {
                         <Building2 className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium">{company.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{company.name}</p>
+                          {isNew && (
+                            <Badge className="bg-green-500 text-white text-xs px-1.5 py-0">NEU</Badge>
+                          )}
+                        </div>
                         <p className="text-sm text-muted-foreground">
-                          {company.email}
+                          {company.email} · {registeredAt}
                         </p>
                       </div>
                     </div>
@@ -740,7 +753,8 @@ export default function SuperAdminDashboard() {
                       </Badge>
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           </CardContent>
