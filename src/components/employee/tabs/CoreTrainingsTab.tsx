@@ -82,7 +82,8 @@ interface TrainingRow {
 type FilterType = "all" | "pending" | "completed";
 
 interface FormData {
-  trainingTypeId: string;
+  trainingTypeId: string;   // set when opened from a row; empty when opened globally
+  trainingName: string;     // free-text name used for global "Status eintragen"
   completionDate: string;
   expiryDate: string;
   noExpiry: boolean;
@@ -96,6 +97,7 @@ const today = new Date().toISOString().split("T")[0];
 
 const EMPTY_FORM: FormData = {
   trainingTypeId: "",
+  trainingName: "",
   completionDate: today,
   expiryDate: "",
   noExpiry: false,
@@ -261,6 +263,7 @@ export function CoreTrainingsTab({
         : "";
     setFormData({
       trainingTypeId: typeId || "",
+      trainingName: row?.trainingType.name ?? "",
       completionDate,
       expiryDate: existingExpiry ?? autoExpiry,
       noExpiry,
@@ -300,17 +303,44 @@ export function CoreTrainingsTab({
   // -------------------------------------------------------------------------
 
   async function handleSave() {
-    if (!formData.trainingTypeId || !formData.completionDate) {
-      toast.error("Bitte Schulung und Abschlussdatum ausfüllen.");
+    const nameToUse = formData.trainingTypeId
+      ? formData.trainingName
+      : formData.trainingName.trim();
+
+    if (!nameToUse || !formData.completionDate) {
+      toast.error("Bitte Schulungsbezeichnung und Abschlussdatum ausfüllen.");
       return;
     }
 
     setSaving(true);
     try {
+      // Resolve training_type_id: use pre-set id (row-level) or find/create by name (global)
+      let typeId = formData.trainingTypeId;
+      if (!typeId) {
+        const { data: existing } = await supabase
+          .from("training_types")
+          .select("id")
+          .eq("company_id", companyId)
+          .ilike("name", nameToUse)
+          .maybeSingle();
+
+        if (existing) {
+          typeId = existing.id;
+        } else {
+          const { data: created, error: createErr } = await supabase
+            .from("training_types")
+            .insert({ company_id: companyId, name: nameToUse, validity_months: 12 })
+            .select("id")
+            .single();
+          if (createErr) throw createErr;
+          typeId = created.id;
+        }
+      }
+
       const payload = {
         company_id: companyId,
         employee_id: employeeId,
-        training_type_id: formData.trainingTypeId,
+        training_type_id: typeId,
         status: "completed",
         completion_date: formData.completionDate,
         expiry_date: formData.noExpiry ? null : (formData.expiryDate || null),
@@ -543,21 +573,16 @@ export function CoreTrainingsTab({
               <Label>Schulung *</Label>
               {preselectedTypeId ? (
                 <div className="px-3 py-2 rounded-md bg-muted/50 border text-sm font-medium">
-                  {rows.find((r) => r.trainingType.id === formData.trainingTypeId)?.trainingType.name ?? "—"}
+                  {formData.trainingName || "—"}
                 </div>
               ) : (
-                <Select value={formData.trainingTypeId} onValueChange={handleTypeChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Schulung auswählen..." />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {rows.map(({ trainingType }) => (
-                      <SelectItem key={trainingType.id} value={trainingType.id}>
-                        {trainingType.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  placeholder="z.B. Brandschutzunterweisung, Ersthelfer-Kurs …"
+                  value={formData.trainingName}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, trainingName: e.target.value }))
+                  }
+                />
               )}
             </div>
 
