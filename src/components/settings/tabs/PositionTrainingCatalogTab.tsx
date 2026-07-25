@@ -881,7 +881,7 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
                 Keine Schulungstypen vorhanden. Erstelle zuerst Schulungstypen im Schulungskatalog.
               </p>
             ) : (
-              <ScrollArea className="max-h-72 pr-2">
+              <ScrollArea className="max-h-[60vh] pr-2">
                 <div className="space-y-2">
                   {trainingTypes.map((tt) => {
                     const checked = selectedTrainings.has(tt.id);

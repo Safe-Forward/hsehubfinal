@@ -5,10 +5,13 @@ import {
   BookOpen,
   CheckCircle2,
   Clock,
+  Infinity,
   Loader2,
+  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -82,6 +85,7 @@ interface FormData {
   trainingTypeId: string;
   completionDate: string;
   expiryDate: string;
+  noExpiry: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +98,7 @@ const EMPTY_FORM: FormData = {
   trainingTypeId: "",
   completionDate: today,
   expiryDate: "",
+  noExpiry: false,
 };
 
 function addMonths(dateStr: string, months: number): string {
@@ -245,10 +250,21 @@ export function CoreTrainingsTab({
   // -------------------------------------------------------------------------
 
   function openAddDialog(typeId?: string) {
-    const type = rows.find((r) => r.trainingType.id === typeId);
-    const expiry =
-      type && today ? addMonths(today, type.trainingType.validityMonths) : "";
-    setFormData({ trainingTypeId: typeId || "", completionDate: today, expiryDate: expiry });
+    const row = rows.find((r) => r.trainingType.id === typeId);
+    const existingRecord = row?.record;
+    const completionDate = existingRecord?.completion_date ?? today;
+    const existingExpiry = existingRecord?.expiry_date ?? null;
+    const noExpiry = existingRecord ? !existingExpiry : false;
+    const autoExpiry =
+      row && completionDate && !noExpiry
+        ? addMonths(completionDate, row.trainingType.validityMonths)
+        : "";
+    setFormData({
+      trainingTypeId: typeId || "",
+      completionDate,
+      expiryDate: existingExpiry ?? autoExpiry,
+      noExpiry,
+    });
     setPreselectedTypeId(typeId || null);
     setDialogOpen(true);
   }
@@ -274,7 +290,8 @@ export function CoreTrainingsTab({
 
   function handleDateChange(date: string) {
     const type = findTrainingType(formData.trainingTypeId);
-    const expiry = type && date ? addMonths(date, type.validityMonths) : "";
+    const expiry =
+      !formData.noExpiry && type && date ? addMonths(date, type.validityMonths) : "";
     setFormData((prev) => ({ ...prev, completionDate: date, expiryDate: expiry }));
   }
 
@@ -296,7 +313,7 @@ export function CoreTrainingsTab({
         training_type_id: formData.trainingTypeId,
         status: "completed",
         completion_date: formData.completionDate,
-        expiry_date: formData.expiryDate || null,
+        expiry_date: formData.noExpiry ? null : (formData.expiryDate || null),
         assigned_date: formData.completionDate,
       };
 
@@ -457,17 +474,24 @@ export function CoreTrainingsTab({
                       {canEdit && (
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {!completed && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 px-2 text-xs"
-                                onClick={() => openAddDialog(trainingType.id)}
-                              >
-                                <Plus className="w-3 h-3 mr-1" />
-                                Eintragen
-                              </Button>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-xs"
+                              onClick={() => openAddDialog(trainingType.id)}
+                            >
+                              {completed ? (
+                                <>
+                                  <Pencil className="w-3 h-3 mr-1" />
+                                  Bearbeiten
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="w-3 h-3 mr-1" />
+                                  Eintragen
+                                </>
+                              )}
+                            </Button>
                             {record && (
                               <Button
                                 variant="ghost"
@@ -525,16 +549,35 @@ export function CoreTrainingsTab({
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Gültig bis (automatisch berechnet)</Label>
-              <Input
-                type="date"
-                value={formData.expiryDate}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, expiryDate: e.target.value }))
+            <div className="flex items-center gap-2 pt-1">
+              <Checkbox
+                id="no-expiry"
+                checked={formData.noExpiry}
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    noExpiry: !!checked,
+                    expiryDate: checked ? "" : (prev.completionDate ? addMonths(prev.completionDate, findTrainingType(prev.trainingTypeId)?.validityMonths ?? 12) : ""),
+                  }))
                 }
               />
+              <Label htmlFor="no-expiry" className="cursor-pointer flex items-center gap-1.5">
+                <Infinity className="w-3.5 h-3.5" />
+                Kein Ablaufdatum (einmalig gültig)
+              </Label>
             </div>
+            {!formData.noExpiry && (
+              <div className="space-y-1.5">
+                <Label>Gültig bis (automatisch berechnet)</Label>
+                <Input
+                  type="date"
+                  value={formData.expiryDate}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, expiryDate: e.target.value }))
+                  }
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>
