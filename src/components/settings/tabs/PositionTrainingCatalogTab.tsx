@@ -80,6 +80,7 @@ interface Props {
 const emptyPositionForm = { name: "", description: "" };
 
 const POSITION_CATALOG = [
+  // ── Produktion & Technik ──────────────────────────────────────────────────
   {
     key: "gabelstaplerfahrer",
     name: "Gabelstaplerfahrer",
@@ -87,8 +88,10 @@ const POSITION_CATALOG = [
     icon: "🏗️",
     trainings: [
       { name: "Gabelstapler-Fahrerlaubnis (DGUV G 308-001)", durationHours: 16, validityMonths: 36 },
+      { name: "Fahrerschulung Flurförderzeuge (DGUV V 68)", durationHours: 8, validityMonths: 36 },
       { name: "Sicherheitsunterweisung Flurförderzeuge", durationHours: 2, validityMonths: 12 },
       { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Brandschutzunterweisung", durationHours: 1, validityMonths: 12 },
     ],
   },
   {
@@ -97,20 +100,21 @@ const POSITION_CATALOG = [
     description: "Elektrotechnische Arbeiten, Installation und Prüfung elektrischer Anlagen",
     icon: "⚡",
     trainings: [
-      { name: "Elektrosicherheit (BGV A3 / DGUV V3)", durationHours: 8, validityMonths: 48 },
+      { name: "Elektrische Anlagen / Schaltberechtigung (DGUV V 3)", durationHours: 8, validityMonths: 36 },
       { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
       { name: "Erste Hilfe", durationHours: 16, validityMonths: 24 },
     ],
   },
   {
-    key: "schlosser",
-    name: "Schlosser / Metallbearbeiter",
-    description: "Metallverarbeitung, Maschinenwartung und mechanische Reparaturen",
-    icon: "🔧",
+    key: "kfz_mechatroniker",
+    name: "Kfz-Mechatroniker / HV-Techniker",
+    description: "Wartung und Reparatur von Fahrzeugen inkl. Elektro- und Hybridantrieben",
+    icon: "🔌",
     trainings: [
-      { name: "Maschinensicherheit PSA", durationHours: 4, validityMonths: 12 },
+      { name: "Hochvolt-Schulung (DGUV I 209-093)", durationHours: 16, validityMonths: 36 },
       { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
-      { name: "Lärm- und Vibrations-Schutz", durationHours: 2, validityMonths: 24 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
     ],
   },
   {
@@ -120,11 +124,136 @@ const POSITION_CATALOG = [
     icon: "🔥",
     trainings: [
       { name: "Schweißerlaubnis / Qualifikation (DVS)", durationHours: 24, validityMonths: 24 },
-      { name: "Feuerschutz und Heißarbeiten", durationHours: 4, validityMonths: 12 },
-      { name: "Gasprüfung und Druckbehälter", durationHours: 4, validityMonths: 12 },
+      { name: "Schweißen und Heißarbeiten (BGR 500)", durationHours: 4, validityMonths: 24 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
       { name: "PSA Augenschutz", durationHours: 1, validityMonths: 12 },
+      { name: "Brandschutzunterweisung", durationHours: 1, validityMonths: 12 },
     ],
   },
+  {
+    key: "schlosser",
+    name: "Schlosser / Metallbearbeiter",
+    description: "Metallverarbeitung, Maschinenwartung und mechanische Reparaturen",
+    icon: "🔧",
+    trainings: [
+      { name: "Maschinenführer-Unterweisung", durationHours: 4, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Lärm- und Vibrations-Unterweisung (LärmVibrationsArbSchV)", durationHours: 2, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "kranfuehrer",
+    name: "Kranführer",
+    description: "Bedienung von Kran- und Hebezeugeinrichtungen",
+    icon: "🏗️",
+    trainings: [
+      { name: "Kranführerschein (DGUV G 309-004)", durationHours: 32, validityMonths: 60 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "maschinenführer",
+    name: "Maschinenführer / Produktionsmitarbeiter",
+    description: "Bedienung und Überwachung von Produktions- und Fertigungsmaschinen",
+    icon: "⚙️",
+    trainings: [
+      { name: "Maschinenführer-Unterweisung", durationHours: 4, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Lärm- und Vibrations-Unterweisung (LärmVibrationsArbSchV)", durationHours: 2, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Brandschutzunterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  // ── Bau & Handwerk ───────────────────────────────────────────────────────
+  {
+    key: "dachdecker",
+    name: "Dachdecker / Gerüstbauer",
+    description: "Dach- und Abdichtungsarbeiten sowie Gerüstbau auf Baustellen",
+    icon: "🏠",
+    trainings: [
+      { name: "Absturzsicherung / PSAgA (DGUV R 112-198)", durationHours: 8, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Brandschutzunterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "maler",
+    name: "Maler und Lackierer",
+    description: "Oberflächen- und Beschichtungsarbeiten an Gebäuden und Bauteilen",
+    icon: "🎨",
+    trainings: [
+      { name: "Gefahrstoffunterweisung (§ 14 GefStoffV)", durationHours: 4, validityMonths: 12 },
+      { name: "Absturzsicherung / PSAgA (DGUV R 112-198)", durationHours: 8, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "kanalarbeiter",
+    name: "Kanalarbeiter / Tiefbauer",
+    description: "Arbeiten in Kanälen, Schächten und anderen engen unterirdischen Räumen",
+    icon: "⛏️",
+    trainings: [
+      { name: "Arbeiten in engen Räumen (DGUV R 113-004)", durationHours: 8, validityMonths: 12 },
+      { name: "Atemschutzunterweisung (DGUV R 112-190)", durationHours: 4, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  // ── Lager & Logistik ─────────────────────────────────────────────────────
+  {
+    key: "lager",
+    name: "Lagerarbeiter",
+    description: "Warenannahme, Einlagerung, Kommissionierung und Versand",
+    icon: "📦",
+    trainings: [
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Heben und Tragen / Rückengerechtes Arbeiten", durationHours: 2, validityMonths: 12 },
+      { name: "Brandschutzunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  {
+    key: "fahrer",
+    name: "Berufskraftfahrer / Dienstfahrer",
+    description: "Güter- und Personentransport sowie regelmäßige Dienstfahrten",
+    icon: "🚛",
+    trainings: [
+      { name: "Fahrsicherheitstraining für Firmenfahrzeuge", durationHours: 8, validityMonths: 36 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Erste Hilfe", durationHours: 16, validityMonths: 24 },
+    ],
+  },
+  // ── Chemie & Labor ───────────────────────────────────────────────────────
+  {
+    key: "chemikant",
+    name: "Chemikant / Chemiefachkraft",
+    description: "Bedienung und Überwachung chemischer Produktionsanlagen",
+    icon: "🧪",
+    trainings: [
+      { name: "Gefahrstoffunterweisung (§ 14 GefStoffV)", durationHours: 4, validityMonths: 12 },
+      { name: "Explosionsschutz-Unterweisung (ATEX)", durationHours: 4, validityMonths: 12 },
+      { name: "PSA-Unterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Erste Hilfe", durationHours: 16, validityMonths: 24 },
+    ],
+  },
+  {
+    key: "laborant",
+    name: "Laborant / Forschungsmitarbeiter",
+    description: "Arbeiten mit chemischen, biologischen oder radioaktiven Stoffen im Labor",
+    icon: "🔬",
+    trainings: [
+      { name: "Gefahrstoffunterweisung (§ 14 GefStoffV)", durationHours: 4, validityMonths: 12 },
+      { name: "Biologische Arbeitsstoffe (BioStoffV § 12)", durationHours: 4, validityMonths: 12 },
+      { name: "Laserschutzunterweisung (OStrV)", durationHours: 4, validityMonths: 12 },
+      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
+    ],
+  },
+  // ── Büro & Verwaltung ────────────────────────────────────────────────────
   {
     key: "buero",
     name: "Bürokraft / Verwaltung",
@@ -137,79 +266,28 @@ const POSITION_CATALOG = [
     ],
   },
   {
-    key: "lager",
-    name: "Lagerarbeiter",
-    description: "Warenannahme, Einlagerung, Kommissionierung und Versand",
-    icon: "📦",
+    key: "it_admin",
+    name: "IT-Administrator / Systemtechniker",
+    description: "Betreuung von IT-Systemen, Netzwerken und Rechenzentren",
+    icon: "💻",
     trainings: [
+      { name: "Bildschirmarbeitsplatz-Unterweisung", durationHours: 1, validityMonths: 12 },
+      { name: "Datenschutz (DSGVO)", durationHours: 2, validityMonths: 12 },
       { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
-      { name: "Rückengerechtes Heben und Tragen", durationHours: 2, validityMonths: 24 },
-      { name: "Sicherheit in der Logistik", durationHours: 4, validityMonths: 24 },
+      { name: "Elektrische Anlagen / Schaltberechtigung (DGUV V 3)", durationHours: 8, validityMonths: 36 },
     ],
   },
+  // ── Medizin & Pflege ─────────────────────────────────────────────────────
   {
-    key: "chemikant",
-    name: "Chemikant / Chemiefachkraft",
-    description: "Bedienung und Überwachung chemischer Produktionsanlagen",
-    icon: "🧪",
+    key: "pflegepersonal",
+    name: "Pflegepersonal / Medizinische Fachkraft",
+    description: "Pflegerische und medizinische Versorgung von Patienten",
+    icon: "🏥",
     trainings: [
-      { name: "Gefahrstoffunterweisung (GefStoffV)", durationHours: 4, validityMonths: 12 },
+      { name: "Biologische Arbeitsstoffe (BioStoffV § 12)", durationHours: 4, validityMonths: 12 },
       { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
-      { name: "PSA für chemische Gefährdung", durationHours: 2, validityMonths: 12 },
+      { name: "Heben und Tragen / Rückengerechtes Arbeiten", durationHours: 2, validityMonths: 12 },
       { name: "Erste Hilfe", durationHours: 16, validityMonths: 24 },
-    ],
-  },
-  {
-    key: "sicherheitsbeauftragter",
-    name: "Sicherheitsbeauftragter",
-    description: "Unterstützung des Arbeitgebers bei der Umsetzung von Arbeitsschutzmaßnahmen",
-    icon: "🛡️",
-    trainings: [
-      { name: "Sicherheitsbeauftragten-Ausbildung (DGUV R 114-017)", durationHours: 16, validityMonths: null },
-      { name: "Auffrischungsschulung Sicherheitsbeauftragter", durationHours: 8, validityMonths: 36 },
-      { name: "Erste Hilfe", durationHours: 16, validityMonths: 24 },
-    ],
-  },
-  {
-    key: "ersthelfer",
-    name: "Ersthelfer",
-    description: "Erste Hilfe bei Betriebsunfällen und medizinischen Notfällen",
-    icon: "🚑",
-    trainings: [
-      { name: "Erste Hilfe Grundkurs (DGUV P 304-001)", durationHours: 16, validityMonths: 24 },
-      { name: "Erste Hilfe Auffrischung", durationHours: 8, validityMonths: 24 },
-    ],
-  },
-  {
-    key: "kranfuehrer",
-    name: "Kranführer",
-    description: "Bedienung von Kran- und Hebezeugeinrichtungen",
-    icon: "🏗️",
-    trainings: [
-      { name: "Kranführer-Ausbildung (DGUV G 309-003)", durationHours: 32, validityMonths: 60 },
-      { name: "Lastensicherung / Anschläger", durationHours: 8, validityMonths: 24 },
-      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
-    ],
-  },
-  {
-    key: "brandschutz",
-    name: "Brandschutzhelfer",
-    description: "Unterstützung bei der Brandverhütung und Evakuierung im Brandfall",
-    icon: "🔥",
-    trainings: [
-      { name: "Brandschutzhelfer-Ausbildung (ASR A2.2)", durationHours: 4, validityMonths: 36 },
-      { name: "Evakuierungsübung", durationHours: 1, validityMonths: 12 },
-    ],
-  },
-  {
-    key: "maler",
-    name: "Maler und Lackierer",
-    description: "Oberflächen- und Beschichtungsarbeiten an Gebäuden und Bauteilen",
-    icon: "🎨",
-    trainings: [
-      { name: "Gefahrstoffunterweisung Farben/Lacke", durationHours: 4, validityMonths: 12 },
-      { name: "Arbeitssicherheit – Grundunterweisung", durationHours: 1, validityMonths: 12 },
-      { name: "Leitererlass und Gerüstsicherheit", durationHours: 4, validityMonths: 24 },
     ],
   },
 ];
