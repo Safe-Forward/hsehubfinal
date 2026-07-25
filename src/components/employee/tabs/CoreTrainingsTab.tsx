@@ -1,16 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   BookOpen,
   CheckCircle2,
   Clock,
-  ExternalLink,
-  FileText,
   Loader2,
   Plus,
   Trash2,
-  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +20,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -60,80 +56,65 @@ interface Props {
   canUploadDocuments?: boolean;
 }
 
-interface CoreCourse {
+interface TrainingType {
   id: string;
   name: string;
-  description: string | null;
+  validityMonths: number;
+  isMandatory: boolean;
 }
 
-type CompletionType = "manual" | "external";
-
-interface CoreTrainingRecord {
+interface TrainingRecord {
   id: string;
-  course_id: string;
-  completion_date: string;
-  completion_type: "system" | "manual" | "external";
-  proof_document_url: string | null;
-  notes: string | null;
-  recorded_by: string | null;
+  training_type_id: string;
+  status: string;
+  completion_date: string | null;
+  expiry_date: string | null;
 }
 
-/** Combined view of a core course with optional completion state */
-interface CourseRow {
-  course: CoreCourse;
-  /** Most recent manual/external record (if any) */
-  record: CoreTrainingRecord | null;
-  /** True when there is a system-level participation (training_participations) */
-  hasSystemCompletion: boolean;
-  systemCompletionDate: string | null;
+interface TrainingRow {
+  trainingType: TrainingType;
+  record: TrainingRecord | null;
 }
 
 type FilterType = "all" | "pending" | "completed";
 
 interface FormData {
-  courseId: string;
+  trainingTypeId: string;
   completionDate: string;
-  completionType: CompletionType;
-  notes: string;
-  proofFile: File | null;
+  expiryDate: string;
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const today = new Date().toISOString().split("T")[0];
 
 const EMPTY_FORM: FormData = {
-  courseId: "",
-  completionDate: new Date().toISOString().split("T")[0],
-  completionType: "manual",
-  notes: "",
-  proofFile: null,
+  trainingTypeId: "",
+  completionDate: today,
+  expiryDate: "",
 };
 
-// ---------------------------------------------------------------------------
-// Status helpers
-// ---------------------------------------------------------------------------
-
-function isCompleted(row: CourseRow): boolean {
-  return row.hasSystemCompletion || row.record !== null;
+function addMonths(dateStr: string, months: number): string {
+  const d = new Date(dateStr);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split("T")[0];
 }
 
-function StatusBadge({ row }: { row: CourseRow }) {
-  if (row.hasSystemCompletion) {
-    const date = row.systemCompletionDate
-      ? new Date(row.systemCompletionDate).toLocaleDateString("de-DE")
+function isCompleted(row: TrainingRow): boolean {
+  return row.record?.status === "completed";
+}
+
+function StatusBadge({ row }: { row: TrainingRow }) {
+  if (isCompleted(row)) {
+    const date = row.record?.completion_date
+      ? new Date(row.record.completion_date).toLocaleDateString("de-DE")
       : "";
     return (
-      <Badge className="gap-1 text-xs bg-green-100 text-green-800 border-green-300 hover:bg-green-100">
-        <CheckCircle2 className="w-3 h-3" />
-        Über System{date ? ` (${date})` : ""}
-      </Badge>
-    );
-  }
-  if (row.record) {
-    const date = new Date(row.record.completion_date).toLocaleDateString("de-DE");
-    const label =
-      row.record.completion_type === "external" ? "Extern" : "Manuell eingetragen";
-    return (
       <Badge className="gap-1 text-xs bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">
-        <FileText className="w-3 h-3" />
-        {label} ({date})
+        <CheckCircle2 className="w-3 h-3" />
+        Manuell eingetragen{date ? ` (${date})` : ""}
       </Badge>
     );
   }
@@ -151,24 +132,19 @@ function StatusBadge({ row }: { row: CourseRow }) {
 
 export function CoreTrainingsTab({
   employeeId,
-  employeeNumber,
   companyId,
   canEdit,
-  canUploadDocuments = false,
 }: Props) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [rows, setRows] = useState<CourseRow[]>([]);
+  const [rows, setRows] = useState<TrainingRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [noPosition, setNoPosition] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
-
-  // Pre-selected course when "Status eintragen" is clicked on a specific row
-  const [preselectedCourseId, setPreselectedCourseId] = useState<string | null>(null);
+  const [preselectedTypeId, setPreselectedTypeId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -176,93 +152,84 @@ export function CoreTrainingsTab({
   }, [employeeId, companyId]);
 
   // -------------------------------------------------------------------------
-  // Data fetching
+  // Data fetching — driven by position_training_requirements
   // -------------------------------------------------------------------------
 
   async function fetchData() {
     setLoading(true);
+    setNoPosition(false);
     try {
-      // 1. All core courses for this company
-      const { data: coursesData, error: coursesErr } = await supabase
-        .from("courses")
-        .select("id, name, description")
-        .eq("company_id", companyId)
-        .eq("is_core_training", true)
+      // 1. Employee's assigned positions
+      const { data: empPositions } = await supabase
+        .from("employee_positions")
+        .select("position_id")
+        .eq("employee_id", employeeId);
+
+      const positionIds = ((empPositions as any[]) || []).map((p) => p.position_id);
+
+      if (positionIds.length === 0) {
+        setNoPosition(true);
+        setRows([]);
+        return;
+      }
+
+      // 2. Training requirements for those positions
+      const { data: reqData } = await supabase
+        .from("position_training_requirements")
+        .select("training_type_id, is_mandatory")
+        .in("position_id", positionIds);
+
+      if (!reqData || reqData.length === 0) {
+        setRows([]);
+        return;
+      }
+
+      // Deduplicate: if same training_type in multiple positions, mandatory wins
+      const typeMap = new Map<string, boolean>();
+      ((reqData as any[]) || []).forEach((r) => {
+        const prev = typeMap.get(r.training_type_id) ?? false;
+        typeMap.set(r.training_type_id, prev || r.is_mandatory);
+      });
+
+      const trainingTypeIds = Array.from(typeMap.keys());
+
+      // 3. Training type details
+      const { data: typesData } = await supabase
+        .from("training_types")
+        .select("id, name, validity_months")
+        .in("id", trainingTypeIds)
         .order("name");
 
-      if (coursesErr) throw coursesErr;
-      let courses: CoreCourse[] = (coursesData as CoreCourse[]) || [];
+      const trainingTypes: TrainingType[] = ((typesData as any[]) || []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        validityMonths: t.validity_months ?? 12,
+        isMandatory: typeMap.get(t.id) ?? true,
+      }));
 
-      if (courses.length === 0) {
-        setRows([]);
-        return;
-      }
-
-      // 1b. Filter by employee access:
-      // If a course has entries in course_employee_access, only show it to listed employees.
-      // Courses with no entries are universal and shown to everyone.
-      const allCourseIds = courses.map((c) => c.id);
-      const { data: accessData } = await supabase
-        .from("course_employee_access")
-        .select("course_id, employee_id")
-        .eq("company_id", companyId)
-        .in("course_id", allCourseIds);
-
-      if (accessData && accessData.length > 0) {
-        const restrictedIds = new Set((accessData as any[]).map((a) => a.course_id));
-        const employeeIds = new Set(
-          (accessData as any[])
-            .filter((a) => a.employee_id === employeeId)
-            .map((a) => a.course_id)
-        );
-        courses = courses.filter(
-          (c) => !restrictedIds.has(c.id) || employeeIds.has(c.id)
-        );
-      }
-
-      const courseIds = courses.map((c) => c.id);
-
-      if (courseIds.length === 0) {
-        setRows([]);
-        return;
-      }
-
-      // 2. Manual/external records for this employee
-      const { data: recordsData } = await (supabase as any)
-        .from("employee_core_training_records")
-        .select("*")
+      // 4. Existing completion records for this employee
+      const { data: recordsData } = await supabase
+        .from("training_records")
+        .select("id, training_type_id, status, completion_date, expiry_date")
         .eq("employee_id", employeeId)
-        .in("course_id", courseIds);
+        .eq("company_id", companyId)
+        .in("training_type_id", trainingTypeIds);
 
-      const recordsByCourseId: Record<string, CoreTrainingRecord> = {};
-      ((recordsData as CoreTrainingRecord[]) || []).forEach((r) => {
-        // Keep the most recent one if multiple exist
+      // Keep the most recent completed record per training type
+      const recordsByTypeId: Record<string, TrainingRecord> = {};
+      ((recordsData as TrainingRecord[]) || []).forEach((r) => {
+        const prev = recordsByTypeId[r.training_type_id];
         if (
-          !recordsByCourseId[r.course_id] ||
-          r.completion_date > recordsByCourseId[r.course_id].completion_date
+          !prev ||
+          (r.completion_date && (!prev.completion_date || r.completion_date > prev.completion_date))
         ) {
-          recordsByCourseId[r.course_id] = r;
+          recordsByTypeId[r.training_type_id] = r;
         }
       });
 
-      // 3. System completions from training_participations
-      const { data: partData } = await (supabase as any)
-        .from("training_participations")
-        .select("course_id, status, completion_date")
-        .eq("employee_id", employeeId)
-        .eq("status", "completed")
-        .in("course_id", courseIds);
-
-      const systemByCourseId: Record<string, string | null> = {};
-      ((partData as any[]) || []).forEach((p) => {
-        systemByCourseId[p.course_id] = p.completion_date || null;
-      });
-
-      const combined: CourseRow[] = courses.map((course) => ({
-        course,
-        record: recordsByCourseId[course.id] || null,
-        hasSystemCompletion: !!systemByCourseId[course.id],
-        systemCompletionDate: systemByCourseId[course.id] ?? null,
+      const combined: TrainingRow[] = trainingTypes.map((tt) => ({
+        trainingType: tt,
+        record: recordsByTypeId[tt.id] ?? null,
       }));
 
       setRows(combined);
@@ -277,90 +244,65 @@ export function CoreTrainingsTab({
   // Dialog
   // -------------------------------------------------------------------------
 
-  function openAddDialog(courseId?: string) {
-    setFormData({
-      ...EMPTY_FORM,
-      courseId: courseId || "",
-    });
-    setPreselectedCourseId(courseId || null);
+  function openAddDialog(typeId?: string) {
+    const type = rows.find((r) => r.trainingType.id === typeId);
+    const expiry =
+      type && today ? addMonths(today, type.trainingType.validityMonths) : "";
+    setFormData({ trainingTypeId: typeId || "", completionDate: today, expiryDate: expiry });
+    setPreselectedTypeId(typeId || null);
     setDialogOpen(true);
   }
 
   function closeDialog() {
     setDialogOpen(false);
-    setPreselectedCourseId(null);
+    setPreselectedTypeId(null);
     setFormData(EMPTY_FORM);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handleTypeChange(typeId: string) {
+    const type = rows.find((r) => r.trainingType.id === typeId);
+    const expiry =
+      type && formData.completionDate
+        ? addMonths(formData.completionDate, type.trainingType.validityMonths)
+        : "";
+    setFormData((prev) => ({ ...prev, trainingTypeId: typeId, expiryDate: expiry }));
+  }
+
+  function handleDateChange(date: string) {
+    const type = rows.find((r) => r.trainingType.id === formData.trainingTypeId);
+    const expiry = type && date ? addMonths(date, type.trainingType.validityMonths) : "";
+    setFormData((prev) => ({ ...prev, completionDate: date, expiryDate: expiry }));
   }
 
   // -------------------------------------------------------------------------
-  // Save
+  // Save — writes to training_records
   // -------------------------------------------------------------------------
 
   async function handleSave() {
-    if (!formData.courseId || !formData.completionDate) {
-      toast.error("Bitte Kurs und Abschlussdatum ausfüllen.");
+    if (!formData.trainingTypeId || !formData.completionDate) {
+      toast.error("Bitte Schulung und Abschlussdatum ausfüllen.");
       return;
     }
 
     setSaving(true);
     try {
-      let proofDocumentUrl: string | null = null;
-
-      // Upload proof document if provided
-      if (canUploadDocuments && formData.proofFile) {
-        const file = formData.proofFile;
-        const fileExt = file.name.split(".").pop();
-        const fileName = `core-trainings/${companyId}/${employeeId}/${Date.now()}-${Math.random()
-          .toString(36)
-          .substring(7)}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("documents")
-          .upload(fileName, file, { cacheControl: "3600", upsert: false });
-
-        if (uploadError) throw uploadError;
-        proofDocumentUrl = fileName;
-
-        // Mirror the proof document into the documents table so it appears in the employee's Documents tab
-        const courseName = rows.find((r) => r.course.id === formData.courseId)?.course.name ?? "Kernschulung";
-        const tags = [employeeId, employeeNumber].filter(Boolean) as string[];
-        await supabase.from("documents").insert({
-          company_id: companyId,
-          title: `${courseName} – Nachweis`,
-          description: `Schulungsnachweis für Kernschulung "${courseName}"`,
-          category: "training",
-          file_name: file.name,
-          file_path: fileName,
-          file_size: file.size,
-          mime_type: file.type || "application/octet-stream",
-          is_public: false,
-          uploaded_by: (await supabase.auth.getUser()).data.user?.id ?? null,
-          tags,
-        });
-      }
-
-      const { data: userData } = await supabase.auth.getUser();
-      const recordedBy = userData?.user?.id || null;
-
       const payload = {
         company_id: companyId,
         employee_id: employeeId,
-        course_id: formData.courseId,
+        training_type_id: formData.trainingTypeId,
+        status: "completed",
         completion_date: formData.completionDate,
-        completion_type: formData.completionType,
-        proof_document_url: proofDocumentUrl,
-        notes: formData.notes.trim() || null,
-        recorded_by: recordedBy,
+        expiry_date: formData.expiryDate || null,
+        assigned_date: formData.completionDate,
       };
 
-      const { error } = await (supabase as any)
-        .from("employee_core_training_records")
-        .insert(payload);
+      const { error } = await supabase
+        .from("training_records")
+        .upsert(payload, { onConflict: "employee_id,training_type_id,company_id" });
 
       if (error) throw error;
 
-      toast.success("Kernschulung eingetragen.");
+      toast.success("Schulungsabschluss eingetragen.");
       closeDialog();
       await fetchData();
     } catch (err: any) {
@@ -378,8 +320,8 @@ export function CoreTrainingsTab({
     if (!confirm("Eintrag wirklich entfernen?")) return;
     setDeleting(recordId);
     try {
-      const { error } = await (supabase as any)
-        .from("employee_core_training_records")
+      const { error } = await supabase
+        .from("training_records")
         .delete()
         .eq("id", recordId);
       if (error) throw error;
@@ -393,19 +335,18 @@ export function CoreTrainingsTab({
   }
 
   // -------------------------------------------------------------------------
-  // Derived values
+  // Derived
   // -------------------------------------------------------------------------
 
-  const pendingCourses = rows.filter((r) => !isCompleted(r));
+  const pendingRows = rows.filter((r) => !isCompleted(r));
+  const completedCount = rows.filter(isCompleted).length;
+  const totalCount = rows.length;
 
   const filteredRows = rows.filter((row) => {
     if (filter === "pending") return !isCompleted(row);
     if (filter === "completed") return isCompleted(row);
     return true;
   });
-
-  const completedCount = rows.filter(isCompleted).length;
-  const totalCount = rows.length;
 
   // -------------------------------------------------------------------------
   // Render
@@ -422,11 +363,12 @@ export function CoreTrainingsTab({
                 Kernschulungen
               </CardTitle>
               <CardDescription>
-                Pflichtschulungen des Unternehmens — {completedCount} von {totalCount} abgeschlossen
+                {noPosition
+                  ? "Keine Stelle zugewiesen — bitte in Einstellungen → Stellen & Schulungen konfigurieren."
+                  : `Pflichtschulungen gemäß zugewiesener Stelle — ${completedCount} von ${totalCount} abgeschlossen`}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              {/* Filter */}
               <Select
                 value={filter}
                 onValueChange={(v) => setFilter(v as FilterType)}
@@ -440,8 +382,7 @@ export function CoreTrainingsTab({
                   <SelectItem value="completed">Abgeschlossen</SelectItem>
                 </SelectContent>
               </Select>
-              {/* Add button (any course) */}
-              {canEdit && (
+              {canEdit && !noPosition && pendingRows.length > 0 && (
                 <Button size="sm" onClick={() => openAddDialog()}>
                   <Plus className="w-4 h-4 mr-1" />
                   Status eintragen
@@ -457,12 +398,20 @@ export function CoreTrainingsTab({
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
               Lade Kernschulungen...
             </div>
+          ) : noPosition ? (
+            <div className="text-center py-10 text-muted-foreground">
+              <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-40" />
+              <p className="font-medium">Keine Stelle zugewiesen</p>
+              <p className="text-sm mt-1">
+                Weisen Sie dem Mitarbeiter eine Stelle zu, damit die Kernschulungen automatisch erscheinen.
+              </p>
+            </div>
           ) : rows.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
               <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p className="font-medium">Keine Kernschulungen definiert</p>
+              <p className="font-medium">Keine Schulungen für diese Stelle definiert</p>
               <p className="text-sm mt-1">
-                Markieren Sie unter <em>Training</em> Kurse als Kernschulung, um sie hier zu verfolgen.
+                Konfigurieren Sie unter <em>Einstellungen → Stellen & Schulungen</em> die Anforderungen.
               </p>
             </div>
           ) : filteredRows.length === 0 ? (
@@ -475,80 +424,52 @@ export function CoreTrainingsTab({
                 <TableRow>
                   <TableHead>Schulung</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Nachweise / Notizen</TableHead>
+                  <TableHead>Gültig bis</TableHead>
                   {canEdit && (
                     <TableHead className="w-28 text-right">Aktionen</TableHead>
                   )}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRows.map(({ course, record, hasSystemCompletion, systemCompletionDate }) => {
-                  const row: CourseRow = { course, record, hasSystemCompletion, systemCompletionDate };
+                {filteredRows.map(({ trainingType, record }) => {
+                  const row: TrainingRow = { trainingType, record };
                   const completed = isCompleted(row);
                   return (
                     <TableRow
-                      key={course.id}
+                      key={trainingType.id}
                       className={completed ? "" : "bg-amber-50/50"}
                     >
                       <TableCell>
                         <div>
-                          <p className="font-medium">{course.name}</p>
-                          {course.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 max-w-xs truncate">
-                              {course.description}
-                            </p>
-                          )}
+                          <p className="font-medium">{trainingType.name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {trainingType.isMandatory ? "Pflicht" : "Empfohlen"} ·{" "}
+                            {trainingType.validityMonths} Mon.
+                          </p>
                         </div>
                       </TableCell>
-
                       <TableCell>
                         <StatusBadge row={row} />
                       </TableCell>
-
                       <TableCell className="text-sm text-muted-foreground">
-                        {record ? (
-                          <div className="space-y-0.5">
-                            {record.notes && (
-                              <p className="max-w-[240px] truncate">{record.notes}</p>
-                            )}
-                            {record.proof_document_url && (
-                              <a
-                                href="#"
-                                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                                onClick={async (e) => {
-                                  e.preventDefault();
-                                  const { data } = await supabase.storage
-                                    .from("documents")
-                                    .getPublicUrl(record.proof_document_url!);
-                                  window.open(data.publicUrl, "_blank");
-                                }}
-                              >
-                                <ExternalLink className="w-3 h-3" />
-                                Dokument ansehen
-                              </a>
-                            )}
-                          </div>
-                        ) : (
-                          "—"
-                        )}
+                        {record?.expiry_date
+                          ? new Date(record.expiry_date).toLocaleDateString("de-DE")
+                          : "—"}
                       </TableCell>
-
                       {canEdit && (
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {/* Enter status for this specific course */}
-                            {!hasSystemCompletion && !record && (
+                            {!completed && (
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 px-2 text-xs"
-                                onClick={() => openAddDialog(course.id)}
+                                onClick={() => openAddDialog(trainingType.id)}
                               >
                                 <Plus className="w-3 h-3 mr-1" />
                                 Eintragen
                               </Button>
                             )}
-                            {/* Delete manual record */}
                             {record && (
                               <Button
                                 variant="ghost"
@@ -578,122 +499,57 @@ export function CoreTrainingsTab({
       </Card>
 
       {/* ----------------------------------------------------------------- */}
-      {/* Add Dialog                                                         */}
+      {/* Dialog: manuellen Abschluss eintragen                             */}
       {/* ----------------------------------------------------------------- */}
       <Dialog open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Kernschulung eintragen</DialogTitle>
+            <DialogTitle>Schulungsabschluss eintragen</DialogTitle>
             <DialogDescription>
-              Abschluss einer Kernschulung manuell oder extern erfassen
+              Manuellen Abschluss einer Kernschulung erfassen
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Course select */}
             <div className="space-y-1.5">
               <Label>Schulung *</Label>
               <Select
-                value={formData.courseId}
-                onValueChange={(v) =>
-                  setFormData((prev) => ({ ...prev, courseId: v }))
-                }
-                disabled={!!preselectedCourseId}
+                value={formData.trainingTypeId}
+                onValueChange={handleTypeChange}
+                disabled={!!preselectedTypeId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Kurs auswählen..." />
+                  <SelectValue placeholder="Schulung auswählen..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
-                  {/* When preselected, show all core courses; otherwise only pending ones */}
-                  {(preselectedCourseId ? rows : pendingCourses).map(({ course }) => (
-                    <SelectItem key={course.id} value={course.id}>
-                      {course.name}
+                  {pendingRows.map(({ trainingType }) => (
+                    <SelectItem key={trainingType.id} value={trainingType.id}>
+                      {trainingType.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Completion date */}
             <div className="space-y-1.5">
               <Label>Abschlussdatum *</Label>
               <Input
                 type="date"
                 value={formData.completionDate}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    completionDate: e.target.value,
-                  }))
-                }
+                onChange={(e) => handleDateChange(e.target.value)}
               />
             </div>
 
-            {/* Completion type */}
             <div className="space-y-1.5">
-              <Label>Art der Durchführung *</Label>
-              <Select
-                value={formData.completionType}
-                onValueChange={(v) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    completionType: v as CompletionType,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">
-                    Intern (manuell eingetragen)
-                  </SelectItem>
-                  <SelectItem value="external">
-                    Extern (bei externem Anbieter)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-1.5">
-              <Label>Notizen</Label>
-              <Textarea
-                value={formData.notes}
+              <Label>Gültig bis (automatisch berechnet)</Label>
+              <Input
+                type="date"
+                value={formData.expiryDate}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                  setFormData((prev) => ({ ...prev, expiryDate: e.target.value }))
                 }
-                placeholder="z.B. Schulungsträger, Zertifikatsnummer, Anmerkungen..."
-                rows={3}
               />
             </div>
-
-            {/* Document upload (optional) */}
-            {canUploadDocuments && (
-              <div className="space-y-1.5">
-                <Label>Nachweisdokument (optional)</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    className="text-sm"
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        proofFile: e.target.files?.[0] || null,
-                      }))
-                    }
-                  />
-                  {formData.proofFile && (
-                    <Upload className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  PDF, JPG, PNG oder Word-Dokument (max. 50 MB)
-                </p>
-              </div>
-            )}
           </div>
 
           <DialogFooter>
