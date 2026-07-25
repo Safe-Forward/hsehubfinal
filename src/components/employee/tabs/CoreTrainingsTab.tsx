@@ -214,13 +214,12 @@ export function CoreTrainingsTab({
         isMandatory: typeMap.get(t.id) ?? true,
       }));
 
-      // 4. Existing completion records for this employee
+      // 4. ALL training records for this employee (position-based + manually added)
       const { data: recordsData } = await supabase
         .from("training_records")
         .select("id, training_type_id, status, completion_date, expiry_date")
         .eq("employee_id", employeeId)
-        .eq("company_id", companyId)
-        .in("training_type_id", trainingTypeIds);
+        .eq("company_id", companyId);
 
       // Keep the most recent completed record per training type
       const recordsByTypeId: Record<string, TrainingRecord> = {};
@@ -234,10 +233,37 @@ export function CoreTrainingsTab({
         }
       });
 
+      // 5. Build rows from position requirements
       const combined: TrainingRow[] = trainingTypes.map((tt) => ({
         trainingType: tt,
         record: recordsByTypeId[tt.id] ?? null,
       }));
+
+      // 6. Add manually entered records that are NOT part of position requirements
+      const positionTypeIdSet = new Set(trainingTypeIds);
+      const manualTypeIds = Object.keys(recordsByTypeId).filter(
+        (id) => !positionTypeIdSet.has(id)
+      );
+
+      if (manualTypeIds.length > 0) {
+        const { data: manualTypesData } = await supabase
+          .from("training_types")
+          .select("id, name, validity_months")
+          .in("id", manualTypeIds)
+          .order("name");
+
+        ((manualTypesData as any[]) || []).forEach((t) => {
+          combined.push({
+            trainingType: {
+              id: t.id,
+              name: t.name,
+              validityMonths: t.validity_months ?? 12,
+              isMandatory: false,
+            },
+            record: recordsByTypeId[t.id] ?? null,
+          });
+        });
+      }
 
       setRows(combined);
     } catch (err: any) {
