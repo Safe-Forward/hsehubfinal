@@ -431,7 +431,7 @@ export function CoreTrainingsTab({
 
   return (
     <>
-      <Card>
+      <Card data-testid="core-trainings-card">
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
@@ -460,7 +460,7 @@ export function CoreTrainingsTab({
                 </SelectContent>
               </Select>
               {canEdit && !noPosition && (
-                <Button size="sm" onClick={() => openAddDialog()}>
+                <Button size="sm" onClick={() => openAddDialog()} data-testid="btn-status-eintragen">
                   <Plus className="w-4 h-4 mr-1" />
                   Status eintragen
                 </Button>
@@ -515,6 +515,7 @@ export function CoreTrainingsTab({
                     <TableRow
                       key={trainingType.id}
                       className={completed ? "" : "bg-amber-50/50"}
+                      data-testid={`core-training-row-${trainingType.id}`}
                     >
                       <TableCell>
                         <div>
@@ -541,6 +542,7 @@ export function CoreTrainingsTab({
                               size="sm"
                               className="h-8 px-2 text-xs"
                               onClick={() => openAddDialog(trainingType.id)}
+                              data-testid={`btn-eintragen-${trainingType.id}`}
                             >
                               {completed ? (
                                 <>
@@ -586,7 +588,7 @@ export function CoreTrainingsTab({
       {/* Dialog: manuellen Abschluss eintragen                             */}
       {/* ----------------------------------------------------------------- */}
       <Dialog open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" data-testid="dialog-status-eintragen">
           <DialogHeader>
             <DialogTitle>Schulungsabschluss eintragen</DialogTitle>
             <DialogDescription>
@@ -603,6 +605,7 @@ export function CoreTrainingsTab({
                 </div>
               ) : (
                 <Input
+                  data-testid="input-training-name"
                   placeholder="z.B. Brandschutzunterweisung, Ersthelfer-Kurs …"
                   value={formData.trainingName}
                   onChange={(e) =>
@@ -616,6 +619,7 @@ export function CoreTrainingsTab({
               <Label>Abschlussdatum *</Label>
               <Input
                 type="date"
+                data-testid="input-completion-date"
                 value={formData.completionDate}
                 onChange={(e) => handleDateChange(e.target.value)}
               />
@@ -624,6 +628,7 @@ export function CoreTrainingsTab({
             <div className="flex items-center gap-2 pt-1">
               <Checkbox
                 id="no-expiry"
+                data-testid="checkbox-no-expiry"
                 checked={formData.noExpiry}
                 onCheckedChange={(checked) =>
                   setFormData((prev) => ({
