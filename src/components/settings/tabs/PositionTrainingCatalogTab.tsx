@@ -868,69 +868,67 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
 
       {/* Training Assignment Dialog */}
       <Dialog open={trainingDialogOpen} onOpenChange={setTrainingDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-md flex flex-col max-h-[85vh]">
+          <DialogHeader className="shrink-0">
             <DialogTitle>Schulungen zuordnen</DialogTitle>
             <DialogDescription>
               Wähle die Pflicht-Schulungen für diese Stelle aus.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-2">
+          <div className="flex-1 overflow-y-auto py-2 min-h-0">
             {trainingTypes.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">
                 Keine Schulungstypen vorhanden. Erstelle zuerst Schulungstypen im Schulungskatalog.
               </p>
             ) : (
-              <ScrollArea className="max-h-[60vh] pr-2">
-                <div className="space-y-2">
-                  {trainingTypes.map((tt) => {
-                    const checked = selectedTrainings.has(tt.id);
-                    return (
-                      <div
-                        key={tt.id}
-                        className={`flex items-start gap-3 rounded-md border px-3 py-2.5 cursor-pointer transition-colors ${
-                          checked ? "bg-primary/5 border-primary/30" : "hover:bg-muted/50"
-                        }`}
-                        onClick={() => toggleTraining(tt.id)}
-                      >
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={() => toggleTraining(tt.id)}
-                          className="mt-0.5"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium">{tt.name}</span>
-                            {checked && (
-                              <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                            )}
-                          </div>
-                          {tt.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                              {tt.description}
-                            </p>
+              <div className="space-y-2 pr-2">
+                {trainingTypes.map((tt) => {
+                  const checked = selectedTrainings.has(tt.id);
+                  return (
+                    <div
+                      key={tt.id}
+                      className={`flex items-start gap-3 rounded-md border px-3 py-2.5 cursor-pointer transition-colors ${
+                        checked ? "bg-primary/5 border-primary/30" : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => toggleTraining(tt.id)}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() => toggleTraining(tt.id)}
+                        className="mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium">{tt.name}</span>
+                          {checked && (
+                            <CheckCircle className="h-3.5 w-3.5 text-primary" />
                           )}
-                          <div className="flex gap-3 mt-1">
-                            {tt.duration_hours && (
-                              <span className="text-xs text-muted-foreground">
-                                {tt.duration_hours} Std.
-                              </span>
-                            )}
-                            {tt.validity_months && (
-                              <span className="text-xs text-muted-foreground">
-                                Gültigkeit: {tt.validity_months} Monate
-                              </span>
-                            )}
-                          </div>
+                        </div>
+                        {tt.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                            {tt.description}
+                          </p>
+                        )}
+                        <div className="flex gap-3 mt-1">
+                          {tt.duration_hours && (
+                            <span className="text-xs text-muted-foreground">
+                              {tt.duration_hours} Std.
+                            </span>
+                          )}
+                          {tt.validity_months && (
+                            <span className="text-xs text-muted-foreground">
+                              Gültigkeit: {tt.validity_months} Monate
+                            </span>
+                          )}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button variant="outline" onClick={() => setTrainingDialogOpen(false)}>
               Abbrechen
             </Button>

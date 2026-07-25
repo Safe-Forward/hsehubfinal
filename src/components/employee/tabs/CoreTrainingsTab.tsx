@@ -403,6 +403,12 @@ export function CoreTrainingsTab({
                   <SelectItem value="completed">Abgeschlossen</SelectItem>
                 </SelectContent>
               </Select>
+              {canEdit && !noPosition && (
+                <Button size="sm" onClick={() => openAddDialog()}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Status eintragen
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -534,10 +540,25 @@ export function CoreTrainingsTab({
 
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Schulung</Label>
-              <div className="px-3 py-2 rounded-md bg-muted/50 border text-sm font-medium">
-                {rows.find((r) => r.trainingType.id === formData.trainingTypeId)?.trainingType.name ?? "—"}
-              </div>
+              <Label>Schulung *</Label>
+              {preselectedTypeId ? (
+                <div className="px-3 py-2 rounded-md bg-muted/50 border text-sm font-medium">
+                  {rows.find((r) => r.trainingType.id === formData.trainingTypeId)?.trainingType.name ?? "—"}
+                </div>
+              ) : (
+                <Select value={formData.trainingTypeId} onValueChange={handleTypeChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Schulung auswählen..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {rows.map(({ trainingType }) => (
+                      <SelectItem key={trainingType.id} value={trainingType.id}>
+                        {trainingType.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="space-y-1.5">
