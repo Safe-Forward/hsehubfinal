@@ -191,14 +191,41 @@ export function CoreTrainingsTab({
         .order("name");
 
       if (coursesErr) throw coursesErr;
-      const courses: CoreCourse[] = (coursesData as CoreCourse[]) || [];
+      let courses: CoreCourse[] = (coursesData as CoreCourse[]) || [];
 
       if (courses.length === 0) {
         setRows([]);
         return;
       }
 
+      // 1b. Filter by employee access:
+      // If a course has entries in course_employee_access, only show it to listed employees.
+      // Courses with no entries are universal and shown to everyone.
+      const allCourseIds = courses.map((c) => c.id);
+      const { data: accessData } = await supabase
+        .from("course_employee_access")
+        .select("course_id, employee_id")
+        .eq("company_id", companyId)
+        .in("course_id", allCourseIds);
+
+      if (accessData && accessData.length > 0) {
+        const restrictedIds = new Set((accessData as any[]).map((a) => a.course_id));
+        const employeeIds = new Set(
+          (accessData as any[])
+            .filter((a) => a.employee_id === employeeId)
+            .map((a) => a.course_id)
+        );
+        courses = courses.filter(
+          (c) => !restrictedIds.has(c.id) || employeeIds.has(c.id)
+        );
+      }
+
       const courseIds = courses.map((c) => c.id);
+
+      if (courseIds.length === 0) {
+        setRows([]);
+        return;
+      }
 
       // 2. Manual/external records for this employee
       const { data: recordsData } = await (supabase as any)
