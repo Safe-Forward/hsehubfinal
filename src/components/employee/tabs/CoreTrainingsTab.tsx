@@ -140,8 +140,6 @@ export function CoreTrainingsTab({
   const [noPosition, setNoPosition] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
 
-  const [allTrainingTypes, setAllTrainingTypes] = useState<TrainingType[]>([]);
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -234,42 +232,6 @@ export function CoreTrainingsTab({
         record: recordsByTypeId[tt.id] ?? null,
       }));
 
-      // Load ALL training types across all company positions for the free dialog
-      const { data: allPositionsData } = await supabase
-        .from("company_positions")
-        .select("id")
-        .eq("company_id", companyId);
-
-      const allPositionIds = ((allPositionsData as any[]) || []).map((p) => p.id);
-
-      if (allPositionIds.length > 0) {
-        const { data: allReqData } = await supabase
-          .from("position_training_requirements")
-          .select("training_type_id")
-          .in("position_id", allPositionIds);
-
-        const allTypeIds = [
-          ...new Set(((allReqData as any[]) || []).map((r) => r.training_type_id)),
-        ];
-
-        if (allTypeIds.length > 0) {
-          const { data: allTypesData } = await supabase
-            .from("training_types")
-            .select("id, name, validity_months")
-            .in("id", allTypeIds)
-            .order("name");
-
-          setAllTrainingTypes(
-            ((allTypesData as any[]) || []).map((t) => ({
-              id: t.id,
-              name: t.name,
-              validityMonths: t.validity_months ?? 12,
-              isMandatory: true,
-            }))
-          );
-        }
-      }
-
       setRows(combined);
     } catch (err: any) {
       console.warn("Kernschulungen konnten nicht geladen werden:", err.message);
@@ -298,10 +260,7 @@ export function CoreTrainingsTab({
   }
 
   function findTrainingType(typeId: string): TrainingType | undefined {
-    return (
-      rows.find((r) => r.trainingType.id === typeId)?.trainingType ??
-      allTrainingTypes.find((t) => t.id === typeId)
-    );
+    return rows.find((r) => r.trainingType.id === typeId)?.trainingType;
   }
 
   function handleTypeChange(typeId: string) {
@@ -567,7 +526,7 @@ export function CoreTrainingsTab({
                   <SelectValue placeholder="Schulung auswählen..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
-                  {allTrainingTypes.map((trainingType) => (
+                  {rows.map(({ trainingType }) => (
                     <SelectItem key={trainingType.id} value={trainingType.id}>
                       {trainingType.name}
                     </SelectItem>
