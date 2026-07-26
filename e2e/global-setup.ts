@@ -23,10 +23,19 @@ async function globalSetup(config: FullConfig) {
   const page = await browser.newPage();
 
   await page.goto(`${baseURL}/auth`);
+  await page.waitForLoadState("networkidle");
   await page.getByTestId("login-email").fill(email);
   await page.getByTestId("login-password").fill(password);
   await page.getByTestId("login-submit").click();
-  await page.waitForURL(/\/dashboard/, { timeout: 30_000 });
+
+  // Warte auf Navigation weg von /auth (Dashboard, Setup oder anderes)
+  await page.waitForURL((url) => !url.pathname.startsWith("/auth"), { timeout: 30_000 });
+
+  // Falls auf Setup-Seite gelandet: zur Dashboard weiterleiten
+  if (page.url().includes("/setup-company")) {
+    await page.goto(`${baseURL}/dashboard`);
+    await page.waitForURL(/\/dashboard/, { timeout: 15_000 });
+  }
 
   await page.context().storageState({ path: authFile });
   await browser.close();

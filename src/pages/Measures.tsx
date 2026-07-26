@@ -641,7 +641,7 @@ export default function Measures() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="type">Measure Type *</Label>
+                        <Label htmlFor="type">Maßnahmentyp *</Label>
                         <Select
                           value={formData.measure_type}
                           onValueChange={(value: any) =>
@@ -652,15 +652,9 @@ export default function Measures() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="corrective">
-                              Corrective
-                            </SelectItem>
-                            <SelectItem value="preventive">
-                              Preventive
-                            </SelectItem>
-                            <SelectItem value="improvement">
-                              Improvement
-                            </SelectItem>
+                            <SelectItem value="corrective">Korrektiv</SelectItem>
+                            <SelectItem value="preventive">Präventiv</SelectItem>
+                            <SelectItem value="improvement">Verbesserung</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -677,12 +671,10 @@ export default function Measures() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="planned">Planned</SelectItem>
-                            <SelectItem value="in_progress">
-                              In Progress
-                            </SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="planned">Geplant</SelectItem>
+                            <SelectItem value="in_progress">In Bearbeitung</SelectItem>
+                            <SelectItem value="completed">Abgeschlossen</SelectItem>
+                            <SelectItem value="cancelled">Abgebrochen</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -705,7 +697,7 @@ export default function Measures() {
                     </div>
 
                     <div>
-                      <Label htmlFor="responsible">Responsible Person</Label>
+                      <Label htmlFor="responsible">Verantwortliche Person</Label>
                       <Select
                         value={formData.responsible_person_id}
                         onValueChange={(value) =>
@@ -719,7 +711,7 @@ export default function Measures() {
                           <SelectValue placeholder="Verantwortliche Person auswählen" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="none">Keine</SelectItem>
                           {employees.map((emp) => (
                             <SelectItem key={emp.id} value={emp.id}>
                               {emp.full_name}

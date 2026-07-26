@@ -102,7 +102,7 @@ test.describe("Mitarbeiterprofil — Tabs & Funktionen", () => {
     const tab = page.getByTestId("tab-qualifications");
     await tab.waitFor({ state: "visible", timeout: 8_000 });
     await tab.click();
-    const content = page.locator('[role="tabpanel"]').last();
+    const content = page.locator('[role="tabpanel"][data-state="active"]');
     await expect(content).toBeVisible({ timeout: 5_000 });
   });
 

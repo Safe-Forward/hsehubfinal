@@ -854,6 +854,15 @@ export default function Dashboard() {
   }
 
   // ─── KPI card config with trend + color logic ──────────────────────────────
+  const kpiNavRoutes: Record<string, string> = {
+    employees: "/employees",
+    recentIncidents: "/incidents",
+    overdueMeasures: "/measures",
+    upcomingCheckups: "/investigations",
+    trainingCompletionRate: "/training",
+    auditComplianceRate: "/audits",
+  };
+
   const kpiConfig: {
     [key: string]: {
       title: string;
@@ -1046,6 +1055,8 @@ export default function Dashboard() {
                     setDragOverKpiId(null);
                   }}
                   onDragEnd={() => { draggedKpiRef.current = null; setDragOverKpiId(null); }}
+                  onClick={() => { if (kpiNavRoutes[id]) navigate(kpiNavRoutes[id]); }}
+                  data-testid={`dashboard-tile-${id}`}
                   className={`border-0 shadow-xl bg-gradient-to-br ${config.gradient} text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate cursor-grab active:cursor-grabbing ${isDragOver ? "ring-2 ring-white/70 scale-[1.02]" : ""}`}
                 >
                   {/* Drag handle indicator */}
@@ -1062,7 +1073,7 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="relative z-10 pb-3">
-                    <div className="text-3xl sm:text-5xl font-bold text-white tracking-tight" data-testid={`dashboard-tile-${id}`}>
+                    <div className="text-3xl sm:text-5xl font-bold text-white tracking-tight">
                       {config.value}
                     </div>
                     {config.context && (

@@ -78,7 +78,9 @@ test.describe("Einstellungen — Sidebar-Tabs (alle)", () => {
 
   test("Konfiguration-Tab ist klickbar und zeigt Inhalt", async ({ page }) => {
     await page.getByTestId("settings-tab-configuration").click();
-    const content = page.locator('[role="tabpanel"], [data-testid="settings-config-content"]').first();
+    await page.waitForTimeout(500);
+    // Pick the active (visible) tabpanel
+    const content = page.locator('[role="tabpanel"][data-state="active"]');
     await expect(content).toBeVisible({ timeout: 5_000 });
   });
 

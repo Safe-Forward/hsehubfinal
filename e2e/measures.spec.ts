@@ -106,13 +106,14 @@ test.describe("Maßnahmen — Formular & Logik", () => {
 
   test("Dialog hat Status-Auswahl mit deutschen Optionen", async ({ page }) => {
     const dialog = page.locator('[role="dialog"]');
-    const statusTrigger = dialog.locator('[role="combobox"]').first();
-    if ((await statusTrigger.count()) === 0) return;
-    await statusTrigger.click();
+    // Typ-Auswahl is first combobox; Status is second
+    const comboboxes = dialog.locator('[role="combobox"]');
+    const count = await comboboxes.count();
+    if (count < 2) return;
+    await comboboxes.nth(1).click();
     const options = page.locator('[role="option"]');
     await options.first().waitFor({ state: "visible", timeout: 3_000 });
     const texts = await options.allTextContents();
-    // Verify German option names
     const hasGerman = texts.some(t => /Geplant|Bearbeitung|Abgeschlossen|Abgebrochen/i.test(t));
     expect(hasGerman).toBe(true);
   });

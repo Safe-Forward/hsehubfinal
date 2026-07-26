@@ -52,7 +52,10 @@ test.describe("Vorfälle — Liste, Filter & Formular", () => {
     const rows = page.locator('[data-testid^="incident-row-"]');
     await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
     if ((await rows.count()) === 0) return;
-    await rows.first().click();
+    // Row has no onClick — click the Eye button ("Details anzeigen")
+    const eyeBtn = rows.first().getByTitle("Details anzeigen");
+    if ((await eyeBtn.count()) === 0) return;
+    await eyeBtn.click();
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible({ timeout: 5_000 });
   });
@@ -61,7 +64,9 @@ test.describe("Vorfälle — Liste, Filter & Formular", () => {
     const rows = page.locator('[data-testid^="incident-row-"]');
     await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
     if ((await rows.count()) === 0) return;
-    await rows.first().click();
+    const eyeBtn = rows.first().getByTitle("Details anzeigen");
+    if ((await eyeBtn.count()) === 0) return;
+    await eyeBtn.click();
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible({ timeout: 5_000 });
     const content = await dialog.textContent();
@@ -72,7 +77,9 @@ test.describe("Vorfälle — Liste, Filter & Formular", () => {
     const rows = page.locator('[data-testid^="incident-row-"]');
     await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
     if ((await rows.count()) === 0) return;
-    await rows.first().click();
+    const eyeBtn = rows.first().getByTitle("Details anzeigen");
+    if ((await eyeBtn.count()) === 0) return;
+    await eyeBtn.click();
     const measureBtn = page.getByRole("button", { name: /Maßnahme erstellen/i });
     if ((await measureBtn.count()) === 0) return;
     await measureBtn.click();

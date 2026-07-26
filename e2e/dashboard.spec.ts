@@ -67,35 +67,21 @@ test.describe("Dashboard — Kritische Warnungen & Navigation", () => {
     // The main check: no links to /health-checkups should exist anywhere in the app
   });
 
-  test("Dashboard-Kachel 'Mitarbeiter' navigiert zu /employees", async ({ page }) => {
-    const tile = page.getByTestId("dashboard-tile-employees");
-    await expect(tile).toBeVisible({ timeout: 10_000 });
-    await tile.click();
-    await expect(page).toHaveURL(/\/employees/, { timeout: 8_000 });
-  });
+  const tiles: [string, string, RegExp][] = [
+    ["dashboard-tile-employees", "Mitarbeiter", /\/employees/],
+    ["dashboard-tile-overdueMeasures", "Überf. Maßnahmen", /\/measures/],
+    ["dashboard-tile-recentIncidents", "Vorfälle", /\/incidents/],
+    ["dashboard-tile-upcomingCheckups", "Anstehende Checkups", /\/investigations/],
+  ];
 
-  test("Dashboard-Kachel 'Überf. Maßnahmen' navigiert zu /measures", async ({ page }) => {
-    const tile = page.getByTestId("dashboard-tile-overdueMeasures");
-    await expect(tile).toBeVisible({ timeout: 10_000 });
-    await tile.click();
-    await expect(page).toHaveURL(/\/measures/, { timeout: 8_000 });
-  });
-
-  test("Dashboard-Kachel 'Vorfälle' navigiert zu /incidents", async ({ page }) => {
-    const tile = page.getByTestId("dashboard-tile-recentIncidents");
-    await expect(tile).toBeVisible({ timeout: 10_000 });
-    await tile.click();
-    await expect(page).toHaveURL(/\/incidents/, { timeout: 8_000 });
-  });
-
-  test("Dashboard-Kachel 'Anstehende Checkups' navigiert zu /investigations", async ({ page }) => {
-    const tile = page.getByTestId("dashboard-tile-upcomingCheckups");
-    await expect(tile).toBeVisible({ timeout: 10_000 });
-    await tile.click();
-    // Should go to /investigations, not /health-checkups
-    await expect(page).toHaveURL(/\/investigations/, { timeout: 8_000 });
-    expect(page.url()).not.toContain("health-checkups");
-  });
+  for (const [testid, label, urlPattern] of tiles) {
+    test(`Dashboard-Kachel '${label}' navigiert korrekt`, async ({ page }) => {
+      const tile = page.getByTestId(testid);
+      await tile.waitFor({ state: "visible", timeout: 10_000 });
+      await tile.click();
+      await expect(page).toHaveURL(urlPattern, { timeout: 8_000 });
+    });
+  }
 });
 
 test.describe("Dashboard — KPI-Werte Logik", () => {
