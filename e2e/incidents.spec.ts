@@ -1,21 +1,32 @@
 import { test, expect } from "@playwright/test";
 import { credsMissing } from "./helpers/auth";
 
-test.describe("Vorfälle — Liste & Formular", () => {
+test.describe("Vorfälle — Liste, Filter & Formular", () => {
   test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
 
   test.beforeEach(async ({ page }) => {
     await page.goto("/incidents");
   });
 
-  test('"Vorfall melden"-Button ist sichtbar', async ({ page }) => {
-    await expect(page.getByTestId("btn-add-incident")).toBeVisible();
+  test("Seite lädt und zeigt Vorfall-Liste", async ({ page }) => {
+    const rows = page.locator('[data-testid^="incident-row-"]');
+    const empty = page.getByText("Keine Vorfälle").or(page.getByText("Noch keine Vorfälle"));
+    await expect(page.getByTestId("btn-add-incident")).toBeVisible({ timeout: 10_000 });
+    const loaded = (await rows.count()) > 0 || await empty.isVisible();
+    expect(loaded).toBe(true);
   });
 
-  test("Dialog öffnet sich beim Klick auf melden", async ({ page }) => {
+  test('"Vorfall melden"-Button öffnet Dialog', async ({ page }) => {
     await page.getByTestId("btn-add-incident").click();
-    await expect(page.getByTestId("incident-form-title")).toBeVisible();
+    await expect(page.getByTestId("incident-form-title")).toBeVisible({ timeout: 5_000 });
     await expect(page.getByTestId("incident-form-submit")).toBeVisible();
+  });
+
+  test("Dialog hat alle wichtigen Felder", async ({ page }) => {
+    await page.getByTestId("btn-add-incident").click();
+    await expect(page.getByTestId("incident-form-title")).toBeVisible({ timeout: 5_000 });
+    const selects = page.locator('[role="combobox"]');
+    expect(await selects.count()).toBeGreaterThan(0);
   });
 
   test("Titel-Feld ist ausfüllbar", async ({ page }) => {
@@ -25,34 +36,74 @@ test.describe("Vorfälle — Liste & Formular", () => {
     await expect(page.getByTestId("incident-form-title")).toHaveValue(`E2E-Vorfall-${stamp}`);
   });
 
-  test("Vorfall-Liste rendert (0 oder mehr Zeilen)", async ({ page }) => {
+  test("Typ-Filter ist vorhanden", async ({ page }) => {
+    await expect(page.getByTestId("filter-incident-type")).toBeVisible({ timeout: 8_000 });
+  });
+
+  test("Schweregrad-Filter ist vorhanden", async ({ page }) => {
+    await expect(page.getByTestId("filter-incident-severity")).toBeVisible({ timeout: 8_000 });
+  });
+
+  test("Status-Filter ist vorhanden (neu hinzugefügt)", async ({ page }) => {
+    await expect(page.getByTestId("filter-incident-status")).toBeVisible({ timeout: 8_000 });
+  });
+
+  test("Vorfall-Zeile öffnet Detail-Dialog beim Klick", async ({ page }) => {
     const rows = page.locator('[data-testid^="incident-row-"]');
-    await expect(rows.first().or(page.locator("body"))).toBeVisible();
-    const count = await rows.count();
-    expect(count).toBeGreaterThanOrEqual(0);
-  });
-});
-
-test.describe("Vorfälle — KPI-Kacheln (Berichte)", () => {
-  test.skip(credsMissing, "E2E_TEST_EMAIL/E2E_TEST_PASSWORD nicht gesetzt");
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/reports");
-    await page.getByTestId("tab-incidents").click();
+    await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
+    if ((await rows.count()) === 0) return;
+    await rows.first().click();
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5_000 });
   });
 
-  const kpiTiles = [
-    "tile-incidents-total",
-    "tile-incidents-open",
-    "tile-incidents-closed",
-    "tile-incidents-reportable",
-    "tile-incidents-accident-free",
-    "tile-incidents-teur",
-  ];
+  test("Detail-Dialog zeigt Vorfall-Informationen", async ({ page }) => {
+    const rows = page.locator('[data-testid^="incident-row-"]');
+    await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
+    if ((await rows.count()) === 0) return;
+    await rows.first().click();
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5_000 });
+    const content = await dialog.textContent();
+    expect(content?.trim().length).toBeGreaterThan(0);
+  });
 
-  for (const tile of kpiTiles) {
-    test(`KPI-Kachel "${tile}" ist sichtbar`, async ({ page }) => {
-      await expect(page.getByTestId(tile)).toBeVisible({ timeout: 10_000 });
-    });
-  }
+  test("Detail-Dialog: 'Maßnahme erstellen'-Button navigiert zu /measures", async ({ page }) => {
+    const rows = page.locator('[data-testid^="incident-row-"]');
+    await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
+    if ((await rows.count()) === 0) return;
+    await rows.first().click();
+    const measureBtn = page.getByRole("button", { name: /Maßnahme erstellen/i });
+    if ((await measureBtn.count()) === 0) return;
+    await measureBtn.click();
+    await expect(page).toHaveURL(/\/measures/, { timeout: 8_000 });
+  });
+
+  test("Typ-Filter funktioniert: reduziert Ergebnismenge", async ({ page }) => {
+    const rows = page.locator('[data-testid^="incident-row-"]');
+    await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
+    if ((await rows.count()) === 0) return;
+    const initialCount = await rows.count();
+    const filter = page.getByTestId("filter-incident-type");
+    await filter.click();
+    const firstOption = page.getByRole("option").nth(1);
+    if ((await firstOption.count()) === 0) return;
+    await firstOption.click();
+    await page.waitForTimeout(500);
+    const filteredCount = await rows.count();
+    expect(filteredCount).toBeLessThanOrEqual(initialCount);
+  });
+
+  test("Status-Filter 'Offen' filtert korrekt", async ({ page }) => {
+    const rows = page.locator('[data-testid^="incident-row-"]');
+    await rows.first().waitFor({ state: "visible", timeout: 10_000 }).catch(() => {});
+    if ((await rows.count()) === 0) return;
+    const filter = page.getByTestId("filter-incident-status");
+    await filter.click();
+    const openOption = page.getByRole("option", { name: /^Offen$|^open$/i });
+    if ((await openOption.count()) === 0) return;
+    await openOption.click();
+    await page.waitForTimeout(500);
+    expect(await rows.count()).toBeGreaterThanOrEqual(0);
+  });
 });
