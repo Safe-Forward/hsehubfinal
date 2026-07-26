@@ -536,6 +536,7 @@ export default function Incidents() {
     const config: Record<string, { className: string; icon: any; label: string }> = {
       minor: { className: "bg-blue-100 text-blue-800", icon: AlertCircle, label: "Gering" },
       moderate: { className: "bg-yellow-100 text-yellow-800", icon: AlertCircle, label: "Mäßig" },
+      major: { className: "bg-orange-100 text-orange-800", icon: AlertTriangle, label: "Schwer" },
       serious: { className: "bg-orange-100 text-orange-800", icon: AlertTriangle, label: "Schwer" },
       critical: { className: "bg-red-100 text-red-800", icon: AlertTriangle, label: "Kritisch" },
       fatal: { className: "bg-red-600 text-white", icon: AlertTriangle, label: "Fatal" },
@@ -703,6 +704,7 @@ export default function Incidents() {
     const severityLabels: Record<string, string> = {
       minor: "Gering",
       moderate: "Mäßig",
+      major: "Schwer",
       serious: "Schwer",
       critical: "Kritisch",
       fatal: "Fatal",

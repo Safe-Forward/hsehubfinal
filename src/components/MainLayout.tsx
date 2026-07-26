@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useCallback } from "react";
+import { ReactNode, useState, useEffect, useCallback, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Shield,
@@ -23,6 +23,8 @@ import {
   LayoutDashboard,
   BarChart3,
   Zap,
+  Menu,
+  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -52,6 +54,29 @@ export default function MainLayout({ children }: Props) {
   const { canAccessFeature } = useSubscriptionLimits();
   const location = useLocation();
   const [darkMode, setDarkMode] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Close mobile sidebar on outside click (exclude sidebar and hamburger button)
+  useEffect(() => {
+    if (!mobileSidebarOpen) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const inSidebar = sidebarRef.current?.contains(target);
+      const inHamburger = hamburgerRef.current?.contains(target);
+      if (!inSidebar && !inHamburger) {
+        setMobileSidebarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [mobileSidebarOpen]);
 
   // Sidebar Maßnahmen-Badge (optional widget, driven by hse_dashboard_visible_kpis)
   const [showMeasuresBadge, setShowMeasuresBadge] = useState(false);
@@ -237,11 +262,30 @@ export default function MainLayout({ children }: Props) {
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
-      <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen sticky top-0">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+      {/* Mobile sidebar backdrop */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 bg-black/40 z-40 md:hidden" onClick={() => setMobileSidebarOpen(false)} />
+      )}
+
+      <aside
+        ref={sidebarRef}
+        className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen md:sticky md:top-0 transition-transform duration-200 ease-in-out ${
+          mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <Link to={userRole === "super_admin" ? "/super-admin/dashboard" : "/dashboard"} className="flex items-center gap-2">
             <img src="/logo-full.svg" alt="Safe-Forward" className="h-8 relative z-10" />
           </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="md:hidden h-8 w-8 p-0"
+            onClick={() => setMobileSidebarOpen(false)}
+            aria-label="Menü schließen"
+          >
+            <X className="w-4 h-4" />
+          </Button>
         </div>
 
         <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
@@ -264,37 +308,39 @@ export default function MainLayout({ children }: Props) {
               </Link>
               <Link to="/super-admin/companies" className={getLinkClasses("/super-admin/companies")}>
                 <Building2 className="w-4 h-4" />
-                <span>Companies</span>
+                <span>Unternehmen</span>
               </Link>
               <Link to="/super-admin/users" className={getLinkClasses("/super-admin/users")}>
                 <Users className="w-4 h-4" />
-                <span>Users</span>
+                <span>Benutzer</span>
               </Link>
               <Link to="/super-admin/subscriptions" className={getLinkClasses("/super-admin/subscriptions")}>
                 <Package className="w-4 h-4" />
-                <span>Subscriptions & Billing</span>
-              </Link>              <Link to="/super-admin/invoices" className={getLinkClasses("/super-admin/invoices")}>
+                <span>Abonnements & Abrechnung</span>
+              </Link>
+              <Link to="/super-admin/invoices" className={getLinkClasses("/super-admin/invoices")}>
                 <Receipt className="w-4 h-4" />
-                <span>Invoices</span>
-              </Link>              <Link to="/super-admin/addons" className={getLinkClasses("/super-admin/addons")}>
+                <span>Rechnungen</span>
+              </Link>
+              <Link to="/super-admin/addons" className={getLinkClasses("/super-admin/addons")}>
                 <Puzzle className="w-4 h-4" />
                 <span>Add-ons</span>
               </Link>
               <Link to="/super-admin/analytics" className={getLinkClasses("/super-admin/analytics")}>
                 <BarChart3 className="w-4 h-4" />
-                <span>Analytics</span>
+                <span>Analytik</span>
               </Link>
               <Link to="/super-admin/system-logs" className={getLinkClasses("/super-admin/system-logs")}>
                 <FileCheck className="w-4 h-4" />
-                <span>System & Logs</span>
+                <span>System & Protokolle</span>
               </Link>
               <Link to="/super-admin/security" className={getLinkClasses("/super-admin/security")}>
                 <Shield className="w-4 h-4" />
-                <span>Security</span>
+                <span>Sicherheit</span>
               </Link>
               <Link to="/super-admin/admin-actions" className={getLinkClasses("/super-admin/admin-actions")}>
                 <Zap className="w-4 h-4" />
-                <span>Admin</span>
+                <span>Administration</span>
               </Link>
               <Link to="/super-admin/support" className={getLinkClasses("/super-admin/support")}>
                 <MessageSquare className="w-4 h-4" />
@@ -402,10 +448,10 @@ export default function MainLayout({ children }: Props) {
             <Building2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                <span>{companyName || "Company"}</span>
+                <span>{companyName || "Unternehmen"}</span>
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                <span>{roleName || (userRole ? userRole.replace("_", " ") : "User")}</span>
+                <span>{roleName || (userRole ? userRole.replace("_", " ") : "Benutzer")}</span>
               </p>
             </div>
           </div>
@@ -423,8 +469,18 @@ export default function MainLayout({ children }: Props) {
 
       <div className="flex-1 flex flex-col">
         <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white"></h2>
+          <div className="px-4 md:px-6 py-4 flex items-center justify-between">
+            <Button
+              ref={hamburgerRef}
+              variant="ghost"
+              size="sm"
+              className="md:hidden h-9 w-9 p-0"
+              onClick={() => setMobileSidebarOpen((prev) => !prev)}
+              aria-label="Menü öffnen"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white hidden md:block"></h2>
 
             <div className="flex items-center gap-4">
               <NotificationBell />

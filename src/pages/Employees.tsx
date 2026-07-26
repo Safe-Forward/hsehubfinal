@@ -1899,7 +1899,7 @@ export default function Employees() {
                           className="cursor-pointer"
                           onClick={() => navigate(`/employees/${employee.id}`)}
                         >
-                          {employee.hire_date || "-"}
+                          {employee.hire_date ? format(new Date(employee.hire_date), "dd.MM.yyyy") : "-"}
                         </TableCell>
                         <TableCell
                           className="cursor-pointer"
@@ -1974,7 +1974,7 @@ export default function Employees() {
                       {t("employees.hireDate")}
                     </p>
                     <p className="font-medium">
-                      {selectedEmployee?.hire_date || "-"}
+                      {selectedEmployee?.hire_date ? format(new Date(selectedEmployee.hire_date), "dd.MM.yyyy") : "-"}
                     </p>
                   </div>
                   <div>

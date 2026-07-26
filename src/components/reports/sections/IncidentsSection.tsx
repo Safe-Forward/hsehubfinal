@@ -304,8 +304,8 @@ export function IncidentsSection({
           teurRate,
           departments: deptKPIs,
         });
-      } catch (err) {
-        console.error("IncidentsSection: error loading accident KPIs", err);
+      } catch {
+        // KPIs konnten nicht geladen werden
       } finally {
         setKpiLoading(false);
       }
@@ -360,8 +360,8 @@ export function IncidentsSection({
     try {
       const saved = localStorage.getItem('hse_layout_incidents');
       if (saved) return JSON.parse(saved);
-    } catch (error) {
-      console.error('Error loading incidents layout:', error);
+    } catch {
+      // Layout konnte nicht geladen werden; Standardlayout wird verwendet
     }
     return defaultLayout;
   });
@@ -377,8 +377,8 @@ export function IncidentsSection({
     lastSavedLayoutRef.current = serialized;
     try {
       localStorage.setItem('hse_layout_incidents', serialized);
-    } catch (error) {
-      console.error('Error saving incidents layout:', error);
+    } catch {
+      // Layout konnte nicht gespeichert werden
     }
   }, []);
 

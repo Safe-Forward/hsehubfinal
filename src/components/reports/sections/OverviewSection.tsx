@@ -96,8 +96,8 @@ export function OverviewSection({
     try {
       const saved = localStorage.getItem(HIDDEN_CARDS_KEY);
       if (saved) return new Set(JSON.parse(saved));
-    } catch (e) {
-      console.error("Error loading hidden cards:", e);
+    } catch {
+      // Ausgeblendete Karten konnten nicht geladen werden
     }
     return new Set();
   });
@@ -212,8 +212,8 @@ export function OverviewSection({
         }
         // If there are missing ids, fall through to build default
       }
-    } catch (error) {
-      console.error("Error loading unified layout:", error);
+    } catch {
+      // Layout konnte nicht geladen werden; Standardlayout wird verwendet
     }
     return buildDefaultUnifiedLayout();
   });
@@ -314,8 +314,8 @@ export function OverviewSection({
     lastSavedLayoutRef.current = serialized;
     try {
       localStorage.setItem(UNIFIED_LAYOUT_KEY, serialized);
-    } catch (error) {
-      console.error("Error saving unified layout:", error);
+    } catch {
+      // Layout konnte nicht gespeichert werden
     }
   }, []);
 
@@ -344,8 +344,8 @@ export function OverviewSection({
       setLayouts(mergedLayouts);
       try {
         localStorage.setItem(UNIFIED_LAYOUT_KEY, serialized);
-      } catch (error) {
-        console.error("Error saving unified layout:", error);
+      } catch {
+        // Layout konnte nicht gespeichert werden
       }
       pendingLayoutRef.current = null;
     }
@@ -372,8 +372,8 @@ export function OverviewSection({
       lastSavedLayoutRef.current = serialized;
       try {
         localStorage.setItem(UNIFIED_LAYOUT_KEY, serialized);
-      } catch (error) {
-        console.error("Error saving unified layout:", error);
+      } catch {
+        // Layout konnte nicht gespeichert werden
       }
       return updated;
     });

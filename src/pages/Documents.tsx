@@ -62,6 +62,7 @@ import {
   DocumentWithUploader,
 } from "@/types/hse-tables";
 import { formatDistanceToNow, format } from "date-fns";
+import { de } from "date-fns/locale";
 
 export default function Documents() {
   const { t } = useLanguage();
@@ -130,7 +131,6 @@ export default function Documents() {
       }
       setDocuments(allRows);
     } catch (error: any) {
-      console.error("Error fetching documents:", error);
       toast({
         title: "Fehler",
         description: "Dokumente konnten nicht geladen werden",
@@ -313,7 +313,6 @@ export default function Documents() {
       setShowUploadDialog(false);
       fetchDocuments();
     } catch (error: any) {
-      console.error("Error uploading document:", error);
       toast({
         title: "Upload fehlgeschlagen",
         description: error.message || "Dokument konnte nicht hochgeladen werden",
@@ -359,7 +358,6 @@ export default function Documents() {
         description: "Dokument wurde heruntergeladen",
       });
     } catch (error: any) {
-      console.error("Error downloading document:", error);
       toast({
         title: "Download fehlgeschlagen",
         description: error.message || "Dokument konnte nicht heruntergeladen werden",
@@ -404,7 +402,7 @@ export default function Documents() {
         .remove([doc.file_path]);
 
       if (storageError) {
-        console.error("Storage-Datei konnte nicht gelöscht werden (DB-Eintrag wurde entfernt):", storageError);
+        // Storage-Datei konnte nicht gelöscht werden; DB-Eintrag ist bereits entfernt
       }
 
       toast({
@@ -425,7 +423,6 @@ export default function Documents() {
 
       fetchDocuments();
     } catch (error: any) {
-      console.error("Error deleting document:", error);
       toast({
         title: "Löschen fehlgeschlagen",
         description: error.message || "Dokument konnte nicht gelöscht werden",
@@ -616,6 +613,7 @@ export default function Documents() {
                       <span>
                         {formatDistanceToNow(new Date(doc.created_at), {
                           addSuffix: true,
+                          locale: de,
                         })}
                       </span>
                     </div>
@@ -751,7 +749,7 @@ export default function Documents() {
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {uploadExpiryDate ? (
-                      format(new Date(uploadExpiryDate), "PPP")
+                      format(new Date(uploadExpiryDate), "PPP", { locale: de })
                     ) : (
                       <span>{t("common.pickDate")}</span>
                     )}

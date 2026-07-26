@@ -45,14 +45,14 @@ export default function Auth() {
     setRedirecting(false);
     try {
       await signIn(loginEmail, loginPassword);
-      toast.success("Signed in successfully");
+      toast.success("Erfolgreich angemeldet");
       setRedirecting(true);
       // Navigation will be handled by useEffect based on role
     } catch (err: unknown) {
       const e = err as { message?: string } | Error | null;
       const message =
         e && "message" in e && e.message ? e.message : String(err);
-      toast.error(message || "Failed to sign in");
+      toast.error(message || "Anmeldung fehlgeschlagen");
       setRedirecting(false);
     } finally {
       setIsLoading(false);
@@ -68,24 +68,24 @@ export default function Auth() {
             onClick={() => navigate("/")}
             className="hover:bg-transparent hover:text-primary"
           >
-            <span>← Back to Homepage</span>
+            <span>← Zurück zur Startseite</span>
           </Button>
         </div>
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
             <img src="/logo-full.svg" alt="Safe-Forward" className="h-12" />
           </div>
-          <p className="text-muted-foreground mt-2"><span>HSE Management Platform</span></p>
+          <p className="text-muted-foreground mt-2"><span>HSE Management Plattform</span></p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle><span>Welcome Back</span></CardTitle>
+            <CardTitle><span>Willkommen zurück</span></CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="login-email"><span>Email</span></Label>
+                <Label htmlFor="login-email"><span>E-Mail</span></Label>
                 <Input
                   id="login-email"
                   data-testid="login-email"
@@ -97,7 +97,7 @@ export default function Auth() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="login-password"><span>Password</span></Label>
+                <Label htmlFor="login-password"><span>Passwort</span></Label>
                 <div className="relative">
                   <Input
                     id="login-password"
@@ -125,7 +125,7 @@ export default function Auth() {
                 </div>
               </div>
               <Button type="submit" data-testid="login-submit" className="w-full" disabled={isLoading}>
-                <span>{isLoading ? "Signing in..." : "Sign In"}</span>
+                <span>{isLoading ? "Anmelden..." : "Anmelden"}</span>
               </Button>
               <div className="text-center">
                 <Button
@@ -144,14 +144,14 @@ export default function Auth() {
         {/* Company Registration CTA */}
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground mb-2">
-            <span>Don't have an account yet?</span>
+            <span>Noch kein Konto?</span>
           </p>
           <Button
             variant="outline"
             onClick={() => navigate("/register")}
             className="w-full"
           >
-            <span>Register Your Company - Start Free Trial</span>
+            <span>Unternehmen registrieren – 7 Tage kostenlos testen</span>
           </Button>
         </div>
       </div>

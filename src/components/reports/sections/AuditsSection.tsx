@@ -105,8 +105,8 @@ export function AuditsSection({
     try {
       const saved = localStorage.getItem('hse_layout_audits');
       if (saved) return JSON.parse(saved);
-    } catch (error) {
-      console.error('Error loading audits layout:', error);
+    } catch {
+      // Layout konnte nicht geladen werden; Standardlayout wird verwendet
     }
     return defaultLayout;
   });
@@ -122,8 +122,8 @@ export function AuditsSection({
     lastSavedLayoutRef.current = serialized;
     try {
       localStorage.setItem('hse_layout_audits', serialized);
-    } catch (error) {
-      console.error('Error saving audits layout:', error);
+    } catch {
+      // Layout konnte nicht gespeichert werden
     }
   }, []);
 

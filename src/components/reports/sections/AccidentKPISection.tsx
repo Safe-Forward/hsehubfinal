@@ -207,7 +207,6 @@ export function AccidentKPISection({ companyId, selectedYear }: Props) {
         departments: deptKPIs,
       });
     } catch (err) {
-      console.error("AccidentKPISection: error loading KPIs", err);
       toast.error("Unfall-KPIs konnten nicht geladen werden.");
     } finally {
       setLoading(false);

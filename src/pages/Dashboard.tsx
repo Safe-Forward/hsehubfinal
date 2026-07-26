@@ -101,7 +101,7 @@ export default function Dashboard() {
 
   const sidebarWidgetLabels: Record<string, string> = {
     sidebarMeasuresBadge: t("dashboard.sidebarMeasuresBadge"),
-    sidebarTrainingBadge: "Schulungs-Badge in Sidebar",
+    sidebarTrainingBadge: t("dashboard.sidebarTrainingBadge"),
   };
 
   const [stats, setStats] = useState({
@@ -154,8 +154,8 @@ export default function Dashboard() {
           setVisibleKpis(parsed.filter((id: string) => allValidIds.includes(id)));
         }
       }
-    } catch (e) {
-      console.error("Error loading KPI preferences:", e);
+    } catch {
+      // Ungültige gespeicherte KPI-Präferenzen — Standardwerte behalten
     }
     try {
       const storedSections = localStorage.getItem("hse_dashboard_section_order");
@@ -165,8 +165,8 @@ export default function Dashboard() {
           setSectionOrder(parsed.filter((id: string) => ["investigations", "tasks"].includes(id)));
         }
       }
-    } catch (e) {
-      console.error("Error loading section order:", e);
+    } catch {
+      // Ungültige gespeicherte Reihenfolge — Standardwerte behalten
     }
   }, []);
 
@@ -184,9 +184,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchEmployeeId = async () => {
-      if (user?.email && companyId) {
-        console.log("🔍 Looking up Employee ID for:", user.email, "Company:", companyId);
+      if (!user?.email || !companyId) return;
 
+      try {
         const { data: empByEmail, error } = await supabase
           .from("employees")
           .select("id, full_name")
@@ -194,12 +194,11 @@ export default function Dashboard() {
           .eq("company_id", companyId)
           .maybeSingle();
 
-        if (error) {
-          console.error("❌ Error fetching employee ID:", error);
+        if (error && !empByEmail) {
+          // Stille Weiterverarbeitung — Fallback-Lookups folgen
         }
 
         if (empByEmail) {
-          console.log("✅ Found Employee ID (by email):", empByEmail.id);
           setCurrentEmployeeId(empByEmail.id);
           setCurrentEmployeeName(empByEmail.full_name);
         } else {
@@ -211,11 +210,9 @@ export default function Dashboard() {
             .maybeSingle();
 
           if (empByEmailInsen) {
-            console.log("✅ Found Employee ID (case-insensitive email):", empByEmailInsen.id);
             setCurrentEmployeeId(empByEmailInsen.id);
             setCurrentEmployeeName(empByEmailInsen.full_name);
           } else {
-            console.log("⚠️ Email lookup failed — trying auth user_id fallback for:", user.id);
             const { data: empByUserId } = await supabase
               .from("employees")
               .select("id, full_name")
@@ -224,11 +221,9 @@ export default function Dashboard() {
               .maybeSingle();
 
             if (empByUserId) {
-              console.log("✅ Found Employee ID (by user_id):", empByUserId.id);
               setCurrentEmployeeId(empByUserId.id);
               setCurrentEmployeeName(empByUserId.full_name);
             } else {
-              console.log("⚠️ Not in employees table — trying team_members by user_id...");
               const { data: memberByUserId } = await supabase
                 .from("team_members")
                 .select("id, first_name, last_name")
@@ -238,7 +233,6 @@ export default function Dashboard() {
 
               if (memberByUserId) {
                 const fullName = `${memberByUserId.first_name} ${memberByUserId.last_name}`.trim();
-                console.log("✅ Found in team_members (by user_id):", fullName);
                 setCurrentEmployeeName(fullName);
               } else {
                 const { data: memberByEmail } = await supabase
@@ -250,16 +244,16 @@ export default function Dashboard() {
 
                 if (memberByEmail) {
                   const fullName = `${memberByEmail.first_name} ${memberByEmail.last_name}`.trim();
-                  console.log("✅ Found in team_members (by email):", fullName);
                   setCurrentEmployeeName(fullName);
                 } else {
-                  console.warn("⚠️ No profile found in employees or team_members. Showing broadcast tasks only.");
                   setCurrentEmployeeName("");
                 }
               }
             }
           }
         }
+      } catch {
+        setCurrentEmployeeName("");
       }
     };
 
@@ -373,12 +367,21 @@ export default function Dashboard() {
           ? Math.round((completedItemsSum / totalItemsSum) * 100)
           : 0;
 
-      const overdueObligations = await fetchOverdueObligations();
-      const recentIncidents = await fetchRecentIncidents();
-      const recentHazards = await fetchRecentHazards();
-      const measuresStats = await fetchMeasuresStats();
-      const upcomingCheckups = await fetchUpcomingCheckups();
-      const trainingCompletionRate = await fetchTrainingCompletionRate();
+      const [
+        overdueObligations,
+        recentIncidents,
+        recentHazards,
+        measuresStats,
+        upcomingCheckups,
+        trainingCompletionRate,
+      ] = await Promise.all([
+        fetchOverdueObligations(),
+        fetchRecentIncidents(),
+        fetchRecentHazards(),
+        fetchMeasuresStats(),
+        fetchUpcomingCheckups(),
+        fetchTrainingCompletionRate(),
+      ]);
 
       // Fetch overdue measures older than 30 days for critical warnings (measures + RAM)
       const thirtyDaysAgo = new Date();
@@ -435,8 +438,8 @@ export default function Dashboard() {
         totalMeasures: measuresStats.open,
         overdueCheckups,
       });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
+    } catch {
+      // Stats konnten nicht geladen werden — Werte bleiben bei 0
     }
   };
 
@@ -492,8 +495,7 @@ export default function Dashboard() {
         (overdueCheckupsByAppointmentDate.count || 0) +
         (overdueInvestigations.count || 0)
       );
-    } catch (error) {
-      console.error("Error fetching overdue obligations:", error);
+    } catch {
       return 0;
     }
   };
@@ -515,13 +517,11 @@ export default function Dashboard() {
         .gte("incident_date", dateString);
 
       if (error) {
-        console.error("Error fetching recent incidents:", error);
         return 0;
       }
 
       return count || 0;
-    } catch (error) {
-      console.error("Error fetching recent incidents:", error);
+    } catch {
       return 0;
     }
   };
@@ -530,17 +530,12 @@ export default function Dashboard() {
     if (!companyId) return;
 
     try {
-      console.log("=== Fetching Investigation Stats ===");
-      console.log("Company ID:", companyId);
-
       const { data: checkupsData, error: checkupsError } = await supabase
         .from("health_checkups")
         .select("id, status")
         .eq("company_id", companyId);
 
       if (checkupsError) throw checkupsError;
-
-      console.log("✅ Health checkups fetched:", checkupsData?.length || 0);
 
       const statusCounts = {
         open: 0,
@@ -560,18 +555,14 @@ export default function Dashboard() {
 
       const total = Object.values(statusCounts).reduce((a, b) => a + b, 0);
 
-      console.log("Combined Status Breakdown:", statusCounts);
-
       setInvestigationStats([
-        { status: "Open", count: statusCounts.open, color: "#6b7280", percent: statusCounts.open / (total || 1) },
-        { status: "Planned", count: statusCounts.planned, color: "#3b82f6", percent: statusCounts.planned / (total || 1) },
-        { status: "Due", count: statusCounts.due, color: "#f59e0b", percent: statusCounts.due / (total || 1) },
-        { status: "Done", count: statusCounts.done, color: "#10b981", percent: statusCounts.done / (total || 1) },
+        { status: "Offen", count: statusCounts.open, color: "#6b7280", percent: statusCounts.open / (total || 1) },
+        { status: "Geplant", count: statusCounts.planned, color: "#3b82f6", percent: statusCounts.planned / (total || 1) },
+        { status: "Fällig", count: statusCounts.due, color: "#f59e0b", percent: statusCounts.due / (total || 1) },
+        { status: "Abgeschlossen", count: statusCounts.done, color: "#10b981", percent: statusCounts.done / (total || 1) },
       ]);
-
-      return;
-    } catch (error) {
-      console.error("Error fetching investigation stats:", error);
+    } catch {
+      // Vorsorgeuntersuchungs-Statistiken konnten nicht geladen werden
     }
   };
 
@@ -611,7 +602,6 @@ export default function Dashboard() {
         .limit(100);
 
       if (error) {
-        console.error("Error fetching tasks:", error);
         throw error;
       }
 
@@ -623,13 +613,8 @@ export default function Dashboard() {
 
       filteredData = filteredData.slice(0, 20);
 
-      console.log("Fetched tasks data:", filteredData);
-      console.log("Current task status filter:", taskStatusFilter);
-      console.log("Number of tasks after filter:", filteredData.length);
-
       setTasks(filteredData);
-    } catch (error) {
-      console.error("Error in fetchTasks:", error);
+    } catch {
       setTasks([]);
     }
   };
@@ -646,8 +631,8 @@ export default function Dashboard() {
       if (error) throw error;
 
       await fetchTasks();
-    } catch (error) {
-      console.error("Error updating task status:", error);
+    } catch {
+      // Status-Update fehlgeschlagen — nächster fetch aktualisiert den Stand
     }
   };
 
@@ -665,8 +650,7 @@ export default function Dashboard() {
         .gte("created_at", sevenDaysAgo.toISOString());
 
       return count || 0;
-    } catch (error) {
-      console.error("Error fetching recent hazards:", error);
+    } catch {
       return 0;
     }
   };
@@ -712,8 +696,7 @@ export default function Dashboard() {
         open: (openRes.count || 0) + (ramOpenRes.count || 0),
         overdue: (overdueRes.count || 0) + (ramOverdueRes.count || 0),
       };
-    } catch (error) {
-      console.error("Error fetching measures stats:", error);
+    } catch {
       return { open: 0, overdue: 0 };
     }
   };
@@ -746,8 +729,7 @@ export default function Dashboard() {
       ]);
 
       return (byDueDate.count || 0) + (byAppointment.count || 0);
-    } catch (error) {
-      console.error("Error fetching upcoming checkups:", error);
+    } catch {
       return 0;
     }
   };
@@ -784,8 +766,7 @@ export default function Dashboard() {
       ).length;
 
       return Math.round((completed / total) * 100);
-    } catch (error) {
-      console.error("Error fetching training completion rate:", error);
+    } catch {
       return 0;
     }
   };
@@ -1322,7 +1303,7 @@ export default function Dashboard() {
                                 <span>
                                   {new Date(
                                     task.due_date
-                                  ).toLocaleDateString()}
+                                  ).toLocaleDateString("de-DE")}
                                 </span>
                               </div>
                             )}

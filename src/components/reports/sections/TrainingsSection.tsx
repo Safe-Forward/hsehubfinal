@@ -105,8 +105,8 @@ export function TrainingsSection({
     try {
       const saved = localStorage.getItem('hse_layout_trainings');
       if (saved) return JSON.parse(saved);
-    } catch (error) {
-      console.error('Error loading trainings layout:', error);
+    } catch {
+      // Layout konnte nicht geladen werden; Standardlayout wird verwendet
     }
     return defaultLayout;
   });
@@ -122,8 +122,8 @@ export function TrainingsSection({
     lastSavedLayoutRef.current = serialized;
     try {
       localStorage.setItem('hse_layout_trainings', serialized);
-    } catch (error) {
-      console.error('Error saving trainings layout:', error);
+    } catch {
+      // Layout konnte nicht gespeichert werden
     }
   }, []);
 
@@ -155,8 +155,8 @@ export function TrainingsSection({
     setLayouts(defaultLayouts);
     try {
       localStorage.removeItem('hse_layout_trainings');
-    } catch (e) {
-      console.error(e);
+    } catch {
+      // localStorage nicht verfügbar
     }
     toast({ title: t("reports.toast.layoutResetTitle"), description: t("reports.toast.trainingsLayoutResetDesc") });
   }, [toast, t]);

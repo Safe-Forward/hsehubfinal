@@ -19,7 +19,7 @@ export default function SetupCompany() {
   const { user, companyId, refreshUserRole } = useAuth();
   const navigate = useNavigate();
   const [isCreating, setIsCreating] = useState(false);
-  const [companyName, setCompanyName] = useState("My Company");
+  const [companyName, setCompanyName] = useState("Mein Unternehmen");
   const [companyInfo, setCompanyInfo] = useState<{
     name: string;
     email: string | null;
@@ -46,7 +46,7 @@ export default function SetupCompany() {
       }
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Unable to load company details";
+        err instanceof Error ? err.message : "Unternehmensdaten konnten nicht geladen werden.";
       setCompanyInfoError(message);
       setCompanyInfo(null);
     } finally {
@@ -66,22 +66,17 @@ export default function SetupCompany() {
 
   const handleCreateCompany = async () => {
     if (!user) {
-      toast.error("You must be logged in");
+      toast.error("Sie müssen angemeldet sein.");
       return;
     }
 
     if (!companyName.trim()) {
-      toast.error("Please enter a company name");
+      toast.error("Bitte geben Sie einen Unternehmensnamen ein.");
       return;
     }
 
     setIsCreating(true);
     try {
-      console.log("Attempting to create company:", {
-        name: companyName.trim(),
-        email: user.email,
-        userId: user.id,
-      });
 
       // Try to use RPC function to bypass RLS
       const { data: rpcData, error: rpcError } = await supabase.rpc(
@@ -94,8 +89,6 @@ export default function SetupCompany() {
       );
 
       if (rpcError) {
-        console.error("RPC Error:", rpcError);
-
         // If function doesn't exist, fall back to direct insert
         const missingFunction =
           rpcError.code === "42883" ||
@@ -104,7 +97,6 @@ export default function SetupCompany() {
           rpcError.message?.toLowerCase().includes("does not exist");
 
         if (missingFunction) {
-          console.log("RPC not found, using direct insert fallback...");
 
           // Direct insert: create company
           const { data: companyData, error: companyError } = await supabase
@@ -118,8 +110,7 @@ export default function SetupCompany() {
             .single();
 
           if (companyError) {
-            toast.error("Failed to create company: " + companyError.message);
-            console.error("Company insert error:", companyError);
+            toast.error("Unternehmen konnte nicht erstellt werden: " + companyError.message);
             return;
           }
 
@@ -133,13 +124,12 @@ export default function SetupCompany() {
             });
 
           if (roleError) {
-            console.error("Role link error:", roleError);
-            // Company created but role link failed - still show success
+            // Unternehmen erstellt, aber Rollenzuordnung fehlgeschlagen
             toast.warning(
-              "Company created but role link needs verification. Please refresh."
+              "Unternehmen erstellt, aber die Rollenzuordnung muss noch geprüft werden. Bitte Seite neu laden."
             );
           } else {
-            toast.success("Company created successfully! Redirecting...");
+            toast.success("Unternehmen erfolgreich erstellt! Weiterleitung …");
           }
 
           await refreshUserRole();
@@ -150,25 +140,23 @@ export default function SetupCompany() {
         }
 
         if (rpcError.message?.toLowerCase().includes("already has a company")) {
-          toast.info("You're already linked to a company. Loading details...");
+          toast.info("Ihr Konto ist bereits einem Unternehmen zugeordnet. Daten werden geladen …");
           await refreshUserRole();
           return;
         }
 
-        toast.error("Setup failed: " + rpcError.message);
+        toast.error("Einrichtung fehlgeschlagen: " + rpcError.message);
         return;
       }
 
-      console.log("Company created successfully:", rpcData);
-      toast.success("Company created successfully! Redirecting...");
+      toast.success("Unternehmen erfolgreich erstellt! Weiterleitung …");
       await refreshUserRole();
       setTimeout(() => {
         window.location.href = "/dashboard";
       }, 1500);
     } catch (err) {
-      console.error("Unexpected error:", err);
-      const errorMsg = err instanceof Error ? err.message : "Unknown error";
-      toast.error("Failed to create company: " + errorMsg);
+      const errorMsg = err instanceof Error ? err.message : "Unbekannter Fehler";
+      toast.error("Unternehmen konnte nicht erstellt werden: " + errorMsg);
     } finally {
       setIsCreating(false);
     }
@@ -180,17 +168,17 @@ export default function SetupCompany() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <Building2 className="w-5 h-5" />
-              Company Linked
+              Unternehmen verknüpft
             </CardTitle>
             <CardDescription className="text-sm">
-              You are already assigned to a company. Review the details below.
+              Ihr Konto ist bereits einem Unternehmen zugeordnet. Die Details finden Sie unten.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {companyInfoLoading && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Fetching company details...
+                Unternehmensdaten werden geladen …
               </div>
             )}
 
@@ -210,9 +198,9 @@ export default function SetupCompany() {
                 )}
                 {companyInfo.created_at && (
                   <div>
-                    <span className="text-muted-foreground">Created:</span>
+                    <span className="text-muted-foreground">Erstellt:</span>
                     <span className="ml-2 font-medium">
-                      {new Date(companyInfo.created_at).toLocaleDateString()}
+                      {new Date(companyInfo.created_at).toLocaleDateString("de-DE")}
                     </span>
                   </div>
                 )}
@@ -221,20 +209,20 @@ export default function SetupCompany() {
 
             {!companyInfoLoading && companyInfoError && (
               <p className="text-sm text-red-500 mb-4">
-                Unable to load company details: {companyInfoError}
+                Unternehmensdaten konnten nicht geladen werden: {companyInfoError}
               </p>
             )}
 
             <div className="space-y-2">
               <Button onClick={() => navigate("/dashboard")} className="w-full">
-                Go to Dashboard
+                Zum Dashboard
               </Button>
               <Button
                 variant="outline"
                 onClick={() => loadCompanyInfo(companyId)}
                 className="w-full"
               >
-                Refresh Company Info
+                Unternehmensdaten aktualisieren
               </Button>
             </div>
           </CardContent>
@@ -253,7 +241,7 @@ export default function SetupCompany() {
             className="h-9 sm:h-10"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Zurück
           </Button>
         </div>
 
@@ -262,23 +250,23 @@ export default function SetupCompany() {
             <CardHeader className="space-y-2 sm:space-y-3">
               <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Building2 className="w-5 h-5 sm:w-6 sm:h-6" />
-                Setup Your Company
+                Unternehmen einrichten
               </CardTitle>
               <CardDescription className="text-sm">
-                Create a company to start managing employees and safety records.
-                This only takes a few seconds.
+                Erstellen Sie ein Unternehmen, um Mitarbeiter und Sicherheitsdaten zu verwalten.
+                Das dauert nur wenige Sekunden.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 p-4 sm:p-6">
               <div className="space-y-2">
                 <Label htmlFor="companyName" className="text-sm sm:text-base">
-                  Company Name
+                  Unternehmensname
                 </Label>
                 <Input
                   id="companyName"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="Enter your company name"
+                  placeholder="Unternehmensnamen eingeben"
                   className="h-10 sm:h-11 text-sm sm:text-base"
                   data-testid="setup-company-name"
                 />
@@ -290,11 +278,11 @@ export default function SetupCompany() {
                 className="w-full h-10 sm:h-11 text-sm sm:text-base"
                 data-testid="setup-company-submit"
               >
-                {isCreating ? "Creating..." : "Create Company"}
+                {isCreating ? "Wird erstellt …" : "Unternehmen erstellen"}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center pt-2">
-                Logged in as:{" "}
+                Angemeldet als:{" "}
                 <strong className="break-all">{user?.email}</strong>
               </p>
             </CardContent>

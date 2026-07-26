@@ -102,8 +102,8 @@ export function RiskAssessmentsSection({
     try {
       const saved = localStorage.getItem('hse_layout_risk_assessments');
       if (saved) return JSON.parse(saved);
-    } catch (error) {
-      console.error('Error loading risk assessments layout:', error);
+    } catch {
+      // Layout konnte nicht geladen werden; Standardlayout wird verwendet
     }
     return defaultLayout;
   });
@@ -119,8 +119,8 @@ export function RiskAssessmentsSection({
     lastSavedLayoutRef.current = serialized;
     try {
       localStorage.setItem('hse_layout_risk_assessments', serialized);
-    } catch (error) {
-      console.error('Error saving risk assessments layout:', error);
+    } catch {
+      // Layout konnte nicht gespeichert werden
     }
   }, []);
 

@@ -44,7 +44,7 @@ export default function AcceptInvitation() {
   useEffect(() => {
     async function validateToken() {
       if (!token) {
-        setError("Invalid invitation link - no token provided");
+        setError("Ungültiger Einladungslink – kein Token angegeben.");
         setLoading(false);
         return;
       }
@@ -61,17 +61,14 @@ export default function AcceptInvitation() {
           { p_token: token }
         );
 
-        console.log("[AcceptInvitation] Token validation result:", { result, rpcError });
-
         if (rpcError) {
-          console.error("[AcceptInvitation] RPC error:", rpcError);
-          setError("Unable to validate invitation. Please ensure you have the correct link or contact your administrator.");
+          setError("Die Einladung konnte nicht geprüft werden. Bitte prüfen Sie den Link oder wenden Sie sich an Ihren Administrator.");
           setLoading(false);
           return;
         }
 
         if (!result || !result.valid) {
-          setError(result?.error || "Invalid invitation link. Please contact your administrator for a new invitation.");
+          setError(result?.error || "Ungültiger Einladungslink. Bitte wenden Sie sich an Ihren Administrator, um eine neue Einladung zu erhalten.");
           setLoading(false);
           return;
         }
@@ -94,8 +91,7 @@ export default function AcceptInvitation() {
 
         setLoading(false);
       } catch (err) {
-        console.error("Error validating invitation:", err);
-        setError("An error occurred while validating your invitation.");
+        setError("Beim Prüfen der Einladung ist ein Fehler aufgetreten.");
         setLoading(false);
       }
     }
@@ -111,7 +107,7 @@ export default function AcceptInvitation() {
     if (password.length < 8) {
       toast({
         title: "Passwort zu kurz",
-        description: "Password must be at least 8 characters long.",
+        description: "Das Passwort muss mindestens 8 Zeichen lang sein.",
         variant: "destructive",
       });
       return;
@@ -119,8 +115,8 @@ export default function AcceptInvitation() {
 
     if (password !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
+        title: "Passwörter stimmen nicht überein",
+        description: "Bitte stellen Sie sicher, dass beide Passwörter identisch sind.",
         variant: "destructive",
       });
       return;
@@ -149,7 +145,7 @@ export default function AcceptInvitation() {
         if (authError.message.includes("already registered")) {
           toast({
             title: "Konto existiert bereits",
-            description: "An account with this email already exists. Please try logging in instead.",
+            description: "Ein Konto mit dieser E-Mail-Adresse existiert bereits. Bitte melden Sie sich stattdessen an.",
             variant: "destructive",
           });
           setSubmitting(false);
@@ -161,7 +157,7 @@ export default function AcceptInvitation() {
       // Get the new user's ID
       const newUserId = authData.user?.id;
       if (!newUserId) {
-        throw new Error("Failed to get user ID after signup");
+        throw new Error("Benutzer-ID nach Registrierung konnte nicht ermittelt werden.");
       }
 
       // Call the accept_team_invitation function to handle all the database updates
@@ -175,12 +171,11 @@ export default function AcceptInvitation() {
       );
 
       if (acceptError) {
-        console.error("Error accepting invitation:", acceptError);
-        throw new Error("Failed to complete invitation acceptance");
+        throw new Error("Die Einladung konnte nicht vollständig angenommen werden.");
       }
 
       if (!acceptResult?.success) {
-        throw new Error(acceptResult?.error || "Failed to accept invitation");
+        throw new Error(acceptResult?.error || "Die Einladung konnte nicht angenommen werden.");
       }
 
       setSuccess(true);
@@ -196,10 +191,9 @@ export default function AcceptInvitation() {
       }, 3000);
 
     } catch (err: any) {
-      console.error("Error creating account:", err);
       toast({
         title: "Fehler beim Erstellen",
-        description: err.message || "An error occurred. Please try again.",
+        description: err.message || "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     } finally {
@@ -224,20 +218,20 @@ export default function AcceptInvitation() {
         <h1 className="mt-4 text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
           HSE Hub
         </h1>
-        <p className="text-sm text-muted-foreground">Health, Safety & Environment Management</p>
+        <p className="text-sm text-muted-foreground">Arbeits- und Umweltschutz-Management</p>
       </div>
     </>
   );
 
   const backToLoginButton = (
     <div className="relative z-10 mt-6">
-      <Button 
-        variant="ghost" 
+      <Button
+        variant="ghost"
         className="text-muted-foreground hover:text-primary"
         onClick={() => navigate("/auth")}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
-        Back to Login
+        Zurück zur Anmeldung
       </Button>
     </div>
   );
@@ -254,8 +248,8 @@ export default function AcceptInvitation() {
                   <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
                   <Loader2 className="relative w-12 h-12 animate-spin text-primary" />
                 </div>
-                <h2 className="mt-4 text-lg font-semibold text-foreground">Validating Your Invitation</h2>
-                <p className="mt-2 text-muted-foreground text-sm">Please wait while we verify your invitation link...</p>
+                <h2 className="mt-4 text-lg font-semibold text-foreground">Einladung wird geprüft</h2>
+                <p className="mt-2 text-muted-foreground text-sm">Bitte warten Sie, während Ihr Einladungslink verifiziert wird …</p>
               </div>
             </CardContent>
           </Card>
@@ -279,8 +273,8 @@ export default function AcceptInvitation() {
                   <XCircle className="w-10 h-10 text-red-500" />
                 </div>
               </div>
-              <CardTitle className="mt-4 text-xl text-red-600">Invitation Invalid</CardTitle>
-              <CardDescription>We couldn't verify your invitation</CardDescription>
+              <CardTitle className="mt-4 text-xl text-red-600">Einladung ungültig</CardTitle>
+              <CardDescription>Ihre Einladung konnte nicht verifiziert werden</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Alert variant="destructive" className="border-red-200 bg-red-50">
@@ -289,13 +283,13 @@ export default function AcceptInvitation() {
               </Alert>
               <div className="text-center space-y-3 pt-2">
                 <p className="text-sm text-muted-foreground">
-                  The invitation link may have expired or already been used.
+                  Der Einladungslink ist möglicherweise abgelaufen oder wurde bereits verwendet.
                 </p>
-                <Button 
+                <Button
                   onClick={() => navigate("/auth")}
                   className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
                 >
-                  Go to Login
+                  Zur Anmeldung
                 </Button>
               </div>
             </CardContent>
@@ -321,25 +315,25 @@ export default function AcceptInvitation() {
                 </div>
               </div>
               <CardTitle className="mt-4 text-xl bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                Welcome to HSE Hub!
+                Willkommen bei HSE Hub!
               </CardTitle>
-              <CardDescription>Your account has been created successfully</CardDescription>
+              <CardDescription>Ihr Konto wurde erfolgreich erstellt</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-center">
               <div className="p-4 bg-green-50 rounded-lg border border-green-100">
                 <p className="text-sm text-green-700">
-                  ✨ You're all set! You can now access all the features assigned to your role.
+                  Ihr Konto ist einsatzbereit! Sie können jetzt auf alle Funktionen Ihrer Rolle zugreifen.
                 </p>
               </div>
               <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Redirecting to login page...</span>
+                <span>Weiterleitung zur Anmeldung …</span>
               </div>
-              <Button 
+              <Button
                 onClick={() => navigate("/auth")}
                 className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
               >
-                Go to Login Now
+                Jetzt zur Anmeldung
               </Button>
             </CardContent>
           </Card>
@@ -363,10 +357,10 @@ export default function AcceptInvitation() {
               </div>
             </div>
             <CardTitle className="mt-4 text-xl bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-              Accept Your Invitation
+              Einladung annehmen
             </CardTitle>
             <CardDescription>
-              Welcome! Set up your password to join the team.
+              Willkommen! Legen Sie Ihr Passwort fest, um dem Team beizutreten.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -378,7 +372,7 @@ export default function AcceptInvitation() {
                     <User className="w-4 h-4 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Full Name</p>
+                    <p className="text-xs text-muted-foreground">Vollständiger Name</p>
                     <p className="font-medium text-foreground">{memberData?.first_name} {memberData?.last_name}</p>
                   </div>
                 </div>
@@ -387,7 +381,7 @@ export default function AcceptInvitation() {
                     <Mail className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Email Address</p>
+                    <p className="text-xs text-muted-foreground">E-Mail-Adresse</p>
                     <p className="font-medium text-foreground">{memberData?.email}</p>
                   </div>
                 </div>
@@ -396,7 +390,7 @@ export default function AcceptInvitation() {
                     <Briefcase className="w-4 h-4 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Your Role</p>
+                    <p className="text-xs text-muted-foreground">Ihre Rolle</p>
                     <Badge variant="secondary" className="mt-0.5 bg-gradient-to-r from-blue-100 to-green-100 text-blue-700 border-0">
                       {memberData?.role}
                     </Badge>
@@ -408,12 +402,12 @@ export default function AcceptInvitation() {
             {/* Password Form */}
             <form onSubmit={handleAcceptInvitation} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Create Password</Label>
+                <Label htmlFor="password" className="text-sm font-medium">Passwort erstellen</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Passwort eingeben"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -435,17 +429,17 @@ export default function AcceptInvitation() {
                 </div>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Shield className="w-3 h-3" />
-                  Must be at least 6 characters
+                  Mindestens 8 Zeichen erforderlich
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">Passwort bestätigen</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Confirm your password"
+                    placeholder="Passwort wiederholen"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
@@ -475,12 +469,12 @@ export default function AcceptInvitation() {
                 {submitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Creating Your Account...
+                    Konto wird erstellt …
                   </>
                 ) : (
                   <>
                     <UserPlus className="w-4 h-4 mr-2" />
-                    Create Account & Join Team
+                    Konto erstellen &amp; Team beitreten
                   </>
                 )}
               </Button>
@@ -488,7 +482,7 @@ export default function AcceptInvitation() {
 
             <div className="text-center pt-2">
               <p className="text-xs text-muted-foreground">
-                By creating an account, you agree to our terms of service and privacy policy.
+                Mit der Kontoerstellung stimmen Sie unseren Nutzungsbedingungen und der Datenschutzerklärung zu.
               </p>
             </div>
           </CardContent>

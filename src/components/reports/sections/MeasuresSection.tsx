@@ -73,8 +73,8 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
     try {
       const saved = localStorage.getItem('hse_layout_measures_v2');
       if (saved) return JSON.parse(saved);
-    } catch (error) {
-      console.error('Error loading measures layout:', error);
+    } catch {
+      // Layout konnte nicht geladen werden; Standardlayout wird verwendet
     }
     return defaultLayout;
   });
@@ -90,8 +90,8 @@ export function MeasuresSection({ stats, chartData, measuresStatusData, onEditTi
     lastSavedLayoutRef.current = serialized;
     try {
       localStorage.setItem('hse_layout_measures_v2', serialized);
-    } catch (error) {
-      console.error('Error saving measures layout:', error);
+    } catch {
+      // Layout konnte nicht gespeichert werden
     }
   }, []);
 

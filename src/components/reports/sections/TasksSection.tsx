@@ -66,8 +66,8 @@ export function TasksSection({ stats, chartData, onEditTile, onAddTileAsReport, 
     try {
       const saved = localStorage.getItem('hse_layout_tasks');
       if (saved) return JSON.parse(saved);
-    } catch (error) {
-      console.error('Error loading tasks layout:', error);
+    } catch {
+      // Layout konnte nicht geladen werden; Standardlayout wird verwendet
     }
     return defaultLayout;
   });
@@ -83,8 +83,8 @@ export function TasksSection({ stats, chartData, onEditTile, onAddTileAsReport, 
     lastSavedLayoutRef.current = serialized;
     try {
       localStorage.setItem('hse_layout_tasks', serialized);
-    } catch (error) {
-      console.error('Error saving tasks layout:', error);
+    } catch {
+      // Layout konnte nicht gespeichert werden
     }
   }, []);
 

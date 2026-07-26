@@ -60,8 +60,8 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTi
     try {
       const saved = localStorage.getItem('hse_layout_checkups');
       if (saved) return JSON.parse(saved);
-    } catch (error) {
-      console.error('Error loading checkups layout:', error);
+    } catch {
+      // Layout konnte nicht geladen werden; Standardlayout wird verwendet
     }
     return defaultLayout;
   });
@@ -77,8 +77,8 @@ export function CheckupsSection({ stats, checkUpsStatusData, onEditTile, onAddTi
     lastSavedLayoutRef.current = serialized;
     try {
       localStorage.setItem('hse_layout_checkups', serialized);
-    } catch (error) {
-      console.error('Error saving checkups layout:', error);
+    } catch {
+      // Layout konnte nicht gespeichert werden
     }
   }, []);
 
