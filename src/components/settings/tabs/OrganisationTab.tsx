@@ -128,7 +128,7 @@ export function OrganisationTab({ onNavigateToTab }: Props) {
 
       setMembers(merged);
     } catch (err) {
-      console.error("Error fetching members:", err);
+      // Mitglieder konnten nicht geladen werden
     }
   };
 

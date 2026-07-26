@@ -58,6 +58,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -239,7 +240,7 @@ export default function Investigations() {
       }
       setInvestigations(allRows);
     } catch (error: any) {
-      console.error("Error fetching investigations:", error);
+      // Untersuchungen konnten nicht geladen werden
     }
   };
 
@@ -265,7 +266,7 @@ export default function Investigations() {
       if (error) throw error;
       setEmployees((data as any) || []);
     } catch (error: any) {
-      console.error("Error fetching employees:", error);
+      // Mitarbeiterliste konnte nicht geladen werden
     }
   };
 
@@ -282,7 +283,7 @@ export default function Investigations() {
       if (error) throw error;
       setDepartments(data || []);
     } catch (error: any) {
-      console.error("Error fetching departments:", error);
+      // Abteilungen konnten nicht geladen werden
     }
   };
 
@@ -299,7 +300,7 @@ export default function Investigations() {
       if (error) throw error;
       setExposureGroups(data || []);
     } catch (error: any) {
-      console.error("Error fetching exposure groups:", error);
+      // Expositionsgruppen konnten nicht geladen werden
     }
   };
 
@@ -327,7 +328,7 @@ export default function Investigations() {
       if (error) throw error;
       setHealthCheckups((data as any) || []);
     } catch (error: any) {
-      console.error("Error fetching health checkups:", error);
+      // Untersuchungstermine konnten nicht geladen werden
     }
   };
 
@@ -342,13 +343,12 @@ export default function Investigations() {
         .order("name");
 
       if (error) {
-        console.log("G-Investigations table not created yet");
+        // G-Untersuchungstabelle noch nicht angelegt
         setGInvestigations([]);
         return;
       }
       setGInvestigations(data || []);
     } catch (error) {
-      console.error("Error fetching G-Investigations:", error);
       setGInvestigations([]);
     }
   };
@@ -393,7 +393,7 @@ export default function Investigations() {
         notes:
           [
             investigationData.doctor
-              ? `Doctor: ${investigationData.doctor}`
+              ? `Arzt: ${investigationData.doctor}`
               : null,
             investigationData.description,
             investigationData.findings,
@@ -408,8 +408,6 @@ export default function Investigations() {
         checkupData.due_date = investigationData.due_date;
       }
 
-      console.log("Syncing to health_checkups:", checkupData);
-
       // Check if a health checkup already exists for this investigation
       const { data: existing, error: fetchError } = await supabase
         .from("health_checkups")
@@ -418,42 +416,26 @@ export default function Investigations() {
         .maybeSingle();
 
       if (fetchError && fetchError.code !== "PGRST116") {
-        console.error("Error checking existing health checkup:", fetchError);
         return;
       }
 
       if (existing) {
-        // Update existing health checkup
-        console.log("Updating existing checkup:", existing.id);
         const { error: updateError } = await supabase
           .from("health_checkups")
           .update(checkupData)
           .eq("id", existing.id);
 
-        if (updateError) {
-          console.error("Error updating health checkup:", updateError);
-          throw updateError;
-        } else {
-          console.log("Successfully updated health checkup");
-        }
+        if (updateError) throw updateError;
       } else {
-        // Create new health checkup
-        console.log("Creating new health checkup");
-        const { data: newCheckup, error: insertError } = await supabase
+        const { error: insertError } = await supabase
           .from("health_checkups")
           .insert(checkupData)
           .select()
           .single();
 
-        if (insertError) {
-          console.error("Error creating health checkup:", insertError);
-          throw insertError;
-        } else {
-          console.log("Successfully created health checkup:", newCheckup);
-        }
+        if (insertError) throw insertError;
       }
     } catch (error) {
-      console.error("Error syncing to health checkups:", error);
       throw error;
     }
   };
@@ -550,7 +532,7 @@ export default function Investigations() {
               editingInvestigation.id
             );
           } catch (syncError: any) {
-            console.error("Failed to sync to health checkups:", syncError);
+            // Sync-Fehler wird dem Nutzer über Toast angezeigt
             toast({
               title: "Hinweis",
               description: "Untersuchung aktualisiert, Synchronisierung fehlgeschlagen: " + (syncError.message || "Unbekannter Fehler"),
@@ -598,7 +580,7 @@ export default function Investigations() {
           try {
             await syncToHealthCheckups(investigationData, newInvestigation.id);
           } catch (syncError: any) {
-            console.error("Failed to sync to health checkups:", syncError);
+            // Sync-Fehler wird dem Nutzer über Toast angezeigt
             toast({
               title: "Hinweis",
               description: "Untersuchung erstellt, Synchronisierung fehlgeschlagen: " + (syncError.message || "Unbekannter Fehler"),
@@ -709,8 +691,6 @@ export default function Investigations() {
       setSelectedInvestigations(new Set());
       fetchInvestigations();
     } catch (error: any) {
-      console.error("Error deleting investigations:", error);
-
       const errorMessage = error?.message || error?.details || error?.hint || "Untersuchungen konnten nicht gelöscht werden";
       const errorDetails = error?.code ? ` (Fehlercode: ${error.code})` : "";
 
@@ -769,8 +749,6 @@ export default function Investigations() {
       setSelectedCheckups(new Set());
       fetchHealthCheckups();
     } catch (error: any) {
-      console.error("Error deleting checkups:", error);
-
       const errorMessage = error?.message || error?.details || error?.hint || "G-Untersuchungen konnten nicht gelöscht werden";
       const errorDetails = error?.code ? ` (Fehlercode: ${error.code})` : "";
 
@@ -1517,7 +1495,7 @@ export default function Investigations() {
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
                               {formData.start_date ? (
-                                format(new Date(formData.start_date), "PPP")
+                                format(new Date(formData.start_date), "dd. MMMM yyyy", { locale: de })
                               ) : (
                                 <span>{t("common.pickDate")}</span>
                               )}
@@ -1550,7 +1528,7 @@ export default function Investigations() {
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
                               {formData.due_date ? (
-                                format(new Date(formData.due_date), "PPP")
+                                format(new Date(formData.due_date), "dd. MMMM yyyy", { locale: de })
                               ) : (
                                 <span>{t("common.pickDate")}</span>
                               )}
@@ -1583,7 +1561,7 @@ export default function Investigations() {
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
                               {formData.appointment_date ? (
-                                format(new Date(formData.appointment_date), "PPP")
+                                format(new Date(formData.appointment_date), "dd. MMMM yyyy", { locale: de })
                               ) : (
                                 <span>{t("common.pickDate")}</span>
                               )}
@@ -1723,7 +1701,7 @@ export default function Investigations() {
           {/* Filters */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <p className="col-span-2 md:col-span-4 text-xs text-muted-foreground">
-              Tip: tap non-badge column headers to filter order, or click badges for status, department, and group filters.
+              Tipp: Spaltenüberschriften klicken zum Sortieren, Badges klicken zum Filtern nach Status, Abteilung oder Gruppe.
             </p>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -1795,7 +1773,7 @@ export default function Investigations() {
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {filterDateFrom ? (
-                    format(new Date(filterDateFrom), "PPP")
+                    format(new Date(filterDateFrom), "dd. MMMM yyyy", { locale: de })
                   ) : (
                     <span>{t("investigations.dueDate")}</span>
                   )}
@@ -1819,7 +1797,7 @@ export default function Investigations() {
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {filterDateTo ? (
-                    format(new Date(filterDateTo), "PPP")
+                    format(new Date(filterDateTo), "dd. MMMM yyyy", { locale: de })
                   ) : (
                     <span>{t("investigations.appointmentDate")}</span>
                   )}
@@ -2077,7 +2055,7 @@ export default function Investigations() {
                               onClick={() => navigate(`/employees/${checkup.employee_id}`)}
                             >
                               <Edit className="w-4 h-4 mr-1" />
-                              View Profile
+                              Profil anzeigen
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -2157,7 +2135,7 @@ export default function Investigations() {
                         colSpan={9}
                         className="text-center py-8 text-muted-foreground"
                       >
-                        No health checkups found
+                        Keine G-Untersuchungen gefunden
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -2213,7 +2191,7 @@ export default function Investigations() {
                                 }
                               >
                                 <Edit className="w-4 h-4 mr-1" />
-                                View Profile
+                                Profil anzeigen
                               </Button>
                             </TableCell>
                           </TableRow>

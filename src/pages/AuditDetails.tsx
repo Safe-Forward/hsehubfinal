@@ -99,7 +99,6 @@ export default function AuditDetails() {
 
       if (auditError) throw auditError;
       setAudit(auditData);
-      console.log("Audit loaded:", auditData);
 
       // Fetch checklist items with ISO criteria - ordered by section and subsection numbers
       const { data: itemsData, error: itemsError } = await supabase
@@ -115,15 +114,11 @@ export default function AuditDetails() {
         .eq("audit_id", id);
 
       if (itemsError) throw itemsError;
-      console.log("Checklist items loaded:", itemsData?.length || 0, "items");
-      
+
       // If no checklist items exist, automatically generate them
       if (!itemsData || itemsData.length === 0) {
-        console.log("No checklist items found, generating automatically...");
         await generateChecklistItems(auditData);
       } else {
-        console.log("Sample item:", itemsData?.[0]);
-        
         // Deduplicate by question text to prevent showing duplicate entries
         const seenQuestionTexts = new Set<string>();
         const uniqueItems = itemsData.filter((item: any) => {
@@ -135,8 +130,6 @@ export default function AuditDetails() {
           seenQuestionTexts.add(questionText);
           return true;
         });
-        
-        console.log(`Deduplicated: ${itemsData.length} -> ${uniqueItems.length} items`);
         
         // Sort items by section_number, subsection_number, and sort_order for proper ordering
         const sortedItems = uniqueItems.sort((a: any, b: any) => {
@@ -185,7 +178,6 @@ export default function AuditDetails() {
 
   const generateChecklistItems = async (auditData: any) => {
     if (!auditData?.iso_code) {
-      console.log("No ISO code found for this audit");
       return;
     }
 
@@ -201,8 +193,6 @@ export default function AuditDetails() {
           selectedSections = allSelectedCriteria
             .filter((id: string) => id.startsWith(`${auditData.iso_code}-section-`))
             .map((id: string) => id.replace(`${auditData.iso_code}-section-`, ""));
-          
-          console.log(`Selected sections for ${auditData.iso_code}:`, selectedSections);
         }
       }
 
@@ -235,31 +225,24 @@ export default function AuditDetails() {
       if (error) throw error;
 
       if (!sections || sections.length === 0) {
-        console.log(`No ISO criteria found for ${auditData.iso_code}`);
         toast({
           title: "Keine Kriterien gefunden",
-          description: `Please import ISO criteria for ${auditData.iso_code} in Settings first.`,
+          description: `Keine ISO-Kriterien für ${auditData.iso_code} gefunden. Bitte importieren Sie die ISO-Kriterien in den Einstellungen.`,
           variant: "destructive",
         });
         return;
       }
 
       // Filter sections to only include selected ones
-      console.log("All sections from database:", sections?.map((s: any) => ({ id: s.id, number: s.section_number })));
       let filteredSections = sections;
       if (selectedSections.length > 0) {
         filteredSections = sections.filter((section: any) => {
           const normalized = section.section_number?.toString().trim();
-          const isIncluded = selectedSections.includes(normalized);
-          console.log(`Section ${section.section_number} (normalized: "${normalized}") included?`, isIncluded);
-          return isIncluded;
+          return selectedSections.includes(normalized);
         });
-        console.log(`Filtered to ${filteredSections.length} sections from ${sections.length} total`);
-        console.log("Filtered section numbers:", filteredSections.map((s: any) => s.section_number));
       } else {
         // Keine Auswahl → alle Sektionen nehmen (sinnvolles Default-Verhalten)
         filteredSections = sections;
-        console.log("No criteria selection found, using all sections as default");
       }
 
       // Check for existing checklist items to prevent duplicates
@@ -303,8 +286,6 @@ export default function AuditDetails() {
       });
 
       if (checklistItems.length > 0) {
-        console.log("Inserting", checklistItems.length, "checklist items");
-        
         const { data: insertedData, error: insertError } = await supabase
           .from("audit_checklist_items")
           .insert(checklistItems)
@@ -317,13 +298,8 @@ export default function AuditDetails() {
           `
           );
 
-        if (insertError) {
-          console.error("Error inserting checklist items:", insertError);
-          throw insertError;
-        }
+        if (insertError) throw insertError;
 
-        console.log("Successfully inserted:", insertedData?.length, "items");
-        
         // Directly set the checklist items instead of fetching again to avoid infinite loop
         setChecklistItems(insertedData || []);
         
@@ -342,9 +318,6 @@ export default function AuditDetails() {
         });
       }
     } catch (err: any) {
-      console.error("Error generating checklist:", err);
-      
-      // Provide more detailed error message
       let errorMessage = err.message || "Checkliste konnte nicht generiert werden";
       if (err.code === '42501') {
         errorMessage = "Datenbankberechtigungsfehler. Bitte wenden Sie sich an den Support.";
@@ -497,7 +470,7 @@ export default function AuditDetails() {
       
       toast({
         title: "Alle ausgewählt",
-        description: `Updated ${allUpdates.length} checklist items`,
+        description: `${allUpdates.length} Checklistenpunkte aktualisiert`,
       });
     }).catch(err => {
       toast({
@@ -526,8 +499,8 @@ export default function AuditDetails() {
       doc.text(audit.title || "Audit", 14, 18);
       doc.setFontSize(10);
       doc.text(`ISO: ${audit.iso_code || "-"}`, 14, 25);
-      doc.text(`Scheduled: ${audit.scheduled_date || "-"}`, 70, 25);
-      doc.text(`Progress: ${audit.progress_percentage || 0}%`, 145, 25);
+      doc.text(`Geplant: ${audit.scheduled_date ? new Date(audit.scheduled_date).toLocaleDateString("de-DE") : "-"}`, 70, 25);
+      doc.text(`Fortschritt: ${audit.progress_percentage || 0}%`, 145, 25);
 
       const rows = checklistItems.map((item) => {
         const sectionNumber = item.iso_criteria_sections?.section_number || "";
@@ -680,14 +653,12 @@ export default function AuditDetails() {
                   setExpandedSections(new Set());
                   
                   // Delete ALL existing checklist items for this audit
-                  console.log("Deleting all checklist items for audit:", audit.id);
-                  const { error: deleteError, count } = await supabase
+                  const { error: deleteError } = await supabase
                     .from("audit_checklist_items")
                     .delete()
                     .eq("audit_id", audit.id);
-                  
+
                   if (deleteError) {
-                    console.error("Delete error:", deleteError);
                     toast({
                       title: "Fehler",
                       description: deleteError.message,
@@ -695,9 +666,7 @@ export default function AuditDetails() {
                     });
                     return;
                   }
-                  
-                  console.log("Deleted items, count:", count);
-                  
+
                   // Read selected criteria from localStorage
                   let selectedSections: string[] = [];
                   const storedCriteria = localStorage.getItem(`selectedCriteria_${companyId}`);
@@ -706,9 +675,8 @@ export default function AuditDetails() {
                     selectedSections = allSelectedCriteria
                       .filter((id: string) => id.startsWith(`${audit.iso_code}-section-`))
                       .map((id: string) => id.replace(`${audit.iso_code}-section-`, ""));
-                    console.log("Selected sections from localStorage:", selectedSections);
                   }
-                  
+
                   // Fetch sections with subsections AND questions from database
                   const { data: sections, error: sectionsError } = await supabase
                     .from("iso_criteria_sections")
@@ -732,31 +700,24 @@ export default function AuditDetails() {
                     `)
                     .eq("iso_code", audit.iso_code)
                     .order("section_number");
-                  
-                  if (sectionsError) {
-                    console.error("Sections fetch error:", sectionsError);
-                    throw sectionsError;
-                  }
-                  
+
+                  if (sectionsError) throw sectionsError;
+
                   // Filter sections to only include selected ones
                   let filteredSections = sections || [];
                   if (selectedSections.length > 0) {
-                    filteredSections = sections?.filter((section: any) => 
+                    filteredSections = sections?.filter((section: any) =>
                       selectedSections.includes(section.section_number)
                     ) || [];
-                    console.log(`Using ${filteredSections.length} selected sections from ${sections?.length || 0} total`);
                   } else {
-                    // Keine Auswahl → alle Sektionen nehmen (sinnvolles Default-Verhalten,
-                    // analog zu generateChecklistItems in Audits.tsx/AuditDetails.tsx)
+                    // Keine Auswahl → alle Sektionen nehmen (sinnvolles Default-Verhalten)
                     filteredSections = sections || [];
-                    console.log("No criteria selection found, using all sections as default");
                   }
 
-                  
                   // Create unique checklist items (one per QUESTION, not subsection)
                   const newItems: any[] = [];
                   const seenQuestionIds = new Set<string>();
-                  
+
                   filteredSections.forEach((section: any) => {
                     section.subsections?.forEach((sub: any) => {
                       sub.questions?.forEach((question: any) => {
@@ -775,9 +736,7 @@ export default function AuditDetails() {
                       });
                     });
                   });
-                  
-                  console.log(`Creating ${newItems.length} unique checklist items (after dedup)`);
-                  
+
                   if (newItems.length > 0) {
                     // Insert new items
                     const { data: insertedData, error: insertError } = await supabase
@@ -789,17 +748,12 @@ export default function AuditDetails() {
                         iso_criteria_subsections(subsection_number, title, title_en),
                         iso_criteria_questions(question_text, question_text_en)
                       `);
-                    
-                    if (insertError) {
-                      console.error("Insert error:", insertError);
-                      throw insertError;
-                    }
-                    
-                    console.log(`Successfully inserted ${insertedData?.length} items`);
-                    
+
+                    if (insertError) throw insertError;
+
                     // Set state with new items
                     setChecklistItems(insertedData || []);
-                    
+
                     // Expand all sections
                     const allSectionIds = new Set<string>();
                     insertedData?.forEach((item: any) => {
@@ -807,14 +761,13 @@ export default function AuditDetails() {
                     });
                     setExpandedSections(allSectionIds);
                   }
-                  
+
                   toast({
                     title: "Checkliste neu generiert",
                     description: `${newItems.length} einzigartige Checklistenpunkte erstellt`,
                   });
-                  
+
                 } catch (err: any) {
-                  console.error("Regeneration error:", err);
                   toast({
                     title: "Fehler",
                     description: err.message || "Checkliste konnte nicht neu generiert werden",
@@ -875,19 +828,19 @@ export default function AuditDetails() {
         {/* Checklist Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Audit File Explanation</CardTitle>
+            <CardTitle>{t("audits.checklistTitle") || "Audit-Checkliste"}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b bg-muted/50">
-                    <th className="text-left p-3 font-semibold">Criteria</th>
+                    <th className="text-left p-3 font-semibold">{t("audits.criteria") || "Kriterium"}</th>
                     <th className="text-center p-3 font-semibold w-32">
-                      Implemented
+                      {t("audits.implemented") || "Umgesetzt"}
                     </th>
                     <th className="text-center p-3 font-semibold w-32">
-                      Satisfied
+                      {t("audits.satisfied") || "Erfüllt"}
                     </th>
                   </tr>
                 </thead>
@@ -972,8 +925,8 @@ export default function AuditDetails() {
                                           }
                                         />
                                         {item.notes && (
-                                          <span 
-                                            title="Click to view/edit note"
+                                          <span
+                                            title="Notiz anzeigen/bearbeiten"
                                             className="cursor-pointer hover:opacity-70"
                                             onClick={() => setNotesDialog({
                                               open: true,

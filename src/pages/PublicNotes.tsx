@@ -21,7 +21,7 @@ export default function PublicNotes() {
   useEffect(() => {
     async function loadNotes() {
       if (!token) {
-        setError("Invalid link - no token provided");
+        setError("Ungültiger Link – kein Token angegeben");
         setLoading(false);
         return;
       }
@@ -36,7 +36,7 @@ export default function PublicNotes() {
         });
 
         if (error || data?.error) {
-          setError(data?.error || "Invalid or expired link");
+          setError(data?.error || "Ungültiger oder abgelaufener Link");
           setLoading(false);
           return;
         }
@@ -45,8 +45,7 @@ export default function PublicNotes() {
         setNotes(data.notes || []);
         setLoading(false);
       } catch (err) {
-        console.error("Error loading notes:", err);
-        setError("An error occurred while loading your notes");
+        setError("Beim Laden der Notizen ist ein Fehler aufgetreten");
         setLoading(false);
       }
     }
@@ -59,7 +58,7 @@ export default function PublicNotes() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading your notes...</p>
+          <p className="text-muted-foreground">Notizen werden geladen...</p>
         </div>
       </div>
     );
@@ -70,7 +69,7 @@ export default function PublicNotes() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle className="text-destructive">Access Denied</CardTitle>
+            <CardTitle className="text-destructive">Zugriff verweigert</CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive">
@@ -88,10 +87,10 @@ export default function PublicNotes() {
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-2xl">
-              Welcome, {memberName}!
+              Willkommen, {memberName}!
             </CardTitle>
             <p className="text-muted-foreground mt-2">
-              Here are your notes which are belonging to you
+              Hier sind alle Notizen, in denen Sie erwähnt werden.
             </p>
           </CardHeader>
         </Card>
@@ -101,7 +100,7 @@ export default function PublicNotes() {
             <CardContent className="py-12 text-center">
               <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground">
-                No notes found where you were mentioned.
+                Keine Notizen gefunden, in denen Sie erwähnt werden.
               </p>
             </CardContent>
           </Card>
@@ -119,13 +118,13 @@ export default function PublicNotes() {
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <User className="w-3 h-3" />
-                          <span>From: {note.employee}</span>
+                          <span>Von: {note.employee}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           <span>
                             {new Date(note.timestamp).toLocaleDateString(
-                              "en-US",
+                              "de-DE",
                               {
                                 year: "numeric",
                                 month: "long",

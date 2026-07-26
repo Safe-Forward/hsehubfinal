@@ -419,9 +419,8 @@ export default function Reports() {
           p_details: { count: reports.length, target_ref: "custom_reports" },
           p_company_id: companyId,
         });
-        console.log("✅ Custom reports update log created, count:", reports.length);
-      } catch (auditLogErr) {
-        console.error("❌ Failed to create reports log:", auditLogErr);
+      } catch {
+        // Audit-Log-Fehler nicht nach außen propagieren
       }
     } catch (error) {
       console.error('Error saving custom reports:', error);
@@ -1462,8 +1461,7 @@ export default function Reports() {
 
           return Object.entries(grouped).map(([name, value]) => ({ name, value }));
         } else if (groupBy === "location") {
-          // Employees don't have location field - return empty
-          console.warn("Employees table does not have a location field");
+          // Employees-Tabelle hat kein location-Feld
           return [{ name: t("reports.fallback.noLocationData"), value: 0 }];
         } else if (groupBy === "created_at") {
           let q2 = supabase

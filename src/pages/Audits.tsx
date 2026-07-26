@@ -5,6 +5,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Plus, FileDown, Eye, Trash2, Filter, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -207,16 +208,8 @@ export default function Audits() {
       await generateChecklistItems(auditData.id, formData.iso_code);
 
       // Log audit action
-      console.log("🔵 [AUDIT LOG] Starting audit log creation...");
-      console.log("🔵 [AUDIT LOG] Parameters:", {
-        audit_id: auditData.id,
-        audit_title: formData.title,
-        company_id: companyId,
-        iso_code: formData.iso_code
-      });
-      
       try {
-        const { data: logResult, error: logError } = await supabase.rpc("create_audit_log", {
+        await supabase.rpc("create_audit_log", {
           p_action_type: "create_audit",
           p_target_type: "audit",
           p_target_id: auditData.id,
@@ -228,22 +221,8 @@ export default function Audits() {
           },
           p_company_id: companyId,
         });
-        
-        if (logError) {
-          console.error("❌ [AUDIT LOG] RPC Error:", logError);
-        } else {
-          console.log("✅ [AUDIT LOG] Created! Log ID:", logResult);
-          
-          // Verify the log was created
-          const { data: verifyLog } = await supabase
-            .from("audit_logs")
-            .select("*")
-            .eq("id", logResult)
-            .single();
-          console.log("🔍 [AUDIT LOG] Verification:", verifyLog);
-        }
-      } catch (auditLogErr) {
-        console.error("❌ [AUDIT LOG] Exception:", auditLogErr);
+      } catch {
+        // Audit-Log-Fehler nicht weiterleiten — Hauptaktion war erfolgreich
       }
 
       toast({
@@ -271,22 +250,16 @@ export default function Audits() {
 
   const generateChecklistItems = async (auditId: string, isoCode: string) => {
     try {
-      console.log("Generating checklist for audit:", auditId, "ISO:", isoCode);
-
       // Read selected criteria from localStorage (same as AuditDetails)
       let selectedSections: string[] = [];
       if (companyId) {
         const storedCriteria = localStorage.getItem(`selectedCriteria_${companyId}`);
-        console.log("Raw stored criteria:", storedCriteria);
         if (storedCriteria) {
           const allSelectedCriteria = JSON.parse(storedCriteria);
-          console.log("All selected criteria:", allSelectedCriteria);
           // Filter to get only section IDs for this ISO code
           selectedSections = allSelectedCriteria
             .filter((id: string) => id.startsWith(`${isoCode}-section-`))
             .map((id: string) => id.replace(`${isoCode}-section-`, "").trim());
-
-          console.log(`Selected sections for ${isoCode}:`, selectedSections);
         }
       }
 
@@ -307,13 +280,10 @@ export default function Audits() {
 
       if (error) throw error;
 
-      console.log("Found sections:", sections?.length || 0);
-
       if (!sections || sections.length === 0) {
-        console.warn("No ISO criteria found for:", isoCode);
         toast({
           title: "Hinweis",
-          description: `No ISO criteria found for ${isoCode}. Please import ISO criteria in Settings first.`,
+          description: `Keine ISO-Kriterien für ${isoCode} gefunden. Bitte importieren Sie die ISO-Kriterien zuerst in den Einstellungen.`,
           variant: "destructive",
         });
         return;
@@ -326,11 +296,9 @@ export default function Audits() {
           const normalized = section.section_number?.toString().trim();
           return selectedSections.includes(normalized);
         });
-        console.log(`Filtered to ${filteredSections.length} sections from ${sections.length} total`);
       } else {
         // Keine Auswahl → alle Sektionen nehmen (sinnvolles Default-Verhalten)
         filteredSections = sections;
-        console.log("No criteria selection found, using all sections as default");
       }
 
       // Create checklist items for each question (only from filtered sections)
@@ -351,23 +319,17 @@ export default function Audits() {
         });
       });
 
-      console.log("Creating checklist items:", checklistItems.length);
-
       if (checklistItems.length > 0) {
         const { error: insertError } = await supabase
           .from("audit_checklist_items")
           .insert(checklistItems);
 
         if (insertError) throw insertError;
-        console.log("Checklist items created successfully");
-      } else {
-        console.log("No checklist items to create (no criteria selected or no questions found)");
       }
     } catch (err: any) {
-      console.error("Error generating checklist:", err);
       toast({
         title: "Fehler",
-        description: `Failed to generate checklist: ${err.message}`,
+        description: `Checkliste konnte nicht generiert werden: ${err.message}`,
         variant: "destructive",
       });
     }
@@ -649,7 +611,7 @@ export default function Audits() {
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {formData.scheduled_date ? (
-                        format(new Date(formData.scheduled_date), "PPP")
+                        format(new Date(formData.scheduled_date), "dd. MMMM yyyy", { locale: de })
                       ) : (
                         <span>{t("common.pickDate")}</span>
                       )}

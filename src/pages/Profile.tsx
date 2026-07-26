@@ -72,7 +72,6 @@ export default function Profile() {
           .single();
 
         if (error) {
-          console.error("Error fetching profile:", error);
           toast({
             title: "Fehler",
             description: "Profildaten konnten nicht geladen werden",
@@ -88,8 +87,8 @@ export default function Profile() {
             email: data.email || user.email || "",
           });
         }
-      } catch (error) {
-        console.error("Unexpected error fetching profile:", error);
+      } catch {
+        // Profil konnte nicht geladen werden
       } finally {
         setIsLoadingProfile(false);
       }
@@ -139,7 +138,7 @@ export default function Profile() {
             .eq("employee_id", empId);
 
           if (prefsError) {
-            console.error("Error fetching notification preferences:", prefsError);
+            // Benachrichtigungseinstellungen konnten nicht geladen werden
           }
 
           const prefsMap: Record<string, NotifPref> = {};
@@ -151,8 +150,8 @@ export default function Profile() {
           });
           setNotifPrefs(prefsMap);
         }
-      } catch (error) {
-        console.error("Unexpected error fetching notification preferences:", error);
+      } catch {
+        // Benachrichtigungseinstellungen konnten nicht geladen werden
       } finally {
         setIsLoadingNotifPrefs(false);
       }
@@ -170,7 +169,7 @@ export default function Profile() {
     if (!employeeId || !companyId) {
       toast({
         title: "Fehler",
-        description: "Could not determine your employee record. Preferences cannot be saved.",
+        description: "Kein Mitarbeiterdatensatz gefunden. Einstellungen können nicht gespeichert werden.",
         variant: "destructive",
       });
       return;
@@ -199,7 +198,6 @@ export default function Profile() {
 
       if (error) throw error;
     } catch (error) {
-      console.error("Error updating notification preference:", error);
       toast({
         title: "Fehler",
         description: "Benachrichtigungseinstellung konnte nicht gespeichert werden",
@@ -224,7 +222,6 @@ export default function Profile() {
         .eq("id", user.id);
 
       if (error) {
-        console.error("Error updating profile:", error);
         toast({
           title: "Fehler",
           description: "Profil konnte nicht aktualisiert werden",
@@ -238,8 +235,7 @@ export default function Profile() {
         description: t("profile.updatedDesc"),
       });
       setIsEditing(false);
-    } catch (error) {
-      console.error("Unexpected error updating profile:", error);
+    } catch {
       toast({
         title: "Fehler",
         description: "Ein unerwarteter Fehler ist aufgetreten",

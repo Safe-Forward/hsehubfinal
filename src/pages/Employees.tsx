@@ -70,6 +70,7 @@ import {
   Calendar as CalendarIcon,
 } from "lucide-react";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -161,15 +162,6 @@ export default function Employees() {
   const [isImportGuideDialogOpen, setIsImportGuideDialogOpen] = useState(false);
 
   useEffect(() => {
-    // Debug logging
-    console.log("Employees page - Auth state:", {
-      loading,
-      user: user?.email,
-      userId: user?.id,
-      userRole,
-      companyId,
-    });
-
     if (!loading && !user) {
       navigate("/auth");
       return;
@@ -267,19 +259,8 @@ export default function Employees() {
       return;
     }
 
-    console.log("Submit - Auth state:", {
-      user: user?.email,
-      userRole,
-      companyId,
-    });
-
     if (!companyId) {
       toast.error(t("employees.noCompanyId"));
-      console.error("Missing companyId. User:", user?.email, "Role:", userRole);
-      console.error(
-        "Please check user_roles table in Supabase for user_id:",
-        user?.id
-      );
       return;
     }
 
@@ -354,7 +335,6 @@ export default function Employees() {
       if (error) throw error;
       setEmployeeTasks(data || []);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
       toast.error(t("employees.tasksLoadError"));
     }
   };
@@ -382,7 +362,6 @@ export default function Employees() {
       }
       setEmployeeNotes(parsedNotes);
     } catch (error) {
-      console.error("Error fetching notes:", error);
       toast.error(t("employees.notesLoadError"));
     }
   };
@@ -437,7 +416,6 @@ export default function Employees() {
       const errors = results.filter((r) => r.error);
 
       if (errors.length > 0) {
-        console.error("Some tasks failed:", errors);
         toast.error(t("employees.someTasksFailed"));
       } else {
         const createdTasks = results.map((r) => r.data).filter(Boolean);
@@ -464,7 +442,6 @@ export default function Employees() {
         });
       }
     } catch (error) {
-      console.error("Error creating task:", error);
       toast.error(t("employees.taskCreateError"));
     }
   };
@@ -499,7 +476,6 @@ export default function Employees() {
         details: { previous_status: task.status, new_status: newStatus }
       });
     } catch (error) {
-      console.error("Error updating task:", error);
       toast.error(t("employees.taskUpdateError"));
     }
   };
@@ -586,7 +562,6 @@ export default function Employees() {
       const errors = results.filter((r) => r.error);
 
       if (errors.length > 0) {
-        console.error("Some notes failed:", errors);
         toast.error(t("employees.someNotesFailed"));
       } else {
         setEmployeeNotes([newNoteObj, ...employeeNotes]);
@@ -611,7 +586,6 @@ export default function Employees() {
         });
       }
     } catch (error) {
-      console.error("Error saving note:", error);
       toast.error(t("employees.noteSaveError"));
     }
   };
@@ -642,7 +616,6 @@ export default function Employees() {
         details: { note_id: noteId }
       });
     } catch (error) {
-      console.error("Error deleting note:", error);
       toast.error(t("employees.noteDeleteError"));
     }
   };
@@ -1062,7 +1035,6 @@ export default function Employees() {
 
       fetchEmployees(); // Refresh the list
     } catch (error) {
-      console.error('Import error:', error);
       toast.error(t("employees.importError"));
     } finally {
       setIsImporting(false);
@@ -1076,14 +1048,14 @@ export default function Employees() {
     try {
       const XLSX = await import("xlsx");
       const exportData = filteredEmployees.map(emp => ({
-        'Employee Number': emp.employee_number,
-        'First Name': emp.full_name.split(' ')[0],
-        'Last Name': emp.full_name.split(' ').slice(1).join(' '),
-        'Email': emp.email || '',
-        'Department': emp.departments?.name || '',
-        'Job Role': emp.job_roles?.title || '',
-        'Hire Date': emp.hire_date || '',
-        'Status': emp.is_active ? 'Active' : 'Inactive',
+        'Mitarbeiternummer': emp.employee_number,
+        'Vorname': emp.full_name.split(' ')[0],
+        'Nachname': emp.full_name.split(' ').slice(1).join(' '),
+        'E-Mail': emp.email || '',
+        'Abteilung': emp.departments?.name || '',
+        'Stelle': emp.job_roles?.title || '',
+        'Einstellungsdatum': emp.hire_date || '',
+        'Status': emp.is_active ? 'Aktiv' : 'Inaktiv',
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -1093,7 +1065,6 @@ export default function Employees() {
 
       toast.success(t("employees.exportSuccess"));
     } catch (error) {
-      console.error('Export error:', error);
       toast.error(t("employees.exportError"));
     } finally {
       setIsExporting(false);
@@ -1105,14 +1076,14 @@ export default function Employees() {
     try {
       const XLSX = await import("xlsx");
       const exportData = filteredEmployees.map(emp => ({
-        'Employee Number': emp.employee_number,
-        'First Name': emp.full_name.split(' ')[0],
-        'Last Name': emp.full_name.split(' ').slice(1).join(' '),
-        'Email': emp.email || '',
-        'Department': emp.departments?.name || '',
-        'Job Role': emp.job_roles?.title || '',
-        'Hire Date': emp.hire_date || '',
-        'Status': emp.is_active ? 'Active' : 'Inactive',
+        'Mitarbeiternummer': emp.employee_number,
+        'Vorname': emp.full_name.split(' ')[0],
+        'Nachname': emp.full_name.split(' ').slice(1).join(' '),
+        'E-Mail': emp.email || '',
+        'Abteilung': emp.departments?.name || '',
+        'Stelle': emp.job_roles?.title || '',
+        'Einstellungsdatum': emp.hire_date || '',
+        'Status': emp.is_active ? 'Aktiv' : 'Inaktiv',
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -1125,7 +1096,6 @@ export default function Employees() {
 
       toast.success(t("employees.exportSuccess"));
     } catch (error) {
-      console.error('Export error:', error);
       toast.error(t("employees.exportError"));
     } finally {
       setIsExporting(false);
@@ -1137,25 +1107,25 @@ export default function Employees() {
     try {
       const doc = new jsPDF();
 
-      // Add title
+      // Titel
       doc.setFontSize(16);
-      doc.text('Employee List', 14, 15);
+      doc.text('Mitarbeiterliste', 14, 15);
       doc.setFontSize(10);
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
+      doc.text(`Erstellt: ${new Date().toLocaleDateString("de-DE")}`, 14, 22);
 
-      // Prepare table data
+      // Tabellendaten
       const tableData = filteredEmployees.map(emp => [
         emp.employee_number,
         emp.full_name,
         emp.email || '-',
         emp.departments?.name || '-',
         emp.job_roles?.title || '-',
-        emp.is_active ? 'Active' : 'Inactive',
+        emp.is_active ? 'Aktiv' : 'Inaktiv',
       ]);
 
-      // Generate table
+      // Tabelle generieren
       autoTable(doc, {
-        head: [['Employee #', 'Name', 'Email', 'Department', 'Job Role', 'Status']],
+        head: [['Mitarbeiter-Nr.', 'Name', 'E-Mail', 'Abteilung', 'Stelle', 'Status']],
         body: tableData,
         startY: 28,
         styles: { fontSize: 8 },
@@ -1165,7 +1135,6 @@ export default function Employees() {
       doc.save(`employees_${new Date().toISOString().split('T')[0]}.pdf`);
       toast.success(t("employees.exportSuccess"));
     } catch (error) {
-      console.error('Export error:', error);
       toast.error(t("employees.exportError"));
     } finally {
       setIsExporting(false);
@@ -1279,12 +1248,12 @@ export default function Employees() {
           <Card className="mb-4 border-orange-500 bg-orange-50 dark:bg-orange-950">
             <CardHeader>
               <CardTitle className="text-orange-700 dark:text-orange-300">
-                ⚠️ Company Setup Required
+                ⚠️ Unternehmenseinrichtung erforderlich
               </CardTitle>
               <CardDescription className="text-orange-600 dark:text-orange-400">
-                Your account is not linked to a company. If you just created a
-                company, please <strong>sign out and sign back in</strong> to
-                refresh your session.
+                Ihr Konto ist mit keinem Unternehmen verknüpft. Falls Sie gerade ein
+                Unternehmen erstellt haben, <strong>melden Sie sich ab und wieder an</strong>,
+                um die Sitzung zu aktualisieren.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -1292,14 +1261,13 @@ export default function Employees() {
                 <RefreshAuthButton />
                 <Button
                   onClick={() => {
-                    console.log("Signing out to refresh auth state...");
                     navigate("/auth");
-                    window.location.href = "/auth"; // Force reload
+                    window.location.href = "/auth";
                   }}
                   variant="default"
                   size="sm"
                 >
-                  Sign Out & Refresh
+                  Abmelden & Neu laden
                 </Button>
                 <Button
                   onClick={() => navigate("/setup-company")}
@@ -1307,15 +1275,15 @@ export default function Employees() {
                   size="sm"
                   className="border-orange-600 text-orange-700"
                 >
-                  Set Up Company
+                  Unternehmen einrichten
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Logged in as: {user.email}
+                Angemeldet als: {user.email}
               </p>
               <p className="text-xs text-orange-600 dark:text-orange-400 font-mono">
-                Debug: User ID: {user.id?.substring(0, 8)}... | Company ID:{" "}
-                {companyId?.substring(0, 8) || "null"} | Role:{" "}
+                Diagnose: Benutzer-ID: {user.id?.substring(0, 8)}... | Unternehmens-ID:{" "}
+                {companyId?.substring(0, 8) || "null"} | Rolle:{" "}
                 {userRole || "null"}
               </p>
             </CardContent>
@@ -1453,8 +1421,8 @@ export default function Employees() {
                             setFormData({ ...formData, job_role_id: value })
                           }
                           placeholder={t("employees.jobRolePlaceholder")}
-                          searchPlaceholder="Search or type to create..."
-                          emptyText="No job role found."
+                          searchPlaceholder="Suchen oder neu erstellen..."
+                          emptyText="Keine Rolle gefunden."
                           allowCustom={true}
                           onCreateCustom={async (customRole) => {
                             if (!companyId) return;
@@ -1505,8 +1473,8 @@ export default function Employees() {
                             setFormData({ ...formData, department_id: value })
                           }
                           placeholder={t("employees.departmentPlaceholder")}
-                          searchPlaceholder="Search or type to create..."
-                          emptyText="No department found."
+                          searchPlaceholder="Suchen oder neu erstellen..."
+                          emptyText="Keine Abteilung gefunden."
                           allowCustom={true}
                           onCreateCustom={async (customDept) => {
                             if (!companyId) return;
@@ -1556,7 +1524,7 @@ export default function Employees() {
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
                               {formData.hire_date ? (
-                                format(new Date(formData.hire_date), "PPP")
+                                format(new Date(formData.hire_date), "dd. MMMM yyyy", { locale: de })
                               ) : (
                                 <span>{t("common.pickDate")}</span>
                               )}

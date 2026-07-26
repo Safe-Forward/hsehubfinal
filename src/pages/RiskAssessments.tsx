@@ -23,6 +23,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -552,8 +553,7 @@ export default function RiskAssessments() {
         title: "Erfolg",
         description: "PDF erfolgreich exportiert",
       });
-    } catch (error) {
-      console.error("PDF Export Error:", error);
+    } catch {
       toast({
         title: "Fehler",
         description: "PDF-Export fehlgeschlagen",
@@ -567,7 +567,7 @@ export default function RiskAssessments() {
       toast({
         title: "Keine Firma gefunden",
         description:
-          "You need to set up a company before creating assessments.",
+          "Bitte richten Sie zuerst eine Firma ein, bevor Sie Bewertungen erstellen.",
         variant: "destructive",
       });
       navigate("/setup-company");
@@ -607,8 +607,6 @@ export default function RiskAssessments() {
         status: "open",
         company_id: companyId,
       };
-
-      console.log("Inserting risk assessment with data:", insertData);
 
       if (editingRiskId) {
         // UPDATE mode
@@ -702,7 +700,6 @@ export default function RiskAssessments() {
         fetchData();
       }
     } catch (err: unknown) {
-      console.error("Unexpected error creating risk assessment:", err);
       const e = err as { message?: string } | Error | null;
       const message =
         e && "message" in e && e.message ? e.message : String(err);
@@ -828,7 +825,7 @@ export default function RiskAssessments() {
       };
       if (approvalComment) {
         const existingNotes = selectedRisk.notes || "";
-        updateData.notes = existingNotes + `\n\n[Freigabe ${new Date().toLocaleDateString()}]: ${approvalComment}`;
+        updateData.notes = existingNotes + `\n\n[Freigabe ${new Date().toLocaleDateString("de-DE")}]: ${approvalComment}`;
       }
       const { error } = await (supabase as any)
         .from("risk_assessments")
@@ -850,8 +847,8 @@ export default function RiskAssessments() {
             related_table: "risk_assessments",
           });
         }
-      } catch (notifErr) {
-        console.error("GBU-Freigabe-Notification fehlgeschlagen:", notifErr);
+      } catch {
+        // Notification-Fehler nicht weiterleiten — Hauptaktion war erfolgreich
       }
 
       toast({ title: "Freigegeben", description: "GBU wurde erfolgreich freigegeben." });
@@ -892,8 +889,8 @@ export default function RiskAssessments() {
             related_table: "risk_assessments",
           });
         }
-      } catch (notifErr) {
-        console.error("GBU-Ablehnung-Notification fehlgeschlagen:", notifErr);
+      } catch {
+        // Notification-Fehler nicht weiterleiten — Hauptaktion war erfolgreich
       }
 
       toast({ title: "Abgelehnt", description: "GBU wurde abgelehnt. Ersteller wird informiert." });
@@ -1129,7 +1126,7 @@ export default function RiskAssessments() {
                                   >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {formData.assessment_date ? (
-                                      format(new Date(formData.assessment_date), "PPP")
+                                      format(new Date(formData.assessment_date), "dd. MMMM yyyy", { locale: de })
                                     ) : (
                                       <span>{t("common.pickDate")}</span>
                                     )}
@@ -1670,7 +1667,7 @@ export default function RiskAssessments() {
                                   >
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {formData.assessment_date ? (
-                                      format(new Date(formData.assessment_date), "PPP")
+                                      format(new Date(formData.assessment_date), "dd. MMMM yyyy", { locale: de })
                                     ) : (
                                       <span>Datum auswählen</span>
                                     )}
@@ -1713,7 +1710,7 @@ export default function RiskAssessments() {
                                     setUploadedDocuments(files);
                                     toast({
                                       title: "Dateien ausgewählt",
-                                      description: `${files.length} file(s) selected`,
+                                      description: `${files.length} Datei(en) ausgewählt`,
                                     });
                                   }
                                 }}
@@ -1870,7 +1867,7 @@ export default function RiskAssessments() {
                                         >
                                           <CalendarIcon className="mr-2 h-4 w-4" />
                                           {measure.due_date ? (
-                                            format(new Date(measure.due_date), "PPP")
+                                            format(new Date(measure.due_date), "dd. MMMM yyyy", { locale: de })
                                           ) : (
                                             <span>Datum auswählen</span>
                                           )}
@@ -2221,14 +2218,10 @@ export default function RiskAssessments() {
                                 try {
                                   // Delete associated measures first
                                   if (risk.measures && risk.measures.length > 0) {
-                                    const { error: measuresError } = await supabase
+                                    await supabase
                                       .from("risk_assessment_measures")
                                       .delete()
                                       .eq("risk_assessment_id", risk.id);
-
-                                    if (measuresError) {
-                                      console.error("Error deleting measures:", measuresError);
-                                    }
                                   }
 
                                   // Delete the risk assessment
@@ -2250,8 +2243,7 @@ export default function RiskAssessments() {
                                     });
                                     fetchData();
                                   }
-                                } catch (err) {
-                                  console.error("Error deleting risk assessment:", err);
+                                } catch {
                                   toast({
                                     title: "Fehler",
                                     description: "Ein Fehler ist aufgetreten",
@@ -2383,8 +2375,7 @@ export default function RiskAssessments() {
                         title: "Erfolg",
                         description: "PDF erfolgreich erstellt",
                       });
-                    } catch (error) {
-                      console.error('PDF generation error:', error);
+                    } catch {
                       toast({
                         title: "Fehler",
                         description: "PDF konnte nicht erstellt werden",

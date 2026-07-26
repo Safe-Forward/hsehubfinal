@@ -47,9 +47,9 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
       gbu_review_days: 60,
     },
     risk_matrix_labels: {
-      likelihood: ["Very unlikely", "unlikely", "possible", "probably", "very probably"],
-      severity: ["very low", "low", "medium", "high", "very high"],
-      result: ["low", "medium", "high", "very high"],
+      likelihood: ["Sehr unwahrscheinlich", "Unwahrscheinlich", "Möglich", "Wahrscheinlich", "Sehr wahrscheinlich"],
+      severity: ["Sehr gering", "Gering", "Mittel", "Hoch", "Sehr hoch"],
+      result: ["Gering", "Mittel", "Hoch", "Sehr hoch"],
       colors: { low: "#22c55e", medium: "#f97316", high: "#ef4444", very_high: "#991b1b" },
     },
     gbu_intervals: [24] as number[],
@@ -88,7 +88,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
         .select("*")
         .eq("company_id", companyId)
         .maybeSingle();
-      if (error) { console.warn("Could not load company settings:", error.message); return; }
+      if (error) { return; }
       if (data) {
         setCompanySettings({
           notification_settings: data.notification_settings,
@@ -97,8 +97,8 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
           audit_intervals: data.audit_intervals || [12],
         });
       }
-    } catch (err: any) {
-      console.warn("Could not load company settings:", err.message);
+    } catch {
+      // Unternehmenseinstellungen konnten nicht geladen werden
     }
   };
 
@@ -164,8 +164,8 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
       for (const isoCode of selected) {
         await fetchIsoCriteria(isoCode);
       }
-    } catch (err) {
-      console.error("Error fetching ISO standards:", err);
+    } catch {
+      // ISO-Standards konnten nicht geladen werden
     }
   };
 
@@ -178,8 +178,8 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
         .order("sort_order");
       if (error) throw error;
       setIsoCriteriaData((prev: any) => ({ ...prev, [isoCode]: sections }));
-    } catch (error: any) {
-      console.error("Error fetching ISO criteria:", error);
+    } catch {
+      // ISO-Kriterien konnten nicht geladen werden
     }
   };
 
@@ -197,8 +197,8 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
           await fetchIsoCriteria(isoCode as string);
         }
       }
-    } catch (error: any) {
-      console.error("Error fetching all ISO criteria:", error);
+    } catch {
+      // Alle ISO-Kriterien konnten nicht geladen werden
     }
   };
 
@@ -302,7 +302,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
 
   const handleAddCustomCriterion = async () => {
     if (!activeISOForCriteria || !newCriterionId.trim() || !newCriterionText.trim()) {
-      toast({ title: "Fehler", description: "Please enter both Criterion ID and Title", variant: "destructive" });
+      toast({ title: "Fehler", description: "Bitte Kriterium-ID und Titel eingeben", variant: "destructive" });
       return;
     }
     try {
@@ -315,7 +315,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
         .eq("section_number", sectionNumber)
         .single();
       if (sectionError || !sectionData) {
-        toast({ title: "Fehler", description: "Could not find section for this ISO.", variant: "destructive" });
+        toast({ title: "Fehler", description: "Abschnitt für diesen ISO-Standard nicht gefunden.", variant: "destructive" });
         return;
       }
       const { data: existingSubsections } = await supabase
@@ -369,7 +369,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
     try {
       const { error } = await supabase.from("iso_criteria_subsections").delete().in("id", subsectionIds);
       if (error) throw error;
-      toast({ title: "Gespeichert", description: `${subsectionIds.length} criterion(s) deleted successfully` });
+      toast({ title: "Gespeichert", description: `${subsectionIds.length} Kriterium/Kriterien erfolgreich gelöscht` });
       const isoCode = activeISOForCriteria;
       if (isoCode && isoCriteriaData[isoCode]) {
         const updatedSections = isoCriteriaData[isoCode].map((section: any) => ({
@@ -390,9 +390,9 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl font-bold">Audits &amp; checklists</CardTitle>
+              <CardTitle className="text-2xl font-bold">Audits &amp; Checklisten</CardTitle>
             </div>
-            <Badge className="bg-green-600 text-white hover:bg-green-700 px-4 py-1 text-sm">Active</Badge>
+            <Badge className="bg-green-600 text-white hover:bg-green-700 px-4 py-1 text-sm">Aktiv</Badge>
           </div>
         </CardHeader>
         <CardContent>
@@ -400,7 +400,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
             {/* ISO Selection */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="font-semibold text-base">ISO Selection</h4>
+                <h4 className="font-semibold text-base">ISO-Auswahl</h4>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -417,19 +417,19 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                       toast({ title: "Gespeichert", description: "Alle ISO-Standards ausgewählt und gespeichert" });
                     }}
                   >
-                    Select All
+                    Alle auswählen
                   </Button>
                   <Button
                     variant="default"
                     size="sm"
                     className="bg-green-600 hover:bg-green-700 text-white"
                     onClick={async () => {
-                      toast({ title: "Gespeichert", description: "ISO selection saved successfully" });
+                      toast({ title: "Gespeichert", description: "ISO-Auswahl erfolgreich gespeichert" });
                       await fetchISOStandards();
                     }}
                   >
                     <Save className="w-4 h-4 mr-2" />
-                    Save
+                    Speichern
                   </Button>
                 </div>
               </div>
@@ -449,7 +449,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                         setSelectedISOs([...selectedISOs, iso.id]);
                         setActiveISOForCriteria(iso.id);
                         await fetchIsoCriteria(iso.id);
-                        toast({ title: "ISO Selected", description: `${iso.name} has been activated` });
+                        toast({ title: "ISO aktiviert", description: `${iso.name} wurde aktiviert` });
                       } else {
                         await deleteISOStandard(iso.id);
                         const newSelectedISOs = selectedISOs.filter((id) => id !== iso.id);
@@ -457,7 +457,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                         if (activeISOForCriteria === iso.id) {
                           setActiveISOForCriteria(newSelectedISOs.length > 0 ? newSelectedISOs[0] : null);
                         }
-                        toast({ title: "ISO Deselected", description: `${iso.name} has been deactivated` });
+                        toast({ title: "ISO deaktiviert", description: `${iso.name} wurde deaktiviert` });
                       }
                     }}
                   >
@@ -497,7 +497,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                       className="w-4 h-4 cursor-pointer"
                     />
                     <span className="font-medium">{iso}</span>
-                    <span className="text-sm">active</span>
+                    <span className="text-sm">Aktiv</span>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -519,7 +519,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
             {/* Add Custom ISO */}
             <div className="flex gap-2 max-w-xl">
               <Input
-                placeholder="Add custom ISO"
+                placeholder="Eigenes ISO hinzufügen"
                 value={newCustomISO}
                 onChange={(e) => setNewCustomISO(e.target.value)}
                 onKeyDown={async (e) => {
@@ -543,7 +543,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                Add
+                Hinzufügen
               </Button>
             </div>
           </div>
@@ -557,8 +557,8 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
             {selectedISOs.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No ISO selected</p>
-                <p className="text-sm">Please select an ISO above</p>
+                <p>Kein ISO ausgewählt</p>
+                <p className="text-sm">Bitte oben einen ISO-Standard auswählen</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -653,11 +653,11 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                         if (companyId) {
                           localStorage.setItem(`selectedCriteria_${companyId}`, JSON.stringify(selectedCriteria));
                         }
-                        toast({ title: "Gespeichert", description: `Criteria selection saved (${selectedCriteria.length} items)` });
+                        toast({ title: "Gespeichert", description: `Kriterienauswahl gespeichert (${selectedCriteria.length} Einträge)` });
                       }}
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      Save
+                      Speichern
                     </Button>
                   </div>
                 </div>
@@ -677,7 +677,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                       return (
                         <div className="text-center py-8 text-muted-foreground">
                           <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                          <p>No criteria available for this ISO</p>
+                          <p>Keine Kriterien für diesen ISO-Standard verfügbar</p>
                         </div>
                       );
 
@@ -820,7 +820,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                   })() : (
                     <div className="text-center py-8 text-muted-foreground">
                       <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>Please select an ISO above to view its criteria</p>
+                      <p>Bitte oben einen ISO-Standard auswählen, um die Kriterien anzuzeigen</p>
                     </div>
                   )}
                 </div>
@@ -828,13 +828,13 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                 {/* Add Criterion Inputs */}
                 <div className="flex gap-2 pt-4">
                   <Input
-                    placeholder="Section.Subsection (e.g. 1.8, 3.5)"
+                    placeholder="Abschnitt.Unterabschnitt (z. B. 1.8, 3.5)"
                     className="w-64"
                     value={newCriterionId}
                     onChange={(e) => setNewCriterionId(e.target.value)}
                   />
                   <Input
-                    placeholder="Enter criterion title"
+                    placeholder="Kriterium-Titel eingeben"
                     className="flex-1"
                     value={newCriterionText}
                     onChange={(e) => setNewCriterionText(e.target.value)}
@@ -844,13 +844,13 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                     onClick={handleAddCustomCriterion}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add
+                    Hinzufügen
                   </Button>
                 </div>
 
                 <div className="pt-4 text-sm text-muted-foreground">
-                  <span className="font-semibold">Note:</span>{" "}
-                  Sub-points of the selected criteria are automatically generated as individual checklist items in the audit and can be checked off individually.
+                  <span className="font-semibold">Hinweis:</span>{" "}
+                  Unterpunkte der ausgewählten Kriterien werden im Audit automatisch als einzelne Checklistenpunkte generiert und können einzeln abgehakt werden.
                 </div>
               </div>
             )}
@@ -884,7 +884,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
           <div className="space-y-6 p-6 bg-white rounded-lg border">
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <h4 className="font-medium mb-3">Likelihood</h4>
+                <h4 className="font-medium mb-3">Eintrittswahrscheinlichkeit</h4>
                 <div className="space-y-2">
                   {companySettings.risk_matrix_labels.likelihood.map((label, idx) => (
                     <Input
@@ -904,7 +904,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                 </div>
               </div>
               <div>
-                <h4 className="font-medium mb-3">Severity</h4>
+                <h4 className="font-medium mb-3">Schweregrad</h4>
                 <div className="space-y-2">
                   {companySettings.risk_matrix_labels.severity.map((label, idx) => (
                     <Input
@@ -924,7 +924,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                 </div>
               </div>
               <div>
-                <h4 className="font-medium mb-3">Result</h4>
+                <h4 className="font-medium mb-3">Ergebnis</h4>
                 <div className="space-y-2">
                   {companySettings.risk_matrix_labels.result.map((label, idx) => (
                     <Input
@@ -947,10 +947,10 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
 
             <div className="grid grid-cols-4 gap-4 pt-4 border-t">
               {[
-                { key: "low", label: "Farbe: Niedrig", tag: "low" },
-                { key: "medium", label: "Farbe: Mittel", tag: "medium" },
-                { key: "high", label: "Farbe: Hoch", tag: "high" },
-                { key: "very_high", label: "Farbe: Sehr hoch", tag: "very high" },
+                { key: "low", label: "Farbe: Niedrig", tag: "niedrig" },
+                { key: "medium", label: "Farbe: Mittel", tag: "mittel" },
+                { key: "high", label: "Farbe: Hoch", tag: "hoch" },
+                { key: "very_high", label: "Farbe: Sehr hoch", tag: "sehr hoch" },
               ].map((c) => (
                 <div key={c.key}>
                   <label className="text-sm mb-2 block">
@@ -984,9 +984,9 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5" />
-                Risk Assessment Intervals
+                Gefährdungsbeurteilungs-Intervalle
               </CardTitle>
-              <CardDescription>Set up recurring risk assessment schedules</CardDescription>
+              <CardDescription>Wiederkehrende Gefährdungsbeurteilungs-Zeitpläne festlegen</CardDescription>
             </div>
             <Button
               size="sm"
@@ -1003,15 +1003,15 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
           <div className="space-y-4">
             <div>
               <h4 className="font-medium mb-3">Prüfintervalle &amp; Fälligkeiten</h4>
-              <p className="text-sm text-muted-foreground mb-4">Define one or more interval options for GBU and Audits.</p>
+              <p className="text-sm text-muted-foreground mb-4">Einen oder mehrere Intervalloptionen für GBU und Audits festlegen.</p>
 
               {/* GBU Intervals */}
               <div className="mb-4">
-                <Label className="mb-2 block">GBU intervals (months)</Label>
+                <Label className="mb-2 block">GBU-Intervalle (Monate)</Label>
                 <div className="flex gap-2 mb-2 flex-wrap">
                   {companySettings.gbu_intervals.map((interval, idx) => (
                     <div key={`gbu-${idx}`} className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
-                      <span className="text-sm">{interval} mo</span>
+                      <span className="text-sm">{interval} Mo.</span>
                       <button
                         className="text-muted-foreground hover:text-foreground"
                         onClick={() => {
@@ -1026,7 +1026,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                 </div>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="e.g. 12"
+                    placeholder="z. B. 12"
                     type="number"
                     className="max-w-[200px]"
                     value={newGbuInterval}
@@ -1052,18 +1052,18 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                     }}
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Add
+                    Hinzufügen
                   </Button>
                 </div>
               </div>
 
               {/* Audit Intervals */}
               <div>
-                <Label className="mb-2 block">Audit intervals (months)</Label>
+                <Label className="mb-2 block">Audit-Intervalle (Monate)</Label>
                 <div className="flex gap-2 mb-2 flex-wrap">
                   {companySettings.audit_intervals.map((interval, idx) => (
                     <div key={`audit-${idx}`} className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md">
-                      <span className="text-sm">{interval} mo</span>
+                      <span className="text-sm">{interval} Mo.</span>
                       <button
                         className="text-muted-foreground hover:text-foreground"
                         onClick={() => {
@@ -1078,7 +1078,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                 </div>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="e.g. 12"
+                    placeholder="z. B. 12"
                     type="number"
                     className="max-w-[200px]"
                     value={newAuditInterval}
@@ -1104,7 +1104,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                     }}
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    Add
+                    Hinzufügen
                   </Button>
                 </div>
               </div>
@@ -1120,9 +1120,9 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="w-5 h-5" />
-                Notification Logic
+                Benachrichtigungslogik
               </CardTitle>
-              <CardDescription>Set up automated notifications and reminders</CardDescription>
+              <CardDescription>Automatische Benachrichtigungen und Erinnerungen einrichten</CardDescription>
             </div>
             <Button
               size="sm"
@@ -1139,14 +1139,14 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
           <div className="space-y-4">
             <div>
               <h4 className="font-medium mb-3">Benachrichtigungslogik</h4>
-              <p className="text-sm text-muted-foreground mb-4">Define reminders in days before due dates</p>
+              <p className="text-sm text-muted-foreground mb-4">Erinnerungen in Tagen vor dem Fälligkeitsdatum festlegen</p>
               <div className="grid grid-cols-2 gap-6">
                 {[
-                  { key: "examinations_days", label: "Examinations (days before)" },
-                  { key: "measures_days", label: "Measures (days before)" },
-                  { key: "qualifications_days", label: "Qualifications (days before)" },
-                  { key: "audits_days", label: "Audits (days before)" },
-                  { key: "gbu_review_days", label: "GBU review (days before)" },
+                  { key: "examinations_days", label: "Untersuchungen (Tage vorher)" },
+                  { key: "measures_days", label: "Maßnahmen (Tage vorher)" },
+                  { key: "qualifications_days", label: "Qualifikationen (Tage vorher)" },
+                  { key: "audits_days", label: "Audits (Tage vorher)" },
+                  { key: "gbu_review_days", label: "GBU-Überprüfung (Tage vorher)" },
                 ].map((item) => (
                   <div key={item.key}>
                     <Label className="mb-2 block">{item.label}</Label>

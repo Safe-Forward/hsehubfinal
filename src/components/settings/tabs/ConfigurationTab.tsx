@@ -67,7 +67,7 @@ import {
 } from "@/components/ui/tooltip";
 
 const baseSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name ist erforderlich"),
   description: z.string().optional(),
 });
 

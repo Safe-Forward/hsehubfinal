@@ -54,19 +54,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 const baseSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name ist erforderlich"),
   description: z.string().optional(),
 });
 
 const PREDEFINED_HAZARD_CATEGORIES = [
-  "Mechanical", "Electrical", "Chemical", "Biological", "Ergonomic",
-  "Physical", "Psychosocial", "Fire/Explosion", "Environmental", "Other",
+  "Mechanisch", "Elektrisch", "Chemisch", "Biologisch", "Ergonomisch",
+  "Physikalisch", "Psychosozial", "Brand/Explosion", "Umwelt", "Sonstiges",
 ];
 
 const PREDEFINED_MEASURE_BUILDING_BLOCKS = [
-  "Elimination", "Substitution", "Engineering Controls", "Administrative Controls",
-  "Personal Protective Equipment (PPE)", "Training", "Supervision", "Maintenance",
-  "Emergency Procedures", "Other",
+  "Beseitigung", "Substitution", "Technische Maßnahmen", "Organisatorische Maßnahmen",
+  "Persönliche Schutzausrüstung (PSA)", "Schulung", "Aufsicht", "Instandhaltung",
+  "Notfallverfahren", "Sonstiges",
 ];
 
 interface Props {
@@ -271,14 +271,14 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Kategorie</TableHead>
+                    <TableHead>Typ</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {riskCategories
-                    .filter((c) => !["Low", "Medium", "High", "Very High"].includes(c.name))
+                    .filter((c) => !["Low", "Medium", "High", "Very High", "Niedrig", "Mittel", "Hoch", "Sehr hoch"].includes(c.name))
                     .map((cat) => (
                       <TableRow key={cat.id}>
                         <TableCell className="font-medium">{cat.name}</TableCell>
@@ -324,7 +324,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
               {t("settings.measureBuildingBlocks")}
             </CardTitle>
             <Button variant="outline" size="sm" onClick={loadPredefinedMeasureBuildingBlocks}>
-              Load Predefined Values
+              Vordefinierte Werte laden
             </Button>
           </div>
           <CardDescription>{t("settings.measureBuildingBlocksDesc")}</CardDescription>
@@ -333,7 +333,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Enter measure building block name..."
+                placeholder="Name des Maßnahmen-Bausteins eingeben..."
                 onKeyDown={async (e) => {
                   if (e.key === "Enter") {
                     const input = e.currentTarget;
@@ -345,7 +345,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                       if (error) {
                         toast({ title: "Fehler", description: error.message, variant: "destructive" });
                       } else {
-                        toast({ title: "Gespeichert", description: `Measure building block "${value}" added` });
+                        toast({ title: "Gespeichert", description: `Maßnahmen-Baustein „${value}" hinzugefügt` });
                         input.value = "";
                         fetchAllData();
                       }
@@ -364,7 +364,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                     if (error) {
                       toast({ title: "Fehler", description: error.message, variant: "destructive" });
                     } else {
-                      toast({ title: "Gespeichert", description: `Measure building block "${value}" added` });
+                      toast({ title: "Gespeichert", description: `Maßnahmen-Baustein „${value}" hinzugefügt` });
                       if (input) input.value = "";
                       fetchAllData();
                     }
@@ -372,11 +372,11 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                 }}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add
+                Hinzufügen
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Add reusable measure templates like Elimination, Substitution, Engineering Controls, etc.
+              Wiederverwendbare Maßnahmen-Vorlagen hinzufügen, z.&nbsp;B. Beseitigung, Substitution, Technische Maßnahmen usw.
             </p>
 
             <div className="rounded-md border">
@@ -391,7 +391,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                   {measureBuildingBlocks.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={2} className="text-center py-8 text-muted-foreground">
-                        No measure building blocks found. Add your first block above.
+                        Keine Maßnahmen-Bausteine gefunden. Füge oben deinen ersten Baustein hinzu.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -413,7 +413,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                                 if (error) {
                                   toast({ title: "Fehler", description: error.message, variant: "destructive" });
                                 } else {
-                                  toast({ title: "Gespeichert", description: "Measure building block deleted" });
+                                  toast({ title: "Gespeichert", description: "Maßnahmen-Baustein gelöscht" });
                                   fetchAllData();
                                 }
                               }}
@@ -442,9 +442,9 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit" : "Add"} Item</DialogTitle>
+            <DialogTitle>{editingItem ? "Bearbeiten" : "Hinzufügen"}</DialogTitle>
             <DialogDescription>
-              {editingItem ? "Update the details below." : "Create a new item."}
+              {editingItem ? "Daten unten aktualisieren." : "Neuen Eintrag erstellen."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -456,7 +456,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                   <FormItem>
                     <FormLabel>Name *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter name" />
+                      <Input {...field} placeholder="Name eingeben" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -467,17 +467,17 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormLabel>Beschreibung (optional)</FormLabel>
                     <FormControl>
-                      <Textarea {...field} rows={3} placeholder="Add additional details..." />
+                      <Textarea {...field} rows={3} placeholder="Weitere Details hinzufügen..." />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={handleDialogClose}>Cancel</Button>
-                <Button type="submit">{editingItem ? "Update" : "Create"}</Button>
+                <Button type="button" variant="outline" onClick={handleDialogClose}>Abbrechen</Button>
+                <Button type="submit">{editingItem ? "Aktualisieren" : "Erstellen"}</Button>
               </div>
             </form>
           </Form>
@@ -488,18 +488,18 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
       <AlertDialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Bist du sicher?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{deleteItem?.name || deleteItem?.title}". This action cannot be undone.
+              Dadurch wird „{deleteItem?.name || deleteItem?.title}" dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Löschen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

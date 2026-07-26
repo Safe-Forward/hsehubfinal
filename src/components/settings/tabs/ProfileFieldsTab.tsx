@@ -116,7 +116,7 @@ export function ProfileFieldsTab({ onNavigateToTab }: Props) {
         setTemplateFields([]);
       }
     } catch (err) {
-      console.error("Error fetching profile field templates:", err);
+      // Profilfeld-Vorlagen konnten nicht geladen werden
     }
   };
 
@@ -131,7 +131,7 @@ export function ProfileFieldsTab({ onNavigateToTab }: Props) {
       if (error) throw error;
       setTemplateFields(data || []);
     } catch (err) {
-      console.error("Error fetching template fields:", err);
+      // Vorlagenfelder konnten nicht geladen werden
       setTemplateFields([]);
     }
   };
@@ -174,7 +174,7 @@ export function ProfileFieldsTab({ onNavigateToTab }: Props) {
       }
       toast({
         title: t("settings.success"),
-        description: editingTemplate ? "Template updated successfully" : "Template added successfully",
+        description: editingTemplate ? "Vorlage erfolgreich aktualisiert" : "Vorlage erfolgreich hinzugefügt",
       });
       await fetchProfileFieldTemplates();
       closeTemplateDialog();
@@ -451,15 +451,15 @@ export function ProfileFieldsTab({ onNavigateToTab }: Props) {
       <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle>{editingTemplate ? "Edit Template" : "Add Template"}</DialogTitle>
-            <DialogDescription>Create and manage profile field templates.</DialogDescription>
+            <DialogTitle>{editingTemplate ? "Vorlage bearbeiten" : "Vorlage hinzufügen"}</DialogTitle>
+            <DialogDescription>Profilfeld-Vorlagen erstellen und verwalten.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label htmlFor="template-name">Template name</Label>
+              <Label htmlFor="template-name">Vorlagenname</Label>
               <Input
                 id="template-name"
-                placeholder="e.g. Driver Template"
+                placeholder="z. B. Fahrer-Vorlage"
                 value={templateForm.name}
                 onChange={(event) => setTemplateForm({ name: event.target.value })}
               />
@@ -488,7 +488,7 @@ export function ProfileFieldsTab({ onNavigateToTab }: Props) {
               </Label>
               <Input
                 id="profile-field-name"
-                placeholder="e.g. license_type"
+                placeholder="z. B. führerschein_klasse"
                 value={profileFieldForm.fieldName}
                 onChange={(event) =>
                   setProfileFieldForm((prev) => ({ ...prev, fieldName: event.target.value }))
@@ -497,7 +497,7 @@ export function ProfileFieldsTab({ onNavigateToTab }: Props) {
                 className={editingProfileField ? "opacity-50" : ""}
               />
               {editingProfileField && (
-                <p className="text-xs text-muted-foreground mt-1">Field name cannot be changed after creation</p>
+                <p className="text-xs text-muted-foreground mt-1">Feldname kann nach der Erstellung nicht mehr geändert werden</p>
               )}
             </div>
             <div>
@@ -506,7 +506,7 @@ export function ProfileFieldsTab({ onNavigateToTab }: Props) {
               </Label>
               <Input
                 id="profile-field-label"
-                placeholder="e.g. Driving license"
+                placeholder="z. B. Führerschein"
                 value={profileFieldForm.fieldLabel}
                 onChange={(event) =>
                   setProfileFieldForm((prev) => ({ ...prev, fieldLabel: event.target.value }))

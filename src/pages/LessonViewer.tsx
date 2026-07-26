@@ -260,8 +260,8 @@ export default function LessonViewer() {
         // Lektion als abgeschlossen markieren
         await handleCompleteLesson(true);
       }
-    } catch (err: any) {
-      console.error("Fehler beim Speichern des Quiz-Ergebnisses:", err);
+    } catch {
+      // Quiz-Ergebnis konnte nicht gespeichert werden
     } finally {
       setSubmittingQuiz(false);
     }
@@ -354,7 +354,7 @@ export default function LessonViewer() {
     doc.setTextColor(30, 78, 137); doc.setFontSize(32); doc.setFont("helvetica", "bold");
     doc.text("ZERTIFIKAT", width / 2, 72, { align: "center" });
     doc.setFontSize(14); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100);
-    doc.text("Hiermit wird bestaetigt, dass", width / 2, 88, { align: "center" });
+    doc.text("Hiermit wird bestätigt, dass", width / 2, 88, { align: "center" });
     doc.setFontSize(28); doc.setFont("helvetica", "bold"); doc.setTextColor(15, 41, 66);
     doc.text(userName, width / 2, 108, { align: "center" });
     doc.setDrawColor(34, 197, 94); doc.setLineWidth(1.5);
@@ -372,7 +372,7 @@ export default function LessonViewer() {
     doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.5);
     doc.line(40, 188, 110, 188); doc.setFontSize(10); doc.setTextColor(100, 100, 100);
     doc.text("Safe-Forward GmbH", 75, 194, { align: "center" });
-    doc.setFontSize(9); doc.text("Geschaeftsfuehrung", 75, 200, { align: "center" });
+    doc.setFontSize(9); doc.text("Geschäftsführung", 75, 200, { align: "center" });
     doc.line(width - 110, 188, width - 40, 188); doc.setFontSize(10);
     doc.text("HSE Hub", width - 75, 194, { align: "center" });
     doc.setFontSize(9); doc.text("Schulungsplattform", width - 75, 200, { align: "center" });
@@ -672,7 +672,7 @@ export default function LessonViewer() {
                               className="bg-gradient-to-r from-green-600 to-green-700"
                             >
                               {submittingQuiz ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
-                              Quiz abschliessen
+                              Quiz abschließen
                             </Button>
                           )}
                         </div>
@@ -823,7 +823,7 @@ export default function LessonViewer() {
                   ) : (
                     <div className="aspect-video bg-black rounded-lg overflow-hidden">
                       <video src={lesson.content_url} controls preload="auto" className="w-full h-full">
-                        Ihr Browser unterstuetzt kein Video.
+                        Ihr Browser unterstützt kein Video.
                       </video>
                     </div>
                   )}
@@ -845,7 +845,7 @@ export default function LessonViewer() {
                       <FileText className="w-4 h-4 mr-2" />PDF herunterladen
                     </Button>
                     <Button variant="default" size="sm" onClick={() => window.open(lesson.content_url!, "_blank", "noopener,noreferrer")}>
-                      In neuem Tab oeffnen
+                      In neuem Tab öffnen
                     </Button>
                   </div>
                   <object data={lesson.content_url} type="application/pdf" className="w-full rounded-lg border-2 border-gray-300" style={{ height: "800px" }}>
@@ -866,7 +866,7 @@ export default function LessonViewer() {
               {!lesson.content_url && !lesson.content_data?.text_content && (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                  <p>Kein Inhalt verfuegbar.</p>
+                  <p>Kein Inhalt verfügbar.</p>
                 </div>
               )}
             </CardContent>
@@ -889,7 +889,7 @@ export default function LessonViewer() {
               )}
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium">{completed ? "Lektion bereits abgeschlossen" : "Lektion abschliessen"}</p>
+                  <p className="font-medium">{completed ? "Lektion bereits abgeschlossen" : "Lektion abschließen"}</p>
                   <p className="text-sm text-muted-foreground">
                     {completed ? "Du hast diese Lektion erfolgreich abgeschlossen." : "Markiere diese Lektion als abgeschlossen."}
                   </p>
@@ -911,7 +911,7 @@ export default function LessonViewer() {
                   <div className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-amber-500" />
                     <div>
-                      <p className="text-sm font-medium">Zertifikat verfuegbar</p>
+                      <p className="text-sm font-medium">Zertifikat verfügbar</p>
                       <p className="text-xs text-muted-foreground">Nr. {certificate.certificate_number}</p>
                     </div>
                   </div>
@@ -927,7 +927,7 @@ export default function LessonViewer() {
         {/* Navigation */}
         <div className="flex justify-between mt-6">
           <Button variant="outline" onClick={() => navigate(`/training/${courseId}`)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />Zurueck zum Kurs
+            <ArrowLeft className="w-4 h-4 mr-2" />Zurück zum Kurs
           </Button>
           {!isAdmin && lesson.type !== "quiz" && (() => {
             const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
@@ -935,7 +935,7 @@ export default function LessonViewer() {
             if (!nextLesson) return null;
             return (
               <Button onClick={() => navigate(`/training/${courseId}/lesson/${nextLesson.id}/view`)} className="bg-gradient-to-r from-blue-600 to-blue-700">
-                Naechste Lektion<ChevronRight className="w-4 h-4 ml-2" />
+                Nächste Lektion<ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             );
           })()}

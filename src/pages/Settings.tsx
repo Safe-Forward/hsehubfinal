@@ -124,7 +124,7 @@ import { Badge } from "@/components/ui/badge";
 
 
 const baseSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, "Name ist erforderlich"),
   description: z.string().optional(),
 });
 
@@ -403,7 +403,6 @@ const fetchCompanySettings = async () => {
       .maybeSingle();
 
     if (error) {
-      console.warn("Could not load company settings:", error.message);
       return;
     }
 
@@ -416,8 +415,8 @@ const fetchCompanySettings = async () => {
       });
       if (data.org_type) setOrgType(data.org_type as 'linie' | 'matrix');
     }
-  } catch (err: any) {
-    console.warn("Could not load company settings:", err.message);
+  } catch {
+    // Unternehmenseinstellungen konnten nicht geladen werden
   }
 };
 
@@ -500,12 +499,11 @@ const handleUpdateManager = async (
         .limit(4);
 
       if (error) {
-        console.error("Error fetching recent invoices:", error);
         return;
       }
       setRecentInvoices(data || []);
-    } catch (err) {
-      console.error("Error fetching recent invoices:", err);
+    } catch {
+      // Rechnungen konnten nicht geladen werden
     }
   };
 
@@ -522,15 +520,14 @@ const handleUpdateManager = async (
         .maybeSingle();
 
       if (error) {
-        // Table might not exist yet — silently skip
-        console.warn("API token table may not exist:", error.message);
+        // Tabelle existiert möglicherweise noch nicht — still überspringen
         return;
       }
       if (data?.token) {
         setApiToken(data.token);
       }
-    } catch (err) {
-      console.warn("Could not load API token:", err);
+    } catch {
+      // API-Token konnte nicht geladen werden
     }
   };
 
@@ -590,12 +587,12 @@ const handleUpdateManager = async (
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.warn("External systems table may not exist:", error.message);
+        // Tabelle existiert möglicherweise noch nicht — still überspringen
         return;
       }
       setExternalSystems(data || []);
-    } catch (err) {
-      console.warn("Could not load external systems:", err);
+    } catch {
+      // Externe Systeme konnten nicht geladen werden
     }
   };
 
@@ -867,8 +864,8 @@ const handleUpdateManager = async (
 
       if (error) throw error;
       setTeamMembers(data || []);
-    } catch (err: unknown) {
-      console.error("Error fetching team members:", err);
+    } catch {
+      // Teammitglieder konnten nicht geladen werden
     }
   };
 
@@ -914,8 +911,8 @@ const handleUpdateManager = async (
           setSelectedRoleForEdit(mappedRoles[0]);
         }
       }
-    } catch (err: unknown) {
-      console.error("Error fetching custom roles:", err);
+    } catch {
+      // Benutzerdefinierte Rollen konnten nicht geladen werden
     } finally {
       setIsRolesLoading(false);
     }
@@ -947,8 +944,8 @@ const handleUpdateManager = async (
       }));
 
       setApprovalWorkflows(formatted);
-    } catch (err: unknown) {
-      console.error("Error fetching approval workflows:", err);
+    } catch {
+      // Genehmigungsworkflows konnten nicht geladen werden
     }
   };
 
@@ -979,8 +976,8 @@ const handleUpdateManager = async (
       } else {
         setTemplateFields([]);
       }
-    } catch (err: unknown) {
-      console.error("Error fetching profile field templates:", err);
+    } catch {
+      // Profilfeld-Vorlagen konnten nicht geladen werden
     }
   };
 
@@ -996,8 +993,8 @@ const handleUpdateManager = async (
 
       if (error) throw error;
       setTemplateFields(data || []);
-    } catch (err: unknown) {
-      console.error("Error fetching template fields:", err);
+    } catch {
+      // Vorlagenfelder konnten nicht geladen werden
       setTemplateFields([]);
     }
   };
@@ -1014,8 +1011,6 @@ const handleUpdateManager = async (
 
       if (error) throw error;
 
-      console.log("Fetched ISO standards from DB:", data);
-
       const selected: string[] = [];
       const custom: string[] = [];
 
@@ -1025,8 +1020,6 @@ const handleUpdateManager = async (
           custom.push(iso.iso_code);
         }
       });
-
-      console.log("Selected ISOs:", selected);
       setSelectedISOs(selected);
       setCustomISOs(custom);
 
@@ -1043,23 +1036,17 @@ const handleUpdateManager = async (
         try {
           const parsedCriteria = JSON.parse(savedCriteria);
           setSelectedCriteria(parsedCriteria);
-          console.log(
-            "Loaded selected criteria from localStorage:",
-            parsedCriteria.length,
-            "items"
-          );
         } catch (e) {
-          console.error("Error parsing saved criteria:", e);
+          // Ungültige gespeicherte Kriterien ignorieren
         }
       }
 
       // Fetch criteria for each selected ISO
       for (const isoCode of selected) {
-        console.log("Fetching criteria for:", isoCode);
         await fetchIsoCriteria(isoCode);
       }
-    } catch (err: unknown) {
-      console.error("Error fetching ISO standards:", err);
+    } catch {
+      // ISO-Standards konnten nicht geladen werden
     }
   };
 
@@ -1073,8 +1060,7 @@ const handleUpdateManager = async (
         .eq("company_id", companyId);
 
       if (error) {
-        console.log("G-Investigations not found, table may not exist yet");
-        setSelectedGInvestigations([]);
+          setSelectedGInvestigations([]);
         return;
       }
 
@@ -1088,8 +1074,8 @@ const handleUpdateManager = async (
         return name;
       });
       setSelectedGInvestigations(selected);
-    } catch (err: unknown) {
-      console.error("Error fetching G-Investigations:", err);
+    } catch {
+      // G-Untersuchungen konnten nicht geladen werden
       setSelectedGInvestigations([]);
     }
   };
@@ -1252,8 +1238,8 @@ const handleUpdateManager = async (
 
       if (error) throw error;
       setMyTickets(data || []);
-    } catch (err: any) {
-      console.error("Error fetching tickets:", err);
+    } catch {
+      // Tickets konnten nicht geladen werden
     }
   };
 
@@ -1552,7 +1538,7 @@ const handleUpdateManager = async (
 
       toast({
         title: t("settings.toast.savedTitle"),
-        description: `${t("settings.toast.roleUpdatedDesc")} ${oldRole} ${language === "de" ? "zu" : "to"} ${newRole}`,
+        description: `${t("settings.toast.roleUpdatedDesc")} ${oldRole} zu ${newRole}`,
       });
 
       // Create audit log
@@ -1591,13 +1577,6 @@ const handleUpdateManager = async (
   };
 
   const onSubmit = async (data: unknown) => {
-    console.log(
-      "onSubmit called with data:",
-      data,
-      "currentTableName:",
-      currentTableName
-    );
-
     if (!companyId || !currentTableName) {
       toast({
         title: t("settings.toast.errorTitle"),
@@ -1830,7 +1809,6 @@ const handleUpdateManager = async (
       // Refresh the criteria data
       await fetchIsoCriteria(isoCode);
     } catch (error: any) {
-      console.error("Error importing ISO criteria:", error);
       toast({
         title: t("settings.toast.errorTitle"),
         description: error.message || t("settings.toast.isoCriteriaImportFailedDesc"),
@@ -1864,8 +1842,8 @@ const handleUpdateManager = async (
         ...prev,
         [isoCode]: sections,
       }));
-    } catch (error: any) {
-      console.error("Error fetching ISO criteria:", error);
+    } catch {
+      // ISO-Kriterien konnten nicht geladen werden
     }
   };
 
@@ -1939,7 +1917,6 @@ const handleUpdateManager = async (
       // Refresh the criteria data
       await fetchIsoCriteria(activeISOForCriteria);
     } catch (error: any) {
-      console.error("Error adding custom criterion:", error);
       toast({
         title: t("settings.toast.errorTitle"),
         description: error.message || t("settings.toast.criterionAddFailedDesc"),
@@ -1960,9 +1937,7 @@ const handleUpdateManager = async (
         .eq("id", subsectionId)
         .select();
 
-      console.log("Delete result:", { data, error, count, subsectionId });
-
-      if (error) throw error;
+        if (error) throw error;
 
       toast({
         title: t("settings.toast.savedTitle"),
@@ -1990,7 +1965,6 @@ const handleUpdateManager = async (
         }));
       }
     } catch (error: any) {
-      console.error("Error deleting criterion:", error);
       toast({
         title: t("settings.toast.errorTitle"),
         description: error.message || t("settings.toast.criterionDeleteFailedDesc"),
@@ -2037,7 +2011,6 @@ const handleUpdateManager = async (
         }));
       }
     } catch (error: any) {
-      console.error("Error deleting criteria:", error);
       toast({
         title: t("settings.toast.errorTitle"),
         description: error.message || t("settings.toast.criteriaDeleteFailedDesc"),
@@ -2116,7 +2089,6 @@ const handleUpdateManager = async (
       // Refresh the criteria data
       await fetchIsoCriteria(activeISOForCriteria);
     } catch (error: any) {
-      console.error("Error deleting section:", error);
       toast({
         title: t("settings.toast.errorTitle"),
         description: error.message || t("settings.toast.sectionDeleteFailedDesc"),
@@ -2151,8 +2123,8 @@ const handleUpdateManager = async (
           await fetchIsoCriteria(isoCode as string);
         }
       }
-    } catch (error: any) {
-      console.error("Error fetching all ISO criteria:", error);
+    } catch {
+      // Alle ISO-Kriterien konnten nicht geladen werden
     }
   };
 
@@ -2205,7 +2177,6 @@ const handleUpdateManager = async (
       // Refresh the data
       await fetchAllIsoCriteria();
     } catch (error: any) {
-      console.error("Error updating English translations:", error);
       toast({
         title: t("settings.toast.errorTitle"),
         description: error.message || t("settings.toast.englishTranslationsFailedDesc"),
@@ -2333,7 +2304,6 @@ const handleUpdateManager = async (
       // Refresh the data
       await fetchAllIsoCriteria();
     } catch (error: any) {
-      console.error("Error adding German translations:", error);
       toast({
         title: t("settings.toast.errorTitle"),
         description: error.message || t("settings.toast.germanTranslationsFailedDesc"),
@@ -3048,8 +3018,7 @@ const handleUpdateManager = async (
           <div>
             <CardTitle>{title}</CardTitle>
             <CardDescription>
-              Manage {title.toLowerCase()} - Used across the system in dropdown
-              menus
+              {title} verwalten – werden systemweit in Dropdown-Menüs verwendet
             </CardDescription>
           </div>
           <Dialog
@@ -3067,28 +3036,22 @@ const handleUpdateManager = async (
               <Button
                 onClick={() => {
                   const tableName = getTableName(title);
-                  console.log(
-                    "Opening dialog for table:",
-                    tableName,
-                    "with title:",
-                    title
-                  );
                   setCurrentTableName(tableName);
                 }}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add {title.slice(0, -1)}
+                Hinzufügen
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editingItem ? "Edit" : "Add"} {title.slice(0, -1)}
+                  {editingItem ? "Bearbeiten" : "Hinzufügen"}
                 </DialogTitle>
                 <DialogDescription>
                   {editingItem
-                    ? "Update the details below to modify this item."
-                    : "Create a new item that will be available in dropdown menus throughout the system."}
+                    ? "Daten unten aktualisieren, um diesen Eintrag zu bearbeiten."
+                    : "Neuen Eintrag erstellen, der in Dropdown-Menüs im gesamten System verfügbar ist."}
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -3105,9 +3068,7 @@ const handleUpdateManager = async (
                         <FormControl>
                           <Input
                             {...field}
-                            placeholder={`Enter ${title
-                              .slice(0, -1)
-                              .toLowerCase()} name`}
+                            placeholder="Name eingeben"
                           />
                         </FormControl>
                         <FormMessage />
@@ -3119,12 +3080,12 @@ const handleUpdateManager = async (
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description (Optional)</FormLabel>
+                        <FormLabel>Beschreibung (optional)</FormLabel>
                         <FormControl>
                           <Textarea
                             {...field}
                             rows={3}
-                            placeholder="Add additional details or notes..."
+                            placeholder="Weitere Details oder Anmerkungen hinzufügen..."
                           />
                         </FormControl>
                         <FormMessage />
@@ -3137,10 +3098,10 @@ const handleUpdateManager = async (
                       variant="outline"
                       onClick={handleDialogClose}
                     >
-                      Cancel
+                      Abbrechen
                     </Button>
                     <Button type="submit">
-                      {editingItem ? "Update" : "Create"}
+                      {editingItem ? "Aktualisieren" : "Erstellen"}
                     </Button>
                   </div>
                 </form>
@@ -3155,7 +3116,7 @@ const handleUpdateManager = async (
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -3165,8 +3126,7 @@ const handleUpdateManager = async (
                     colSpan={2}
                     className="text-center py-8 text-muted-foreground"
                   >
-                    No items found. Click "Add {title.slice(0, -1)}" to create
-                    your first entry.
+                    Keine Einträge gefunden. Klicke auf "Hinzufügen", um den ersten Eintrag zu erstellen.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -3190,7 +3150,7 @@ const handleUpdateManager = async (
                               <Pencil className="w-4 h-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Edit</TooltipContent>
+                          <TooltipContent>Bearbeiten</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -3207,7 +3167,7 @@ const handleUpdateManager = async (
                               <Trash2 className="w-4 h-4 text-destructive" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Delete</TooltipContent>
+                          <TooltipContent>Löschen</TooltipContent>
                         </Tooltip>
                       </div>
                     </TableCell>
@@ -3223,21 +3183,18 @@ const handleUpdateManager = async (
       <AlertDialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Bist du sicher?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "
-              {deleteItem?.name || deleteItem?.title}". This action cannot be
-              undone. Items assigned to employees or other records will be
-              unlinked.
+              Dadurch wird „{deleteItem?.name || deleteItem?.title}" dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden. Verknüpfte Einträge bei Mitarbeitern werden getrennt.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Löschen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

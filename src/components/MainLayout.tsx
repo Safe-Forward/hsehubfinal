@@ -201,14 +201,6 @@ export default function MainLayout({ children }: Props) {
     fetchOpenMeasures
   );
 
-  // Log permissions state in dev for debugging
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log("[MainLayout] Permissions loading:", permissionsLoading);
-      console.log("[MainLayout] Role:", roleName);
-      console.log("[MainLayout] Current permissions:", permissions);
-    }
-  }, [permissionsLoading, roleName, permissions]);
 
   useEffect(() => {
     const isDark = localStorage.getItem("darkMode") === "true";
@@ -450,7 +442,7 @@ export default function MainLayout({ children }: Props) {
                   <Link to="/profile">
                     <DropdownMenuItem className="cursor-pointer">
                       <User className="w-4 h-4 mr-2" />
-                      Profile
+                      Profil
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuItem
@@ -462,7 +454,7 @@ export default function MainLayout({ children }: Props) {
                     ) : (
                       <Moon className="w-4 h-4 mr-2" />
                     )}
-                    Dark mode
+                    Dunkelmodus
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer justify-between"
@@ -470,7 +462,7 @@ export default function MainLayout({ children }: Props) {
                   >
                     <div className="flex items-center">
                       <Globe className="w-4 h-4 mr-2" />
-                      Language
+                      Sprache
                     </div>
                     <span className="text-xs text-muted-foreground">
                       {language === "en" ? "EN" : "DE"}
@@ -482,7 +474,7 @@ export default function MainLayout({ children }: Props) {
                     className="cursor-pointer text-red-600 dark:text-red-400"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
-                    Sign out
+                    Abmelden
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

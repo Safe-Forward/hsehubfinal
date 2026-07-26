@@ -319,8 +319,8 @@ export default function Training() {
       });
 
       setEmployeeProgress(result);
-    } catch (err: any) {
-      console.error("Fehler beim Laden des Fortschritts:", err);
+    } catch {
+      // Fehler beim Laden des Fortschritts
     } finally {
       setLoadingProgress(false);
     }
@@ -362,7 +362,7 @@ export default function Training() {
     doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.5);
     doc.line(40, 188, 110, 188); doc.setFontSize(10); doc.setTextColor(100, 100, 100);
     doc.text("Safe-Forward GmbH", 75, 194, { align: "center" });
-    doc.setFontSize(9); doc.text("Geschaeftsfuehrung", 75, 200, { align: "center" });
+    doc.setFontSize(9); doc.text("Geschäftsführung", 75, 200, { align: "center" });
     doc.line(width - 110, 188, width - 40, 188); doc.setFontSize(10);
     doc.text("HSE Hub", width - 75, 194, { align: "center" });
     doc.setFontSize(9); doc.text("Schulungsplattform", width - 75, 200, { align: "center" });
@@ -410,7 +410,7 @@ export default function Training() {
             : ep
         )
       );
-      toast({ title: "Aktualisiert", description: `Teilnahmestatus wurde auf "${status === "completed" ? "Abgeschlossen" : status === "absent" ? "Abwesend" : "Registriert"}" gesetzt` });
+      toast({ title: "Aktualisiert", description: `Teilnahmestatus: ${status === "completed" ? "Abgeschlossen" : status === "absent" ? "Abwesend" : "Registriert"}` });
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
     } finally {
@@ -630,7 +630,7 @@ export default function Training() {
     try {
       await supabase.from("course_lessons").delete().eq("course_id", courseId);
       await supabase.from("courses").delete().eq("id", courseId);
-      toast({ title: "Erfolgreich", description: "Kurs wurde geloescht" });
+      toast({ title: "Erfolgreich", description: "Kurs wurde gelöscht" });
       fetchCourses();
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
@@ -654,7 +654,7 @@ export default function Training() {
     try {
       await supabase.from("course_lessons").update({ status: newStatus }).eq("id", lessonId);
       setLessons(lessons.map((l) => l.id === lessonId ? { ...l, status: newStatus as "draft" | "published" } : l));
-      toast({ title: "Erfolgreich", description: `Lektion ${newStatus === "published" ? "veroeffentlicht" : "als Entwurf gespeichert"}` });
+      toast({ title: "Erfolgreich", description: `Lektion ${newStatus === "published" ? "veröffentlicht" : "als Entwurf gespeichert"}` });
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
     }
@@ -665,7 +665,7 @@ export default function Training() {
     try {
       await supabase.from("course_lessons").delete().eq("id", lessonId);
       setLessons(lessons.filter((l) => l.id !== lessonId));
-      toast({ title: "Erfolgreich", description: "Lektion wurde geloescht" });
+      toast({ title: "Erfolgreich", description: "Lektion wurde gelöscht" });
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
     }
@@ -719,7 +719,7 @@ export default function Training() {
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Users className="w-5 h-5 text-primary" />Nutzerzugriff verwalten</DialogTitle>
-          <DialogDescription>{managingAccessCourse ? `Zugriff fuer Kurs "${managingAccessCourse.name}" verwalten.` : "Nutzerzugriff verwalten."}</DialogDescription>
+          <DialogDescription>{managingAccessCourse ? `Zugriff für Kurs "${managingAccessCourse.name}" verwalten.` : "Nutzerzugriff verwalten."}</DialogDescription>
         </DialogHeader>
         <div className="max-h-[420px] overflow-y-auto border rounded-xl p-3 space-y-2">
           {employees.length === 0 ? (
@@ -783,7 +783,7 @@ export default function Training() {
             {isAdmin && (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => openAccessDialog(selectedCourse)}><Users className="w-4 h-4 mr-2" />Zugriff verwalten</Button>
-                <Button size="sm" onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}><Plus className="w-4 h-4 mr-2" />Lektion hinzufuegen</Button>
+                <Button size="sm" onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}><Plus className="w-4 h-4 mr-2" />Lektion hinzufügen</Button>
               </div>
             )}
           </div>
@@ -882,7 +882,7 @@ export default function Training() {
                     <CardTitle className="text-xl">{isAdmin ? "Kursinhalt" : "Lektionen"}</CardTitle>
                     <CardDescription>{isAdmin ? "Lektionen verwalten" : "Klicken Sie auf eine Lektion um sie zu starten"}</CardDescription>
                   </div>
-                  {isAdmin && <Button onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}><Plus className="w-4 h-4 mr-2" />Lektion hinzufuegen</Button>}
+                  {isAdmin && <Button onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}><Plus className="w-4 h-4 mr-2" />Lektion hinzufügen</Button>}
                 </div>
               </CardHeader>
               <CardContent>
@@ -890,7 +890,7 @@ export default function Training() {
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4"><BookOpen className="w-10 h-10 text-muted-foreground/40" /></div>
                     <p className="text-lg font-medium text-muted-foreground mb-1">{isAdmin ? "Noch keine Lektionen" : "Noch keine Inhalte"}</p>
-                    <p className="text-sm text-muted-foreground/60 mb-4">{isAdmin ? "Fuege die erste Lektion hinzu" : "Der Administrator hat noch keine Lektionen veroeffentlicht"}</p>
+                    <p className="text-sm text-muted-foreground/60 mb-4">{isAdmin ? "Füge die erste Lektion hinzu" : "Der Administrator hat noch keine Lektionen veröffentlicht"}</p>
                     {isAdmin && <Button onClick={() => navigate(`/training/${selectedCourse.id}/lesson/new`)}><Plus className="w-4 h-4 mr-2" />Erste Lektion erstellen</Button>}
                   </div>
                 ) : (
@@ -1032,7 +1032,7 @@ export default function Training() {
             <div>
               <div className="flex items-center gap-2 mb-3"><GraduationCap className="w-8 h-8" /><span className="text-lg font-bold">HSE Hub Akademie</span></div>
               <h2 className="text-3xl font-bold mb-2">{isAdmin ? "Schulungen & Qualifikationen" : "Meine Lernwelt"}</h2>
-              <p className="text-blue-100 max-w-lg">{isAdmin ? "Erstellen Sie Kurse, verwalten Sie Lektionen und stellen Sie Ihren Nutzern automatische Zertifikate aus." : "Hier finden Sie alle Ihnen zugewiesenen Kurse. Schliessen Sie Lektionen ab und erhalten Sie Ihr Zertifikat."}</p>
+              <p className="text-blue-100 max-w-lg">{isAdmin ? "Erstellen Sie Kurse, verwalten Sie Lektionen und stellen Sie Ihren Nutzern automatische Zertifikate aus." : "Hier finden Sie alle Ihnen zugewiesenen Kurse. Schließen Sie Lektionen ab und erhalten Sie Ihr Zertifikat."}</p>
             </div>
             <div className="hidden md:flex items-center gap-4">
               <div className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
@@ -1108,7 +1108,7 @@ export default function Training() {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2"><GraduationCap className="w-5 h-5 text-primary" />Neuen Kurs erstellen</DialogTitle>
-                      <DialogDescription>Erstellen Sie einen neuen Schulungskurs fuer Ihre Nutzer.</DialogDescription>
+                      <DialogDescription>Erstellen Sie einen neuen Schulungskurs für Ihre Nutzer.</DialogDescription>
                     </DialogHeader>
                     <Form {...courseForm}>
                       <form onSubmit={courseForm.handleSubmit(onCourseSubmit)} className="space-y-4">

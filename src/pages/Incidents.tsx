@@ -69,6 +69,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface Incident {
   id: string;
@@ -233,7 +234,6 @@ export default function Incidents() {
       }
       setIncidents(allRows);
     } catch (error: any) {
-      console.error("Error fetching incidents:", error);
       toast({
         title: "Fehler",
         description: error.message || "Vorfälle konnten nicht geladen werden",
@@ -272,7 +272,7 @@ export default function Incidents() {
       if (error) throw error;
       setEmployees(data || []);
     } catch (error: any) {
-      console.error("Error fetching employees:", error);
+      // Mitarbeiterliste konnte nicht geladen werden
     }
   };
 
@@ -289,7 +289,7 @@ export default function Incidents() {
       if (error) throw error;
       setDepartments(data || []);
     } catch (error: any) {
-      console.error("Error fetching departments:", error);
+      // Abteilungsliste konnte nicht geladen werden
     }
   };
 
@@ -348,9 +348,8 @@ export default function Incidents() {
             },
             p_company_id: companyId,
           });
-          console.log("✅ Incident update log created:", formData.title);
         } catch (auditLogErr) {
-          console.error("❌ Failed to create incident update log:", auditLogErr);
+          // Audit-Log-Fehler nicht an Nutzer weiterleiten
         }
 
         toast({
@@ -367,16 +366,8 @@ export default function Incidents() {
         if (error) throw error;
 
         // Log incident creation
-        console.log("🔵 [INCIDENT LOG] Starting audit log creation...");
-        console.log("🔵 [INCIDENT LOG] Parameters:", {
-          incident_id: newIncident?.id,
-          incident_title: formData.title,
-          company_id: companyId,
-          severity: formData.severity
-        });
-        
         try {
-          const { data: logResult, error: logError } = await supabase.rpc("create_audit_log", {
+          await supabase.rpc("create_audit_log", {
             p_action_type: "create_incident",
             p_target_type: "incident",
             p_target_id: newIncident?.id,
@@ -387,22 +378,8 @@ export default function Incidents() {
             },
             p_company_id: companyId,
           });
-          
-          if (logError) {
-            console.error("❌ [INCIDENT LOG] RPC Error:", logError);
-          } else {
-            console.log("✅ [INCIDENT LOG] Created! Log ID:", logResult);
-            
-            // Verify the log was created
-            const { data: verifyLog } = await supabase
-              .from("audit_logs")
-              .select("*")
-              .eq("id", logResult)
-              .single();
-            console.log("🔍 [INCIDENT LOG] Verification:", verifyLog);
-          }
         } catch (auditLogErr) {
-          console.error("❌ [INCIDENT LOG] Exception:", auditLogErr);
+          // Audit-Log-Fehler nicht an Nutzer weiterleiten
         }
 
         toast({
@@ -443,9 +420,8 @@ export default function Incidents() {
           p_details: { id },
           p_company_id: companyId,
         });
-        console.log("✅ Incident deletion log created");
       } catch (auditLogErr) {
-        console.error("❌ Failed to create incident deletion log:", auditLogErr);
+        // Audit-Log-Fehler nicht an Nutzer weiterleiten
       }
 
       toast({ title: "Gelöscht", description: "Vorfall wurde gelöscht" });
@@ -557,20 +533,14 @@ export default function Incidents() {
   };
 
   const getSeverityBadge = (severity: string, clickable = false) => {
-    const config: Record<string, { className: string; icon: any }> = {
-      minor: { className: "bg-blue-100 text-blue-800", icon: AlertCircle },
-      moderate: {
-        className: "bg-yellow-100 text-yellow-800",
-        icon: AlertCircle,
-      },
-      serious: {
-        className: "bg-orange-100 text-orange-800",
-        icon: AlertTriangle,
-      },
-      critical: { className: "bg-red-100 text-red-800", icon: AlertTriangle },
-      fatal: { className: "bg-red-600 text-white", icon: AlertTriangle },
+    const config: Record<string, { className: string; icon: any; label: string }> = {
+      minor: { className: "bg-blue-100 text-blue-800", icon: AlertCircle, label: "Gering" },
+      moderate: { className: "bg-yellow-100 text-yellow-800", icon: AlertCircle, label: "Mäßig" },
+      serious: { className: "bg-orange-100 text-orange-800", icon: AlertTriangle, label: "Schwer" },
+      critical: { className: "bg-red-100 text-red-800", icon: AlertTriangle, label: "Kritisch" },
+      fatal: { className: "bg-red-600 text-white", icon: AlertTriangle, label: "Fatal" },
     };
-    const { className, icon: Icon } = config[severity] || config.minor;
+    const { className, icon: Icon, label } = config[severity] || { ...config.minor, label: severity };
     return (
       <Badge
         className={`${className} ${clickable ? "cursor-pointer hover:opacity-80" : ""}`}
@@ -578,29 +548,35 @@ export default function Incidents() {
         title={clickable ? "Klicken zum Filtern nach Schweregrad" : undefined}
       >
         <Icon className="w-3 h-3 mr-1" />
-        {severity.charAt(0).toUpperCase() + severity.slice(1)}
+        {label}
       </Badge>
     );
   };
 
   const getTypeBadge = (type: string, clickable = false) => {
-    const colors: Record<string, string> = {
-      injury: "bg-red-100 text-red-800",
-      near_miss: "bg-yellow-100 text-yellow-800",
-      property_damage: "bg-purple-100 text-purple-800",
-      environmental: "bg-green-100 text-green-800",
-      other: "bg-gray-100 text-gray-800",
+    const typeConfig: Record<string, { color: string; label: string }> = {
+      injury: { color: "bg-red-100 text-red-800", label: "Verletzung" },
+      near_miss: { color: "bg-yellow-100 text-yellow-800", label: "Beinahe-Unfall" },
+      property_damage: { color: "bg-purple-100 text-purple-800", label: "Sachschaden" },
+      environmental: { color: "bg-green-100 text-green-800", label: "Umweltvorfall" },
+      other: { color: "bg-gray-100 text-gray-800", label: "Sonstiges" },
     };
+    const { color, label } = typeConfig[type] || typeConfig.other;
     return (
       <Badge
-        className={`${colors[type] || colors.other} ${clickable ? "cursor-pointer hover:opacity-80" : ""}`}
+        className={`${color} ${clickable ? "cursor-pointer hover:opacity-80" : ""}`}
         onClick={clickable ? () => setFilterType((prev) => (prev === type ? "all" : type)) : undefined}
         title={clickable ? "Klicken zum Filtern nach Typ" : undefined}
       >
-        {type.replace("_", " ").charAt(0).toUpperCase() +
-          type.replace("_", " ").slice(1)}
+        {label}
       </Badge>
     );
+  };
+
+  const statusLabels: Record<string, string> = {
+    open: "Offen",
+    in_progress: "In Bearbeitung",
+    closed: "Abgeschlossen",
   };
 
   const getStatusBadge = (status: string, clickable = false) => {
@@ -616,7 +592,7 @@ export default function Incidents() {
         }
         title={clickable ? "Klicken zum Filtern nach Status" : undefined}
       >
-        {status}
+        {statusLabels[status] || status}
       </Badge>
     );
   };
@@ -1016,7 +992,7 @@ export default function Incidents() {
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                               {formData.incident_date ? (
-                                format(new Date(formData.incident_date), "PPP")
+                                format(new Date(formData.incident_date), "dd. MMMM yyyy", { locale: de })
                               ) : (
                                 <span>{t("common.pickDate")}</span>
                               )}
@@ -1100,7 +1076,7 @@ export default function Incidents() {
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="none">{t("common.none")}</SelectItem>
                           {departments.map((dept) => (
                             <SelectItem key={dept.id} value={dept.id}>
                               {dept.name}
@@ -1159,7 +1135,7 @@ export default function Incidents() {
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="none">{t("common.none")}</SelectItem>
                           {employees.map((emp) => (
                             <SelectItem key={emp.id} value={emp.id}>
                               {emp.full_name}
@@ -1602,7 +1578,7 @@ export default function Incidents() {
                       <TableCell>
                         {format(
                           new Date(incident.incident_date),
-                          "MMM dd, yyyy"
+                          "dd.MM.yyyy"
                         )}
                       </TableCell>
                       <TableCell>

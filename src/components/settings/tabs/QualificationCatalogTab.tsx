@@ -95,7 +95,7 @@ export function QualificationCatalogTab({ companyId }: Props) {
       if (error) throw error;
       setTypes((data as QualificationType[]) || []);
     } catch (err: any) {
-      console.warn("Qualifikationstypen konnten nicht geladen werden:", err.message);
+      // Qualifikationstypen konnten nicht geladen werden
     } finally {
       setLoading(false);
     }

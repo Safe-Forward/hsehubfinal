@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Send, Hash, Users, Search, Plus, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface Message {
   id: string;
@@ -86,8 +87,8 @@ export default function Messages() {
       if (!activeChannel && companyChannels.length > 0) {
         setActiveChannel(companyChannels[0]);
       }
-    } catch (error) {
-      console.error("Error fetching channels:", error);
+    } catch {
+      // Kanäle konnten nicht geladen werden — keine UI-Blockierung nötig
     } finally {
       setLoading(false);
     }
@@ -114,8 +115,8 @@ export default function Messages() {
         })) || [];
 
       setMessages(demoMessages);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
+    } catch {
+      // Nachrichten konnten nicht geladen werden
     }
   };
 
@@ -161,23 +162,19 @@ export default function Messages() {
         user_id: user?.id,
         category: "system",  // Changed from "message" to "system" - valid category
         type: "info",
-        title: `Message in ${activeChannel.name}`,
+        title: `Nachricht in ${activeChannel.name}`,
         message: messageInput,
         is_read: false,
       });
 
-      if (error) {
-        console.error("Send message error:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       setMessageInput("");
       toast({
-        title: "✅ Message sent",
-        description: "Your message has been delivered.",
+        title: "Nachricht gesendet",
+        description: "Ihre Nachricht wurde übermittelt.",
       });
     } catch (error: any) {
-      console.error("Failed to send message - full error:", error);
       toast({
         title: "Fehler",
         description: error.message || "Nachricht konnte nicht gesendet werden",
@@ -364,6 +361,7 @@ export default function Messages() {
                           <span className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(message.created_at), {
                               addSuffix: true,
+                              locale: de,
                             })}
                           </span>
                         </div>

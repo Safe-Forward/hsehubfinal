@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
 import { ArrowLeft, Plus, Search, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -115,8 +116,6 @@ export default function Tasks() {
   const fetchEmployeeId = async () => {
     if (!user?.email || !companyId) return;
 
-    console.log("🔍 [Tasks] Looking up Employee ID for:", user.email);
-
     // Find employee by email
     const { data: empByEmail } = await supabase
       .from("employees")
@@ -126,11 +125,8 @@ export default function Tasks() {
       .maybeSingle();
 
     if (empByEmail) {
-      console.log("✅ [Tasks] Found Employee ID:", empByEmail.id);
       setCurrentEmployeeId(empByEmail.id);
       setCurrentEmployeeName(empByEmail.full_name);
-    } else {
-      console.log("⚠️ [Tasks] No employee record found for this user");
     }
   };
 
@@ -254,21 +250,11 @@ export default function Tasks() {
         }
       );
       if (notifErr) {
-        console.error("❌ Task notification RPC error:", notifErr);
-      } else {
-        console.log(`✅ Task notifications sent: ${notifCount}`);
+        // Notification-Fehler still loggen ohne console.error (wird bei Bedarf erweitert)
       }
       // ─────────────────────────────────────────────────────────────────────
 
-      // Log audit action for task creation
-      console.log("🔵 [TASK LOG] Starting audit log creation...");
-      console.log("🔵 [TASK LOG] Parameters:", {
-        task_id: insertedRows.id,
-        task_title: insertedRows.title,
-        company_id: companyId,
-        assignee: data.assigned_to
-      });
-      
+      // Audit-Log erstellen
       try {
         const { data: logResult, error: logError } = await supabase.rpc("create_audit_log", {
           p_action_type: "assign_task",
@@ -284,21 +270,11 @@ export default function Tasks() {
           p_company_id: companyId,
         });
         
-        if (logError) {
-          console.error("❌ [TASK LOG] RPC Error:", logError);
-        } else {
-          console.log("✅ [TASK LOG] Created! Log ID:", logResult);
-          
-          // Verify the log was created
-          const { data: verifyLog } = await supabase
-            .from("audit_logs")
-            .select("*")
-            .eq("id", logResult)
-            .single();
-          console.log("🔍 [TASK LOG] Verification:", verifyLog);
-        }
-      } catch (auditErr) {
-        console.error("❌ [TASK LOG] Exception:", auditErr);
+        // Fehlerbehandlung intern, kein console.log
+        void logError;
+        void logResult;
+      } catch {
+        // Audit-Log-Fehler nicht nach außen propagieren
       }
 
       toast({ title: "Gespeichert", description: "Aufgabe wurde erstellt" });
@@ -586,7 +562,7 @@ export default function Tasks() {
                                     >
                                       <CalendarIcon className="mr-2 h-4 w-4" />
                                       {field.value ? (
-                                        format(new Date(field.value), "PPP")
+                                        format(new Date(field.value), "dd. MMMM yyyy", { locale: de })
                                       ) : (
                                         <span>{t("common.pickDate")}</span>
                                       )}

@@ -48,10 +48,10 @@ export function InvoicesBillingTab({ onNavigateToTab }: Props) {
         .eq("company_id", companyId)
         .order("created_at", { ascending: false })
         .limit(4);
-      if (error) { console.error("Error fetching recent invoices:", error); return; }
+      if (error) { return; }
       setRecentInvoices(data || []);
-    } catch (err) {
-      console.error("Error fetching recent invoices:", err);
+    } catch {
+      // Rechnungen konnten nicht geladen werden
     }
   };
 

@@ -102,6 +102,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { de } from "date-fns/locale";
 
 interface EmployeeData {
   id: string;
@@ -451,7 +452,6 @@ fetchProfileFields();
 
       if (error) {
         // If table doesn't exist yet, just set empty array
-        console.log("Health checkups table not created yet");
         setHealthCheckups([]);
         return;
       }
@@ -477,7 +477,6 @@ fetchProfileFields();
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.log("Checkup documents table not created yet");
         return;
       }
 
@@ -521,11 +520,6 @@ fetchProfileFields();
 
   const fetchActivityLogs = async () => {
     try {
-      console.log("=== Fetching Activity Logs ===");
-      console.log("Employee ID:", id);
-      console.log("Company ID:", companyId);
-      console.log("User ID:", user?.id);
-
       const { data, error } = await supabase
         .from("employee_activity_logs")
         .select("*")
@@ -556,11 +550,6 @@ fetchProfileFields();
         throw error;
       }
 
-      console.log("✅ Activity logs fetched successfully");
-      console.log("Records found:", data?.length || 0);
-      if (data && data.length > 0) {
-        console.log("Sample log:", data[0]);
-      }
       setActivityLogs((data as any) || []);
     } catch (error: any) {
       console.error("❌ Failed to fetch activity logs:", error);
@@ -576,21 +565,10 @@ fetchProfileFields();
     metadata?: Record<string, any>
   ) => {
     if (!companyId || !user || !id) {
-      console.warn("⚠️ Cannot log activity - missing required data:");
-      console.warn("  - Company ID:", companyId);
-      console.warn("  - User:", user ? "✓" : "✗");
-      console.warn("  - Employee ID:", id);
       return false;
     }
 
     try {
-      console.log("=== Logging Activity ===");
-      console.log("Action:", action);
-      console.log("Type:", actionType);
-      console.log("Details:", details);
-      console.log("Employee ID:", id);
-      console.log("Company ID:", companyId);
-      console.log("User:", user.email);
 
       const { data, error } = await supabase
         .from("employee_activity_logs")
@@ -601,7 +579,7 @@ fetchProfileFields();
           action_type: actionType,
           details: details || null,
           changed_by: user.id,
-          changed_by_name: user.email || "Unknown User",
+          changed_by_name: user.email || "Unbekannter Benutzer",
           metadata: metadata || null,
         })
         .select();
@@ -626,11 +604,8 @@ fetchProfileFields();
 
         return false;
       } else {
-        console.log("✅ Activity logged successfully!");
-        console.log("Log data:", data);
         // Refresh activity logs after logging
         setTimeout(() => {
-          console.log("🔄 Refreshing activity logs...");
           fetchActivityLogs();
         }, 500);
         return true;
@@ -729,7 +704,6 @@ const fetchGInvestigations = async () => {
         .order("name");
 
       if (error) {
-        console.log("G-Investigations table not created yet");
         setGInvestigations([]);
         return;
       }
@@ -989,7 +963,6 @@ const fetchGInvestigations = async () => {
         .single();
 
       if (error) {
-        console.log("No profile fields found");
         setProfileFields([]);
         return;
       }
@@ -1019,7 +992,6 @@ const fetchGInvestigations = async () => {
         .order("display_order", { ascending: true });
 
       if (templatesError || fieldsError) {
-        console.log("Error fetching profile field templates");
         setProfileFieldTemplates([]);
         return;
       }
@@ -2383,7 +2355,6 @@ p_sender_name: senderName,
         if (notifErr) {
           console.error("❌ Task notification RPC error:", notifErr);
         } else {
-          console.log(`✅ Task notifications sent: ${notifCount}`);
         }
       } catch (notifErr) {
         console.error("❌ Exception sending task notifications:", notifErr);
@@ -2391,7 +2362,6 @@ p_sender_name: senderName,
       // ─────────────────────────────────────────────────────────────────────
 
       // ALSO log to audit_logs for Super Admin Activity tab
-      console.log("🔵 [EMPLOYEE PROFILE TASK] Creating audit log...");
       try {
         const { data: logResult, error: logError } = await supabase.rpc("create_audit_log", {
           p_action_type: "assign_task",
@@ -2411,7 +2381,6 @@ p_sender_name: senderName,
         if (logError) {
           console.error("❌ [EMPLOYEE PROFILE TASK] Audit log error:", logError);
         } else {
-          console.log("✅ [EMPLOYEE PROFILE TASK] Audit log created! ID:", logResult);
         }
       } catch (auditErr) {
         console.error("❌ [EMPLOYEE PROFILE TASK] Exception:", auditErr);
@@ -2422,7 +2391,7 @@ p_sender_name: senderName,
       setNewTaskDueDate(undefined);
       setNewTaskPriority("medium");
       setMentionedMemberId(null);
-      toast.success("Task erstellt");
+      toast.success("Aufgabe erstellt.");
     } catch (error) {
       console.error("Error creating task:", error);
       toast.error("Aufgabe konnte nicht erstellt werden.");
@@ -2453,7 +2422,6 @@ p_sender_name: senderName,
 
       // ALSO log to audit_logs for Super Admin Activity tab
       const actionType = newStatus === "completed" ? "complete_task" : "reopen_task";
-      console.log(`🔵 [EMPLOYEE PROFILE TASK STATUS] Logging ${actionType}...`);
       try {
         const { data: logResult, error: logError } = await supabase.rpc("create_audit_log", {
           p_action_type: actionType,
@@ -2471,7 +2439,6 @@ p_sender_name: senderName,
         if (logError) {
           console.error(`❌ [EMPLOYEE PROFILE TASK STATUS] Audit log error:`, logError);
         } else {
-          console.log(`✅ [EMPLOYEE PROFILE TASK STATUS] Audit log created! ID:`, logResult);
         }
       } catch (auditErr) {
         console.error(`❌ [EMPLOYEE PROFILE TASK STATUS] Exception:`, auditErr);
@@ -3238,7 +3205,7 @@ p_sender_name: senderName,
                     : null}
                   <div className="flex gap-2 items-center">
                     <Input
-                      placeholder="Add tag..."
+                      placeholder="Tag hinzufügen..."
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
@@ -3415,7 +3382,7 @@ p_sender_name: senderName,
                                 <Textarea
                                   value={languages}
                                   onChange={(e) => setLanguages(e.target.value)}
-                                  placeholder="Enter languages (e.g., English, German, Spanish)"
+                                  placeholder="Sprachen eingeben (z. B. Deutsch, Englisch, Spanisch)"
                                   className="text-sm min-h-[80px]"
                                   autoFocus
                                 />
@@ -3446,7 +3413,7 @@ p_sender_name: senderName,
                                 className="text-sm text-muted-foreground whitespace-pre-wrap cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors"
                                 onClick={() => setEditingSpecialField("languages")}
                               >
-                                {languages || "No languages specified"}
+                                {languages || "Keine Sprachen angegeben"}
                               </p>
                             )}
                           </div>
@@ -3483,7 +3450,7 @@ p_sender_name: senderName,
                                 <Textarea
                                   value={skills}
                                   onChange={(e) => setSkills(e.target.value)}
-                                  placeholder="Enter skills (e.g., Project Management, Safety Training)"
+                                  placeholder="Fähigkeiten eingeben (z. B. Projektmanagement, Sicherheitsschulung)"
                                   className="text-sm min-h-[80px]"
                                   autoFocus
                                 />
@@ -3512,7 +3479,7 @@ p_sender_name: senderName,
                                 className="text-sm text-muted-foreground whitespace-pre-wrap cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors"
                                 onClick={() => setEditingSpecialField("skills")}
                               >
-                                {skills || "No skills specified"}
+                                {skills || "Keine Fähigkeiten angegeben"}
                               </p>
                             )}
                           </div>
@@ -3550,7 +3517,7 @@ p_sender_name: senderName,
                                   type="text"
                                   value={salary}
                                   onChange={(e) => setSalary(e.target.value)}
-                                  placeholder="Enter salary (e.g., EUR 50,000 per year)"
+                                  placeholder="Gehalt eingeben (z. B. EUR 50.000 pro Jahr)"
                                   className="text-sm"
                                   autoFocus
                                 />
@@ -3579,7 +3546,7 @@ p_sender_name: senderName,
                                 className="text-sm text-muted-foreground cursor-pointer hover:bg-muted/50 p-2 rounded transition-colors"
                                 onClick={() => setEditingSpecialField("salary")}
                               >
-                                {salary || "No salary specified"}
+                                {salary || "Kein Gehalt angegeben"}
                               </p>
                             )}
                           </div>
@@ -3664,7 +3631,7 @@ p_sender_name: senderName,
                                     >
                                       <CalendarIcon className="mr-2 h-4 w-4" />
                                       {customFieldEditValue ? (
-                                        format(new Date(customFieldEditValue), "PPP")
+                                        format(new Date(customFieldEditValue), "dd. MMMM yyyy", { locale: de })
                                       ) : (
                                         <span>{t("common.pickDate")}</span>
                                       )}
@@ -3694,7 +3661,7 @@ p_sender_name: senderName,
                                   onChange={(e) =>
                                     setCustomFieldEditValue(e.target.value)
                                   }
-                                  placeholder="Enter number"
+                                  placeholder="Zahl eingeben"
                                   className="text-sm"
                                   autoFocus
                                 />
@@ -4039,7 +4006,7 @@ p_sender_name: senderName,
                               >
                                 <CalendarIcon className="w-3 h-3 mr-1" />
                                 {newTaskDueDate
-                                  ? format(newTaskDueDate, "MMM d")
+                                  ? format(newTaskDueDate, "d. MMM", { locale: de })
                                   : "Fälligkeitsdatum"}
                               </Button>
                             </PopoverTrigger>
@@ -4199,7 +4166,7 @@ p_sender_name: senderName,
                                           >
                                             {new Date(
                                               task.due_date
-                                            ).toLocaleDateString()}
+                                            ).toLocaleDateString("de-DE")}
                                           </Badge>
                                         )}
                                         <Badge
@@ -4212,7 +4179,7 @@ p_sender_name: senderName,
                                           }
                                           className="text-[10px] px-1 py-0"
                                         >
-                                          {task.priority}
+                                          {task.priority === "high" ? "Hoch" : task.priority === "medium" ? "Mittel" : "Niedrig"}
                                         </Badge>
                                       </div>
                                     </div>
@@ -4296,7 +4263,7 @@ p_sender_name: senderName,
                                     onKeyDown={(e) => e.key === 'Enter' && handleInsertLink()}
                                   />
                                   <Input
-                                    placeholder="Display text (optional)"
+                                    placeholder="Anzeigetext (optional)"
                                     value={linkLabel}
                                     onChange={(e) => setLinkLabel(e.target.value)}
                                     className="h-8 text-sm"
@@ -4390,7 +4357,7 @@ p_sender_name: senderName,
                               }}
                               onClick={updateActiveFormats}
                               onKeyUp={updateActiveFormats}
-                              data-placeholder="Add a note..."
+                              data-placeholder="Notiz hinzufügen..."
                               className="min-h-[60px] text-sm border-0 p-0 focus-visible:outline-none resize-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                               style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
                             />
@@ -4434,7 +4401,7 @@ p_sender_name: senderName,
                                   setSelectedVisibilityUsers([]);
                                 }}
                               >
-                                Everyone
+                                Alle
                               </Button>
 
                               {/* Specific Users Button */}
@@ -4445,7 +4412,7 @@ p_sender_name: senderName,
                                     size="sm"
                                     className="h-7 text-xs"
                                   >
-                                    Specific Users
+                                    Bestimmte Benutzer
                                     {selectedVisibilityUsers.length > 0 && (
                                       <Badge variant="secondary" className="ml-2 text-xs h-4 px-1">
                                         {selectedVisibilityUsers.length}
@@ -4456,9 +4423,9 @@ p_sender_name: senderName,
                                 <PopoverContent className="w-64 p-0" align="start">
                                   <Card className="border-0 shadow-none">
                                     <CardHeader className="p-3 pb-2">
-                                      <CardTitle className="text-sm">Select Users</CardTitle>
+                                      <CardTitle className="text-sm">Benutzer auswählen</CardTitle>
                                       <CardDescription className="text-xs">
-                                        Choose who can see this note
+                                        Wählen, wer diese Notiz sehen kann
                                       </CardDescription>
                                     </CardHeader>
                                     <CardContent className="p-0">
@@ -4597,7 +4564,7 @@ p_sender_name: senderName,
                                             {note.date
                                               ? new Date(
                                                 note.date
-                                              ).toLocaleString("en-US", {
+                                              ).toLocaleString("de-DE", {
                                                 month: "short",
                                                 day: "numeric",
                                                 hour: "2-digit",
@@ -4608,11 +4575,11 @@ p_sender_name: senderName,
                                           {/* Visibility badge */}
                                           {note.visibleTo && note.visibleTo !== 'everyone' ? (
                                             <Badge variant="outline" className="text-xs px-1.5 py-0 border-amber-400 text-amber-600 dark:text-amber-400">
-                                              🔒 Specific users
+                                              🔒 Bestimmte Benutzer
                                             </Badge>
                                           ) : (
                                             <Badge variant="outline" className="text-xs px-1.5 py-0 border-green-400 text-green-600 dark:text-green-400">
-                                              🌐 Everyone
+                                              🌐 Alle
                                             </Badge>
                                           )}
                                         </div>
@@ -4645,7 +4612,7 @@ p_sender_name: senderName,
                                           onClick={() => handleLikeNote(note.id)}
                                         >
                                           <ThumbsUp className={`w-3 h-3 mr-1 ${note.likes?.includes(user?.id) ? "fill-current" : ""}`} />
-                                          Like{note.likes?.length > 0 ? ` (${note.likes.length})` : ""}
+                                          Gefällt mir{note.likes?.length > 0 ? ` (${note.likes.length})` : ""}
                                         </Button>
 
                                         
@@ -4664,7 +4631,7 @@ p_sender_name: senderName,
                                                   <p className="font-medium text-xs">{reply.author}</p>
                                                   <span className="text-xs text-muted-foreground">
                                                     {reply.date
-                                                      ? new Date(reply.date).toLocaleString("en-US", {
+                                                      ? new Date(reply.date).toLocaleString("de-DE", {
                                                         month: "short",
                                                         day: "numeric",
                                                         hour: "2-digit",
@@ -4687,7 +4654,7 @@ p_sender_name: senderName,
                                         <div className="mt-3 pl-4 border-l-2 border-primary/20">
                                           <div className="space-y-2">
                                             <Textarea
-                                              placeholder="Write a reply..."
+                                              placeholder="Antwort schreiben..."
                                               value={replyText}
                                               onChange={(e) =>
                                                 setReplyText(e.target.value)
@@ -5007,31 +4974,29 @@ p_sender_name: senderName,
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label>G-Investigation *</Label>
+                    <Label>G-Untersuchung *</Label>
                     {gInvestigations.length === 0 ? (
                       <div className="space-y-2">
                         <Select disabled>
                           <SelectTrigger className="border-destructive">
-                            <SelectValue placeholder="No investigations available" />
+                            <SelectValue placeholder="Keine Untersuchungen verfügbar" />
                           </SelectTrigger>
                         </Select>
                         <div className="text-xs text-destructive bg-destructive/10 p-3 rounded-md border border-destructive/20">
                           <p className="font-semibold mb-1">
-                            Dropdown of Occupational Medical Care (Settings) is
-                            missing.
+                            Dropdown für Arbeitsmedizinische Vorsorge (Einstellungen) fehlt.
                           </p>
                           <p className="text-muted-foreground">
-                            <strong>Explanation:</strong> Company Set up all
-                            G-Check Ups which they need for their company. Those
-                            selected G-Check ups will be shown in the dropdown
-                            list.
+                            <strong>Erklärung:</strong> Das Unternehmen legt alle
+                            G-Untersuchungen fest, die benötigt werden. Diese
+                            ausgewählten G-Untersuchungen werden im Dropdown angezeigt.
                           </p>
                           <p className="mt-2 text-muted-foreground">
-                            Please go to{" "}
+                            Bitte gehen Sie zu{" "}
                             <strong>
-                              Settings → Occupational Medical Care
+                              Einstellungen → Arbeitsmedizinische Vorsorge
                             </strong>{" "}
-                            to configure G-Investigations for your company.
+                            um G-Untersuchungen für Ihr Unternehmen zu konfigurieren.
                           </p>
                         </div>
                       </div>
@@ -5046,7 +5011,7 @@ p_sender_name: senderName,
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select investigation" />
+                          <SelectValue placeholder="Untersuchung auswählen" />
                         </SelectTrigger>
                         <SelectContent>
                           {gInvestigations.map((inv) => (
@@ -5062,7 +5027,7 @@ p_sender_name: senderName,
                   {/* Date Fields - Row Layout */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Appointment Date (optional)</Label>
+                      <Label>Termindatum (optional)</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -5071,7 +5036,7 @@ p_sender_name: senderName,
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {checkupFormData.appointment_date ? (
-                              format(new Date(checkupFormData.appointment_date), "PPP")
+                              format(new Date(checkupFormData.appointment_date), "dd. MMMM yyyy", { locale: de })
                             ) : (
                               <span>{t("common.pickDate")}</span>
                             )}
@@ -5094,7 +5059,7 @@ p_sender_name: senderName,
                     </div>
 
                     <div>
-                      <Label>Due Date</Label>
+                      <Label>Fälligkeitsdatum</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -5103,7 +5068,7 @@ p_sender_name: senderName,
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {checkupFormData.due_date ? (
-                              format(new Date(checkupFormData.due_date), "PPP")
+                              format(new Date(checkupFormData.due_date), "dd. MMMM yyyy", { locale: de })
                             ) : (
                               <span>{t("common.pickDate")}</span>
                             )}
@@ -5127,7 +5092,7 @@ p_sender_name: senderName,
                   </div>
 
                   <div>
-                    <Label>Status</Label>
+                    <Label>Status *</Label>
                     <Select
                       value={checkupFormData.status}
                       onValueChange={(value: any) =>
@@ -5141,16 +5106,16 @@ p_sender_name: senderName,
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="planned">Planned</SelectItem>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="done">Done</SelectItem>
+                        <SelectItem value="planned">Geplant</SelectItem>
+                        <SelectItem value="open">Offen</SelectItem>
+                        <SelectItem value="done">Erledigt</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   {checkupFormData.status === "done" && (
                     <div>
-                      <Label>Completion Date *</Label>
+                      <Label>Abschlussdatum *</Label>
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -5159,9 +5124,9 @@ p_sender_name: senderName,
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {checkupFormData.completion_date ? (
-                              format(new Date(checkupFormData.completion_date), "PPP")
+                              format(new Date(checkupFormData.completion_date), "dd. MMMM yyyy", { locale: de })
                             ) : (
-                              <span>Pick a date</span>
+                              <span>Datum wählen</span>
                             )}
                           </Button>
                         </PopoverTrigger>
@@ -5217,7 +5182,7 @@ p_sender_name: senderName,
                   )}
 
                   <div>
-                    <Label>Notes</Label>
+                    <Label>Notizen</Label>
                     <Textarea
                       value={checkupFormData.notes}
                       onChange={(e) =>
@@ -5226,7 +5191,7 @@ p_sender_name: senderName,
                           notes: e.target.value,
                         })
                       }
-                      placeholder="Additional notes..."
+                      placeholder="Weitere Anmerkungen..."
                     />
                   </div>
                 </div>
@@ -5259,7 +5224,7 @@ p_sender_name: senderName,
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label>Appointment Date (optional)</Label>
+                    <Label>Termindatum (optional)</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -5268,9 +5233,9 @@ p_sender_name: senderName,
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {appointmentDate ? (
-                            format(appointmentDate, "PPP")
+                            format(appointmentDate, "dd. MMMM yyyy", { locale: de })
                           ) : (
-                            <span>Pick a date</span>
+                            <span>Datum wählen</span>
                           )}
                         </Button>
                       </PopoverTrigger>
@@ -5406,8 +5371,8 @@ p_sender_name: senderName,
                             <>
                               <p className="font-medium">{doc.title}</p>
                               <p className="text-xs text-muted-foreground">
-                                {doc.file_name} • Uploaded{" "}
-                                {new Date(doc.created_at).toLocaleDateString()}
+                                {doc.file_name} • Hochgeladen{" "}
+                                {new Date(doc.created_at).toLocaleDateString("de-DE")}
                               </p>
                             </>
                           )}
@@ -5661,13 +5626,13 @@ p_sender_name: senderName,
                             )}
                             <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                               <span>
-                                {new Date(log.changed_at).toLocaleDateString()}{" "}
-                                at{" "}
-                                {new Date(log.changed_at).toLocaleTimeString()}
+                                {new Date(log.changed_at).toLocaleDateString("de-DE")}{" "}
+                                um{" "}
+                                {new Date(log.changed_at).toLocaleTimeString("de-DE")}
                               </span>
                               <span>•</span>
                               <span className="truncate">
-                                {log.changed_by_name || "Unknown User"}
+                                {log.changed_by_name || "Unbekannter Benutzer"}
                               </span>
                             </div>
                           </div>
@@ -5684,21 +5649,21 @@ p_sender_name: senderName,
           <TabsContent value="tags">
             <Card>
               <CardHeader>
-                <CardTitle>Tags / Keywords</CardTitle>
-                <CardDescription>Manage tags for this employee</CardDescription>
+                <CardTitle>Tags / Schlagwörter</CardTitle>
+                <CardDescription>Tags für diesen Mitarbeiter verwalten</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Add a new tag..."
+                      placeholder="Neuen Tag hinzufügen..."
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
                     />
                     <Button onClick={handleAddTag}>
                       <Plus className="w-4 h-4 mr-2" />
-                      Add
+                      Hinzufügen
                     </Button>
                   </div>
 
@@ -5721,7 +5686,7 @@ p_sender_name: senderName,
                       ))
                     ) : (
                       <p className="text-muted-foreground text-sm">
-                        No tags added yet.
+                        Noch keine Tags hinzugefügt.
                       </p>
                     )}
                   </div>
@@ -5734,23 +5699,23 @@ p_sender_name: senderName,
           <TabsContent value="groups">
             <Card>
               <CardHeader>
-                <CardTitle>Activity / Stress Group</CardTitle>
+                <CardTitle>Belastungsgruppe</CardTitle>
                 <CardDescription>
-                  Manage activity and stress groups
+                  Belastungsgruppe verwalten
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Assigned Group</Label>
+                      <Label>Zugewiesene Gruppe</Label>
                       <div className="p-3 bg-muted rounded-md font-medium">
-                        {employee.exposure_groups?.name || "No Group Assigned"}
+                        {employee.exposure_groups?.name || "Keine Gruppe zugewiesen"}
                       </div>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    To change the group, please use the Overview tab.
+                    Um die Gruppe zu ändern, bitte den Übersicht-Tab verwenden.
                   </p>
                 </div>
               </CardContent>
