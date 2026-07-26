@@ -173,14 +173,14 @@ function fmt(amount: number, currency = "EUR") {
 function fmtDate(dateStr: string | null | undefined, fallback = "—") {
   if (!dateStr) return fallback;
   try {
-    return format(new Date(dateStr), "MMM d, yyyy");
+    return format(new Date(dateStr), "dd.MM.yyyy");
   } catch {
     return fallback;
   }
 }
 
 function billingIntervalLabel(interval: "month" | "year" | null | undefined) {
-  return interval === "year" ? "Yearly" : "Monthly";
+  return interval === "year" ? "Jährlich" : "Monatlich";
 }
 
 function readPendingCheckout(): PendingStripeCheckout | null {
@@ -213,28 +213,28 @@ function getStatusConfig(status: InvoiceStatus) {
     case "paid":
       return {
         icon: <CheckCircle className="w-3.5 h-3.5" />,
-        label: "Paid",
+        label: "Bezahlt",
         className:
           "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
       };
     case "pending":
       return {
         icon: <Clock className="w-3.5 h-3.5" />,
-        label: "Pending",
+        label: "Ausstehend",
         className:
           "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800",
       };
     case "overdue":
       return {
         icon: <AlertTriangle className="w-3.5 h-3.5" />,
-        label: "Overdue",
+        label: "Überfällig",
         className:
           "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
       };
     case "cancelled":
       return {
         icon: <XCircle className="w-3.5 h-3.5" />,
-        label: "Cancelled",
+        label: "Storniert",
         className:
           "bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
       };
@@ -242,7 +242,7 @@ function getStatusConfig(status: InvoiceStatus) {
     default:
       return {
         icon: <FileText className="w-3.5 h-3.5" />,
-        label: "Draft",
+        label: "Entwurf",
         className:
           "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
       };
@@ -429,24 +429,24 @@ function SubscriptionCard({
     if (status === "active")
       return (
         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-          <CheckCircle className="w-3 h-3" /> Active
+          <CheckCircle className="w-3 h-3" /> Aktiv
         </span>
       );
     if (status === "trial")
       return (
         <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-          <Zap className="w-3 h-3" /> Trial
+          <Zap className="w-3 h-3" /> Testphase
         </span>
       );
     if (status === "cancelled")
       return (
         <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400">
-          <XCircle className="w-3 h-3" /> Cancelled
+          <XCircle className="w-3 h-3" /> Gekündigt
         </span>
       );
     return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500">
-        <AlertCircle className="w-3 h-3" /> Inactive
+        <AlertCircle className="w-3 h-3" /> Inaktiv
       </span>
     );
   })();
@@ -471,20 +471,20 @@ function SubscriptionCard({
         <div className="flex items-end gap-1">
           <span className="text-3xl font-bold">€{price}</span>
           <span className="text-sm text-muted-foreground mb-1">
-            /{company.subscription_billing_interval === "year" ? "year" : "month"}
+            /{company.subscription_billing_interval === "year" ? "Jahr" : "Monat"}
           </span>
         </div>
         <Separator className="opacity-50" />
         <div className="space-y-1.5 text-xs text-muted-foreground">
           {company.subscription_start_date && (
             <div className="flex justify-between">
-              <span>Started</span>
+              <span>Gestartet</span>
               <span className="font-medium text-foreground">{fmtDate(company.subscription_start_date)}</span>
             </div>
           )}
           {company.subscription_billing_interval && (
             <div className="flex justify-between">
-              <span>Billing cycle</span>
+              <span>Abrechnungszyklus</span>
               <span className="font-medium text-foreground">
                 {billingIntervalLabel(company.subscription_billing_interval)}
               </span>
@@ -492,27 +492,27 @@ function SubscriptionCard({
           )}
           {company.subscription_end_date && !isCancelled && (
             <div className="flex justify-between">
-              <span>Renews</span>
+              <span>Verlängert sich</span>
               <span className="font-medium text-foreground">{fmtDate(company.subscription_end_date)}</span>
             </div>
           )}
           {isCancelled && company.subscription_end_date && (
             <div className="flex justify-between">
-              <span>Access until</span>
+              <span>Zugang bis</span>
               <span className="font-medium text-red-600 dark:text-red-400">{fmtDate(company.subscription_end_date)}</span>
             </div>
           )}
           {isTrialing && daysUntilTrialEnd !== null && (
             <div className="flex justify-between">
-              <span>Trial ends</span>
+              <span>Testphase endet</span>
               <span className={`font-medium ${daysUntilTrialEnd <= 3 ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>
-                {daysUntilTrialEnd === 0 ? "Today" : `${daysUntilTrialEnd}d left`}
+                {daysUntilTrialEnd === 0 ? "Heute" : `Noch ${daysUntilTrialEnd} Tage`}
               </span>
             </div>
           )}
           {company.billing_email && (
             <div className="flex justify-between gap-2">
-              <span className="shrink-0">Billing email</span>
+              <span className="shrink-0">Rechnungs-E-Mail</span>
               <span className="font-medium text-foreground truncate">{company.billing_email}</span>
             </div>
           )}
@@ -534,7 +534,7 @@ function SubscriptionCard({
                   ) : (
                     <Zap className="w-3.5 h-3.5 mr-1.5" />
                   )}
-                  {`Choose ${PLAN_LABELS[targetTier]}`}
+                  {`${PLAN_LABELS[targetTier]} wählen`}
                 </Button>
               ))}
             </div>
@@ -549,7 +549,7 @@ function SubscriptionCard({
             disabled={billingLoading}
           >
             {billingLoading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <CreditCard className="w-3.5 h-3.5 mr-1.5" />}
-            Manage Billing
+            Abrechnung verwalten
           </Button>
         )}
       </CardContent>
@@ -591,8 +591,8 @@ function InvoiceDetailDialog({
             {invoice.invoice_number}
           </DialogTitle>
           <DialogDescription>
-            Issued {fmtDate(invoice.created_at)}
-            {invoice.due_date ? ` · Due ${fmtDate(invoice.due_date)}` : ""}
+            Ausgestellt {fmtDate(invoice.created_at)}
+            {invoice.due_date ? ` · Fällig ${fmtDate(invoice.due_date)}` : ""}
           </DialogDescription>
         </DialogHeader>
 
@@ -605,7 +605,7 @@ function InvoiceDetailDialog({
           </div>
           {invoice.billing_period_start && invoice.billing_period_end && (
             <div>
-              <p className="text-xs text-muted-foreground">Billing Period</p>
+              <p className="text-xs text-muted-foreground">Abrechnungszeitraum</p>
               <p className="font-medium mt-1 text-xs">
                 {fmtDate(invoice.billing_period_start)} – {fmtDate(invoice.billing_period_end)}
               </p>
@@ -613,13 +613,13 @@ function InvoiceDetailDialog({
           )}
           {invoice.paid_at && (
             <div>
-              <p className="text-xs text-muted-foreground">Paid On</p>
+              <p className="text-xs text-muted-foreground">Bezahlt am</p>
               <p className="font-medium mt-1">{fmtDate(invoice.paid_at)}</p>
             </div>
           )}
           {invoice.payment_method && (
             <div>
-              <p className="text-xs text-muted-foreground">Payment Method</p>
+              <p className="text-xs text-muted-foreground">Zahlungsmethode</p>
               <p className="font-medium mt-1 capitalize">{invoice.payment_method}</p>
             </div>
           )}
@@ -629,10 +629,10 @@ function InvoiceDetailDialog({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead>Description</TableHead>
-                <TableHead className="w-16 text-center">Qty</TableHead>
-                <TableHead className="w-28 text-right">Unit Price</TableHead>
-                <TableHead className="w-28 text-right">Total</TableHead>
+                <TableHead>Beschreibung</TableHead>
+                <TableHead className="w-16 text-center">Menge</TableHead>
+                <TableHead className="w-28 text-right">Einzelpreis</TableHead>
+                <TableHead className="w-28 text-right">Gesamt</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -654,39 +654,39 @@ function InvoiceDetailDialog({
 
         <div className="flex flex-col items-end gap-1 text-sm">
           <div className="flex gap-8 text-muted-foreground">
-            <span>Subtotal</span>
+            <span>Zwischensumme</span>
             <span>{sym}{invoice.subtotal.toFixed(2)}</span>
           </div>
           {invoice.tax_amount > 0 && (
             <div className="flex gap-8 text-muted-foreground">
-              <span>Tax</span>
+              <span>MwSt.</span>
               <span>{sym}{invoice.tax_amount.toFixed(2)}</span>
             </div>
           )}
           <Separator className="w-48 my-1" />
           <div className="flex gap-8 font-bold text-base">
-            <span>Total</span>
+            <span>Gesamt</span>
             <span>{sym}{invoice.total.toFixed(2)}</span>
           </div>
         </div>
 
         {invoice.notes && (
           <div className="text-xs text-muted-foreground p-3 bg-muted/30 rounded-md">
-            <span className="font-medium">Notes: </span>{invoice.notes}
+            <span className="font-medium">Hinweise: </span>{invoice.notes}
           </div>
         )}
 
         {/* send tracking */}
         {(invoice.metadata as Record<string, unknown>)?.last_sent_at && (
           <p className="text-xs text-muted-foreground">
-            Last sent to <span className="font-medium">{String((invoice.metadata as Record<string, unknown>).last_sent_to)}</span>{" "}
-            on {fmtDate(String((invoice.metadata as Record<string, unknown>).last_sent_at))}
-            {(invoice.metadata as Record<string, unknown>).sent_count ? ` · ${(invoice.metadata as Record<string, unknown>).sent_count}× total` : ""}
+            Zuletzt gesendet an <span className="font-medium">{String((invoice.metadata as Record<string, unknown>).last_sent_to)}</span>{" "}
+            am {fmtDate(String((invoice.metadata as Record<string, unknown>).last_sent_at))}
+            {(invoice.metadata as Record<string, unknown>).sent_count ? ` · ${(invoice.metadata as Record<string, unknown>).sent_count}× insgesamt` : ""}
           </p>
         )}
         <DialogFooter className="flex-wrap gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
+            Schließen
           </Button>
           {(invoice.metadata as Record<string, unknown>)?.stripe_hosted_url && (
             <Button
@@ -694,16 +694,16 @@ function InvoiceDetailDialog({
               onClick={() => window.open((invoice.metadata as Record<string, string>).stripe_hosted_url, "_blank")}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Stripe Invoice
+              Stripe-Rechnung
             </Button>
           )}
           <Button variant="outline" onClick={() => generateInvoicePDF(invoice, companyName)}>
             <Download className="w-4 h-4 mr-2" />
-            Download PDF
+            PDF herunterladen
           </Button>
           <Button onClick={() => onSend(invoice)} disabled={sendLoading}>
             {sendLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-            Send Invoice
+            Rechnung senden
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -796,9 +796,9 @@ function InvoiceTable({
         <div className="p-4 rounded-full bg-muted mb-4">
           <FileText className="w-8 h-8 text-muted-foreground" />
         </div>
-        <p className="font-medium text-muted-foreground">No invoices found</p>
+        <p className="font-medium text-muted-foreground">Keine Rechnungen gefunden</p>
         <p className="text-sm text-muted-foreground mt-1">
-          Invoices will appear here once billing cycles begin.
+          Rechnungen erscheinen hier, sobald Abrechnungszyklen beginnen.
         </p>
       </div>
     );
@@ -810,22 +810,22 @@ function InvoiceTable({
         <TableHeader>
           <TableRow className="bg-muted/50">
             <SortableTh field="invoice_number" currentField={sortField} dir={sortDir} onClick={handleSort}>
-              Invoice #
+              Rechnungs-Nr.
             </SortableTh>
             <SortableTh field="created_at" currentField={sortField} dir={sortDir} onClick={handleSort}>
-              Date
+              Datum
             </SortableTh>
-            <TableHead>Description</TableHead>
+            <TableHead>Beschreibung</TableHead>
             <SortableTh field="due_date" currentField={sortField} dir={sortDir} onClick={handleSort}>
-              Due Date
+              Fälligkeitsdatum
             </SortableTh>
             <SortableTh field="total" currentField={sortField} dir={sortDir} onClick={handleSort} className="text-right">
-              Amount
+              Betrag
             </SortableTh>
             <SortableTh field="status" currentField={sortField} dir={sortDir} onClick={handleSort}>
               Status
             </SortableTh>
-            <TableHead className="text-right w-[110px]">Actions</TableHead>
+            <TableHead className="text-right w-[110px]">Aktionen</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -858,7 +858,7 @@ function InvoiceTable({
                 <TableCell className="text-sm max-w-[200px]">
                   <span className="truncate block">{description}</span>
                   {lineItems && lineItems.length > 1 && (
-                    <span className="text-xs text-muted-foreground">+{lineItems.length - 1} more items</span>
+                    <span className="text-xs text-muted-foreground">+{lineItems.length - 1} weitere Positionen</span>
                   )}
                 </TableCell>
                 <TableCell className="text-sm whitespace-nowrap">
@@ -891,7 +891,7 @@ function InvoiceTable({
                             <Eye className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>View details</TooltipContent>
+                        <TooltipContent>Details anzeigen</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                     <TooltipProvider>
@@ -901,7 +901,7 @@ function InvoiceTable({
                             {sendLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Send invoice by email</TooltipContent>
+                        <TooltipContent>Rechnung per E-Mail senden</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                     <TooltipProvider>
@@ -911,7 +911,7 @@ function InvoiceTable({
                             <Download className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Download PDF</TooltipContent>
+                        <TooltipContent>PDF herunterladen</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
@@ -950,17 +950,17 @@ function PaymentMethodsTab({
                 <CreditCard className="w-4 h-4 text-violet-600 dark:text-violet-400" />
               </div>
               <div>
-                <CardTitle className="text-sm">Payment Gateway</CardTitle>
-                <CardDescription className="text-xs">Stripe – Secure payment processing</CardDescription>
+                <CardTitle className="text-sm">Zahlungsanbieter</CardTitle>
+                <CardDescription className="text-xs">Stripe – Sichere Zahlungsabwicklung</CardDescription>
               </div>
             </div>
             {hasStripe ? (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 px-2 py-1 rounded-full">
-                <CheckCircle className="w-3 h-3" /> Connected
+                <CheckCircle className="w-3 h-3" /> Verbunden
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-1 rounded-full">
-                <AlertCircle className="w-3 h-3" /> Not configured
+                <AlertCircle className="w-3 h-3" /> Nicht konfiguriert
               </span>
             )}
           </div>
@@ -979,8 +979,8 @@ function PaymentMethodsTab({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-sm">Saved Payment Methods</CardTitle>
-              <CardDescription className="text-xs">Cards and bank accounts on file</CardDescription>
+              <CardTitle className="text-sm">Gespeicherte Zahlungsmethoden</CardTitle>
+              <CardDescription className="text-xs">Hinterlegte Karten und Bankkonten</CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={onManageBilling} disabled={billingLoading}>
               {billingLoading ? (
@@ -988,7 +988,7 @@ function PaymentMethodsTab({
               ) : (
                 <CreditCard className="w-3.5 h-3.5 mr-1.5" />
               )}
-              {hasStripe ? "Manage Cards" : "Add Card"}
+              {hasStripe ? "Karten verwalten" : "Karte hinzufügen"}
             </Button>
           </div>
         </CardHeader>
@@ -1001,23 +1001,23 @@ function PaymentMethodsTab({
                 </div>
                 <div>
                   <p className="text-sm font-medium">•••• •••• •••• 4242</p>
-                  <p className="text-xs text-muted-foreground">Visa · Expires 12/27</p>
+                  <p className="text-xs text-muted-foreground">Visa · Läuft ab 12/27</p>
                 </div>
               </div>
-              <Badge variant="secondary" className="text-xs">Default</Badge>
+              <Badge variant="secondary" className="text-xs">Standard</Badge>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <div className="p-3 rounded-full bg-muted mb-3">
                 <CreditCard className="w-6 h-6 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">No payment methods configured</p>
+              <p className="text-sm font-medium text-muted-foreground">Keine Zahlungsmethoden hinterlegt</p>
               <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                Payment methods are managed through the Stripe billing portal.
+                Zahlungsmethoden werden über das Stripe-Abrechnungsportal verwaltet.
               </p>
               <Button size="sm" variant="outline" className="mt-3" onClick={onManageBilling} disabled={billingLoading}>
                 {billingLoading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 mr-1.5" />}
-                Set Up Billing
+                Abrechnung einrichten
               </Button>
             </div>
           )}
@@ -1028,7 +1028,7 @@ function PaymentMethodsTab({
       {company?.billing_email && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Billing Contact</CardTitle>
+            <CardTitle className="text-sm">Rechnungskontakt</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2 text-sm">
@@ -1036,7 +1036,7 @@ function PaymentMethodsTab({
               <span>{company.billing_email}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Invoices and billing notifications are sent to this address.
+              Rechnungen und Abrechnungsbenachrichtigungen werden an diese Adresse gesendet.
             </p>
           </CardContent>
         </Card>
@@ -1046,7 +1046,7 @@ function PaymentMethodsTab({
       <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 rounded-lg text-xs text-blue-700 dark:text-blue-300">
         <Shield className="w-3.5 h-3.5 mt-0.5 shrink-0" />
         <span>
-          All payment information is encrypted and processed securely through Stripe. HSE Safety Hub never stores your full card details.
+          Alle Zahlungsinformationen werden verschlüsselt und sicher über Stripe verarbeitet. HSE Safety Hub speichert niemals vollständige Kartendaten.
         </span>
       </div>
     </div>
@@ -1259,7 +1259,7 @@ export default function Invoices() {
 
     if (checkoutStatus === "success") {
       clearPendingCheckout();
-      toast({ title: "Subscription activated!", description: "Your plan has been updated. Refreshing billing data…" });
+      toast({ title: "Abonnement aktiviert!", description: "Ihr Plan wurde aktualisiert. Abrechnungsdaten werden aktualisiert…" });
       fetchData(true);
       setSearchParams({}, { replace: true });
     } else if (checkoutStatus === "cancelled" || checkoutStatus === "canceled" || checkoutStatus === "failed") {
@@ -1290,7 +1290,7 @@ export default function Invoices() {
       clearPendingCheckout();
       toast({
         title: "Zahlung erfolgreich",
-        description: `${PLAN_LABELS[company.subscription_tier]} plan activated.`,
+        description: `${PLAN_LABELS[company.subscription_tier]}-Plan aktiviert.`,
       });
       fetchData(true);
       return;
@@ -1300,7 +1300,7 @@ export default function Invoices() {
       clearPendingCheckout();
       toast({
         title: "Zahlung nicht abgeschlossen",
-        description: "No successful Stripe payment was detected. Please try again.",
+        description: "Es wurde keine erfolgreiche Stripe-Zahlung erkannt. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     }
@@ -1346,7 +1346,7 @@ export default function Invoices() {
       } else {
         toast({
           title: "Rechnungsportal nicht verfügbar",
-          description: msg || "Please try again later.",
+          description: msg || "Bitte versuchen Sie es später erneut.",
           variant: "destructive",
         });
       }
@@ -1383,7 +1383,7 @@ export default function Invoices() {
     } catch (err: unknown) {
       toast({
         title: "Fehler",
-        description: err instanceof Error ? err.message : "Please try again.",
+        description: err instanceof Error ? err.message : "Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     } finally {
@@ -1487,7 +1487,7 @@ export default function Invoices() {
     } catch (err: unknown) {
       toast({
         title: "Checkout nicht verfügbar",
-        description: err instanceof Error ? err.message : "Please try again later.",
+        description: err instanceof Error ? err.message : "Bitte versuchen Sie es später erneut.",
         variant: "destructive",
       });
       setBillingLoading(false);
@@ -1546,7 +1546,7 @@ export default function Invoices() {
       },
     });
     generateInvoicePDF(invoice, company?.name ?? "Company");
-    toast({ title: "PDF generated", description: `${invoice.invoice_number}.pdf downloaded.` });
+    toast({ title: "PDF erstellt", description: `${invoice.invoice_number}.pdf wurde heruntergeladen.` });
   };
 
   const handleSendClick = (invoice: Invoice) => {
@@ -1580,8 +1580,8 @@ export default function Invoices() {
         },
       });
       toast({
-        title: "Invoice sent!",
-        description: `${sendTarget.invoice_number} emailed to ${sendEmail}.`,
+        title: "Rechnung gesendet!",
+        description: `${sendTarget.invoice_number} wurde an ${sendEmail} gesendet.`,
       });
       setSendDialogOpen(false);
       setDetailOpen(false);
@@ -1589,7 +1589,7 @@ export default function Invoices() {
     } catch (err: unknown) {
       toast({
         title: "Fehler",
-        description: err instanceof Error ? err.message : "Please try again.",
+        description: err instanceof Error ? err.message : "Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     } finally {
@@ -1629,12 +1629,12 @@ export default function Invoices() {
           <AlertCircle className="w-8 h-8 text-red-500" />
         </div>
         <div>
-          <p className="font-semibold text-lg">Failed to load billing data</p>
+          <p className="font-semibold text-lg">Abrechnungsdaten konnten nicht geladen werden</p>
           <p className="text-sm text-muted-foreground mt-1 max-w-xs">{error}</p>
         </div>
         <Button variant="outline" onClick={() => fetchData()}>
           <RefreshCw className="w-4 h-4 mr-2" />
-          Try Again
+          Erneut versuchen
         </Button>
       </div>
     );
@@ -1647,7 +1647,7 @@ export default function Invoices() {
         <div className="p-4 rounded-full bg-muted">
           <Building2 className="w-8 h-8 text-muted-foreground" />
         </div>
-        <p className="font-medium text-muted-foreground">No company associated with your account.</p>
+        <p className="font-medium text-muted-foreground">Ihrem Konto ist kein Unternehmen zugeordnet.</p>
       </div>
     );
   }
@@ -1660,10 +1660,10 @@ export default function Invoices() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Receipt className="w-6 h-6 text-primary" />
-            Invoices &amp; Billing
+            Rechnungen &amp; Abrechnung
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage your subscription billing and download invoices
+            Abonnement-Abrechnung verwalten und Rechnungen herunterladen
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => fetchData(true)} disabled={refreshing}>
@@ -1672,7 +1672,7 @@ export default function Invoices() {
           ) : (
             <RefreshCw className="w-4 h-4 mr-2" />
           )}
-          Refresh
+          Aktualisieren
         </Button>
       </div>
 
@@ -1681,13 +1681,13 @@ export default function Invoices() {
         <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
           <div className="flex-1">
-            <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Billing Portal Not Yet Configured</p>
+            <p className="font-semibold text-amber-800 dark:text-amber-200 text-sm">Abrechnungsportal noch nicht konfiguriert</p>
             <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-              Stripe payment processing is not yet set up. To use the billing portal, an administrator must configure the <strong>STRIPE_SECRET_KEY</strong> in the Supabase Edge Function secrets. Until then, invoices can still be generated and sent manually below.
+              Die Stripe-Zahlungsabwicklung ist noch nicht eingerichtet. Um das Abrechnungsportal zu nutzen, muss ein Administrator den <strong>STRIPE_SECRET_KEY</strong> in den Supabase Edge Function-Geheimnissen konfigurieren. Bis dahin können Rechnungen weiterhin manuell erstellt und unten versendet werden.
             </p>
           </div>
           <Button size="sm" variant="outline" className="shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:border-amber-700" onClick={() => setStripeUnavailable(false)}>
-            Dismiss
+            Schließen
           </Button>
         </div>
       )}
@@ -1697,14 +1697,14 @@ export default function Invoices() {
         <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg">
           <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
           <div className="flex-1">
-            <p className="font-semibold text-blue-800 dark:text-blue-200 text-sm">Set a Billing Email</p>
+            <p className="font-semibold text-blue-800 dark:text-blue-200 text-sm">Rechnungs-E-Mail festlegen</p>
             <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-              No billing email is set for your account. Invoices and payment receipts will be sent to this address.
+              Für Ihr Konto ist keine Rechnungs-E-Mail hinterlegt. Rechnungen und Zahlungsbelege werden an diese Adresse gesendet.
             </p>
           </div>
           <Button size="sm" className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white" onClick={openBillingEmailDialog}>
             <Mail className="w-3.5 h-3.5 mr-1.5" />
-            Set Email
+            E-Mail festlegen
           </Button>
         </div>
       )}
@@ -1716,7 +1716,7 @@ export default function Invoices() {
             {/* Total Paid */}
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
+                <CardTitle className="text-sm font-medium">Gesamt bezahlt</CardTitle>
                 <div className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950">
                   <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
@@ -1724,7 +1724,7 @@ export default function Invoices() {
               <CardContent>
                 <div className="text-2xl font-bold">{fmt(stats.totalPaid, currency)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats.paid.length} paid invoice{stats.paid.length !== 1 ? "s" : ""}
+                  {stats.paid.length} bezahlte Rechnung{stats.paid.length !== 1 ? "en" : ""}
                 </p>
               </CardContent>
             </Card>
@@ -1732,7 +1732,7 @@ export default function Invoices() {
             {/* Pending */}
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Amount</CardTitle>
+                <CardTitle className="text-sm font-medium">Ausstehender Betrag</CardTitle>
                 <div className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-950">
                   <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 </div>
@@ -1740,10 +1740,10 @@ export default function Invoices() {
               <CardContent>
                 <div className="text-2xl font-bold">{fmt(stats.totalPending, currency)}</div>
                 <div className="flex items-center gap-1 mt-1 flex-wrap">
-                  <p className="text-xs text-muted-foreground">{stats.pending.length} pending</p>
+                  <p className="text-xs text-muted-foreground">{stats.pending.length} ausstehend</p>
                   {stats.totalOverdue > 0 && (
                     <span className="text-xs text-red-600 dark:text-red-400 font-medium">
-                      · {fmt(stats.totalOverdue, currency)} overdue
+                      · {fmt(stats.totalOverdue, currency)} überfällig
                     </span>
                   )}
                 </div>
@@ -1753,7 +1753,7 @@ export default function Invoices() {
             {/* Next billing */}
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Next Billing</CardTitle>
+                <CardTitle className="text-sm font-medium">Nächste Abrechnung</CardTitle>
                 <div className="p-1.5 rounded-md bg-blue-50 dark:bg-blue-950">
                   <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
@@ -1764,8 +1764,8 @@ export default function Invoices() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {company?.subscription_tier
-                    ? `${PLAN_LABELS[company.subscription_tier]} ${billingIntervalLabel(company.subscription_billing_interval).toLowerCase()} plan`
-                    : "Monthly subscription"}
+                    ? `${PLAN_LABELS[company.subscription_tier]} ${billingIntervalLabel(company.subscription_billing_interval).toLowerCase()}es Abonnement`
+                    : "Monatliches Abonnement"}
                 </p>
               </CardContent>
             </Card>
@@ -1777,14 +1777,14 @@ export default function Invoices() {
               <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
               <div className="flex-1 text-sm">
                 <p className="font-medium text-red-800 dark:text-red-200">
-                  {stats.overdue.length} overdue invoice{stats.overdue.length > 1 ? "s" : ""}
+                  {stats.overdue.length} überfällige Rechnung{stats.overdue.length > 1 ? "en" : ""}
                 </p>
                 <p className="text-red-600 dark:text-red-400 text-xs mt-0.5">
-                  Total outstanding: {fmt(stats.totalOverdue, currency)}. Please settle promptly to avoid service interruption.
+                  Gesamtbetrag ausstehend: {fmt(stats.totalOverdue, currency)}. Bitte zeitnah begleichen, um Serviceunterbrechungen zu vermeiden.
                 </p>
               </div>
               <Button size="sm" variant="destructive" onClick={() => setActiveTab("overdue")}>
-                View
+                Anzeigen
               </Button>
             </div>
           )}
@@ -1801,7 +1801,7 @@ export default function Invoices() {
             />
           ) : (
             <Card className="h-full flex items-center justify-center p-6">
-              <p className="text-sm text-muted-foreground text-center">Subscription info unavailable</p>
+              <p className="text-sm text-muted-foreground text-center">Abonnementinformationen nicht verfügbar</p>
             </Card>
           )}
         </div>

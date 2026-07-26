@@ -230,6 +230,20 @@ export default function Notifications() {
         return icons[category] || "📢";
     };
 
+    const getCategoryLabel = (category: string) => {
+        const labels: Record<string, string> = {
+            task: "Aufgabe",
+            training: "Schulung",
+            audit: "Audit",
+            incident: "Vorfall",
+            risk: "Gefährdung",
+            measure: "Maßnahme",
+            message: "Nachricht",
+            system: "System",
+        };
+        return labels[category] || category;
+    };
+
     const getTypeColor = (type: string) => {
         const colors: Record<string, string> = {
             info: "bg-blue-500",
@@ -273,15 +287,15 @@ export default function Notifications() {
         <div className="p-8" data-testid="notifications-page">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold">Notifications</h1>
+                    <h1 className="text-3xl font-bold">Benachrichtigungen</h1>
                     <p className="text-muted-foreground">
-                        {unreadCount > 0 ? `${unreadCount} unread notifications` : "All caught up!"}
+                        {unreadCount > 0 ? `${unreadCount} ungelesene Benachrichtigungen` : "Alles gelesen!"}
                     </p>
                 </div>
                 {unreadCount > 0 && (
                     <Button data-testid="notifications-mark-all-read" variant="outline" onClick={markAllAsRead}>
                         <CheckCheck className="w-4 h-4 mr-2" />
-                        Mark all as read
+                        Alle als gelesen markieren
                     </Button>
                 )}
             </div>
@@ -290,15 +304,15 @@ export default function Notifications() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Bell className="w-5 h-5" />
-                        All Notifications
+                        Alle Benachrichtigungen
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {notifications.length === 0 ? (
                         <div className="text-center py-12 text-muted-foreground">
                             <Bell className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                            <p className="text-lg">No notifications yet</p>
-                            <p className="text-sm">You'll see notifications here when someone mentions you or sends you a message.</p>
+                            <p className="text-lg">Noch keine Benachrichtigungen</p>
+                            <p className="text-sm">Hier erscheinen Benachrichtigungen, wenn jemand Sie erwähnt oder eine Nachricht sendet.</p>
                         </div>
                     ) : (
                         <ScrollArea className="h-[600px]">
@@ -363,7 +377,7 @@ export default function Notifications() {
                                                     })}
                                                 </span>
                                                 <Badge variant="outline" className="text-xs">
-                                                    {notification.category}
+                                                    {getCategoryLabel(notification.category)}
                                                 </Badge>
                                             </div>
                                         </div>

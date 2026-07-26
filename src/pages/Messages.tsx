@@ -57,11 +57,11 @@ export default function Messages() {
     try {
       // Company-wide channels
       const companyChannels: Channel[] = [
-        { id: "general", name: "General", type: "company", unread_count: 0 },
-        { id: "safety", name: "Safety", type: "company", unread_count: 0 },
+        { id: "general", name: "Allgemein", type: "company", unread_count: 0 },
+        { id: "safety", name: "Sicherheit", type: "company", unread_count: 0 },
         {
           id: "announcements",
-          name: "Announcements",
+          name: "Ankündigungen",
           type: "company",
           unread_count: 0,
         },

@@ -834,7 +834,7 @@ export default function Reports() {
           const bucketEnd = new Date(cursor);
           bucketEnd.setHours(23, 59, 59, 999);
           buckets.push({
-            label: bucketStart.toLocaleDateString("en-US", {
+            label: bucketStart.toLocaleDateString("de-DE", {
               month: "short",
               day: "numeric",
             }),
@@ -859,7 +859,7 @@ export default function Reports() {
             999
           );
           buckets.push({
-            label: monthStart.toLocaleDateString("en-US", { month: "short" }),
+            label: monthStart.toLocaleDateString("de-DE", { month: "short" }),
             startDate: monthStart,
             endDate: monthEnd,
           });
@@ -1053,8 +1053,8 @@ export default function Reports() {
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const pageW = doc.internal.pageSize.getWidth();
     const now = new Date();
-    const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
-    const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
+    const timeStr = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
     // ── Header bar ──────────────────────────────────────────────
     doc.setFillColor(79, 70, 229); // indigo-600
@@ -2237,8 +2237,8 @@ export default function Reports() {
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const pageW = doc.internal.pageSize.getWidth();
     const now = new Date();
-    const dateStr = now.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
-    const timeStr = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const dateStr = now.toLocaleDateString("de-DE", { day: "2-digit", month: "long", year: "numeric" });
+    const timeStr = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
     // Header bar
     doc.setFillColor(79, 70, 229);

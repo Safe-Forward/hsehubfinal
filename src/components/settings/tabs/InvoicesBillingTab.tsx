@@ -62,13 +62,13 @@ export function InvoicesBillingTab({ onNavigateToTab }: Props) {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Receipt className="w-5 h-5" />
-              Invoices &amp; Billing
+              Rechnungen &amp; Abrechnung
             </CardTitle>
-            <CardDescription>View your recent invoices and billing information</CardDescription>
+            <CardDescription>Deine letzten Rechnungen und Abrechnungsinformationen ansehen</CardDescription>
           </div>
           <Button onClick={() => navigate("/invoices")} variant="outline">
             <Receipt className="w-4 h-4 mr-2" />
-            View All Invoices
+            Alle Rechnungen anzeigen
           </Button>
         </div>
       </CardHeader>
@@ -79,9 +79,9 @@ export function InvoicesBillingTab({ onNavigateToTab }: Props) {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Rechnungsnr.</TableHead>
+                    <TableHead>Datum</TableHead>
+                    <TableHead className="text-right">Betrag</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -89,7 +89,7 @@ export function InvoicesBillingTab({ onNavigateToTab }: Props) {
                   {recentInvoices.map((invoice: any) => (
                     <TableRow key={invoice.invoice_number}>
                       <TableCell className="font-mono text-sm">{invoice.invoice_number}</TableCell>
-                      <TableCell>{new Date(invoice.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>{new Date(invoice.created_at).toLocaleDateString("de-DE")}</TableCell>
                       <TableCell className="text-right font-semibold">
                         {invoice.currency === "USD" ? "$" : invoice.currency === "EUR" ? "€" : ""}
                         {invoice.total.toFixed(2)}
@@ -104,7 +104,13 @@ export function InvoicesBillingTab({ onNavigateToTab }: Props) {
                               : "destructive"
                           }
                         >
-                          {invoice.status}
+                          {invoice.status === "paid"
+                            ? "Bezahlt"
+                            : invoice.status === "pending"
+                              ? "Ausstehend"
+                              : invoice.status === "overdue"
+                                ? "Überfällig"
+                                : invoice.status}
                         </Badge>
                       </TableCell>
                     </TableRow>
@@ -115,7 +121,7 @@ export function InvoicesBillingTab({ onNavigateToTab }: Props) {
           ) : (
             <div className="p-6 border rounded-lg bg-muted/30 text-center">
               <Receipt className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
-              <p className="text-muted-foreground">No recent invoices available.</p>
+              <p className="text-muted-foreground">Keine aktuellen Rechnungen vorhanden.</p>
             </div>
           )}
         </div>

@@ -74,8 +74,8 @@ export default function ProtectedRoute({
     if (requiredRole) {
       if (!satisfiesRequiredRole(userRole, requiredRole)) {
         toast({
-          title: "Access Denied",
-          description: `This page requires ${requiredRole.replace('_', ' ')} role.`,
+          title: "Kein Zugriff",
+          description: `Diese Seite erfordert die Rolle: ${requiredRole.replace('_', ' ')}.`,
           variant: "destructive",
         });
         navigate("/dashboard", { replace: true });
@@ -103,9 +103,9 @@ export default function ProtectedRoute({
 
     if (!hasAccess || !hasTierAccess) {
       toast({
-        title: "Access Denied",
+        title: "Kein Zugriff",
         description: !hasAccess
-          ? "You don't have permission to access this page."
+          ? "Du hast keine Berechtigung für diese Seite."
           : "Dieses Modul ist in Ihrem aktuellen Tarif nicht enthalten.",
         variant: "destructive",
       });

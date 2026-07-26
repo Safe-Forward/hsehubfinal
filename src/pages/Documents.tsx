@@ -200,7 +200,7 @@ export default function Documents() {
     // Check permission before allowing upload
     if (!hasDetailedPermission('documents', 'upload')) {
       toast({
-        title: "Permission Denied",
+        title: "Keine Berechtigung",
         description: "Keine Berechtigung zum Hochladen von Dokumenten",
         variant: "destructive",
       });
@@ -315,7 +315,7 @@ export default function Documents() {
     } catch (error: any) {
       console.error("Error uploading document:", error);
       toast({
-        title: "Upload Failed",
+        title: "Upload fehlgeschlagen",
         description: error.message || "Dokument konnte nicht hochgeladen werden",
         variant: "destructive",
       });
@@ -361,7 +361,7 @@ export default function Documents() {
     } catch (error: any) {
       console.error("Error downloading document:", error);
       toast({
-        title: "Download Failed",
+        title: "Download fehlgeschlagen",
         description: error.message || "Dokument konnte nicht heruntergeladen werden",
         variant: "destructive",
       });
@@ -372,7 +372,7 @@ export default function Documents() {
     // Check permission before allowing delete
     if (!hasDetailedPermission('documents', 'delete')) {
       toast({
-        title: "Permission Denied",
+        title: "Keine Berechtigung",
         description: "Keine Berechtigung zum Löschen von Dokumenten",
         variant: "destructive",
       });
@@ -427,7 +427,7 @@ export default function Documents() {
     } catch (error: any) {
       console.error("Error deleting document:", error);
       toast({
-        title: "Delete Failed",
+        title: "Löschen fehlgeschlagen",
         description: error.message || "Dokument konnte nicht gelöscht werden",
         variant: "destructive",
       });
@@ -483,7 +483,7 @@ export default function Documents() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading documents...</p>
+          <p className="text-muted-foreground">Dokumente werden geladen...</p>
         </div>
       </div>
     );
@@ -494,9 +494,9 @@ export default function Documents() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">Documents</h1>
+          <h1 className="text-3xl font-bold mb-2">Dokumente</h1>
           <p className="text-muted-foreground">
-            Manage your HSE documents, policies, and procedures
+            HSE-Dokumente, Richtlinien und Verfahren verwalten
           </p>
         </div>
 
@@ -511,14 +511,14 @@ export default function Documents() {
             }`}
         >
           <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-lg font-medium mb-2">Drag and drop files here</p>
+          <p className="text-lg font-medium mb-2">Dateien hier ablegen</p>
           <p className="text-sm text-muted-foreground mb-4">
-            or click the button below to select files
+            oder unten auf „Dokument hochladen" klicken
           </p>
           {hasDetailedPermission('documents', 'upload') && (
             <Button onClick={() => setShowUploadDialog(true)} data-testid="btn-upload-document">
               <Upload className="h-4 w-4 mr-2" />
-              Upload Document
+              Dokument hochladen
             </Button>
           )}
         </div>
@@ -529,10 +529,11 @@ export default function Documents() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search documents..."
+                placeholder="Dokumente suchen..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
+                data-testid="search-documents"
               />
             </div>
           </div>
@@ -542,12 +543,12 @@ export default function Documents() {
               setCategoryFilter(value as DocumentCategory | "all")
             }
           >
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[200px]" data-testid="filter-document-category">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Nach Kategorie filtern" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">Alle Kategorien</SelectItem>
               {Object.entries(documentCategoryLabels).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
                   {label}
@@ -562,7 +563,7 @@ export default function Documents() {
           <Card>
             <CardContent className="py-12 text-center">
               <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-lg font-medium mb-2">No documents found</p>
+              <p className="text-lg font-medium mb-2">Keine Dokumente gefunden</p>
               <p className="text-sm text-muted-foreground mb-4">
                 {searchQuery || categoryFilter !== "all"
                   ? "Suche oder Filter anpassen"
@@ -571,7 +572,7 @@ export default function Documents() {
               {!searchQuery && categoryFilter === "all" && hasDetailedPermission('documents', 'upload') && (
                 <Button onClick={() => setShowUploadDialog(true)} data-testid="btn-upload-document-empty">
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload Document
+                  Dokument hochladen
                 </Button>
               )}
             </CardContent>
@@ -619,7 +620,7 @@ export default function Documents() {
                       </span>
                     </div>
                     <div className="text-xs">
-                      Size: {formatFileSize(doc.file_size)}
+                      Größe: {formatFileSize(doc.file_size)}
                     </div>
                     {doc.expiry_date && (
                       <div
@@ -632,8 +633,8 @@ export default function Documents() {
                       >
                         <AlertCircle className="h-4 w-4" />
                         <span>
-                          Expires:{" "}
-                          {new Date(doc.expiry_date).toLocaleDateString()}
+                          Läuft ab:{" "}
+                          {new Date(doc.expiry_date).toLocaleDateString("de-DE")}
                         </span>
                       </div>
                     )}
@@ -645,15 +646,17 @@ export default function Documents() {
                       variant="outline"
                       className="flex-1"
                       onClick={() => handleDownload(doc)}
+                      data-testid={`btn-download-document-${doc.id}`}
                     >
                       <Download className="h-4 w-4 mr-1" />
-                      Download
+                      Herunterladen
                     </Button>
                     {hasDetailedPermission('documents', 'delete') && (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleDelete(doc)}
+                        data-testid={`btn-delete-document-${doc.id}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -670,15 +673,15 @@ export default function Documents() {
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Upload Document</DialogTitle>
+            <DialogTitle>Dokument hochladen</DialogTitle>
             <DialogDescription>
-              Add a new document to your HSE management system
+              Neues Dokument zum HSE-System hinzufügen
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="file">File *</Label>
+              <Label htmlFor="file">Datei *</Label>
               <Input
                 id="file"
                 ref={fileInputRef}
@@ -689,14 +692,13 @@ export default function Documents() {
               />
               {uploadFile && (
                 <p className="text-sm text-muted-foreground mt-1">
-                  Selected: {uploadFile.name} ({formatFileSize(uploadFile.size)}
-                  )
+                  Ausgewählt: {uploadFile.name} ({formatFileSize(uploadFile.size)})
                 </p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="title">Titel *</Label>
               <Input
                 id="title"
                 value={uploadTitle}
@@ -706,7 +708,7 @@ export default function Documents() {
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Beschreibung</Label>
               <Textarea
                 id="description"
                 value={uploadDescription}
@@ -717,7 +719,7 @@ export default function Documents() {
             </div>
 
             <div>
-              <Label htmlFor="category">Category *</Label>
+              <Label htmlFor="category">Kategorie *</Label>
               <Select
                 value={uploadCategory}
                 onValueChange={(value) =>
@@ -740,7 +742,7 @@ export default function Documents() {
             </div>
 
             <div>
-              <Label htmlFor="expiryDate">Expiry Date (optional)</Label>
+              <Label htmlFor="expiryDate">Ablaufdatum (optional)</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -765,7 +767,7 @@ export default function Documents() {
                 </PopoverContent>
               </Popover>
               <p className="text-xs text-muted-foreground mt-1">
-                For certificates, permits, licenses, etc.
+                Für Zertifikate, Genehmigungen, Lizenzen usw.
               </p>
             </div>
 
@@ -778,7 +780,7 @@ export default function Documents() {
                 className="h-4 w-4"
               />
               <Label htmlFor="isPublic" className="cursor-pointer">
-                Make accessible to all company users
+                Für alle Unternehmensnutzer sichtbar
               </Label>
             </div>
           </div>
@@ -792,18 +794,18 @@ export default function Documents() {
               }}
               disabled={uploading}
             >
-              Cancel
+              Abbrechen
             </Button>
             <Button onClick={handleUpload} disabled={uploading || !uploadFile} data-testid="document-upload-submit">
               {uploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Uploading...
+                  Wird hochgeladen...
                 </>
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload
+                  Hochladen
                 </>
               )}
             </Button>

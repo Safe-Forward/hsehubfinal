@@ -124,7 +124,7 @@ export default function LessonCard({
               variant={lesson.status === "published" ? "default" : "secondary"}
               className="text-xs h-5"
             >
-              {lesson.status === "draft" ? "Entwurf" : "Veroeffentlicht"}
+              {lesson.status === "draft" ? "Entwurf" : "Veröffentlicht"}
             </Badge>
           )}
           {isCompleted && (
@@ -173,7 +173,7 @@ export default function LessonCard({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onToggleStatus(lesson.id, lesson.status); }}>
               {lesson.status === "draft" ? (
-                <><CheckCircle2 className="w-4 h-4 mr-2" />Veroeffentlichen</>
+                <><CheckCircle2 className="w-4 h-4 mr-2" />Veröffentlichen</>
               ) : (
                 <><Circle className="w-4 h-4 mr-2" />Als Entwurf</>
               )}
@@ -183,7 +183,7 @@ export default function LessonCard({
               className="text-destructive"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Loeschen
+              Löschen
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

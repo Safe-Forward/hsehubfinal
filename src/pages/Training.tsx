@@ -626,7 +626,7 @@ export default function Training() {
 
   const onCourseDelete = async (courseId: string, courseName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Kurs "${courseName}" wirklich loeschen?`)) return;
+    if (!confirm(`Kurs "${courseName}" wirklich löschen?`)) return;
     try {
       await supabase.from("course_lessons").delete().eq("course_id", courseId);
       await supabase.from("courses").delete().eq("id", courseId);
@@ -661,7 +661,7 @@ export default function Training() {
   };
 
   const onLessonDelete = async (lessonId: string, lessonName: string) => {
-    if (!confirm(`Lektion "${lessonName}" wirklich loeschen?`)) return;
+    if (!confirm(`Lektion "${lessonName}" wirklich löschen?`)) return;
     try {
       await supabase.from("course_lessons").delete().eq("id", lessonId);
       setLessons(lessons.filter((l) => l.id !== lessonId));
@@ -838,13 +838,13 @@ export default function Training() {
               <Card className="border-0 shadow-md bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
                 <CardContent className="p-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center"><CheckCircle className="w-5 h-5 text-white" /></div>
-                  <div><p className="text-2xl font-bold">{publishedCount}</p><p className="text-xs text-muted-foreground">Veroeffentlicht</p></div>
+                  <div><p className="text-2xl font-bold">{publishedCount}</p><p className="text-xs text-muted-foreground">Veröffentlicht</p></div>
                 </CardContent>
               </Card>
               <Card className="border-0 shadow-md bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900">
                 <CardContent className="p-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center"><Clock className="w-5 h-5 text-white" /></div>
-                  <div><p className="text-2xl font-bold">{draftCount}</p><p className="text-xs text-muted-foreground">Entwuerfe</p></div>
+                  <div><p className="text-2xl font-bold">{draftCount}</p><p className="text-xs text-muted-foreground">Entwürfe</p></div>
                 </CardContent>
               </Card>
               <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
@@ -1078,7 +1078,7 @@ export default function Training() {
             <Card className="border-0 shadow-md">
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900 flex items-center justify-center"><Award className="w-5 h-5 text-amber-600" /></div>
-                <div><p className="text-2xl font-bold">{courses.length}</p><p className="text-xs text-muted-foreground">Zertifikate bereit</p></div>
+                <div><p className="text-2xl font-bold">{courses.length}</p><p className="text-xs text-muted-foreground">Verfügbare Kurse</p></div>
               </CardContent>
             </Card>
             <Card className="border-0 shadow-md">

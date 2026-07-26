@@ -291,10 +291,10 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
           }
         }
       }
-      toast({ title: "Gespeichert", description: `${data.iso_name} criteria imported successfully!` });
+      toast({ title: "Gespeichert", description: `${data.iso_name} Kriterien erfolgreich importiert!` });
       await fetchIsoCriteria(isoCode);
     } catch (error: any) {
-      toast({ title: "Fehler", description: error.message || "Failed to import ISO criteria", variant: "destructive" });
+      toast({ title: "Fehler", description: error.message || "ISO-Kriterien konnten nicht importiert werden", variant: "destructive" });
     } finally {
       setImportingISO(null);
     }
@@ -414,7 +414,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                         }
                       }
                       setSelectedISOs(allISOIds);
-                      toast({ title: "Gespeichert", description: "All ISOs selected and saved" });
+                      toast({ title: "Gespeichert", description: "Alle ISO-Standards ausgewählt und gespeichert" });
                     }}
                   >
                     Select All
@@ -471,7 +471,7 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                     <label htmlFor={iso.id} className="cursor-pointer font-medium">
                       {iso.name}
                     </label>
-                    <span className="text-sm">{selectedISOs.includes(iso.id) ? "active" : "active"}</span>
+                    <span className="text-sm">{selectedISOs.includes(iso.id) ? "Aktiv" : ""}</span>
                   </div>
                 ))}
 
@@ -638,12 +638,12 @@ export function IntervalsTab({ onNavigateToTab }: Props) {
                           localStorage.setItem(`selectedCriteria_${companyId}`, JSON.stringify(newCriteria));
                         }
                         toast({
-                          title: "All Selected",
-                          description: `All criteria for ${isoCodeMap[activeISOForCriteria] || activeISOForCriteria} selected (${allCriteriaIds.length} items)`,
+                          title: "Alle ausgewählt",
+                          description: `Alle Kriterien für ${isoCodeMap[activeISOForCriteria] || activeISOForCriteria} ausgewählt (${allCriteriaIds.length} Einträge)`,
                         });
                       }}
                     >
-                      Select All
+                      Alle auswählen
                     </Button>
                     <Button
                       variant="default"

@@ -311,7 +311,7 @@ export function IncidentsSection({
       }
     };
     loadKPIs();
-  }, [companyId, selectedYear]);
+  }, [companyId, selectedYear, departmentFilter]);
 
   // ─────────────────────────────────────────────────────────────────────────────
 

@@ -168,7 +168,7 @@ export default function Audits() {
     // Check permission before allowing create
     if (!hasDetailedPermission('audits', 'create_edit')) {
       toast({
-        title: "Permission Denied",
+        title: "Keine Berechtigung",
         description: "Keine Berechtigung zum Erstellen von Audits",
         variant: "destructive",
       });
@@ -177,7 +177,7 @@ export default function Audits() {
 
     if (!formData.title || !formData.iso_code || !formData.scheduled_date) {
       toast({
-        title: "Validation Error",
+        title: "Pflichtfelder fehlen",
         description: "Bitte alle Pflichtfelder ausfüllen",
         variant: "destructive",
       });
@@ -379,7 +379,7 @@ export default function Audits() {
     // Check permission before allowing delete
     if (!hasDetailedPermission('audits', 'create_edit')) {
       toast({
-        title: "Permission Denied",
+        title: "Keine Berechtigung",
         description: "Keine Berechtigung zum Löschen von Audits",
         variant: "destructive",
       });
@@ -547,8 +547,8 @@ export default function Audits() {
                         </div>
 
                         <div className="flex gap-4 text-sm text-muted-foreground mb-2">
-                          <span>📋 {audit.iso_code} Template</span>
-                          <span>📅 {audit.scheduled_date}</span>
+                          <span>📋 {audit.iso_code} Vorlage</span>
+                          <span>📅 {audit.scheduled_date ? new Date(audit.scheduled_date).toLocaleDateString("de-DE") : "—"}</span>
                           <span>
                             👤{" "}
                             {audit.team_members

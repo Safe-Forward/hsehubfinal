@@ -142,7 +142,7 @@ export default function LessonViewer() {
       const { data, error } = await supabase.from("course_lessons").select("*").eq("id", lessonId).eq("course_id", courseId).single();
       if (error) throw error;
       if (!isAdmin && data.status === "draft") {
-        toast({ title: "Kein Zugriff", description: "Diese Lektion ist noch nicht veroeffentlicht.", variant: "destructive" });
+        toast({ title: "Kein Zugriff", description: "Diese Lektion ist noch nicht veröffentlicht.", variant: "destructive" });
         navigate(`/training/${courseId}`);
         return;
       }
@@ -326,7 +326,7 @@ export default function LessonViewer() {
         .select().single();
       if (error) throw error;
       setCertificate(certData);
-      toast({ title: "Kurs abgeschlossen! 🎉", description: "Herzlichen Glueckwunsch! Ihr Zertifikat wurde generiert." });
+      toast({ title: "Kurs abgeschlossen! 🎉", description: "Herzlichen Glückwunsch! Ihr Zertifikat wurde generiert." });
     } catch (err: any) {
       toast({ title: "Fehler beim Generieren des Zertifikats", description: err.message, variant: "destructive" });
     } finally {
@@ -506,7 +506,7 @@ export default function LessonViewer() {
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="outline">{getTypeLabel(lesson.type)}</Badge>
                   {completed && <Badge className="bg-green-100 text-green-700 border-green-200"><CheckCircle className="w-3 h-3 mr-1" />Abgeschlossen</Badge>}
-                  {isAdmin && <Badge variant={lesson.status === "published" ? "default" : "secondary"}>{lesson.status === "published" ? "Veroeffentlicht" : "Entwurf"}</Badge>}
+                  {isAdmin && <Badge variant={lesson.status === "published" ? "default" : "secondary"}>{lesson.status === "published" ? "Veröffentlicht" : "Entwurf"}</Badge>}
                   {lesson.type === "quiz" && quizData && (
                     <Badge className="bg-pink-100 text-pink-700 border-pink-200">
                       {quizData.questions.length} Fragen • {quizData.passing_score}% zum Bestehen

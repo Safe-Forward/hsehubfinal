@@ -126,7 +126,7 @@ export function ApiIntegrationTab({
                       variant="outline"
                       size="icon"
                       onClick={copyApiToken}
-                      title="Copy to clipboard"
+                      title="In die Zwischenablage kopieren"
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
@@ -210,14 +210,14 @@ export function ApiIntegrationTab({
                             </span>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={system.status === 'active' ? "default" : "secondary"}>
-                              {system.status === 'active' ? "Active" : system.status === 'error' ? 'Error' : "Inactive"}
+                            <Badge variant={system.status === 'active' ? "default" : system.status === 'error' ? "destructive" : "secondary"}>
+                              {system.status === 'active' ? "Aktiv" : system.status === 'error' ? 'Fehler' : "Inaktiv"}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             {system.last_sync_at
-                              ? new Date(system.last_sync_at).toLocaleString()
-                              : "Never"
+                              ? new Date(system.last_sync_at).toLocaleString("de-DE")
+                              : "Nie"
                             }
                           </TableCell>
                           <TableCell className="text-right">
@@ -240,32 +240,32 @@ export function ApiIntegrationTab({
 
             <div className="flex justify-between items-center">
               <p className="text-sm text-muted-foreground">
-                Connect external systems via webhooks or REST APIs
+                Externe Systeme über Webhooks oder REST-APIs anbinden
               </p>
               <div className="flex gap-2">
                 <Dialog open={isAddSystemDialogOpen} onOpenChange={setIsAddSystemDialogOpen}>
                   <DialogTrigger asChild>
                     <Button>
                       <Plus className="w-4 h-4 mr-2" />
-                      Connect System
+                      System verbinden
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Connect External System</DialogTitle>
+                      <DialogTitle>Externes System verbinden</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div>
-                        <Label htmlFor="system-name">System Name *</Label>
+                        <Label htmlFor="system-name">Systemname *</Label>
                         <Input
                           id="system-name"
-                          placeholder="e.g., SAP HR, Salesforce"
+                          placeholder="z. B. SAP HR, Salesforce"
                           value={newSystemForm.name}
                           onChange={(e) => setNewSystemForm(prev => ({ ...prev, name: e.target.value }))}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="system-type">System Type</Label>
+                        <Label htmlFor="system-type">Systemtyp</Label>
                         <Select
                           value={newSystemForm.type}
                           onValueChange={(value) => setNewSystemForm(prev => ({ ...prev, type: value }))}
@@ -276,20 +276,20 @@ export function ApiIntegrationTab({
                           <SelectContent>
                             <SelectItem value="webhook">Webhook</SelectItem>
                             <SelectItem value="rest_api">REST API</SelectItem>
-                            <SelectItem value="erp">ERP System</SelectItem>
+                            <SelectItem value="erp">ERP-System</SelectItem>
                             <SelectItem value="sap">SAP</SelectItem>
                             <SelectItem value="oracle">Oracle ERP</SelectItem>
                             <SelectItem value="quickbooks">QuickBooks</SelectItem>
                             <SelectItem value="sftp">SFTP</SelectItem>
-                            <SelectItem value="database">Database</SelectItem>
+                            <SelectItem value="database">Datenbank</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="system-endpoint">Endpoint URL *</Label>
+                        <Label htmlFor="system-endpoint">Endpunkt-URL *</Label>
                         <Input
                           id="system-endpoint"
-                          placeholder="https://api.example.com/webhook"
+                          placeholder="https://api.beispiel.de/webhook"
                           value={newSystemForm.endpoint}
                           onChange={(e) => setNewSystemForm(prev => ({ ...prev, endpoint: e.target.value }))}
                         />
@@ -297,7 +297,7 @@ export function ApiIntegrationTab({
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setIsAddSystemDialogOpen(false)}>
-                        Cancel
+                        Abbrechen
                       </Button>
                       <Button onClick={addExternalSystem} disabled={isAddingSystem}>
                         {isAddingSystem ? (
@@ -305,7 +305,7 @@ export function ApiIntegrationTab({
                         ) : (
                           <Plus className="w-4 h-4 mr-2" />
                         )}
-                        Add System
+                        System hinzufügen
                       </Button>
                     </DialogFooter>
                   </DialogContent>

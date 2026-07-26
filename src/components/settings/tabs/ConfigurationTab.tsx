@@ -205,7 +205,7 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
         .eq("id", deleteItem.id)
         .eq("company_id", companyId);
       if (error) throw error;
-      toast({ title: "Gespeichert", description: "Item deleted successfully" });
+      toast({ title: "Gespeichert", description: "Eintrag gelöscht" });
       setDeleteItem(null);
       fetchAllData();
     } catch (err: any) {
@@ -343,7 +343,7 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
     if (error) {
       toast({ title: "Fehler", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Gespeichert", description: "Added successfully" });
+      toast({ title: "Gespeichert", description: "Erfolgreich hinzugefügt" });
       logAction({
         action: auditAction,
         targetType: auditType,
@@ -378,7 +378,7 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Enter location name..."
+                placeholder="Standortname eingeben..."
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     const input = e.currentTarget;
@@ -397,7 +397,7 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                 }}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add
+                Hinzufügen
               </Button>
             </div>
 
@@ -406,14 +406,14 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {locations.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={2} className="text-center py-8 text-muted-foreground">
-                        No locations found. Add your first location above.
+                        Keine Standorte gefunden. Füge oben deinen ersten Standort hinzu.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -458,13 +458,13 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
       <Card>
         <CardHeader>
           <CardTitle>{t("settings.departments")}</CardTitle>
-          <CardDescription>Manage departments - Used across the system in dropdown menus</CardDescription>
+          <CardDescription>Abteilungen verwalten – werden systemweit in Dropdown-Menüs verwendet</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Enter department name..."
+                placeholder="Abteilungsname eingeben..."
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     const input = e.currentTarget;
@@ -483,7 +483,7 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                 }}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add
+                Hinzufügen
               </Button>
             </div>
 
@@ -494,14 +494,14 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                     <TableHead>Name</TableHead>
                     <TableHead>{orgType === "matrix" ? "Leiter (disziplinarisch)" : "Abteilungsleiter"}</TableHead>
                     {orgType === "matrix" && <TableHead>Leiter (fachlich)</TableHead>}
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {departments.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={orgType === "matrix" ? 4 : 3} className="text-center py-8 text-muted-foreground">
-                        No departments found. Add your first department above.
+                        Keine Abteilungen gefunden. Füge oben deine erste Abteilung hinzu.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -706,13 +706,13 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
       <Card>
         <CardHeader>
           <CardTitle>{t("settings.exposureGroups")}</CardTitle>
-          <CardDescription>Manage exposure groups - Used across the system in dropdown menus</CardDescription>
+          <CardDescription>Expositionsgruppen verwalten – werden systemweit in Dropdown-Menüs verwendet</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Enter exposure group name..."
+                placeholder="Name der Expositionsgruppe eingeben..."
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     const input = e.currentTarget;
@@ -731,7 +731,7 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                 }}
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add
+                Hinzufügen
               </Button>
             </div>
 
@@ -740,15 +740,15 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Beschreibung</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {exposureGroups.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                        No exposure groups found. Add your first group above.
+                        Keine Expositionsgruppen gefunden. Füge oben deine erste Gruppe hinzu.
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -804,9 +804,9 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit" : "Add"} Item</DialogTitle>
+            <DialogTitle>{editingItem ? "Eintrag bearbeiten" : "Eintrag hinzufügen"}</DialogTitle>
             <DialogDescription>
-              {editingItem ? "Update the details below." : "Create a new item."}
+              {editingItem ? "Details unten aktualisieren." : "Neuen Eintrag erstellen."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -818,7 +818,7 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                   <FormItem>
                     <FormLabel>Name *</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="Enter name" />
+                      <Input {...field} placeholder="Name eingeben" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -829,9 +829,9 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormLabel>Beschreibung (Optional)</FormLabel>
                     <FormControl>
-                      <Textarea {...field} rows={3} placeholder="Add additional details..." />
+                      <Textarea {...field} rows={3} placeholder="Weitere Details hinzufügen..." />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -839,9 +839,9 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
               />
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={handleDialogClose}>
-                  Cancel
+                  Abbrechen
                 </Button>
-                <Button type="submit">{editingItem ? "Update" : "Create"}</Button>
+                <Button type="submit">{editingItem ? "Aktualisieren" : "Erstellen"}</Button>
               </div>
             </form>
           </Form>
@@ -852,18 +852,18 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
       <AlertDialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Bist du sicher?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{deleteItem?.name || deleteItem?.title}". This action cannot be undone.
+              Dadurch wird „{deleteItem?.name || deleteItem?.title}" dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              Löschen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

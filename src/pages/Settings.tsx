@@ -368,6 +368,7 @@ const [newAuditInterval, setNewAuditInterval] = useState("");
       fetchMyTickets();
       fetchApiToken();
       fetchExternalSystems();
+      fetchCompanySettings();
     }
   }, [user, loading, navigate, companyId]);
 

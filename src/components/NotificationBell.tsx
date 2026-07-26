@@ -271,7 +271,7 @@ export default function NotificationBell() {
       setUnreadCount(0);
 
       toast({
-        title: "✅ All notifications marked as read",
+        title: "Alle als gelesen markiert",
       });
     } catch (error) {
       console.error("Error marking all as read:", error);
@@ -387,7 +387,7 @@ export default function NotificationBell() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative" data-testid="notification-bell-trigger">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
@@ -401,7 +401,7 @@ export default function NotificationBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-96">
         <div className="flex items-center justify-between p-3 border-b">
-          <h3 className="font-semibold">Notifications</h3>
+          <h3 className="font-semibold">Benachrichtigungen</h3>
           <div className="flex gap-2">
             {unreadCount > 0 && (
               <Button
@@ -409,9 +409,10 @@ export default function NotificationBell() {
                 size="sm"
                 onClick={markAllAsRead}
                 className="h-7 text-xs"
+                data-testid="notification-bell-mark-all-read"
               >
                 <CheckCheck className="h-3 w-3 mr-1" />
-                Mark all read
+                Alle gelesen
               </Button>
             )}
             <Button
@@ -422,8 +423,9 @@ export default function NotificationBell() {
                 navigate("/notifications");
               }}
               className="h-7 text-xs"
+              data-testid="notification-bell-view-all"
             >
-              View all
+              Alle anzeigen
             </Button>
           </div>
         </div>
@@ -432,7 +434,7 @@ export default function NotificationBell() {
           {notifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No notifications yet</p>
+              <p>Noch keine Benachrichtigungen</p>
             </div>
           ) : (
             <div className="p-2">

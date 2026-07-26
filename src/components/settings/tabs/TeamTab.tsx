@@ -158,7 +158,7 @@ export function TeamTab({
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {isAddingTeamMember
-                  ? "Adding..."
+                  ? "Wird hinzugefügt..."
                   : t("settings.addTeamMember")}
               </Button>
             </div>
@@ -253,7 +253,7 @@ export function TeamTab({
                                 <Send className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Send Invite</TooltipContent>
+                            <TooltipContent>Einladung senden</TooltipContent>
                           </Tooltip>
 
                           <Tooltip>
@@ -288,7 +288,7 @@ export function TeamTab({
                                 <Mail className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Send Mail</TooltipContent>
+                            <TooltipContent>E-Mail senden</TooltipContent>
                           </Tooltip>
 
                           <Tooltip>
@@ -322,7 +322,7 @@ export function TeamTab({
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Delete</TooltipContent>
+                            <TooltipContent>Löschen</TooltipContent>
                           </Tooltip>
                         </div>
                       </TableCell>

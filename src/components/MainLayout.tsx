@@ -181,16 +181,16 @@ export default function MainLayout({ children }: Props) {
   }, [companyId]);
 
   useEffect(() => {
-    if (showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin")) {
+    if (showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin" || userRole === "hse_manager")) {
       fetchIncompleteTrainings();
     }
   }, [showTrainingBadge, companyId, userRole, fetchIncompleteTrainings]);
 
   useRealtimeRefetch(
-    showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin")
+    showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin" || userRole === "hse_manager")
       ? ["courses", "course_employee_access", "course_certificates", "training_participations"]
       : [],
-    showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin") ? companyId : null,
+    showTrainingBadge && companyId && (userRole === "company_admin" || userRole === "super_admin" || userRole === "hse_manager") ? companyId : null,
     fetchIncompleteTrainings
   );
 
@@ -367,7 +367,7 @@ export default function MainLayout({ children }: Props) {
                 </Link>
               )}
 
-              {hasPermission("riskAssessments") && canAccessFeature("riskAssessments") && (
+              {hasPermission("measures") && canAccessFeature("riskAssessments") && (
                 <Link to="/measures" className={getLinkClasses("/measures")} data-testid="nav-measures">
                   <ClipboardList className="w-4 h-4" />
                   <span>Maßnahmen</span>

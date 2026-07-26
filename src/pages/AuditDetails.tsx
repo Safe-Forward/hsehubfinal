@@ -337,8 +337,8 @@ export default function AuditDetails() {
         setExpandedSections(allSections);
         
         toast({
-          title: "Checklist Generated",
-          description: `Successfully created ${insertedData?.length || checklistItems.length} checklist items`,
+          title: "Checkliste generiert",
+          description: `${insertedData?.length || checklistItems.length} Checklistenpunkte wurden erstellt`,
         });
       }
     } catch (err: any) {
@@ -347,7 +347,7 @@ export default function AuditDetails() {
       // Provide more detailed error message
       let errorMessage = err.message || "Checkliste konnte nicht generiert werden";
       if (err.code === '42501') {
-        errorMessage = "Database permission error. Please contact support to fix RLS policies.";
+        errorMessage = "Datenbankberechtigungsfehler. Bitte wenden Sie sich an den Support.";
       }
       
       toast({
@@ -619,7 +619,7 @@ export default function AuditDetails() {
   if (!audit) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Audit not found</p>
+        <p>Audit nicht gefunden</p>
       </div>
     );
   }
@@ -663,7 +663,7 @@ export default function AuditDetails() {
             <div>
               <h1 className="text-xl font-bold">{audit.title}</h1>
               <p className="text-xs text-muted-foreground">
-                {audit.iso_code} - {audit.scheduled_date}
+                {audit.iso_code} - {audit.scheduled_date ? new Date(audit.scheduled_date).toLocaleDateString("de-DE") : "—"}
               </p>
             </div>
           </div>
@@ -809,8 +809,8 @@ export default function AuditDetails() {
                   }
                   
                   toast({
-                    title: "Checklist Regenerated",
-                    description: `Created ${newItems.length} unique checklist items`,
+                    title: "Checkliste neu generiert",
+                    description: `${newItems.length} einzigartige Checklistenpunkte erstellt`,
                   });
                   
                 } catch (err: any) {
@@ -824,16 +824,16 @@ export default function AuditDetails() {
               }}
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Regenerate Checklist
+              Checkliste neu generieren
             </Button>
             <Button
               variant="default"
               size="sm"
               onClick={handleSelectAll}
               className="bg-green-600 hover:bg-green-700"
-              data-testid="audit-details-save"
+              data-testid="btn-select-all-checklist"
             >
-              Select All
+              Alle auswählen
             </Button>
             <Button variant="outline" size="sm" onClick={handleExportPdf}>
               <FileDown className="w-4 h-4 mr-2" />
@@ -1018,14 +1018,14 @@ export default function AuditDetails() {
       <Dialog open={notesDialog.open} onOpenChange={(open) => !open && handleCancelNote()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Implementation Note</DialogTitle>
+            <DialogTitle>Umsetzungsnotiz hinzufügen</DialogTitle>
             <DialogDescription>
-              Add any relevant notes about the implementation of this criterion (optional)
+              Notizen zur Umsetzung dieses Kriteriums hinzufügen (optional)
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Textarea
-              placeholder="Enter your implementation notes here..."
+              placeholder="Notizen zur Umsetzung hier eingeben..."
               value={notesDialog.currentNote}
               onChange={(e) =>
                 setNotesDialog((prev) => ({ ...prev, currentNote: e.target.value }))
@@ -1035,11 +1035,11 @@ export default function AuditDetails() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={handleCancelNote}>
-              Skip
+            <Button variant="outline" onClick={handleCancelNote} data-testid="btn-skip-note">
+              Überspringen
             </Button>
-            <Button onClick={handleSaveNote}>
-              Save Note
+            <Button onClick={handleSaveNote} data-testid="btn-save-note">
+              Notiz speichern
             </Button>
           </DialogFooter>
         </DialogContent>

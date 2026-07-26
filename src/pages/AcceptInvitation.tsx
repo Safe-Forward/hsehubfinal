@@ -186,8 +186,8 @@ export default function AcceptInvitation() {
       setSuccess(true);
       
       toast({
-        title: "Account created successfully!",
-        description: "You can now log in to access HSE Hub.",
+        title: "Konto erfolgreich erstellt!",
+        description: "Du kannst dich jetzt bei HSE Hub anmelden.",
       });
 
       // Redirect to login after 3 seconds

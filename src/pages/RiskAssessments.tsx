@@ -91,37 +91,37 @@ type Measure = {
 
 // Constants
 const DEFAULT_HAZARD_CATEGORIES = [
-  "Mechanical",
-  "Electrical",
-  "Chemical",
-  "Biological",
-  "Ergonomic",
-  "Physical",
-  "Psychosocial",
-  "Fire/Explosion",
-  "Environmental",
-  "Other",
+  "Mechanisch",
+  "Elektrisch",
+  "Chemisch",
+  "Biologisch",
+  "Ergonomisch",
+  "Physisch",
+  "Psychosozial",
+  "Brand/Explosion",
+  "Umwelt",
+  "Sonstige",
 ];
 
 const RISK_MATRIX_LABELS = [
-  "Negligible",
-  "Minor",
-  "Moderate",
-  "Major",
-  "Catastrophic",
+  "Vernachlässigbar",
+  "Gering",
+  "Mäßig",
+  "Schwerwiegend",
+  "Katastrophal",
 ];
 
 const DEFAULT_MEASURE_BUILDING_BLOCKS = [
-  "Elimination",
+  "Eliminierung",
   "Substitution",
-  "Engineering Controls",
-  "Administrative Controls",
-  "Personal Protective Equipment (PPE)",
-  "Training",
-  "Supervision",
-  "Maintenance",
-  "Emergency Procedures",
-  "Other",
+  "Technische Maßnahmen",
+  "Organisatorische Maßnahmen",
+  "Persönliche Schutzausrüstung (PSA)",
+  "Schulung",
+  "Aufsicht",
+  "Wartung",
+  "Notfallverfahren",
+  "Sonstige",
 ];
 
 const PROBABILITY_LABELS = [
@@ -515,13 +515,13 @@ export default function RiskAssessments() {
 
       // Define columns
       const tableColumn = [
-        "Title",
-        "Department",
-        "Location",
-        "Hazard",
-        "Risk Level",
+        "Titel",
+        "Abteilung",
+        "Standort",
+        "Gefährdung",
+        "Risikostufe",
         "Status",
-        "Date"
+        "Datum"
       ];
 
       // Define rows
@@ -1325,7 +1325,7 @@ export default function RiskAssessments() {
                                   )
                                 }
                               >
-                                Manage in Settings
+                                In den Einstellungen verwalten
                               </Button>
                             </div>
                             <Select
@@ -1442,7 +1442,7 @@ export default function RiskAssessments() {
                               </div>
                               <div className="text-center p-3 bg-white rounded border mt-2">
                                 <p className="text-xs text-muted-foreground mb-1">
-                                  Risk Score (calculated)
+                                  Risiko-Score (berechnet)
                                 </p>
                                 <p className="text-3xl font-bold text-red-600">
                                   {riskScoreBefore}
@@ -1453,7 +1453,7 @@ export default function RiskAssessments() {
                                   )}
                                   className="mt-2"
                                 >
-                                  {getRiskLevel(riskScoreBefore)}
+                                  {({ critical: "Kritisch", high: "Hoch", medium: "Mittel", low: "Niedrig" } as Record<string,string>)[getRiskLevel(riskScoreBefore)] ?? getRiskLevel(riskScoreBefore)}
                                 </Badge>
                               </div>
                             </div>
@@ -1538,7 +1538,7 @@ export default function RiskAssessments() {
                                   )}
                                   className="mt-2"
                                 >
-                                  {getRiskLevel(riskScoreAfter)}
+                                  {({ critical: "Kritisch", high: "Hoch", medium: "Mittel", low: "Niedrig" } as Record<string,string>)[getRiskLevel(riskScoreAfter)] ?? getRiskLevel(riskScoreAfter)}
                                 </Badge>
                               </div>
                             </div>
@@ -1672,7 +1672,7 @@ export default function RiskAssessments() {
                                     {formData.assessment_date ? (
                                       format(new Date(formData.assessment_date), "PPP")
                                     ) : (
-                                      <span>Pick a date</span>
+                                      <span>Datum auswählen</span>
                                     )}
                                   </Button>
                                 </PopoverTrigger>
@@ -1720,7 +1720,7 @@ export default function RiskAssessments() {
                               />
                               {uploadedDocuments.length > 0 && (
                                 <div className="mt-2 text-sm">
-                                  <p className="font-medium">Selected files:</p>
+                                  <p className="font-medium">Ausgewählte Dateien:</p>
                                   {uploadedDocuments.map((doc, idx) => (
                                     <p
                                       key={idx}
@@ -1769,7 +1769,7 @@ export default function RiskAssessments() {
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm font-medium">
-                                    Measure {index + 1}
+                                    Maßnahme {index + 1}
                                   </span>
                                   {measures.length > 1 && (
                                     <Button
@@ -1790,7 +1790,7 @@ export default function RiskAssessments() {
                                 <div className="grid grid-cols-2 gap-3">
                                   <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                      <Label>Building Block</Label>
+                                      <Label>Baustein</Label>
                                       <Button
                                         type="button"
                                         variant="link"
@@ -1801,7 +1801,7 @@ export default function RiskAssessments() {
                                           )
                                         }
                                       >
-                                        Manage in Settings
+                                        In den Einstellungen verwalten
                                       </Button>
                                     </div>
                                     <Select
@@ -1814,7 +1814,7 @@ export default function RiskAssessments() {
                                       }}
                                     >
                                       <SelectTrigger>
-                                        <SelectValue placeholder="Select building block" />
+                                        <SelectValue placeholder="Baustein auswählen" />
                                       </SelectTrigger>
                                       <SelectContent>
                                         {measureBuildingBlocks.map(
@@ -1832,7 +1832,7 @@ export default function RiskAssessments() {
                                   </div>
 
                                   <div className="space-y-2">
-                                    <Label>Responsible Person</Label>
+                                    <Label>Verantwortliche Person</Label>
                                     <Select
                                       value={measure.responsible_person || "__none__"}
                                       onValueChange={(val) => {
@@ -1842,11 +1842,11 @@ export default function RiskAssessments() {
                                       }}
                                     >
                                       <SelectTrigger>
-                                        <SelectValue placeholder="Select responsible person" />
+                                        <SelectValue placeholder="Verantwortliche Person auswählen" />
                                       </SelectTrigger>
                                       <SelectContent>
                                         <SelectItem value="__none__">
-                                          None / Optional
+                                          Keine / Optional
                                         </SelectItem>
                                         {employees.map((emp) => (
                                           <SelectItem
@@ -1861,7 +1861,7 @@ export default function RiskAssessments() {
                                   </div>
 
                                   <div className="space-y-2">
-                                    <Label>Due Date</Label>
+                                    <Label>Fälligkeitsdatum</Label>
                                     <Popover>
                                       <PopoverTrigger asChild>
                                         <Button
@@ -1872,7 +1872,7 @@ export default function RiskAssessments() {
                                           {measure.due_date ? (
                                             format(new Date(measure.due_date), "PPP")
                                           ) : (
-                                            <span>Pick a date</span>
+                                            <span>Datum auswählen</span>
                                           )}
                                         </Button>
                                       </PopoverTrigger>
@@ -1892,7 +1892,7 @@ export default function RiskAssessments() {
                                   </div>
 
                                   <div className="space-y-2">
-                                    <Label>Progress Status</Label>
+                                    <Label>Fortschrittsstatus</Label>
                                     <Select
                                       value={measure.progress_status}
                                       onValueChange={(val) => {
@@ -1906,16 +1906,16 @@ export default function RiskAssessments() {
                                       </SelectTrigger>
                                       <SelectContent>
                                         <SelectItem value="not_started">
-                                          Not Started
+                                          Nicht begonnen
                                         </SelectItem>
                                         <SelectItem value="in_progress">
-                                          In Progress
+                                          In Bearbeitung
                                         </SelectItem>
                                         <SelectItem value="completed">
-                                          Completed
+                                          Abgeschlossen
                                         </SelectItem>
                                         <SelectItem value="blocked">
-                                          Blocked
+                                          Blockiert
                                         </SelectItem>
                                       </SelectContent>
                                     </Select>
@@ -1923,7 +1923,7 @@ export default function RiskAssessments() {
                                 </div>
 
                                 <div className="space-y-2">
-                                  <Label>Notes</Label>
+                                  <Label>Notizen</Label>
                                   <Textarea
                                     value={measure.notes || ""}
                                     onChange={(e) => {
@@ -2066,10 +2066,10 @@ export default function RiskAssessments() {
                         <div className="flex flex-col items-center justify-center">
                           <Shield className="w-16 h-16 text-muted-foreground/20 mb-4" />
                           <p className="text-lg font-medium text-muted-foreground mb-1">
-                            No risk assessments found
+                            Keine Gefährdungsbeurteilungen gefunden
                           </p>
                           <p className="text-sm text-muted-foreground/60">
-                            Create your first risk assessment to get started
+                            Erstellen Sie Ihre erste Gefährdungsbeurteilung
                           </p>
                         </div>
                       </TableCell>
@@ -2175,12 +2175,12 @@ export default function RiskAssessments() {
                             <div className="flex flex-wrap gap-1">
                               {risk.measures.map((measure, idx) => {
                                 const statusConfig = {
-                                  without_due_date: { label: "no due date", color: "bg-gray-500" },
-                                  done: { label: "done", color: "bg-yellow-500" },
-                                  open: { label: "open", color: "bg-blue-400" },
-                                  in_progress: { label: "in progress", color: "bg-teal-500" },
-                                  completed: { label: "completed", color: "bg-green-500" },
-                                  not_started: { label: "not started", color: "bg-gray-400" },
+                                  without_due_date: { label: "Kein Fälligkeitsdatum", color: "bg-gray-500" },
+                                  done: { label: "Erledigt", color: "bg-yellow-500" },
+                                  open: { label: "Offen", color: "bg-blue-400" },
+                                  in_progress: { label: "In Bearbeitung", color: "bg-teal-500" },
+                                  completed: { label: "Erledigt", color: "bg-green-500" },
+                                  not_started: { label: "Nicht begonnen", color: "bg-gray-400" },
                                 };
                                 const status = measure.progress_status || "not_started";
                                 const config = statusConfig[status] || { label: status, color: "bg-gray-500" };
@@ -2198,7 +2198,7 @@ export default function RiskAssessments() {
                             <span className="text-xs text-muted-foreground">-</span>
                           )}
                         </TableCell>
-                        <TableCell>{risk.assessment_date}</TableCell>
+                        <TableCell>{risk.assessment_date ? new Date(risk.assessment_date).toLocaleDateString("de-DE") : "—"}</TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1 flex-wrap">
                             {risk.approval_status === "rejected" && (
@@ -2217,11 +2217,7 @@ export default function RiskAssessments() {
                             variant="ghost"
                             size="sm"
                             onClick={async () => {
-                              if (confirm(
-                                language === "de"
-                                  ? `Möchten Sie die Risikobewertung "${risk.title}" wirklich löschen?`
-                                  : `Are you sure you want to delete the risk assessment "${risk.title}"?`
-                              )) {
+                              if (confirm(`Gefährdungsbeurteilung wirklich löschen?\n\n„${risk.title}"`)) {
                                 try {
                                   // Delete associated measures first
                                   if (risk.measures && risk.measures.length > 0) {
@@ -2295,7 +2291,7 @@ export default function RiskAssessments() {
               <div className="flex items-center justify-between">
                 <div>
                   <DialogTitle className="text-xl">
-                    Risk Matrix - {selectedRisk?.title}
+                    Risikomatrix – {selectedRisk?.title}
                   </DialogTitle>
                   <DialogDescription className="text-sm mt-1">
                     {language === "de"
@@ -2408,7 +2404,7 @@ export default function RiskAssessments() {
                 {/* Progress Bar */}
                 <div className="mt-4 mb-6">
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="font-medium">Implementation</span>
+                    <span className="font-medium">Umsetzungsfortschritt</span>
                     <span className="font-medium">
                       {selectedRisk.measures?.filter((m) => m.progress_status === "completed" || m.progress_status === "done").length || 0}/
                       {selectedRisk.measures?.length || 0} ({calculateProgress(selectedRisk.measures || [])}%)
@@ -2691,11 +2687,11 @@ export default function RiskAssessments() {
                         {/* Status Buttons */}
                         <div className="flex flex-wrap gap-2 text-xs mb-3">
                           {[
-                            { status: "not_started", label: "not started", bgColor: "bg-gray-500", textColor: "text-white", borderColor: "border-gray-600" },
-                            { status: "pending", label: "pending", bgColor: "bg-yellow-500", textColor: "text-white", borderColor: "border-yellow-600" },
-                            { status: "in_progress", label: "in progress", bgColor: "bg-blue-400", textColor: "text-white", borderColor: "border-blue-500" },
-                            { status: "blocked", label: "blocked", bgColor: "bg-orange-500", textColor: "text-white", borderColor: "border-orange-600" },
-                            { status: "completed", label: "completed", bgColor: "bg-green-500", textColor: "text-white", borderColor: "border-green-600" },
+                            { status: "not_started", label: "Nicht begonnen", bgColor: "bg-gray-500", textColor: "text-white", borderColor: "border-gray-600" },
+                            { status: "pending", label: "Ausstehend", bgColor: "bg-yellow-500", textColor: "text-white", borderColor: "border-yellow-600" },
+                            { status: "in_progress", label: "In Bearbeitung", bgColor: "bg-blue-400", textColor: "text-white", borderColor: "border-blue-500" },
+                            { status: "blocked", label: "Blockiert", bgColor: "bg-orange-500", textColor: "text-white", borderColor: "border-orange-600" },
+                            { status: "completed", label: "Abgeschlossen", bgColor: "bg-green-500", textColor: "text-white", borderColor: "border-green-600" },
                           ].map(({ status, label, bgColor, textColor, borderColor }) => {
                             // DB allows: not_started, in_progress, blocked, completed
                             const dbStatus = status === "pending" ? "in_progress" : status;
@@ -2825,19 +2821,19 @@ export default function RiskAssessments() {
                     <div className="flex flex-wrap gap-3 text-xs justify-center items-center p-3 bg-muted/30 rounded-lg border">
                       <div className="flex items-center gap-2">
                         <div className="w-5 h-5 bg-green-500 rounded"></div>
-                        <span className="font-medium">Low</span>
+                        <span className="font-medium">Niedrig</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-5 h-5 bg-yellow-400 rounded"></div>
-                        <span className="font-medium">Medium</span>
+                        <span className="font-medium">Mittel</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-5 h-5 bg-orange-500 rounded"></div>
-                        <span className="font-medium">High</span>
+                        <span className="font-medium">Hoch</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="w-5 h-5 bg-red-500 rounded"></div>
-                        <span className="font-medium">Critical</span>
+                        <span className="font-medium">Kritisch</span>
                       </div>
                     </div>
                   </div>
@@ -2983,7 +2979,7 @@ export default function RiskAssessments() {
                       <div className="flex items-center gap-2">
                         <span className="text-2xl font-bold">{selectedRisk.risk_score_before ?? "—"}</span>
                         <Badge variant={getRiskLevelColor(getRiskLevel(selectedRisk.risk_score_before || 0))}>
-                          {getRiskLevel(selectedRisk.risk_score_before || 0)}
+                          {({ critical: "Kritisch", high: "Hoch", medium: "Mittel", low: "Niedrig" } as Record<string,string>)[getRiskLevel(selectedRisk.risk_score_before || 0)] ?? getRiskLevel(selectedRisk.risk_score_before || 0)}
                         </Badge>
                       </div>
                     </div>
@@ -2992,7 +2988,7 @@ export default function RiskAssessments() {
                       <div className="flex items-center gap-2">
                         <span className="text-2xl font-bold">{selectedRisk.risk_score_after ?? "—"}</span>
                         <Badge variant={getRiskLevelColor(getRiskLevel(selectedRisk.risk_score_after || 0))}>
-                          {getRiskLevel(selectedRisk.risk_score_after || 0)}
+                          {({ critical: "Kritisch", high: "Hoch", medium: "Mittel", low: "Niedrig" } as Record<string,string>)[getRiskLevel(selectedRisk.risk_score_after || 0)] ?? getRiskLevel(selectedRisk.risk_score_after || 0)}
                         </Badge>
                       </div>
                     </div>

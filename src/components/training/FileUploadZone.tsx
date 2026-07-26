@@ -28,12 +28,10 @@ export default function FileUploadZone({
     const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim();
     const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET?.trim().replace(/"/g, "");
 
-    console.log("Cloudinary Config:", { cloudName, uploadPreset, lessonType });
-
     if (!cloudName || !uploadPreset) {
       toast({
-        title: "Configuration Error",
-        description: "Cloudinary credentials missing in .env",
+        title: "Konfigurationsfehler",
+        description: "Cloudinary-Zugangsdaten fehlen in .env",
         variant: "destructive",
       });
       return;
@@ -42,8 +40,8 @@ export default function FileUploadZone({
     // Check if Cloudinary is available
     if (!window.cloudinary) {
       toast({
-        title: "Upload Error",
-        description: "Cloudinary widget not loaded. Please refresh the page.",
+        title: "Upload-Fehler",
+        description: "Cloudinary-Widget nicht geladen. Bitte Seite neu laden.",
         variant: "destructive",
       });
       return;
@@ -98,19 +96,17 @@ export default function FileUploadZone({
         if (!error && result && result.event === "success") {
           // Use the secure_url directly
           const fileUrl = result.info.secure_url;
-          console.log("Uploaded file URL:", fileUrl, "Resource type:", result.info.resource_type);
           onUploadComplete(fileUrl);
           toast({
-            title: "Upload Successful",
+            title: "Upload erfolgreich",
             description: "Datei wurde hochgeladen",
           });
           setIsUploading(false);
         } else if (error) {
-          console.error("Upload error:", error);
           setIsUploading(false);
           if (error.statusText !== "abort") {
             toast({
-              title: "Upload Failed",
+              title: "Upload fehlgeschlagen",
               description: error.message || "Datei konnte nicht hochgeladen werden",
               variant: "destructive",
             });
@@ -146,7 +142,7 @@ export default function FileUploadZone({
               <FileVideo className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <p className="font-medium">File uploaded</p>
+              <p className="font-medium">Datei hochgeladen</p>
               <p className="text-sm text-muted-foreground truncate max-w-md">
                 {currentFileUrl}
               </p>
@@ -163,16 +159,16 @@ export default function FileUploadZone({
                   e.stopPropagation();
                   window.open(currentFileUrl, '_blank', 'noopener,noreferrer');
                 }}
-                title="View/Download PDF"
+                title="PDF ansehen/herunterladen"
               >
-                View
+                Ansehen
               </Button>
             )}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => onUploadComplete("")}
-              title="Remove file"
+              title="Datei entfernen"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -202,7 +198,7 @@ export default function FileUploadZone({
               />
             </object>
             <p className="text-xs text-muted-foreground text-center">
-              If preview doesn't load, use the View button above to open the PDF
+              Falls die Vorschau nicht lädt, verwende die Schaltfläche „Ansehen" oben.
             </p>
           </div>
         )}
@@ -232,11 +228,11 @@ export default function FileUploadZone({
 
         <div className="text-center space-y-1">
           <p className="font-medium text-lg">
-            {isUploading ? "Uploading..." : "Select files or drop them here"}
+            {isUploading ? "Wird hochgeladen..." : "Dateien auswählen oder hier ablegen"}
           </p>
           <p className="text-sm text-muted-foreground">
-            {lessonType === "video_audio" && "Video & Audio formats up to 500MB"}
-            {lessonType === "pdf" && "PDF files up to 500MB"}
+            {lessonType === "video_audio" && "Video- & Audioformate bis 500MB"}
+            {lessonType === "pdf" && "PDF-Dateien bis 500MB"}
           </p>
         </div>
 
@@ -252,7 +248,7 @@ export default function FileUploadZone({
           onClick={handleCloudinaryUpload}
           disabled={isUploading}
         >
-          {isUploading ? "Uploading..." : "Open Upload Widget"}
+          {isUploading ? "Wird hochgeladen..." : "Upload-Widget öffnen"}
         </Button>
       </div>
     </div>

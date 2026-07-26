@@ -20,13 +20,13 @@ import { ArrowLeft, Camera, Save, Mail, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const NOTIF_CATEGORIES = [
-  { key: "task", label: "Tasks & Mentions in Tasks" },
-  { key: "mention", label: "Mentions in Notes" },
+  { key: "task", label: "Aufgaben & Erwähnungen" },
+  { key: "mention", label: "Erwähnungen in Notizen" },
   { key: "training", label: "Schulungen" },
   { key: "audit", label: "Audits" },
   { key: "measure", label: "Maßnahmen" },
-  { key: "risk", label: "Risk Assessments" },
-  { key: "checkup", label: "Health Check-Ups" },
+  { key: "risk", label: "Gefährdungsbeurteilungen" },
+  { key: "checkup", label: "Gesundheits-Check-Ups" },
 ];
 
 type NotifPref = { in_app_enabled: boolean; email_enabled: boolean };
@@ -49,6 +49,8 @@ export default function Profile() {
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<Record<string, NotifPref>>({});
   const [isLoadingNotifPrefs, setIsLoadingNotifPrefs] = useState(true);
+  const [passwordData, setPasswordData] = useState({ current: "", newPw: "", confirm: "" });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -248,6 +250,32 @@ export default function Profile() {
     }
   };
 
+  const handlePasswordChange = async () => {
+    if (!passwordData.newPw || !passwordData.confirm) {
+      toast({ title: "Pflichtfelder fehlen", description: "Bitte alle Felder ausfüllen.", variant: "destructive" });
+      return;
+    }
+    if (passwordData.newPw !== passwordData.confirm) {
+      toast({ title: "Passwörter stimmen nicht überein", variant: "destructive" });
+      return;
+    }
+    if (passwordData.newPw.length < 8) {
+      toast({ title: "Passwort zu kurz", description: "Mindestens 8 Zeichen erforderlich.", variant: "destructive" });
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: passwordData.newPw });
+      if (error) throw error;
+      toast({ title: "Passwort geändert", description: "Dein Passwort wurde erfolgreich aktualisiert." });
+      setPasswordData({ current: "", newPw: "", confirm: "" });
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err.message || "Passwort konnte nicht geändert werden.", variant: "destructive" });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   if (loading || isLoadingProfile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -292,7 +320,7 @@ export default function Profile() {
           {isEditing && (
             <Button data-testid="profile-save-btn" onClick={handleSave} disabled={isSaving}>
               <Save className="w-4 h-4 mr-2" />
-              {isSaving ? "Saving..." : t("profile.saveChanges")}
+              {isSaving ? "Wird gespeichert..." : t("profile.saveChanges")}
             </Button>
           )}
         </div>
@@ -426,19 +454,21 @@ export default function Profile() {
                   <Label htmlFor="current">
                     {t("profile.currentPassword")}
                   </Label>
-                  <Input id="current" type="password" />
+                  <Input id="current" type="password" value={passwordData.current} onChange={(e) => setPasswordData(p => ({ ...p, current: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="new">{t("profile.newPassword")}</Label>
-                  <Input id="new" type="password" />
+                  <Input id="new" type="password" value={passwordData.newPw} onChange={(e) => setPasswordData(p => ({ ...p, newPw: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm">
                     {t("profile.confirmPassword")}
                   </Label>
-                  <Input id="confirm" type="password" />
+                  <Input id="confirm" type="password" value={passwordData.confirm} onChange={(e) => setPasswordData(p => ({ ...p, confirm: e.target.value }))} />
                 </div>
-                <Button>{t("profile.updatePassword")}</Button>
+                <Button onClick={handlePasswordChange} disabled={isChangingPassword}>
+                  {isChangingPassword ? "Wird gespeichert..." : t("profile.updatePassword")}
+                </Button>
               </CardContent>
             </Card>
 
@@ -488,14 +518,13 @@ export default function Profile() {
               <CardHeader>
                 <CardTitle>{t("profile.notifications")}</CardTitle>
                 <CardDescription>
-                  Choose which notifications you want to receive, and how.
+                  Wähle, welche Benachrichtigungen du erhalten möchtest.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {!employeeId && !isLoadingNotifPrefs ? (
                   <p className="text-sm text-muted-foreground">
-                    No employee record could be matched to your account, so
-                    notification preferences are not available.
+                    Kein Mitarbeiterdatensatz für dein Konto gefunden. Benachrichtigungseinstellungen nicht verfügbar.
                   </p>
                 ) : isLoadingNotifPrefs ? (
                   <div className="flex justify-center py-4">
@@ -504,9 +533,9 @@ export default function Profile() {
                 ) : (
                   <div className="space-y-1">
                     <div className="grid grid-cols-[1fr_70px_70px] gap-4 pb-2 border-b text-sm font-medium text-muted-foreground">
-                      <span>Category</span>
+                      <span>Kategorie</span>
                       <span className="text-center">In-App</span>
-                      <span className="text-center">Email</span>
+                      <span className="text-center">E-Mail</span>
                     </div>
                     {NOTIF_CATEGORIES.map((cat) => {
                       const pref = notifPrefs[cat.key];

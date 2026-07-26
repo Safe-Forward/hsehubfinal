@@ -132,7 +132,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
         .eq("id", deleteItem.id)
         .eq("company_id", companyId);
       if (error) throw error;
-      toast({ title: "Gespeichert", description: "Item deleted successfully" });
+      toast({ title: "Gespeichert", description: "Element gelöscht" });
       setDeleteItem(null);
       fetchAllData();
     } catch (err: any) {
@@ -180,7 +180,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
         missing.map((name) => ({ name, company_id: companyId, is_predefined: true }))
       );
       if (error) throw error;
-      toast({ title: "Gespeichert", description: `${missing.length} predefined hazard categories added.` });
+      toast({ title: "Gespeichert", description: `${missing.length} Gefahrenkategorien hinzugefügt.` });
       fetchAllData();
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
@@ -193,14 +193,14 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
       const existingNames = new Set(measureBuildingBlocks.map((item: any) => String(item.name || "").trim().toLowerCase()));
       const missing = PREDEFINED_MEASURE_BUILDING_BLOCKS.filter((name) => !existingNames.has(name.toLowerCase()));
       if (missing.length === 0) {
-        toast({ title: "Bereits aktuell", description: "All predefined measure building blocks are already available." });
+        toast({ title: "Bereits aktuell", description: "Alle vordefinierten Maßnahmen-Bausteine sind bereits vorhanden." });
         return;
       }
       const { error } = await supabase.from("measure_building_blocks").insert(
         missing.map((name) => ({ name, company_id: companyId }))
       );
       if (error) throw error;
-      toast({ title: "Gespeichert", description: `${missing.length} predefined measure building blocks added.` });
+      toast({ title: "Gespeichert", description: `${missing.length} Maßnahmen-Bausteine hinzugefügt.` });
       fetchAllData();
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
@@ -215,7 +215,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
           <div className="flex items-center justify-between gap-3">
             <CardTitle>{t("settings.hazardCategories")}</CardTitle>
             <Button variant="outline" size="sm" onClick={loadPredefinedHazardCategories}>
-              Load Predefined Values
+              Vordefinierte Werte laden
             </Button>
           </div>
           <CardDescription>{t("settings.hazardCategoriesDesc")}</CardDescription>
@@ -224,7 +224,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
           <div className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Add custom category..."
+                placeholder="Kategorie hinzufügen..."
                 onKeyDown={async (e) => {
                   if (e.key === "Enter") {
                     const input = e.currentTarget;
@@ -236,7 +236,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                       if (error) {
                         toast({ title: "Fehler", description: error.message, variant: "destructive" });
                       } else {
-                        toast({ title: "Gespeichert", description: "Category added successfully" });
+                        toast({ title: "Gespeichert", description: "Kategorie hinzugefügt" });
                         input.value = "";
                         fetchAllData();
                       }

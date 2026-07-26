@@ -51,22 +51,22 @@ export function SupportTab({
 }: SupportTabProps) {
   return (
     <div className="space-y-6">
-      {/* Submit Ticket Card */}
+      {/* Support-Ticket einreichen */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Headphones className="w-5 h-5" />
-            Submit a Support Ticket
+            Support-Ticket einreichen
           </CardTitle>
           <CardDescription>
-            Having an issue? Submit a ticket and our team will help you.
+            Problem gefunden? Reiche ein Ticket ein und unser Team hilft dir weiter.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Category *</Label>
+                <Label>Kategorie *</Label>
                 <Select
                   value={ticketForm.category}
                   onValueChange={(value) =>
@@ -74,20 +74,20 @@ export function SupportTab({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
+                    <SelectValue placeholder="Kategorie auswählen" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="login_issue">Login Issue</SelectItem>
-                    <SelectItem value="payment_error">Payment Error</SelectItem>
-                    <SelectItem value="bug">Bug Report</SelectItem>
-                    <SelectItem value="feature_request">Feature Request</SelectItem>
-                    <SelectItem value="performance">Performance Issue</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="login_issue">Anmeldeproblem</SelectItem>
+                    <SelectItem value="payment_error">Zahlungsfehler</SelectItem>
+                    <SelectItem value="bug">Fehlermeldung</SelectItem>
+                    <SelectItem value="feature_request">Funktionswunsch</SelectItem>
+                    <SelectItem value="performance">Leistungsproblem</SelectItem>
+                    <SelectItem value="other">Sonstiges</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>Priority</Label>
+                <Label>Priorität</Label>
                 <Select
                   value={ticketForm.priority}
                   onValueChange={(value) =>
@@ -98,18 +98,18 @@ export function SupportTab({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="low">Niedrig</SelectItem>
+                    <SelectItem value="medium">Mittel</SelectItem>
+                    <SelectItem value="high">Hoch</SelectItem>
+                    <SelectItem value="urgent">Dringend</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div>
-              <Label>Title *</Label>
+              <Label>Betreff *</Label>
               <Input
-                placeholder="Brief summary of your issue"
+                placeholder="Kurze Zusammenfassung deines Problems"
                 value={ticketForm.title}
                 onChange={(e) =>
                   setTicketForm((prev) => ({ ...prev, title: e.target.value }))
@@ -117,9 +117,9 @@ export function SupportTab({
               />
             </div>
             <div>
-              <Label>Description *</Label>
+              <Label>Beschreibung *</Label>
               <Textarea
-                placeholder="Please describe your issue in detail. Include any error messages, steps to reproduce, etc."
+                placeholder="Bitte beschreibe dein Problem ausführlich. Füge Fehlermeldungen, Schritte zur Reproduktion usw. hinzu."
                 rows={5}
                 value={ticketForm.description}
                 onChange={(e) =>
@@ -132,12 +132,12 @@ export function SupportTab({
                 {isSubmittingTicket ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Submitting...
+                    Wird gesendet...
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4 mr-2" />
-                    Submit Ticket
+                    Absenden
                   </>
                 )}
               </Button>
@@ -146,12 +146,12 @@ export function SupportTab({
         </CardContent>
       </Card>
 
-      {/* My Tickets Card */}
+      {/* Meine Tickets */}
       <Card>
         <CardHeader>
-          <CardTitle>My Recent Tickets</CardTitle>
+          <CardTitle>Meine letzten Tickets</CardTitle>
           <CardDescription>
-            Track the status of your submitted tickets
+            Status deiner eingereichten Tickets verfolgen
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -159,11 +159,11 @@ export function SupportTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Priority</TableHead>
+                  <TableHead>Betreff</TableHead>
+                  <TableHead>Kategorie</TableHead>
+                  <TableHead>Priorität</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Erstellt</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -171,7 +171,7 @@ export function SupportTab({
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       <Headphones className="w-8 h-8 mx-auto mb-2 opacity-20" />
-                      No tickets submitted yet
+                      Noch keine Tickets eingereicht
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -193,7 +193,13 @@ export function SupportTab({
                                 : "secondary"
                           }
                         >
-                          {ticket.priority}
+                          {ticket.priority === "urgent"
+                            ? "Dringend"
+                            : ticket.priority === "high"
+                              ? "Hoch"
+                              : ticket.priority === "medium"
+                                ? "Mittel"
+                                : "Niedrig"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -206,11 +212,17 @@ export function SupportTab({
                                 : "default"
                           }
                         >
-                          {ticket.status?.replace("_", " ")}
+                          {ticket.status === "open"
+                            ? "Offen"
+                            : ticket.status === "in_progress"
+                              ? "In Bearbeitung"
+                              : ticket.status === "closed"
+                                ? "Geschlossen"
+                                : ticket.status?.replace("_", " ")}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(ticket.created_at).toLocaleDateString()}
+                        {new Date(ticket.created_at).toLocaleDateString("de-DE")}
                       </TableCell>
                     </TableRow>
                   ))
