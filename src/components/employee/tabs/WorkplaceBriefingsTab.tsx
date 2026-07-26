@@ -231,7 +231,7 @@ export function WorkplaceBriefingsTab({ employeeId, companyId, canEdit }: Props)
           </p>
         </div>
         {canEdit && (
-          <Button onClick={openCreate} size="sm" className="gap-1">
+          <Button data-testid="btn-add-briefing" onClick={openCreate} size="sm" className="gap-1">
             <Plus className="h-4 w-4" />
             Unterweisung hinzufügen
           </Button>

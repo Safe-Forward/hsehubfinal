@@ -829,7 +829,7 @@ export default function Dashboard() {
         : t("dashboard.warningOverdueCheckupsSingular")
       ).replace("{count}", String(stats.overdueCheckups)),
       count: stats.overdueCheckups,
-      link: "/health-checkups",
+      link: "/investigations",
     });
   }
   if (oldOverdueMeasures > 0) {

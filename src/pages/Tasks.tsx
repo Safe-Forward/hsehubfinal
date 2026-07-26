@@ -439,8 +439,8 @@ export default function Tasks() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold">Tasks</h1>
-              <p className="text-xs text-muted-foreground">Task Management</p>
+              <h1 className="text-xl font-bold">Aufgaben</h1>
+              <p className="text-xs text-muted-foreground">Aufgabenverwaltung</p>
             </div>
           </div>
         </div>
@@ -451,19 +451,19 @@ export default function Tasks() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Tasks</CardTitle>
-                <CardDescription>Track and manage safety tasks</CardDescription>
+                <CardTitle>Aufgaben</CardTitle>
+                <CardDescription>Aufgaben verwalten und verfolgen</CardDescription>
               </div>
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button data-testid="btn-add-task">
                     <Plus className="w-4 h-4 mr-2" />
-                    New Task
+                    Neue Aufgabe
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>Create Task</DialogTitle>
+                    <DialogTitle>Aufgabe erstellen</DialogTitle>
                   </DialogHeader>
                   <Form {...form}>
                     <form
@@ -475,9 +475,9 @@ export default function Tasks() {
                         name="title"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Title</FormLabel>
+                            <FormLabel>Titel *</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input data-testid="task-form-title" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -490,9 +490,9 @@ export default function Tasks() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>
-                              Description{" "}
+                              Beschreibung{" "}
                               <span className="text-xs text-muted-foreground font-normal">
-                                (type @ to mention an employee — mentioned person sees this task only)
+                                (@ eingeben, um einen Mitarbeiter zu erwähnen — nur diese Person sieht die Aufgabe)
                               </span>
                             </FormLabel>
                             <FormControl>
@@ -508,7 +508,7 @@ export default function Tasks() {
                                       field.onChange
                                     )
                                   }
-                                  placeholder="Describe the task... Use @Name to assign visibility to a specific person"
+                                  placeholder="Aufgabe beschreiben... @Name eingeben, um Sichtbarkeit auf eine Person zu beschränken"
                                 />
                                 {showMentionDropdown &&
                                   filteredMentions.length > 0 && (
@@ -548,7 +548,7 @@ export default function Tasks() {
                           name="assigned_to"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Assign To</FormLabel>
+                              <FormLabel>Zugewiesen an</FormLabel>
                               <Select
                                 onValueChange={field.onChange}
                                 value={field.value}
@@ -576,7 +576,7 @@ export default function Tasks() {
                           name="due_date"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Due Date</FormLabel>
+                              <FormLabel>Fälligkeitsdatum</FormLabel>
                               <FormControl>
                                 <Popover>
                                   <PopoverTrigger asChild>
@@ -614,21 +614,21 @@ export default function Tasks() {
                           name="priority"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Priority</FormLabel>
+                              <FormLabel>Priorität</FormLabel>
                               <Select
                                 onValueChange={field.onChange}
                                 value={field.value}
                               >
                                 <FormControl>
-                                  <SelectTrigger>
+                                  <SelectTrigger data-testid="task-form-priority">
                                     <SelectValue />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="low">Low</SelectItem>
-                                  <SelectItem value="medium">Medium</SelectItem>
-                                  <SelectItem value="high">High</SelectItem>
-                                  <SelectItem value="urgent">Urgent</SelectItem>
+                                  <SelectItem value="low">Niedrig</SelectItem>
+                                  <SelectItem value="medium">Mittel</SelectItem>
+                                  <SelectItem value="high">Hoch</SelectItem>
+                                  <SelectItem value="urgent">Dringend</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -647,22 +647,22 @@ export default function Tasks() {
                                 value={field.value}
                               >
                                 <FormControl>
-                                  <SelectTrigger>
+                                  <SelectTrigger data-testid="task-form-status">
                                     <SelectValue />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                   <SelectItem value="pending">
-                                    Pending
+                                    Ausstehend
                                   </SelectItem>
                                   <SelectItem value="in_progress">
-                                    In Progress
+                                    In Bearbeitung
                                   </SelectItem>
                                   <SelectItem value="completed">
-                                    Completed
+                                    Abgeschlossen
                                   </SelectItem>
                                   <SelectItem value="overdue">
-                                    Overdue
+                                    Überfällig
                                   </SelectItem>
                                 </SelectContent>
                               </Select>
@@ -678,9 +678,9 @@ export default function Tasks() {
                           variant="outline"
                           onClick={() => setIsDialogOpen(false)}
                         >
-                          Cancel
+                          Abbrechen
                         </Button>
-                        <Button type="submit" data-testid="task-form-submit">Create Task</Button>
+                        <Button type="submit" data-testid="task-form-submit">Aufgabe erstellen</Button>
                       </div>
                     </form>
                   </Form>
@@ -693,7 +693,7 @@ export default function Tasks() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Search tasks..."
+                  placeholder="Aufgaben suchen..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -705,11 +705,11 @@ export default function Tasks() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Priority</TableHead>
+                    <TableHead>Titel</TableHead>
+                    <TableHead>Zugewiesen an</TableHead>
+                    <TableHead>Priorität</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Due Date</TableHead>
+                    <TableHead>Fälligkeitsdatum</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -719,7 +719,7 @@ export default function Tasks() {
                         colSpan={5}
                         className="text-center py-8 text-muted-foreground"
                       >
-                        No tasks found
+                        Keine Aufgaben gefunden
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -733,15 +733,15 @@ export default function Tasks() {
                         </TableCell>
                         <TableCell>
                           <Badge variant={getPriorityColor(task.priority)}>
-                            {task.priority}
+                            {{ low: "Niedrig", medium: "Mittel", high: "Hoch", urgent: "Dringend" }[task.priority] ?? task.priority}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={getStatusColor(task.status)}>
-                            {task.status.replace("_", " ")}
+                            {{ pending: "Ausstehend", in_progress: "In Bearbeitung", completed: "Abgeschlossen", overdue: "Überfällig" }[task.status] ?? task.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>{task.due_date || "-"}</TableCell>
+                        <TableCell>{task.due_date ? format(new Date(task.due_date), "dd.MM.yyyy") : "-"}</TableCell>
                       </TableRow>
                     ))
                   )}

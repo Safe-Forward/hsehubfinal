@@ -844,7 +844,7 @@ export default function Measures() {
               />
             </div>
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px]" data-testid="filter-measure-status">
                 <SelectValue placeholder="Nach Status filtern" />
               </SelectTrigger>
               <SelectContent>
@@ -855,8 +855,19 @@ export default function Measures() {
                 <SelectItem value="cancelled">Abgebrochen</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-[180px]" data-testid="filter-measure-type">
+                <SelectValue placeholder="Nach Typ filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Typen</SelectItem>
+                <SelectItem value="preventive">Präventiv</SelectItem>
+                <SelectItem value="corrective">Korrektiv</SelectItem>
+                <SelectItem value="improvement">Verbesserung</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={filterSource} onValueChange={setFilterSource}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px]" data-testid="filter-measure-source">
                 <SelectValue placeholder="Nach Herkunft filtern" />
               </SelectTrigger>
               <SelectContent>
@@ -892,8 +903,11 @@ export default function Measures() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredMeasures.map((measure) => (
-                    <TableRow key={measure.id} data-testid={`measure-row-${measure.id}`}>
+                  filteredMeasures.map((measure) => {
+                    const today = new Date().toISOString().split("T")[0];
+                    const isOverdue = measure.due_date && measure.due_date < today && measure.status !== "completed" && measure.status !== "cancelled";
+                    return (
+                    <TableRow key={measure.id} data-testid={`measure-row-${measure.id}`} className={isOverdue ? "bg-red-50 dark:bg-red-950/20" : ""}>
                       <TableCell>
                         <div>
                           <div className="font-medium">{measure.title}</div>
@@ -946,9 +960,10 @@ export default function Measures() {
                       </TableCell>
                       <TableCell>
                         {measure.due_date ? (
-                          <div className="flex items-center gap-1">
+                          <div className={`flex items-center gap-1 ${isOverdue ? "text-red-600 dark:text-red-400 font-medium" : ""}`}>
                             <Clock className="w-3 h-3" />
                             {format(new Date(measure.due_date), "dd.MM.yyyy")}
+                            {isOverdue && <span className="text-xs ml-1">(überfällig)</span>}
                           </div>
                         ) : (
                           <span className="text-muted-foreground">
@@ -979,7 +994,8 @@ export default function Measures() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

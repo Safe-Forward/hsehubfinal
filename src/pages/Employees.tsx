@@ -1611,7 +1611,7 @@ export default function Employees() {
                   {t("employees.filterStatus")}
                 </Label>
                 <Select value={filterActive} onValueChange={setFilterActive}>
-                  <SelectTrigger>
+                  <SelectTrigger data-testid="filter-employee-status">
                     <SelectValue placeholder={t("employees.filterStatus")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -1635,7 +1635,7 @@ export default function Employees() {
                   value={filterDepartment}
                   onValueChange={setFilterDepartment}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-testid="filter-employee-department">
                     <SelectValue
                       placeholder={t("employees.filterDepartment")}
                     />
@@ -1837,6 +1837,7 @@ export default function Employees() {
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <Input
+                  data-testid="search-employees"
                   placeholder={t("employees.search")}
                   className="pl-12 h-12 border-2 focus:border-primary transition-colors"
                   value={searchTerm}

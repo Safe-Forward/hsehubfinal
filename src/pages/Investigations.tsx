@@ -1692,6 +1692,7 @@ export default function Investigations() {
           {/* View Mode Toggle */}
           <div className="flex gap-2 mb-4">
             <Button
+              data-testid="btn-view-mode-employee"
               variant={viewMode === "employee" ? "default" : "outline"}
               onClick={() => setViewMode("employee")}
               className="flex-1 basis-0"
@@ -1700,6 +1701,7 @@ export default function Investigations() {
               {t("investigations.employeeView")}
             </Button>
             <Button
+              data-testid="btn-view-mode-date"
               variant={viewMode === "date" ? "default" : "outline"}
               onClick={() => setViewMode("date")}
               className="flex-1 basis-0"
@@ -1708,6 +1710,7 @@ export default function Investigations() {
               {t("investigations.dateView")}
             </Button>
             <Button
+              data-testid="btn-view-mode-checkup"
               variant={viewMode === "checkup" ? "default" : "outline"}
               onClick={() => setViewMode("checkup")}
               className="flex-1 basis-0"

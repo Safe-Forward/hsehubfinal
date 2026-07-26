@@ -3117,7 +3117,7 @@ p_sender_name: senderName,
         {/* Main Content */}
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 overflow-x-auto flex-nowrap no-scrollbar">
-            <TabsTrigger value="overview" className="px-4 py-2">
+            <TabsTrigger data-testid="tab-overview" value="overview" className="px-4 py-2">
               Übersicht
             </TabsTrigger>
             {hasPermission("healthCheckups") && (
@@ -3130,19 +3130,19 @@ p_sender_name: senderName,
                 Dokumente
               </TabsTrigger>
             )}
-            <TabsTrigger value="workplace_briefings" className="px-4 py-2">
+            <TabsTrigger data-testid="tab-workplace-briefings" value="workplace_briefings" className="px-4 py-2">
               Unterweisungen
             </TabsTrigger>
-            <TabsTrigger value="qualifications" className="px-4 py-2">
+            <TabsTrigger data-testid="tab-qualifications" value="qualifications" className="px-4 py-2">
               Qualifikationen
             </TabsTrigger>
-            <TabsTrigger value="core_trainings" className="px-4 py-2">
+            <TabsTrigger data-testid="tab-core-trainings" value="core_trainings" className="px-4 py-2">
               Kernschulungen
             </TabsTrigger>
-            <TabsTrigger value="training_certs" className="px-4 py-2">
+            <TabsTrigger data-testid="tab-training-certs" value="training_certs" className="px-4 py-2">
               Schulungen & Zertifikate
             </TabsTrigger>
-            <TabsTrigger value="activity" className="px-4 py-2">
+            <TabsTrigger data-testid="tab-activity" value="activity" className="px-4 py-2">
               Aktivität
             </TabsTrigger>
           </TabsList>

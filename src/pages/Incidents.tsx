@@ -1462,7 +1462,7 @@ export default function Incidents() {
                 />
               </div>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" data-testid="filter-incident-type">
                   <SelectValue placeholder={t("incidents.filterByType")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -1483,7 +1483,7 @@ export default function Incidents() {
                 </SelectContent>
               </Select>
               <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px]" data-testid="filter-incident-severity">
                   <SelectValue placeholder={t("incidents.filterBySeverity")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -1501,6 +1501,17 @@ export default function Incidents() {
                     {t("incidents.critical")}
                   </SelectItem>
                   <SelectItem value="fatal">{t("incidents.fatal")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[180px]" data-testid="filter-incident-status">
+                  <SelectValue placeholder="Status filtern" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Status</SelectItem>
+                  <SelectItem value="open">Offen</SelectItem>
+                  <SelectItem value="in_progress">In Bearbeitung</SelectItem>
+                  <SelectItem value="closed">Abgeschlossen</SelectItem>
                 </SelectContent>
               </Select>
             </div>

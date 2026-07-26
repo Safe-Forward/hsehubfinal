@@ -3385,6 +3385,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-intervals"
                     onClick={() => setActiveTab("intervals")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "intervals"
                       ? "bg-primary text-primary-foreground"
@@ -3401,6 +3402,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-position-training"
                     onClick={() => setActiveTab("position-training")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "position-training"
                       ? "bg-primary text-primary-foreground"
@@ -3417,6 +3419,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-qualification-catalog"
                     onClick={() => setActiveTab("qualification-catalog")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "qualification-catalog"
                       ? "bg-primary text-primary-foreground"
@@ -3433,6 +3436,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-medical-care"
                     onClick={() => setActiveTab("medical-care")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "medical-care"
                       ? "bg-primary text-primary-foreground"
@@ -3449,6 +3453,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-api-integration"
                     onClick={() => setActiveTab("api-integration")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "api-integration"
                       ? "bg-primary text-primary-foreground"
@@ -3465,6 +3470,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-invoices-billing"
                     onClick={() => setActiveTab("invoices-billing")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "invoices-billing"
                       ? "bg-primary text-primary-foreground"
@@ -3481,6 +3487,7 @@ const handleUpdateManager = async (
                   </button>
 
                   <button
+                    data-testid="settings-tab-support"
                     onClick={() => setActiveTab("support")}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "support"
                       ? "bg-primary text-primary-foreground"
