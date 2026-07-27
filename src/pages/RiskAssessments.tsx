@@ -225,6 +225,7 @@ export default function RiskAssessments() {
   const [loadingData, setLoadingData] = useState(false);
   const [formStep, setFormStep] = useState(1);
   const [editingRiskId, setEditingRiskId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editableNotes, setEditableNotes] = useState("");
   const [hazardCategories, setHazardCategories] = useState<string[]>(
     DEFAULT_HAZARD_CATEGORIES
@@ -562,6 +563,7 @@ export default function RiskAssessments() {
   };
 
   const onSubmit = async () => {
+    setIsSubmitting(true);
     if (!companyId) {
       toast({
         title: "Keine Firma gefunden",
@@ -707,6 +709,8 @@ export default function RiskAssessments() {
         description: message,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1098,7 +1102,7 @@ export default function RiskAssessments() {
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label htmlFor="title">
-                                {t("risks.riskTitle")} *
+                                {t("risks.riskTitle")} <span className="text-destructive ml-1">*</span>
                               </Label>
                               <Input
                                 id="title"
@@ -1115,7 +1119,7 @@ export default function RiskAssessments() {
 
                             <div className="space-y-2">
                               <Label htmlFor="assessment_date">
-                                {t("risks.assessmentDate")} *
+                                {t("risks.assessmentDate")} <span className="text-destructive ml-1">*</span>
                               </Label>
                               <Popover>
                                 <PopoverTrigger asChild>
@@ -1942,9 +1946,9 @@ export default function RiskAssessments() {
                             >
                               {t("risks.back")}
                             </Button>
-                            <Button type="submit" data-testid="risk-form-submit">
+                            <Button type="submit" data-testid="risk-form-submit" disabled={isSubmitting}>
                               <Save className="w-4 h-4 mr-2" />
-                              {t("common.create")}
+                              {isSubmitting ? "Wird gespeichert..." : t("common.create")}
                             </Button>
                           </div>
                         </div>

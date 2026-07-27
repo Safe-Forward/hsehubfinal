@@ -1344,7 +1344,7 @@ export default function Employees() {
                       <form onSubmit={handleSubmit} className="space-y-4 p-4">
                         <div className="space-y-2">
                           <Label htmlFor="employee_number">
-                            {t("employees.employeeNumber")} *
+                            {t("employees.employeeNumber")} <span className="text-destructive ml-1">*</span>
                           </Label>
                           <Input
                             id="employee_number"
@@ -1362,7 +1362,7 @@ export default function Employees() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="first_name">
-                          {t("employees.firstName")} *
+                          {t("employees.firstName")} <span className="text-destructive ml-1">*</span>
                         </Label>
                         <Input
                           id="first_name"
@@ -1380,7 +1380,7 @@ export default function Employees() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="last_name">
-                          {t("employees.lastName")} *
+                          {t("employees.lastName")} <span className="text-destructive ml-1">*</span>
                         </Label>
                         <Input
                           id="last_name"

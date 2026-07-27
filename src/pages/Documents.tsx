@@ -679,7 +679,7 @@ export default function Documents() {
 
           <div className="space-y-4">
             <div>
-              <Label htmlFor="file">Datei *</Label>
+              <Label htmlFor="file">Datei <span className="text-destructive ml-1">*</span></Label>
               <Input
                 id="file"
                 ref={fileInputRef}
@@ -696,7 +696,7 @@ export default function Documents() {
             </div>
 
             <div>
-              <Label htmlFor="title">Titel *</Label>
+              <Label htmlFor="title">Titel <span className="text-destructive ml-1">*</span></Label>
               <Input
                 id="title"
                 value={uploadTitle}
@@ -717,7 +717,7 @@ export default function Documents() {
             </div>
 
             <div>
-              <Label htmlFor="category">Kategorie *</Label>
+              <Label htmlFor="category">Kategorie <span className="text-destructive ml-1">*</span></Label>
               <Select
                 value={uploadCategory}
                 onValueChange={(value) =>

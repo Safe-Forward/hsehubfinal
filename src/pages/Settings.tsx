@@ -3064,7 +3064,7 @@ const handleUpdateManager = async (
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Name *</FormLabel>
+                        <FormLabel>Name <span className="text-destructive ml-1">*</span></FormLabel>
                         <FormControl>
                           <Input
                             {...field}
@@ -3100,8 +3100,8 @@ const handleUpdateManager = async (
                     >
                       Abbrechen
                     </Button>
-                    <Button type="submit">
-                      {editingItem ? "Aktualisieren" : "Erstellen"}
+                    <Button type="submit" disabled={form.formState.isSubmitting}>
+                      {form.formState.isSubmitting ? "Wird gespeichert..." : editingItem ? "Aktualisieren" : "Erstellen"}
                     </Button>
                   </div>
                 </form>

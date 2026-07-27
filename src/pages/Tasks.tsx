@@ -451,7 +451,7 @@ export default function Tasks() {
                         name="title"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Titel *</FormLabel>
+                            <FormLabel>Titel <span className="text-destructive ml-1">*</span></FormLabel>
                             <FormControl>
                               <Input data-testid="task-form-title" {...field} />
                             </FormControl>
@@ -656,7 +656,9 @@ export default function Tasks() {
                         >
                           Abbrechen
                         </Button>
-                        <Button type="submit" data-testid="task-form-submit">Aufgabe erstellen</Button>
+                        <Button type="submit" data-testid="task-form-submit" disabled={form.formState.isSubmitting}>
+                          {form.formState.isSubmitting ? "Wird gespeichert..." : "Aufgabe erstellen"}
+                        </Button>
                       </div>
                     </form>
                   </Form>

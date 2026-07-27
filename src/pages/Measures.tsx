@@ -124,6 +124,7 @@ export default function Measures() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingMeasure, setEditingMeasure] = useState<Measure | null>(null);
   const [linkedIncidentId, setLinkedIncidentId] = useState<string | null>(null);
   const [linkedRiskAssessmentId, setLinkedRiskAssessmentId] = useState<string | null>(null);
@@ -330,6 +331,7 @@ export default function Measures() {
     e.preventDefault();
     if (!companyId) return;
 
+    setIsSubmitting(true);
     try {
       const measureData = {
         company_id: companyId,
@@ -400,6 +402,8 @@ export default function Measures() {
         description: error.message || "Maßnahme konnte nicht gespeichert werden",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -626,7 +630,7 @@ export default function Measures() {
                     )}
                     <div>
                       <Label htmlFor="title">
-                        {t("measures.measureTitle")} *
+                        {t("measures.measureTitle")} <span className="text-destructive ml-1">*</span>
                       </Label>
                       <Input
                         id="title"
@@ -641,7 +645,7 @@ export default function Measures() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="type">Maßnahmentyp *</Label>
+                        <Label htmlFor="type">Maßnahmentyp <span className="text-destructive ml-1">*</span></Label>
                         <Select
                           value={formData.measure_type}
                           onValueChange={(value: any) =>
@@ -660,7 +664,7 @@ export default function Measures() {
                       </div>
 
                       <div>
-                        <Label htmlFor="status">Status *</Label>
+                        <Label htmlFor="status">Status <span className="text-destructive ml-1">*</span></Label>
                         <Select
                           value={formData.status}
                           onValueChange={(value: any) =>
@@ -681,7 +685,7 @@ export default function Measures() {
                     </div>
 
                     <div>
-                      <Label htmlFor="description">Description</Label>
+                      <Label htmlFor="description">Beschreibung</Label>
                       <Textarea
                         id="description"
                         value={formData.description}
@@ -814,8 +818,8 @@ export default function Measures() {
                       >
                         Abbrechen
                       </Button>
-                      <Button type="submit">
-                        {editingMeasure ? "Aktualisieren" : "Erstellen"}
+                      <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Wird gespeichert..." : editingMeasure ? "Aktualisieren" : "Erstellen"}
                       </Button>
                     </div>
                   </form>

@@ -65,6 +65,7 @@ export default function Audits() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [deleteAudit, setDeleteAudit] = useState<any>(null);
 
   // Filters
@@ -185,6 +186,8 @@ export default function Audits() {
       return;
     }
 
+    setIsCreating(true);
+
     try {
       // Create audit
       const { data: auditData, error: auditError } = await supabase
@@ -245,6 +248,8 @@ export default function Audits() {
         description: err.message,
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -570,7 +575,7 @@ export default function Audits() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>{t("audits.auditTitle")} *</Label>
+              <Label>{t("audits.auditTitle")} <span className="text-destructive ml-1">*</span></Label>
               <Input
                 value={formData.title}
                 onChange={(e) =>
@@ -582,7 +587,7 @@ export default function Audits() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{t("audits.isoStandard")} *</Label>
+                <Label>{t("audits.isoStandard")} <span className="text-destructive ml-1">*</span></Label>
                 <Select
                   value={formData.iso_code}
                   onValueChange={(value) =>
@@ -603,7 +608,7 @@ export default function Audits() {
               </div>
 
               <div>
-                <Label>{t("audits.scheduledDate")} *</Label>
+                <Label>{t("audits.scheduledDate")} <span className="text-destructive ml-1">*</span></Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -668,7 +673,9 @@ export default function Audits() {
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 {t("common.cancel")}
               </Button>
-              <Button data-testid="audit-form-submit" onClick={createAudit}>{t("audits.createAudit")}</Button>
+              <Button data-testid="audit-form-submit" onClick={createAudit} disabled={isCreating}>
+                {isCreating ? "Wird erstellt..." : t("audits.createAudit")}
+              </Button>
             </div>
           </div>
         </DialogContent>
