@@ -2205,7 +2205,7 @@ export default function RiskAssessments() {
                               </Button>
                             )}
                             {risk.approval_status !== "approved" && canManageRisk && (
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => loadRiskForEdit(risk)}>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => loadRiskForEdit(risk)} aria-label="Risikobewertung bearbeiten">
                                 <Pencil className="w-4 h-4" />
                               </Button>
                             )}
@@ -2253,6 +2253,7 @@ export default function RiskAssessments() {
                               }
                             }}
                             className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            aria-label="Risikobewertung löschen"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

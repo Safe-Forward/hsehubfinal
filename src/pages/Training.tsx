@@ -774,7 +774,7 @@ export default function Training() {
         <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/training")}><ArrowLeft className="w-5 h-5" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => navigate("/training")} aria-label="Zurück zu Schulungen"><ArrowLeft className="w-5 h-5" /></Button>
               <div>
                 <h1 className="text-xl font-bold">{selectedCourse.name}</h1>
                 <p className="text-xs text-muted-foreground">{selectedCourse.description || "Schulungsmodul"}</p>
@@ -924,7 +924,7 @@ export default function Training() {
                 <div className="flex gap-2 mt-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input placeholder="Nutzer suchen..." value={progressSearch} onChange={(e) => setProgressSearch(e.target.value)} className="pl-9" />
+                    <Input placeholder="Nutzer suchen..." aria-label="Nutzer suchen" value={progressSearch} onChange={(e) => setProgressSearch(e.target.value)} className="pl-9" />
                   </div>
                   <Button variant="outline" size="sm" onClick={() => { setProgressSort("name"); setProgressSortDir(progressSort === "name" && progressSortDir === "asc" ? "desc" : "asc"); }} className={progressSort === "name" ? "border-primary text-primary" : ""}>
                     {progressSort === "name" && progressSortDir === "desc" ? <SortDesc className="w-4 h-4 mr-1" /> : <SortAsc className="w-4 h-4 mr-1" />}Name
@@ -1013,7 +1013,7 @@ export default function Training() {
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}><ArrowLeft className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} aria-label="Zurück zum Dashboard"><ArrowLeft className="w-5 h-5" /></Button>
             <div>
               <h1 className="text-xl font-bold">{isAdmin ? "Schulungsmanagement" : "Meine Schulungen"}</h1>
               <p className="text-xs text-muted-foreground">{isAdmin ? "Kurse, Lektionen und Zertifikate verwalten" : "Ihre zugewiesenen Kurse"}</p>
@@ -1166,7 +1166,7 @@ export default function Training() {
             <div className="mb-6">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input placeholder="Kurse durchsuchen..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-12 h-12 border-2 focus:border-primary transition-colors" />
+                <Input placeholder="Kurse durchsuchen..." aria-label="Kurse durchsuchen" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-12 h-12 border-2 focus:border-primary transition-colors" />
               </div>
             </div>
 

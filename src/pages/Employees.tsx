@@ -106,6 +106,7 @@ export default function Employees() {
   const { logAction } = useAuditLog();
   const navigate = useNavigate();
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
@@ -201,6 +202,7 @@ export default function Employees() {
 
   const fetchEmployees = async () => {
     if (!companyId) return;
+    setLoadingEmployees(true);
 
     // Sichtbarkeit wird serverseitig per RLS (user_can_view_employee) durchgesetzt:
     // berücksichtigt department_managers (inkl. Subtree) und employee_managers.
@@ -233,6 +235,7 @@ export default function Employees() {
       if (error) {
         toast.error(t("employees.loadError"));
         console.error(error);
+        setLoadingEmployees(false);
         return;
       }
 
@@ -242,6 +245,7 @@ export default function Employees() {
     }
 
     setEmployees(allRows);
+    setLoadingEmployees(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1836,7 +1840,16 @@ export default function Employees() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredEmployees.length === 0 ? (
+                  {loadingEmployees ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-12">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                          <p className="text-sm text-muted-foreground">Mitarbeiter werden geladen...</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredEmployees.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-12">
                         <div className="flex flex-col items-center justify-center">

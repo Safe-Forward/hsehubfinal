@@ -421,6 +421,7 @@ export default function Audits() {
               variant="ghost"
               size="icon"
               onClick={() => navigate("/dashboard")}
+              aria-label="Zurück zum Dashboard"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>

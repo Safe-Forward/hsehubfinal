@@ -437,13 +437,13 @@ export default function LessonViewer() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate(`/training/${courseId}`)} data-testid="lesson-viewer-back">
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/training/${courseId}`)} data-testid="lesson-viewer-back" aria-label="Zurück zum Kurs">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="hover:text-foreground cursor-pointer" onClick={() => navigate(`/training/${courseId}`)}>
+                <button className="hover:text-foreground cursor-pointer bg-transparent border-0 p-0 text-inherit" onClick={() => navigate(`/training/${courseId}`)} aria-label="Zurück zum Kurs">
                   {course?.name || "Kurs"}
-                </span>
+                </button>
                 <ChevronRight className="w-4 h-4" />
                 <span className="text-foreground font-medium">{lesson.name}</span>
               </div>
