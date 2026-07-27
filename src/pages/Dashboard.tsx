@@ -144,6 +144,9 @@ export default function Dashboard() {
   // Overdue measures older than 30 days (for critical warnings)
   const [oldOverdueMeasures, setOldOverdueMeasures] = useState(0);
 
+  // Loading state for KPI tiles
+  const [statsLoading, setStatsLoading] = useState(true);
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem("hse_dashboard_visible_kpis");
@@ -326,6 +329,7 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     if (!companyId) return;
+    setStatsLoading(true);
 
     try {
       const [employeesRes, risksRes, auditsRes, tasksRes, auditProgressRes] =
@@ -440,6 +444,8 @@ export default function Dashboard() {
       });
     } catch {
       // Stats konnten nicht geladen werden — Werte bleiben bei 0
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -1007,6 +1013,18 @@ export default function Dashboard() {
             <div className="col-span-full text-center py-8 text-muted-foreground border rounded-xl">
               {t("dashboard.noTilesSelected")}
             </div>
+          ) : statsLoading ? (
+            Array.from({ length: visibleKpis.filter((id) => !SIDEBAR_WIDGET_IDS.includes(id)).length || 4 }).map((_, i) => (
+              <Card key={i} className="border-0 shadow-xl overflow-hidden" aria-busy="true" aria-label={t("dashboard.loading") || "Wird geladen…"}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="h-4 bg-muted animate-pulse rounded w-3/4"></div>
+                  <div className="w-11 h-11 rounded-2xl bg-muted animate-pulse"></div>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <div className="h-10 bg-muted animate-pulse rounded w-1/2"></div>
+                </CardContent>
+              </Card>
+            ))
           ) : (
             visibleKpis.filter((id) => !SIDEBAR_WIDGET_IDS.includes(id)).map((id) => {
               const config = kpiConfig[id];
@@ -1037,6 +1055,10 @@ export default function Dashboard() {
                   }}
                   onDragEnd={() => { draggedKpiRef.current = null; setDragOverKpiId(null); }}
                   onClick={() => { if (kpiNavRoutes[id]) navigate(kpiNavRoutes[id]); }}
+                  onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && kpiNavRoutes[id]) { e.preventDefault(); navigate(kpiNavRoutes[id]); } }}
+                  tabIndex={kpiNavRoutes[id] ? 0 : undefined}
+                  aria-label={config.title}
+                  role={kpiNavRoutes[id] ? "button" : undefined}
                   data-testid={`dashboard-tile-${id}`}
                   className={`border-0 shadow-xl bg-gradient-to-br ${config.gradient} text-white overflow-hidden relative group hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 isolate cursor-grab active:cursor-grabbing ${isDragOver ? "ring-2 ring-white/70 scale-[1.02]" : ""}`}
                 >
@@ -1263,6 +1285,7 @@ export default function Dashboard() {
                             onChange={() =>
                               toggleTaskStatus(task.id, task.status)
                             }
+                            aria-label={`${task.title} – ${task.status === "completed" ? "Abgehakt" : "Offen"}`}
                             className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-muted-foreground/30 bg-background checked:bg-primary checked:border-primary transition-all duration-200 hover:border-primary/50"
                           />
                           <CheckCircle className="absolute w-3.5 h-3.5 text-primary-foreground opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />

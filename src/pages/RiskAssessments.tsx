@@ -506,13 +506,28 @@ export default function RiskAssessments() {
       const title = "Risikobewertungsbericht";
       const timestamp = new Date().toLocaleString();
 
-      // Title
-      doc.setFontSize(18);
-      doc.text(title, 14, 22);
-
-      doc.setFontSize(10);
+      // Firmen-Header
+      doc.setFontSize(12);
+      doc.setTextColor(34, 197, 94);
+      doc.setFont("helvetica", "bold");
+      doc.text("Safe-Forward", 14, 12);
       doc.setTextColor(100);
-      doc.text(`${t("common.generatedOn") || "Erstellt am"}: ${timestamp}`, 14, 30);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("HSEHub — Gefährdungsbeurteilung", 14, 18);
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, 20, 196, 20);
+      doc.setTextColor(0);
+
+      // Titel (verschoben)
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text(title, 14, 30);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100);
+      doc.text(`${t("common.generatedOn") || "Erstellt am"}: ${timestamp}`, 14, 38);
+      doc.setTextColor(0);
 
       // Define columns
       const tableColumn = [
@@ -540,10 +555,18 @@ export default function RiskAssessments() {
       autoTable(doc, {
         head: [tableColumn],
         body: tableRows,
-        startY: 35,
+        startY: 44,
         styles: { fontSize: 8 },
         headStyles: { fillColor: [41, 128, 185], textColor: 255 },
         alternateRowStyles: { fillColor: [245, 245, 245] },
+        didDrawPage: (data) => {
+          const pageCount = doc.internal.getNumberOfPages();
+          doc.setFontSize(8);
+          doc.setTextColor(150);
+          const pw = doc.internal.pageSize.getWidth();
+          const ph = doc.internal.pageSize.getHeight();
+          doc.text(`Seite ${data.pageNumber} von ${pageCount}`, pw - 14, ph - 8, { align: "right" });
+        },
       });
 
       // Save the PDF

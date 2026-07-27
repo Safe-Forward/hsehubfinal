@@ -531,11 +531,28 @@ export default function Measures() {
   const exportToPDF = () => {
     const doc = new jsPDF();
 
-    // Add title
-    doc.setFontSize(18);
-    doc.text("Maßnahmen & Kontrollen – Bericht", 14, 22);
-    doc.setFontSize(11);
-    doc.text(`Erstellt am: ${format(new Date(), "dd.MM.yyyy")}`, 14, 30);
+    // Firmen-Header
+    doc.setFontSize(12);
+    doc.setTextColor(34, 197, 94);
+    doc.setFont("helvetica", "bold");
+    doc.text("Safe-Forward", 14, 12);
+    doc.setTextColor(100);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("HSEHub — Maßnahmenbericht", 14, 18);
+    doc.setDrawColor(220, 220, 220);
+    doc.line(14, 20, 196, 20);
+    doc.setTextColor(0);
+
+    // Titel (verschoben)
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Maßnahmen & Kontrollen – Bericht", 14, 30);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100);
+    doc.text(`Erstellt am: ${format(new Date(), "dd.MM.yyyy")}`, 14, 38);
+    doc.setTextColor(0);
 
     // Prepare table data
     const tableData = filteredMeasures.map((measure) => [
@@ -552,12 +569,20 @@ export default function Measures() {
     autoTable(doc, {
       head: [["Maßnahme", "Typ", "Status", "Verantwortlich", "Fälligkeitsdatum"]],
       body: tableData,
-      startY: 35,
+      startY: 44,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [37, 99, 235] },
+      didDrawPage: (data) => {
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        const pw = doc.internal.pageSize.getWidth();
+        const ph = doc.internal.pageSize.getHeight();
+        doc.text(`Seite ${data.pageNumber} von ${pageCount}`, pw - 14, ph - 8, { align: "right" });
+      },
     });
 
-    doc.save(`measures_report_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+    doc.save(`massnahmen_bericht_${format(new Date(), "yyyy-MM-dd")}.pdf`);
     toast({
       title: "Gespeichert",
       description: "PDF wurde exportiert",
