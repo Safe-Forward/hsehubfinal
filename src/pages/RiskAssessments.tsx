@@ -69,7 +69,6 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -2327,6 +2326,7 @@ export default function RiskAssessments() {
                       await new Promise(resolve => setTimeout(resolve, 100));
 
                       // Capture the dialog as canvas
+                      const { default: html2canvas } = await import("html2canvas");
                       const canvas = await html2canvas(dialogElement, {
                         scale: 2,
                         useCORS: true,
