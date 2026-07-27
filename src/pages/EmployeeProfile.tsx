@@ -306,9 +306,9 @@ export default function EmployeeProfile() {
   );
 
   // Editable labels for special fields
-  const [languagesLabel, setLanguagesLabel] = useState("Languages Known");
-  const [skillsLabel, setSkillsLabel] = useState("Skills");
-  const [salaryLabel, setSalaryLabel] = useState("Salary");
+  const [languagesLabel, setLanguagesLabel] = useState("Bekannte Sprachen");
+  const [skillsLabel, setSkillsLabel] = useState("Fähigkeiten");
+  const [salaryLabel, setSalaryLabel] = useState("Gehalt");
   const [editingSpecialFieldLabel, setEditingSpecialFieldLabel] = useState<string | null>(null);
 
   // State for editing custom profile fields
@@ -813,11 +813,18 @@ const fetchGInvestigations = async () => {
     doc.setFillColor(248, 250, 252); doc.rect(0, 0, width, height, "F");
     doc.setDrawColor(30, 78, 137); doc.setLineWidth(3); doc.rect(8, 8, width - 16, height - 16);
     doc.setDrawColor(34, 197, 94); doc.setLineWidth(1); doc.rect(12, 12, width - 24, height - 24);
-    doc.setFillColor(15, 41, 66); doc.rect(8, 8, width - 16, 40, "F");
+    doc.setFillColor(15, 41, 66); doc.rect(8, 8, width - 16, 52, "F");
+    // Firmen-Header oben links
+    doc.setTextColor(34, 197, 94); doc.setFontSize(12); doc.setFont("helvetica", "bold");
+    doc.text("Safe-Forward", 14, 14);
+    doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.5); doc.line(14, 20, 283, 20);
+    doc.setTextColor(160, 160, 160); doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    doc.text("HSEHub — Schulungszertifikat", 14, 26);
+    // Haupttitel zentriert
     doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont("helvetica", "bold");
-    doc.text("HSE HUB", width / 2, 24, { align: "center" });
+    doc.text("HSE HUB", width / 2, 38, { align: "center" });
     doc.setFontSize(11); doc.setFont("helvetica", "normal");
-    doc.text("Health, Safety & Environment Management", width / 2, 34, { align: "center" });
+    doc.text("Health, Safety & Environment Management", width / 2, 48, { align: "center" });
     doc.setTextColor(30, 78, 137); doc.setFontSize(32); doc.setFont("helvetica", "bold");
     doc.text("ZERTIFIKAT", width / 2, 72, { align: "center" });
     doc.setFontSize(14); doc.setFont("helvetica", "normal"); doc.setTextColor(100, 100, 100);
@@ -1107,9 +1114,16 @@ const fetchGInvestigations = async () => {
     const fieldName = `${fieldType
       .replace(/\s+/g, "_")
       .toLowerCase()}_${Date.now()}`;
+    const germanFieldTypeLabel: Record<string, string> = {
+      "Single-line text": "Einzeiliger Text",
+      "Multi-line text": "Mehrzeiliger Text",
+      "Yes/No": "Ja / Nein",
+      "Date": "Datum",
+      "Number": "Zahl",
+    };
     const newField = {
       id: fieldName,
-      label: `New ${fieldType}`,
+      label: germanFieldTypeLabel[fieldType] ?? fieldType,
       type: fieldType,
       value: fieldType === "Yes/No" ? false : "",
       created_at: new Date().toISOString(),
@@ -2839,7 +2853,7 @@ p_sender_name: senderName,
           <CardContent className="pt-6">
             <p>Mitarbeiter nicht gefunden</p>
             <Button onClick={() => navigate("/employees")} className="mt-4">
-              Back to Employees
+              Zur Mitarbeiterliste
             </Button>
           </CardContent>
         </Card>
@@ -2905,9 +2919,9 @@ p_sender_name: senderName,
                   toast.error("Aktualisierung fehlgeschlagen.");
                 }
               }}
-              placeholder={`Select ${label}`}
-              searchPlaceholder="Search or type to create..."
-              emptyText={`No ${label.toLowerCase()} found.`}
+              placeholder={`${label} auswählen`}
+              searchPlaceholder="Suchen oder eingeben..."
+              emptyText={`Kein ${label.toLowerCase()} gefunden.`}
               allowCustom={field === "department_id" || field === "job_role_id"}
               onCreateCustom={async (newValue) => {
                 if (!companyId) return;
@@ -3044,7 +3058,7 @@ p_sender_name: senderName,
               {t("common.back")}
             </Button>
             <div>
-              <h1 className="text-3xl font-bold" data-testid="employee-profile-name">{employee.full_name || "Employee Profile"}</h1>
+              <h1 className="text-3xl font-bold" data-testid="employee-profile-name">{employee.full_name || "Mitarbeiterprofil"}</h1>
               <p className="text-muted-foreground">
                 {t("employees.employeeNumber")} #{employee.employee_number}
               </p>
@@ -3216,6 +3230,7 @@ p_sender_name: senderName,
                       size="sm"
                       variant="ghost"
                       className="h-7 w-7 p-0"
+                      aria-label="Tag hinzufügen"
                     >
                       <Plus className="w-3 h-3" />
                     </Button>
@@ -3235,7 +3250,7 @@ p_sender_name: senderName,
                       </div>
                       <div className="grid grid-cols-[100px_1fr] gap-2 text-sm">
                         <span className="text-muted-foreground">
-                          Employee #
+                          Mitarb.-Nr.
                         </span>
                         <span className="font-medium">
                           {employee.employee_number}
@@ -3293,7 +3308,7 @@ p_sender_name: senderName,
                                     }
                                   >
                                     <FileText className="w-3 h-3 mr-2" />
-                                    Single-line text
+                                    Einzeiliger Text
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -3304,7 +3319,7 @@ p_sender_name: senderName,
                                     }
                                   >
                                     <List className="w-3 h-3 mr-2" />
-                                    Multi-line text
+                                    Mehrzeiliger Text
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -3315,7 +3330,7 @@ p_sender_name: senderName,
                                     }
                                   >
                                     <CheckCircle className="w-3 h-3 mr-2" />
-                                    Yes / No
+                                    Ja / Nein
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -3324,7 +3339,7 @@ p_sender_name: senderName,
                                     onClick={() => handleAddProfileField("Date")}
                                   >
                                     <CalendarIcon className="w-3 h-3 mr-2" />
-                                    Date
+                                    Datum
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -3335,7 +3350,7 @@ p_sender_name: senderName,
                                     }
                                   >
                                     <Hash className="w-3 h-3 mr-2" />
-                                    Number
+                                    Zahl
                                   </Button>
                                 </div>
                               </CardContent>
@@ -3600,6 +3615,7 @@ p_sender_name: senderName,
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 ml-auto"
+                              aria-label="Profilfeld löschen"
                               onClick={() => handleDeleteProfileField(field.id)}
                             >
                               <Trash2 className="w-3 h-3 text-destructive" />
@@ -3766,8 +3782,8 @@ p_sender_name: senderName,
                       {profileFieldTemplates.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                           <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                          <p className="font-medium mb-2">No templates available</p>
-                          <p className="text-sm">Go to Settings → Profile Fields to create templates</p>
+                          <p className="font-medium mb-2">Keine Vorlagen verfügbar</p>
+                          <p className="text-sm">Gehen Sie zu Einstellungen → Profilfelder, um Vorlagen zu erstellen</p>
                         </div>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
@@ -3789,7 +3805,7 @@ p_sender_name: senderName,
                                   <div className="flex-1">
                                     <div className="font-medium">{template.name}</div>
                                     <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
-                                      <span>{template.fields?.length || 0} fields</span>
+                                      <span>{template.fields?.length || 0} Felder</span>
                                     </div>
                                   </div>
                                 </div>
@@ -3812,12 +3828,12 @@ p_sender_name: senderName,
                                 ))
                               ) : (
                                 <div className="text-sm text-muted-foreground">
-                                  No fields in this template yet.
+                                  Noch keine Felder in dieser Vorlage.
                                 </div>
                               )
                             ) : (
                               <div className="text-sm text-muted-foreground">
-                                Select a template to preview its fields.
+                                Vorlage auswählen, um die Felder zu sehen.
                               </div>
                             )}
                           </div>
@@ -3989,7 +4005,7 @@ p_sender_name: senderName,
                                 </Card>
                               )}
                           </div>
-                          <Button onClick={handleCreateTask} size="sm">
+                          <Button onClick={handleCreateTask} size="sm" aria-label="Aufgabe erstellen">
                             <Plus className="w-3 h-3" />
                           </Button>
                         </div>
@@ -4049,19 +4065,19 @@ p_sender_name: senderName,
                               <SelectItem value="low">
                                 <span className="flex items-center gap-2">
                                   <span className="w-2 h-2 rounded-full bg-green-500" />
-                                  Low
+                                  Niedrig
                                 </span>
                               </SelectItem>
                               <SelectItem value="medium">
                                 <span className="flex items-center gap-2">
                                   <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                                  Medium
+                                  Mittel
                                 </span>
                               </SelectItem>
                               <SelectItem value="high">
                                 <span className="flex items-center gap-2">
                                   <span className="w-2 h-2 rounded-full bg-red-500" />
-                                  High
+                                  Hoch
                                 </span>
                               </SelectItem>
                             </SelectContent>
@@ -4071,6 +4087,7 @@ p_sender_name: senderName,
                           <Button
                             variant="outline"
                             size="sm"
+                            aria-label="Mitarbeiter erwähnen"
                             onClick={() => setShowTaskMentionDropdown(!showTaskMentionDropdown)}
                           >
                             <AtSign className="w-4 h-4" />
@@ -4092,14 +4109,14 @@ p_sender_name: senderName,
                             {hideCompletedTasks ? (
                               <>
                                 <Eye className="w-3 h-3 mr-1" />
-                                Show completed tasks (
+                                Erledigte anzeigen (
                                 {tasks.filter((t) => t.status === "completed").length}
                                 )
                               </>
                             ) : (
                               <>
                                 <Eye className="w-3 h-3 mr-1" />
-                                Hide completed tasks
+                                Erledigte ausblenden
                               </>
                             )}
                           </Button>
@@ -4212,6 +4229,7 @@ p_sender_name: senderName,
                             <Button
                               variant="ghost"
                               size="sm"
+                              aria-label="Fett"
                               className={`h-7 w-7 p-0 ${activeFormats.has('bold') ? 'bg-accent' : ''}`}
                               onClick={() => applyFormatting('bold')}
                             >
@@ -4220,6 +4238,7 @@ p_sender_name: senderName,
                             <Button
                               variant="ghost"
                               size="sm"
+                              aria-label="Kursiv"
                               className={`h-7 w-7 p-0 ${activeFormats.has('italic') ? 'bg-accent' : ''}`}
                               onClick={() => applyFormatting('italic')}
                             >
@@ -4228,6 +4247,7 @@ p_sender_name: senderName,
                             <Button
                               variant="ghost"
                               size="sm"
+                              aria-label="Unterstrichen"
                               className={`h-7 w-7 p-0 ${activeFormats.has('underline') ? 'bg-accent' : ''}`}
                               onClick={() => applyFormatting('underline')}
                             >
@@ -4237,6 +4257,7 @@ p_sender_name: senderName,
                             <Button
                               variant="ghost"
                               size="sm"
+                              aria-label="Liste"
                               className={`h-7 w-7 p-0 ${activeFormats.has('list') ? 'bg-accent' : ''}`}
                               onClick={() => applyFormatting('list')}
                             >
@@ -4247,6 +4268,7 @@ p_sender_name: senderName,
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  aria-label="Link einfügen"
                                   className="h-7 w-7 p-0"
                                 >
                                   <Link className="w-3.5 h-3.5" />
@@ -4280,6 +4302,7 @@ p_sender_name: senderName,
                             <Button
                               variant="ghost"
                               size="sm"
+                              aria-label="Anhang einfügen"
                               className="h-7 w-7 p-0"
                               onClick={() => noteAttachmentInputRef.current?.click()}
                             >
@@ -4694,7 +4717,7 @@ p_sender_name: senderName,
 
                             return (
                               <p className="text-center text-muted-foreground text-xs py-4">
-                                No notes added yet
+                                Noch keine Notizen hinzugefügt
                               </p>
                             );
                           })()}
@@ -4772,12 +4795,12 @@ p_sender_name: senderName,
                             })()}
                           </h3>
 
-                          {/* Due Date - When investigation expires (no special styling) */}
+                          {/* Fälligkeitsdatum - When investigation expires (no special styling) */}
                           <div className="text-sm text-muted-foreground">
                             <span className="font-medium">
-                              Due Date: {checkup.due_date
+                              Fälligkeitsdatum: {checkup.due_date
                                 ? new Date(checkup.due_date).toLocaleDateString('de-DE')
-                                : 'Not calculated yet'}
+                                : 'Noch nicht berechnet'}
                             </span>
                           </div>
 
@@ -4807,17 +4830,17 @@ p_sender_name: senderName,
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="planned">Planned</SelectItem>
-                                <SelectItem value="open">Open</SelectItem>
-                                <SelectItem value="done">Done</SelectItem>
+                                <SelectItem value="planned">Geplant</SelectItem>
+                                <SelectItem value="open">Offen</SelectItem>
+                                <SelectItem value="done">Erledigt</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
 
-                          {/* Appointment Info (only show if set) */}
+                          {/* Termininfo (nur wenn gesetzt) */}
                           {checkup.appointment_date && (
                             <p className="text-sm text-muted-foreground">
-                              Appointment: {new Date(checkup.appointment_date).toLocaleDateString('de-DE')}
+                              Termin: {new Date(checkup.appointment_date).toLocaleDateString('de-DE')}
                             </p>
                           )}
 
@@ -4919,7 +4942,7 @@ p_sender_name: senderName,
                           {/* Documents List */}
                           {checkupDocuments[checkup.id] && checkupDocuments[checkup.id].length > 0 && (
                             <div className="mt-3 pt-3 border-t">
-                              <p className="text-xs font-medium mb-2">Attached Documents:</p>
+                              <p className="text-xs font-medium mb-2">Angehängte Dokumente:</p>
                               <div className="space-y-1">
                                 {checkupDocuments[checkup.id].map((doc: any) => (
                                   <div key={doc.id} className="flex items-center justify-between bg-muted/50 rounded px-2 py-1">
@@ -4933,7 +4956,8 @@ p_sender_name: senderName,
                                         size="sm"
                                         onClick={() => handlePreviewCheckupDocument(doc.file_path)}
                                         className="h-6 w-6 p-0"
-                                        title="Preview document"
+                                        title="Dokument anzeigen"
+                                        aria-label="Dokument anzeigen"
                                       >
                                         <Eye className="w-3 h-3 text-blue-600" />
                                       </Button>
@@ -4943,6 +4967,7 @@ p_sender_name: senderName,
                                         onClick={() => handleDeleteCheckupDocument(doc.id, doc.file_path)}
                                         className="h-6 w-6 p-0"
                                         title="Dokument löschen"
+                                        aria-label="Dokument löschen"
                                       >
                                         <Trash2 className="w-3 h-3 text-red-600" />
                                       </Button>
@@ -5386,7 +5411,8 @@ p_sender_name: senderName,
                               variant="ghost"
                               size="sm"
                               onClick={() => handlePreviewDocument(doc)}
-                              title="Preview document"
+                              title="Dokument anzeigen"
+                              aria-label="Dokument anzeigen"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -5396,7 +5422,8 @@ p_sender_name: senderName,
                               variant="ghost"
                               size="sm"
                               onClick={() => handleStartRename(doc)}
-                              title="Rename document"
+                              title="Dokument umbenennen"
+                              aria-label="Dokument umbenennen"
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -5428,7 +5455,8 @@ p_sender_name: senderName,
                                   toast.error("Dokument konnte nicht heruntergeladen werden.");
                                 }
                               }}
-                              title="Download document"
+                              title="Dokument herunterladen"
+                              aria-label="Dokument herunterladen"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
@@ -5538,10 +5566,10 @@ p_sender_name: senderName,
                           <div className="flex flex-col items-center justify-center p-8 text-center">
                             <FileText className="w-16 h-16 text-muted-foreground mb-4" />
                             <p className="text-lg font-medium mb-2">
-                              Preview not available
+                              Vorschau nicht verfügbar
                             </p>
                             <p className="text-sm text-muted-foreground mb-4">
-                              This file type cannot be previewed in the browser.
+                              Dieser Dateityp kann nicht im Browser angezeigt werden.
                             </p>
                             <Button
                               onClick={() => {
@@ -5555,7 +5583,7 @@ p_sender_name: senderName,
                               }}
                             >
                               <Download className="w-4 h-4 mr-2" />
-                              Download File
+                              Datei herunterladen
                             </Button>
                           </div>
                         );
