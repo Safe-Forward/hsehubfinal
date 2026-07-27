@@ -2384,22 +2384,22 @@ export default function Reports() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Left Sub-Navigation */}
-      <aside className="w-56 border-r bg-card flex-shrink-0">
-        <div className="p-4 space-y-1">
+    <div className="flex flex-col md:flex-row h-screen bg-background">
+      {/* Left Sub-Navigation — horizontal on mobile, vertical on desktop */}
+      <aside className="md:w-56 border-b md:border-b-0 md:border-r bg-card flex-shrink-0">
+        <div className="flex md:flex-col gap-1 p-2 md:p-4 overflow-x-auto">
           {navSections.map((section) => (
             <button
               key={section.id}
               data-testid={`tab-${section.id}`}
               onClick={() => setActiveSection(section.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === section.id
+              className={`flex-shrink-0 md:w-full flex items-center gap-2 px-2 md:px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${activeSection === section.id
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
             >
               {section.icon}
-              <span>{section.name}</span>
+              <span className="hidden sm:inline md:inline">{section.name}</span>
             </button>
           ))}
         </div>
@@ -2408,7 +2408,7 @@ export default function Reports() {
       {/* Main Content Area */}
       <main className="flex-1 overflow-auto">
         {/* Professional Header */}
-        <header className="sticky top-0 z-10 bg-card border-b px-8 py-4">
+        <header className="sticky top-0 z-10 bg-card border-b px-4 md:px-8 py-3 md:py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4 flex-1 min-w-[300px]">
               <Input
@@ -2480,7 +2480,7 @@ export default function Reports() {
         </header>
 
         {/* Content Sections */}
-        <div className="p-8">
+        <div className="p-4 md:p-8">
           {activeSection === "overview" && (
             <OverviewSection
               stats={stats}

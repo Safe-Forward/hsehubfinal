@@ -50,9 +50,17 @@ export default function Auth() {
       // Navigation will be handled by useEffect based on role
     } catch (err: unknown) {
       const e = err as { message?: string } | Error | null;
-      const message =
-        e && "message" in e && e.message ? e.message : String(err);
-      toast.error(message || "Anmeldung fehlgeschlagen");
+      const rawMessage = e && "message" in e && e.message ? e.message : String(err);
+      // Map common Supabase error messages to German
+      const errorMap: Record<string, string> = {
+        "Invalid login credentials": "E-Mail oder Passwort ist falsch",
+        "Email not confirmed": "Bitte bestätige zuerst deine E-Mail-Adresse",
+        "User not found": "Kein Konto mit dieser E-Mail-Adresse gefunden",
+        "Too many requests": "Zu viele Anmeldeversuche. Bitte warte kurz und versuche es erneut",
+        "Network request failed": "Keine Internetverbindung. Bitte prüfe deine Verbindung",
+      };
+      const message = errorMap[rawMessage] ?? rawMessage ?? "Anmeldung fehlgeschlagen";
+      toast.error(message);
       setRedirecting(false);
     } finally {
       setIsLoading(false);

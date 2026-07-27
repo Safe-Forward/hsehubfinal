@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,6 +35,7 @@ export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (companyId && user) {
@@ -132,6 +134,7 @@ export default function NotificationBell() {
   };
 
   const fetchNotifications = async () => {
+    setIsLoading(true);
     try {
       // 1. Fetch real notifications from the notifications table
       const { data, error } = await supabase
@@ -164,6 +167,8 @@ export default function NotificationBell() {
       setUnreadCount(merged.filter((n) => !n.is_read).length);
     } catch (error) {
       console.error("Error fetching notifications:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -387,7 +392,7 @@ export default function NotificationBell() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" data-testid="notification-bell-trigger">
+        <Button variant="ghost" size="icon" className="relative" data-testid="notification-bell-trigger" aria-label="Benachrichtigungen">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <Badge
@@ -431,7 +436,12 @@ export default function NotificationBell() {
         </div>
 
         <ScrollArea className="h-[400px]">
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <div className="p-8 text-center text-muted-foreground">
+              <div className="h-6 w-6 mx-auto mb-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+              <p className="text-sm">Wird geladen...</p>
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Bell className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Noch keine Benachrichtigungen</p>
@@ -473,6 +483,7 @@ export default function NotificationBell() {
                         <span className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(notification.created_at), {
                             addSuffix: true,
+                            locale: de,
                           })}
                         </span>
                         <Badge variant="outline" className="text-xs">

@@ -804,8 +804,8 @@ export default function Incidents() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="p-4 md:p-8">
+      <div className="mb-6 md:mb-8 flex flex-wrap items-center gap-3 justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" onClick={() => navigate("/dashboard")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -950,7 +950,7 @@ export default function Incidents() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="type">{t("incidents.type")} *</Label>
                       <Select
@@ -1080,7 +1080,7 @@ export default function Incidents() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="location">
                         {t("incidents.location")}
@@ -1122,7 +1122,7 @@ export default function Incidents() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="affected">
                         {t("incidents.affectedEmployee")}
@@ -1462,8 +1462,8 @@ export default function Incidents() {
             <p className="text-xs text-muted-foreground mb-3">
               Tipp: Auf einen Wert in den Spalten Typ, Schwere oder Status klicken, um schnell zu filtern.
             </p>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-3">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <Input
                   placeholder={t("incidents.searchPlaceholder")}

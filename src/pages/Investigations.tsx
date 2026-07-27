@@ -1409,8 +1409,8 @@ export default function Investigations() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="p-4 md:p-8">
+      <div className="mb-6 md:mb-8 flex flex-wrap items-center gap-3 justify-between">
         <div>
           <h2 className="text-3xl font-bold">{t("investigations.title")}</h2>
           <p className="text-muted-foreground">
@@ -1454,7 +1454,7 @@ export default function Investigations() {
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="g_code">
                           {t("investigations.gCode")} *
@@ -1521,7 +1521,7 @@ export default function Investigations() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="start_date">
                           {t("investigations.startDate")}
@@ -1623,7 +1623,7 @@ export default function Investigations() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="doctor">
                           {t("investigations.doctor")}
@@ -1809,7 +1809,7 @@ export default function Investigations() {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={`w-[180px] justify-start text-left font-normal ${!filterDateFrom && "text-muted-foreground"}`}
+                  className={`w-full justify-start text-left font-normal ${!filterDateFrom && "text-muted-foreground"}`}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {filterDateFrom ? (
@@ -1833,7 +1833,7 @@ export default function Investigations() {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={`w-[180px] justify-start text-left font-normal ${!filterDateTo && "text-muted-foreground"}`}
+                  className={`w-full justify-start text-left font-normal ${!filterDateTo && "text-muted-foreground"}`}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {filterDateTo ? (
