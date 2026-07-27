@@ -496,6 +496,16 @@ export default function Investigations() {
     e.preventDefault();
     if (!companyId) return;
 
+    // Client-side validation for fields that use Select (no native HTML required)
+    if (!formData.g_code) {
+      toast({
+        title: t("common.error"),
+        description: "Bitte wählen Sie einen G-Code aus.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const investigationData = {
         company_id: companyId,
@@ -1245,14 +1255,40 @@ export default function Investigations() {
     }
 
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Company header – Safe-Forward in green
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(34, 197, 94); // #22c55e
+    doc.text("Safe-Forward", 14, 15);
+
+    // Main report title
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(18);
-    doc.text(t("investigations.overview"), 14, 22);
+    doc.text("Untersuchungsbericht", 14, 25);
+
+    // Creation date
     doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
     doc.text(
       `${t("common.createdOn")} ${format(new Date(), "dd.MM.yyyy")}`,
       14,
-      30
+      33
     );
+
+    const addPageNumbers = (data: any) => {
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Seite ${data.pageNumber} von ${pageCount}`,
+        pageWidth - 14,
+        pageHeight - 8,
+        { align: "right" }
+      );
+    };
 
     if (viewMode === "employee") {
       const tableData = sortedEmployeeRows.map((item: any) => {
@@ -1284,9 +1320,10 @@ export default function Investigations() {
           ],
         ],
         body: tableData,
-        startY: 35,
+        startY: 40,
         styles: { fontSize: 9 },
         headStyles: { fillColor: [37, 99, 235] },
+        didDrawPage: addPageNumbers,
       });
     } else if (viewMode === "date") {
       const tableData = sortedDateRows.map((checkup: any) => [
@@ -1314,9 +1351,10 @@ export default function Investigations() {
           ],
         ],
         body: tableData,
-        startY: 35,
+        startY: 40,
         styles: { fontSize: 9 },
         headStyles: { fillColor: [37, 99, 235] },
+        didDrawPage: addPageNumbers,
       });
     } else {
       const tableData = sortedCheckupRows.map((checkup: any) => [
@@ -1346,9 +1384,10 @@ export default function Investigations() {
           ],
         ],
         body: tableData,
-        startY: 35,
+        startY: 40,
         styles: { fontSize: 9 },
         headStyles: { fillColor: [37, 99, 235] },
+        didDrawPage: addPageNumbers,
       });
     }
 
@@ -1710,6 +1749,7 @@ export default function Investigations() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
+                aria-label={t("investigations.search")}
               />
             </div>
 
@@ -1819,6 +1859,7 @@ export default function Investigations() {
           <div className="rounded-md border">
             {viewMode === "employee" ? (
               // Employee View - Using health checkups data for consistency
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1939,8 +1980,10 @@ export default function Investigations() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             ) : viewMode === "date" ? (
               // Date View - Using health checkups data for consistency
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -2063,6 +2106,7 @@ export default function Investigations() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             ) : (
               // Checkup View - Shows all health checkups from all employees
               <div className="overflow-x-auto">
@@ -2135,7 +2179,7 @@ export default function Investigations() {
                         colSpan={9}
                         className="text-center py-8 text-muted-foreground"
                       >
-                        Keine G-Untersuchungen gefunden
+                        {t("investigations.noInvestigations")}
                       </TableCell>
                     </TableRow>
                   ) : (

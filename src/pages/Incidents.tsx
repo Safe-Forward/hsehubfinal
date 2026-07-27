@@ -297,6 +297,16 @@ export default function Incidents() {
     e.preventDefault();
     if (!companyId) return;
 
+    // Pflichtfeld-Validierung mit deutschen Fehlermeldungen
+    if (!formData.title.trim()) {
+      toast({ title: "Pflichtfeld fehlt", description: "Bitte geben Sie einen Titel für den Vorfall ein.", variant: "destructive" });
+      return;
+    }
+    if (!formData.incident_date) {
+      toast({ title: "Pflichtfeld fehlt", description: "Bitte wählen Sie das Datum des Vorfalls aus.", variant: "destructive" });
+      return;
+    }
+
     try {
       const incidentData = {
         company_id: companyId,
@@ -715,17 +725,28 @@ export default function Incidents() {
       closed: "Abgeschlossen",
     };
 
-    // Header
+    // Firmen-Header (oben links)
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(22, 163, 74); // grün (green-600)
+    doc.text("Safe-Forward", 14, 14);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100);
+    doc.text("HSEHub", 14, 20);
+
+    // Dokumenttitel
     doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
-    doc.text("Vorfallbericht", 14, 22);
+    doc.setTextColor(0);
+    doc.text("Vorfallbericht", 14, 32);
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(100);
-    doc.text(`Erstellt am: ${format(new Date(), "dd.MM.yyyy")}`, 14, 30);
+    doc.text(`Erstellt am: ${format(new Date(), "dd.MM.yyyy")}`, 14, 40);
     if (incident.incident_number) {
-      doc.text(`Vorfallsnr.: ${incident.incident_number}`, 14, 36);
+      doc.text(`Vorfallsnr.: ${incident.incident_number}`, 14, 46);
     }
     doc.setTextColor(0);
 
@@ -748,7 +769,7 @@ export default function Incidents() {
     autoTable(doc, {
       head: [["Bezeichnung", "Details"]],
       body: rows,
-      startY: incident.incident_number ? 42 : 36,
+      startY: incident.incident_number ? 52 : 46,
       styles: { fontSize: 9, cellPadding: 3 },
       headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold" },
       columnStyles: {
@@ -757,7 +778,19 @@ export default function Incidents() {
       },
     });
 
-    const filename = `vorfall_${incident.incident_number || incident.id.slice(0, 8)}_${format(new Date(), "yyyy-MM-dd")}.pdf`;
+    // Seitenzahlen unten rechts (nach autoTable, damit Gesamtzahl bekannt)
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    for (let pg = 1; pg <= totalPages; pg++) {
+      doc.setPage(pg);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(150);
+      doc.text(`Seite ${pg} von ${totalPages}`, pageWidth - 14, pageHeight - 10, { align: "right" });
+    }
+
+    const filename = `vorfall_${incident.incident_number || incident.id.slice(0, 8)}_${format(new Date(), "dd-MM-yyyy")}.pdf`;
     doc.save(filename);
     toast({ title: "Gespeichert", description: "PDF wurde exportiert" });
   };
@@ -1437,6 +1470,7 @@ export default function Incidents() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-12 h-12 border-2 focus:border-primary transition-colors"
+                  aria-label="Vorfälle durchsuchen"
                 />
               </div>
               <Select value={filterType} onValueChange={setFilterType}>
@@ -1495,7 +1529,7 @@ export default function Incidents() {
             </div>
           </div>
 
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -1531,12 +1565,25 @@ export default function Incidents() {
                     <TableCell colSpan={6} className="text-center py-12">
                       <div className="flex flex-col items-center justify-center">
                         <AlertTriangle className="w-16 h-16 text-muted-foreground/20 mb-4" />
-                        <p className="text-lg font-medium text-muted-foreground mb-1">
-                          Keine Vorfälle gefunden
-                        </p>
-                        <p className="text-sm text-muted-foreground/60">
-                          Erfassen Sie einen Vorfall, um zu beginnen
-                        </p>
+                        {searchTerm || filterType !== "all" || filterSeverity !== "all" || filterStatus !== "all" ? (
+                          <>
+                            <p className="text-lg font-medium text-muted-foreground mb-1">
+                              Keine Ergebnisse gefunden
+                            </p>
+                            <p className="text-sm text-muted-foreground/60">
+                              Keine Vorfälle entsprechen den aktuellen Filterkriterien.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-lg font-medium text-muted-foreground mb-1">
+                              Noch keine Vorfälle erfasst
+                            </p>
+                            <p className="text-sm text-muted-foreground/60">
+                              Klicken Sie auf „Vorfall melden", um zu beginnen.
+                            </p>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1593,6 +1640,7 @@ export default function Incidents() {
                             size="sm"
                             onClick={() => { setViewingIncident(incident); fetchStatusHistory(incident.id); }}
                             title="Details anzeigen"
+                            aria-label="Details anzeigen"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -1601,6 +1649,8 @@ export default function Incidents() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(incident)}
+                            title="Vorfall bearbeiten"
+                            aria-label="Vorfall bearbeiten"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -1610,6 +1660,8 @@ export default function Incidents() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(incident.id)}
+                            title="Vorfall löschen"
+                            aria-label="Vorfall löschen"
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
