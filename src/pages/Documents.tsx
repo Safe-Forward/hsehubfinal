@@ -287,7 +287,11 @@ export default function Documents() {
         .select()
         .single();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        // Rollback: remove the orphaned file from storage when DB insert fails
+        await supabase.storage.from("documents").remove([filePath]);
+        throw dbError;
+      }
 
       logAction({
         action: "upload_document",

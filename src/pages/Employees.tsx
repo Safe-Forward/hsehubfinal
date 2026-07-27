@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useNavigate } from "react-router-dom";
+import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
 import { supabase } from "@/integrations/supabase/client";
 // Removed unused import for Tables
 import { Button } from "@/components/ui/button";
@@ -175,6 +176,8 @@ export default function Employees() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, loading, user, navigate, permissionsLoading]);
+
+  useRealtimeRefetch(["employees"], companyId, fetchEmployees);
 
   const fetchDepartments = async () => {
     if (!companyId) return;

@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useNavigate } from "react-router-dom";
+import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
 import { ArrowLeft, Plus, FileDown, Eye, Trash2, Filter, Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
@@ -89,6 +90,8 @@ export default function Audits() {
       fetchData();
     }
   }, [user, loading, navigate, companyId]);
+
+  useRealtimeRefetch(["audits"], companyId, fetchData);
 
   const fetchData = async () => {
     if (!companyId) return;
