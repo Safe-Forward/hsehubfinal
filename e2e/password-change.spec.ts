@@ -43,7 +43,7 @@ test.describe("Passwort ändern (Profile → Sicherheit)", () => {
     await page.locator("#new").fill("Passwort123");
     await page.locator("#confirm").fill("AnderesPw456");
     await page.getByRole("button", { name: /passwort/i }).click();
-    await expect(page.getByText(/stimmen nicht überein/i)).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(/stimmen nicht überein/i).first()).toBeVisible({ timeout: 5_000 });
   });
 
   test("Validierung: zu kurzes Passwort", async ({ page }) => {
