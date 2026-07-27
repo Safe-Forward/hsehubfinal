@@ -8,6 +8,7 @@ import {
   Link as LinkIcon,
   Trash2,
   Edit,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +72,8 @@ export default function ActivityGroups() {
   const [editingItem, setEditingItem] = useState<
     ActivityGroup | ExposureGroup | null
   >(null);
+  const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
+  const [isSubmittingExposure, setIsSubmittingExposure] = useState(false);
 
   // Form states for Activity Groups
   const [formData, setFormData] = useState({
@@ -147,6 +150,7 @@ export default function ActivityGroups() {
   const handleSubmitActivity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyId) return;
+    setIsSubmittingActivity(true);
 
     try {
       const hazardsArray = formData.hazards
@@ -201,12 +205,15 @@ export default function ActivityGroups() {
         description: error.message || "Tätigkeitsgruppe konnte nicht gespeichert werden",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmittingActivity(false);
     }
   };
 
   const handleSubmitExposure = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyId) return;
+    setIsSubmittingExposure(true);
 
     try {
       const factorsArray = exposureFormData.exposure_factors
@@ -255,6 +262,8 @@ export default function ActivityGroups() {
         description: error.message || "Expositionsgruppe konnte nicht gespeichert werden",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmittingExposure(false);
     }
   };
 
@@ -492,11 +501,16 @@ export default function ActivityGroups() {
                             setIsDialogOpen(false);
                             resetForm();
                           }}
+                          disabled={isSubmittingActivity}
                         >
                           Abbrechen
                         </Button>
-                        <Button type="submit">
-                          {editingItem ? "Aktualisieren" : "Erstellen"}
+                        <Button type="submit" disabled={isSubmittingActivity}>
+                          {isSubmittingActivity ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{editingItem ? "Aktualisieren…" : "Erstellen…"}</>
+                          ) : (
+                            editingItem ? "Aktualisieren" : "Erstellen"
+                          )}
                         </Button>
                       </div>
                     </form>
@@ -517,7 +531,7 @@ export default function ActivityGroups() {
                 </div>
               </div>
 
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -609,6 +623,7 @@ export default function ActivityGroups() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleEditActivity(activity)}
+                                aria-label="Tätigkeitsgruppe bearbeiten"
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
@@ -618,6 +633,7 @@ export default function ActivityGroups() {
                                 onClick={() =>
                                   handleDeleteActivity(activity.id)
                                 }
+                                aria-label="Tätigkeitsgruppe löschen"
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
@@ -723,11 +739,16 @@ export default function ActivityGroups() {
                             setIsExposureDialogOpen(false);
                             resetExposureForm();
                           }}
+                          disabled={isSubmittingExposure}
                         >
                           Abbrechen
                         </Button>
-                        <Button type="submit">
-                          {editingItem ? "Aktualisieren" : "Erstellen"}
+                        <Button type="submit" disabled={isSubmittingExposure}>
+                          {isSubmittingExposure ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{editingItem ? "Aktualisieren…" : "Erstellen…"}</>
+                          ) : (
+                            editingItem ? "Aktualisieren" : "Erstellen"
+                          )}
                         </Button>
                       </div>
                     </form>
@@ -748,7 +769,7 @@ export default function ActivityGroups() {
                 </div>
               </div>
 
-              <div className="rounded-md border">
+              <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -811,6 +832,7 @@ export default function ActivityGroups() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleEditExposure(exposure)}
+                                aria-label="Expositionsgruppe bearbeiten"
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
@@ -820,6 +842,7 @@ export default function ActivityGroups() {
                                 onClick={() =>
                                   handleDeleteExposure(exposure.id)
                                 }
+                                aria-label="Expositionsgruppe löschen"
                               >
                                 <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>

@@ -203,6 +203,17 @@ export default function Messages() {
       .substring(0, 2);
   };
 
+  if (loading) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center" data-testid="messages-page">
+        <div className="text-center text-muted-foreground">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+          <p>Nachrichten werden geladen…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-[calc(100vh-4rem)] flex gap-4 p-4" data-testid="messages-page">
       {/* Sidebar */}
@@ -227,7 +238,7 @@ export default function Messages() {
                   <Hash className="h-4 w-4" />
                   {t("messages.channels")}
                 </h3>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" aria-label="Kanal hinzufügen">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -264,7 +275,7 @@ export default function Messages() {
                   <MessageCircle className="h-4 w-4" />
                   {t("messages.directMessages")}
                 </h3>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0" aria-label="Direktnachricht starten">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
@@ -385,7 +396,7 @@ export default function Messages() {
                   onKeyPress={handleKeyPress}
                   className="flex-1"
                 />
-                <Button data-testid="messages-send" onClick={sendMessage} disabled={!messageInput.trim()}>
+                <Button data-testid="messages-send" onClick={sendMessage} disabled={!messageInput.trim()} aria-label="Nachricht senden">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>

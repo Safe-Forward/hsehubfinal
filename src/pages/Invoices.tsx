@@ -266,32 +266,45 @@ function StatusBadge({ status }: { status: InvoiceStatus }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function generateInvoicePDF(invoice: Invoice, companyName: string) {
   const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  doc.setFontSize(12);
+  doc.setTextColor(34, 197, 94); // grün
+  doc.setFont("helvetica", "bold");
+  doc.text("Safe-Forward", 14, 14);
+  doc.setTextColor(100);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text("HSEHub — Rechnung", 14, 20);
+  doc.setDrawColor(220, 220, 220);
+  doc.line(14, 22, pageWidth - 14, 22);
+  doc.setTextColor(0);
+
   const sym = CURRENCY_SYMBOLS[invoice.currency] ?? invoice.currency + " ";
 
-  // Header bar
+  // Header bar (starts below brand separator)
   doc.setFillColor(30, 64, 175);
-  doc.rect(0, 0, 210, 40, "F");
+  doc.rect(0, 24, 210, 40, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text("RECHNUNG", 14, 24);
+  doc.text("RECHNUNG", 14, 36);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(invoice.invoice_number, 14, 32);
+  doc.text(invoice.invoice_number, 14, 44);
 
   // Right side header
   const rightX = 196;
-  doc.text(companyName, rightX, 16, { align: "right" });
-  doc.text(`Status: ${invoice.status.toUpperCase()}`, rightX, 24, { align: "right" }); // status codes stay as-is (technical)
+  doc.text(companyName, rightX, 28, { align: "right" });
+  doc.text(`Status: ${invoice.status.toUpperCase()}`, rightX, 36, { align: "right" }); // status codes stay as-is (technical)
   if (invoice.due_date) {
-    doc.text(`Fällig: ${fmtDate(invoice.due_date)}`, rightX, 32, { align: "right" });
+    doc.text(`Fällig: ${fmtDate(invoice.due_date)}`, rightX, 44, { align: "right" });
   }
 
   doc.setTextColor(30, 30, 30);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
 
-  let y = 52;
+  let y = 64;
   doc.setFont("helvetica", "bold");
   doc.text("Rechnungsdetails", 14, y);
   doc.setFont("helvetica", "normal");
@@ -376,6 +389,15 @@ function generateInvoicePDF(invoice: Invoice, companyName: string) {
   doc.setTextColor(150, 150, 150);
   doc.text("Erstellt von HSE Safety Hub", 105, pageH - 10, { align: "center" });
   doc.text(format(new Date(), "PPP"), 105, pageH - 5, { align: "center" });
+
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Seite ${i} von ${pageCount}`, pageWidth - 14, doc.internal.pageSize.getHeight() - 8, { align: 'right' });
+  }
+
   doc.save(`${invoice.invoice_number}.pdf`);
 }
 
