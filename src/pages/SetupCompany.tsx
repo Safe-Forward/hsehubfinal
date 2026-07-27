@@ -190,7 +190,7 @@ export default function SetupCompany() {
                 </div>
                 {companyInfo.email && (
                   <div>
-                    <span className="text-muted-foreground">Email:</span>
+                    <span className="text-muted-foreground">E-Mail:</span>
                     <span className="ml-2 font-medium">
                       {companyInfo.email}
                     </span>

@@ -199,7 +199,7 @@ export default function AuditLogsContent() {
         } catch (error: any) {
             console.error("Error fetching audit logs:", error);
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -285,7 +285,7 @@ export default function AuditLogsContent() {
         a.click();
         window.URL.revokeObjectURL(url);
 
-        toast({ title: "CSV Exported", description: `${filteredLogs.length} records exported` });
+        toast({ title: "CSV exportiert", description: `${filteredLogs.length} Einträge exportiert` });
     };
 
     // PDF export
@@ -352,7 +352,7 @@ export default function AuditLogsContent() {
         }
 
         doc.save(`audit-logs-${format(new Date(), "yyyy-MM-dd")}.pdf`);
-        toast({ title: "PDF Exported", description: `${filteredLogs.length} records exported as PDF` });
+        toast({ title: "PDF exportiert", description: `${filteredLogs.length} Einträge als PDF exportiert` });
     };
 
     const filteredLogs = useMemo(() => {
@@ -405,45 +405,45 @@ export default function AuditLogsContent() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Logs</CardTitle>
+                        <CardTitle className="text-sm font-medium">Protokolle gesamt</CardTitle>
                         <FileText className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalLogs.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">All time</p>
+                        <p className="text-xs text-muted-foreground">Gesamt</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Today's Activity</CardTitle>
+                        <CardTitle className="text-sm font-medium">Heutige Aktivität</CardTitle>
                         <Activity className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-blue-600">{stats.todayLogs}</div>
-                        <p className="text-xs text-muted-foreground">Last 24 hours</p>
+                        <p className="text-xs text-muted-foreground">Letzte 24 Stunden</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Critical Actions</CardTitle>
+                        <CardTitle className="text-sm font-medium">Kritische Aktionen</CardTitle>
                         <Shield className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-600">{stats.criticalActions}</div>
-                        <p className="text-xs text-muted-foreground">Requires attention</p>
+                        <p className="text-xs text-muted-foreground">Erfordert Aufmerksamkeit</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Errors / Crashes</CardTitle>
+                        <CardTitle className="text-sm font-medium">Fehler / Abstürze</CardTitle>
                         <Bug className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-orange-600">{stats.errorCount}</div>
-                        <p className="text-xs text-muted-foreground">Application errors</p>
+                        <p className="text-xs text-muted-foreground">Anwendungsfehler</p>
                     </CardContent>
                 </Card>
             </div>
@@ -453,7 +453,7 @@ export default function AuditLogsContent() {
                 <div className="relative md:col-span-2">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search by actor, action, target, company, IP..."
+                        placeholder="Nach Akteur, Aktion, Ziel, Unternehmen, IP suchen..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9"
@@ -465,7 +465,7 @@ export default function AuditLogsContent() {
                         <SelectValue placeholder="All Actions" />
                     </SelectTrigger>
                     <SelectContent className="max-h-72">
-                        <SelectItem value="all">All Actions</SelectItem>
+                        <SelectItem value="all">Alle Aktionen</SelectItem>
                         {ALL_ACTION_TYPES.map((a) => (
                             <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
                         ))}
@@ -477,10 +477,10 @@ export default function AuditLogsContent() {
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="7days">Last 7 days</SelectItem>
-                        <SelectItem value="30days">Last 30 days</SelectItem>
-                        <SelectItem value="90days">Last 90 days</SelectItem>
-                        <SelectItem value="all_time">All Time</SelectItem>
+                        <SelectItem value="7days">Letzte 7 Tage</SelectItem>
+                        <SelectItem value="30days">Letzte 30 Tage</SelectItem>
+                        <SelectItem value="90days">Letzte 90 Tage</SelectItem>
+                        <SelectItem value="all_time">Gesamter Zeitraum</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -492,11 +492,11 @@ export default function AuditLogsContent() {
                         <SelectValue placeholder="All Target Types" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Targets</SelectItem>
-                        <SelectItem value="company">Company</SelectItem>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="employee">Employee</SelectItem>
-                        <SelectItem value="subscription">Subscription</SelectItem>
+                        <SelectItem value="all">Alle Ziele</SelectItem>
+                        <SelectItem value="company">Unternehmen</SelectItem>
+                        <SelectItem value="user">Benutzer</SelectItem>
+                        <SelectItem value="employee">Mitarbeiter</SelectItem>
+                        <SelectItem value="subscription">Abonnement</SelectItem>
                         <SelectItem value="invoice">Invoice</SelectItem>
                         <SelectItem value="task">Task</SelectItem>
                         <SelectItem value="incident">Incident</SelectItem>
@@ -510,7 +510,7 @@ export default function AuditLogsContent() {
                         <SelectValue placeholder="All Companies" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Companies</SelectItem>
+                        <SelectItem value="all">Alle Unternehmen</SelectItem>
                         {companies.map((company) => (
                             <SelectItem key={company.id} value={company.id}>
                                 {company.name}
@@ -520,7 +520,7 @@ export default function AuditLogsContent() {
                 </Select>
 
                 <Input
-                    placeholder="Filter by actor email"
+                    placeholder="Nach Akteur-E-Mail filtern"
                     value={actorFilter}
                     onChange={(e) => setActorFilter(e.target.value)}
                     className="w-full sm:w-52"
@@ -529,7 +529,7 @@ export default function AuditLogsContent() {
                 <div className="flex gap-2 ml-auto">
                     <Button onClick={fetchLogs} variant="outline" size="sm" disabled={loadingData}>
                         <RefreshCcw className={`w-4 h-4 mr-2 ${loadingData ? "animate-spin" : ""}`} />
-                        Refresh
+                        Aktualisieren
                     </Button>
                     <Button onClick={handleExportCSV} variant="outline" size="sm">
                         <Download className="w-4 h-4 mr-2" />
@@ -547,14 +547,14 @@ export default function AuditLogsContent() {
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle>Audit Trail</CardTitle>
+                            <CardTitle>Prüfspur</CardTitle>
                             <CardDescription>
-                                {loadingData ? "Loading..." : `${filteredLogs.length} of ${logs.length} entries shown`}
+                                {loadingData ? "Laden..." : `${filteredLogs.length} von ${logs.length} Einträgen angezeigt`}
                             </CardDescription>
                         </div>
                         {filteredLogs.length > 0 && (
                             <Badge variant="secondary" className="text-xs">
-                                {filteredLogs.filter(l => CRITICAL_ACTIONS.includes(l.action_type)).length} critical
+                                {filteredLogs.filter(l => CRITICAL_ACTIONS.includes(l.action_type)).length} kritisch
                             </Badge>
                         )}
                     </div>
@@ -564,12 +564,12 @@ export default function AuditLogsContent() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-36">Timestamp</TableHead>
-                                    <TableHead>Actor</TableHead>
-                                    <TableHead>Action</TableHead>
-                                    <TableHead>Target</TableHead>
-                                    <TableHead>Company</TableHead>
-                                    <TableHead className="w-28">IP Address</TableHead>
+                                    <TableHead className="w-36">Zeitstempel</TableHead>
+                                    <TableHead>Akteur</TableHead>
+                                    <TableHead>Aktion</TableHead>
+                                    <TableHead>Ziel</TableHead>
+                                    <TableHead>Unternehmen</TableHead>
+                                    <TableHead className="w-28">IP-Adresse</TableHead>
                                     <TableHead className="w-16 text-center">Details</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -588,8 +588,8 @@ export default function AuditLogsContent() {
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                                             <Activity className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                                            <p>No audit logs found</p>
-                                            <p className="text-xs mt-1">Try adjusting filters or expanding the date range</p>
+                                            <p>Keine Prüfprotokolle gefunden</p>
+                                            <p className="text-xs mt-1">Versuchen Sie, Filter anzupassen oder den Zeitraum zu erweitern</p>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -664,32 +664,32 @@ export default function AuditLogsContent() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-base">
                             <FileText className="w-4 h-4 text-primary" />
-                            Log Details — {detailLog?.action_type}
+                            Protokolldetails — {detailLog?.action_type}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3 text-sm">
                             <div>
-                                <p className="text-xs text-muted-foreground">Actor</p>
+                                <p className="text-xs text-muted-foreground">Akteur</p>
                                 <p className="font-medium">{detailLog?.actor_email}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Timestamp</p>
+                                <p className="text-xs text-muted-foreground">Zeitstempel</p>
                                 <p className="font-medium">
                                     {detailLog && new Date(detailLog.created_at).toLocaleString()}
                                 </p>
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Target</p>
+                                <p className="text-xs text-muted-foreground">Ziel</p>
                                 <p className="font-medium">{detailLog?.target_name || detailLog?.target_type || "—"}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">IP Address</p>
+                                <p className="text-xs text-muted-foreground">IP-Adresse</p>
                                 <p className="font-mono text-sm">{detailLog?.ip_address || "—"}</p>
                             </div>
                         </div>
                         <div>
-                            <p className="text-xs text-muted-foreground mb-1.5">Details Payload</p>
+                            <p className="text-xs text-muted-foreground mb-1.5">Details-Payload</p>
                             <pre className="bg-muted rounded-md p-3 text-xs overflow-auto max-h-48 font-mono">
                                 {JSON.stringify(detailLog?.details || {}, null, 2)}
                             </pre>

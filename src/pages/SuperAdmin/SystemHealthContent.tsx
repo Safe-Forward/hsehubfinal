@@ -144,16 +144,16 @@ export default function SystemHealthContent() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-xl font-semibold">Real-time System Monitoring</h3>
-                    <p className="text-sm text-muted-foreground">Comprehensive infrastructure health metrics</p>
+                    <h3 className="text-xl font-semibold">Echtzeit-Systemüberwachung</h3>
+                    <p className="text-sm text-muted-foreground">Umfassende Infrastruktur-Gesundheitsmetriken</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge variant="outline" className="h-8">
-                        Live Polling (5s)
+                        Live-Abfrage (5s)
                     </Badge>
                     <Button variant="outline" size="sm" onClick={() => { fetchRealTimeMetrics(); fetchSystemAlerts(); }}>
                         <RotateCcw className="h-4 w-4 mr-2" />
-                        Refresh
+                        Aktualisieren
                     </Button>
                 </div>
             </div>
@@ -163,13 +163,13 @@ export default function SystemHealthContent() {
                 {/* Server Status */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Server Status</CardTitle>
+                        <CardTitle className="text-sm font-medium">Serverstatus</CardTitle>
                         <Server className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-2">
                             <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-                            <div className="text-2xl font-bold text-green-600">Operational</div>
+                            <div className="text-2xl font-bold text-green-600">Betriebsbereit</div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">99.99% uptime</p>
                     </CardContent>
@@ -178,14 +178,14 @@ export default function SystemHealthContent() {
                 {/* API Response Time */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">API Latency</CardTitle>
+                        <CardTitle className="text-sm font-medium">API-Latenz</CardTitle>
                         <Zap className="h-4 w-4 text-yellow-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{performanceMetrics.api_latency_ms}ms</div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                             {performanceMetrics.api_latency_ms < 100 ? (
-                                <><TrendingDown className="h-3 w-3 text-green-500" /> Excellent</>
+                                <><TrendingDown className="h-3 w-3 text-green-500" /> Ausgezeichnet</>
                             ) : (
                                 <><TrendingUp className="h-3 w-3 text-amber-500" /> Normal</>
                             )}
@@ -196,7 +196,7 @@ export default function SystemHealthContent() {
                 {/* Error Rate */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Error Rate</CardTitle>
+                        <CardTitle className="text-sm font-medium">Fehlerrate</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
@@ -208,7 +208,7 @@ export default function SystemHealthContent() {
                 {/* Queue Length */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Queue / Jobs</CardTitle>
+                        <CardTitle className="text-sm font-medium">Warteschlange / Jobs</CardTitle>
                         <Clock className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
@@ -225,14 +225,14 @@ export default function SystemHealthContent() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg flex items-center gap-2">
                             <Database className="h-5 w-5 text-blue-500" />
-                            Database Utilization
+                            Datenbankauslastung
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-muted-foreground">Active Connections</span>
+                                    <span className="text-muted-foreground">Aktive Verbindungen</span>
                                     <span className="font-mono font-bold">{systemMetrics?.active_connections || 0}</span>
                                 </div>
                                 <Progress value={(systemMetrics?.active_connections || 0) * 10} className="h-2" />
@@ -240,7 +240,7 @@ export default function SystemHealthContent() {
 
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-muted-foreground">Cache Hit Ratio</span>
+                                    <span className="text-muted-foreground">Cache-Trefferquote</span>
                                     <span className={`font-mono font-bold ${Number(systemMetrics?.cache_hit_ratio) > 90 ? 'text-green-600' : 'text-amber-600'}`}>
                                         {systemMetrics?.cache_hit_ratio}%
                                     </span>
@@ -250,7 +250,7 @@ export default function SystemHealthContent() {
 
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-muted-foreground">Database Size</span>
+                                    <span className="text-muted-foreground">Datenbankgröße</span>
                                     <span className="font-mono text-xs">{formatBytes(systemMetrics?.db_size_bytes || 0)}</span>
                                 </div>
                                 <Progress value={35} className="h-2" />
@@ -258,7 +258,7 @@ export default function SystemHealthContent() {
 
                             <div>
                                 <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-muted-foreground">Memory Usage</span>
+                                    <span className="text-muted-foreground">Speicherauslastung</span>
                                     <span className="font-mono text-xs text-muted-foreground">N/A</span>
                                 </div>
                                 <Progress value={0} className="h-2" />
@@ -272,7 +272,7 @@ export default function SystemHealthContent() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg flex items-center gap-2">
                             <Activity className="h-5 w-5 text-purple-500" />
-                            Performance Metrics (Live)
+                            Leistungsmetriken (Live)
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -287,8 +287,8 @@ export default function SystemHealthContent() {
                                         contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', fontSize: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                                         labelStyle={{ color: '#64748b' }}
                                     />
-                                    <Line yAxisId="left" type="monotone" dataKey="connections" stroke="#8b5cf6" strokeWidth={2} name="Connections" dot={false} />
-                                    <Line yAxisId="right" type="monotone" dataKey="api_latency" stroke="#f59e0b" strokeWidth={2} name="API Latency (ms)" dot={false} />
+                                    <Line yAxisId="left" type="monotone" dataKey="connections" stroke="#8b5cf6" strokeWidth={2} name="Verbindungen" dot={false} />
+                                    <Line yAxisId="right" type="monotone" dataKey="api_latency" stroke="#f59e0b" strokeWidth={2} name="API-Latenz (ms)" dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
@@ -300,7 +300,7 @@ export default function SystemHealthContent() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="shadow-sm">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Error Rate Trend</CardTitle>
+                        <CardTitle className="text-lg">Fehlerraten-Trend</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[180px]">
@@ -319,7 +319,7 @@ export default function SystemHealthContent() {
 
                 <Card className="shadow-sm">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-lg">Load & Performance Drops</CardTitle>
+                        <CardTitle className="text-lg">Last & Leistungsabfälle</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-3">
@@ -327,8 +327,8 @@ export default function SystemHealthContent() {
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="h-5 w-5 text-green-600" />
                                     <div>
-                                        <p className="font-medium text-sm">No Performance Drops</p>
-                                        <p className="text-xs text-muted-foreground">Last 24 hours</p>
+                                        <p className="font-medium text-sm">Keine Leistungsabfälle</p>
+                                        <p className="text-xs text-muted-foreground">Letzte 24 Stunden</p>
                                     </div>
                                 </div>
                             </div>
@@ -336,8 +336,8 @@ export default function SystemHealthContent() {
                                 <div className="flex items-center gap-2">
                                     <Activity className="h-5 w-5 text-blue-600" />
                                     <div>
-                                        <p className="font-medium text-sm">Load Peaks: Normal</p>
-                                        <p className="text-xs text-muted-foreground">Peak at 14:30 (12 connections)</p>
+                                        <p className="font-medium text-sm">Lastspitzen: Normal</p>
+                                        <p className="text-xs text-muted-foreground">Spitze um 14:30 Uhr (12 Verbindungen)</p>
                                     </div>
                                 </div>
                             </div>
@@ -345,8 +345,8 @@ export default function SystemHealthContent() {
                                 <div className="flex items-center gap-2">
                                     <Database className="h-5 w-5 text-slate-600" />
                                     <div>
-                                        <p className="font-medium text-sm">Database Anomalies</p>
-                                        <p className="text-xs text-muted-foreground">None detected</p>
+                                        <p className="font-medium text-sm">Datenbank-Anomalien</p>
+                                        <p className="text-xs text-muted-foreground">Keine erkannt</p>
                                     </div>
                                 </div>
                             </div>
@@ -360,7 +360,7 @@ export default function SystemHealthContent() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-lg flex items-center gap-2">
                         <AlertTriangle className="h-5 w-5 text-amber-500" />
-                        Active System Alerts
+                        Aktive Systemwarnungen
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -393,8 +393,8 @@ export default function SystemHealthContent() {
                     ) : (
                         <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground bg-slate-50 rounded-lg dashed border-2 border-slate-200">
                             <CheckCircle className="h-10 w-10 text-green-500 mb-3" />
-                            <p className="font-medium text-slate-900">All systems operational</p>
-                            <p className="text-sm">No active alerts detected</p>
+                            <p className="font-medium text-slate-900">Alle Systeme betriebsbereit</p>
+                            <p className="text-sm">Keine aktiven Warnungen erkannt</p>
                         </div>
                     )}
                 </CardContent>

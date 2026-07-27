@@ -24,9 +24,9 @@ export default function Security() {
     return (
         <div className="p-8">
             <div className="mb-6">
-                <h2 className="text-3xl font-bold mb-2">Security & Compliance</h2>
+                <h2 className="text-3xl font-bold mb-2">Sicherheit & Compliance</h2>
                 <p className="text-muted-foreground">
-                    Monitor security events, login anomalies, and GDPR compliance
+                    Sicherheitsereignisse, Anmeldeanomalien und DSGVO-Compliance überwachen
                 </p>
             </div>
             <SecurityContent />

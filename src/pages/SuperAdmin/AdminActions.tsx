@@ -200,13 +200,13 @@ export default function AdminActions() {
             );
 
             toast({
-                title: "Success",
-                description: `Company ${newBlockedStatus ? "locked" : "unlocked"} successfully`,
+                title: "Erfolgreich",
+                description: `Unternehmen ${newBlockedStatus ? "gesperrt" : "entsperrt"}`,
             });
             fetchCompanies();
             fetchRecentActions();
         } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Fehler", description: error.message, variant: "destructive" });
         } finally {
             setLoadingAction(false);
         }
@@ -215,7 +215,7 @@ export default function AdminActions() {
     // Action: Extend Trial
     const handleExtendTrial = async () => {
         if (!selectedCompany) {
-            toast({ title: "Error", description: "Please select a company", variant: "destructive" });
+            toast({ title: "Fehler", description: "Bitte wählen Sie ein Unternehmen aus", variant: "destructive" });
             return;
         }
         setLoadingAction(true);
@@ -244,12 +244,12 @@ export default function AdminActions() {
             });
 
             toast({
-                title: "Trial Extended",
-                description: `Trial extended by ${extendTrialDays} days`,
+                title: "Testphase verlängert",
+                description: `Testphase um ${extendTrialDays} Tage verlängert`,
             });
             fetchRecentActions();
         } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Fehler", description: error.message, variant: "destructive" });
         } finally {
             setLoadingAction(false);
         }
@@ -258,7 +258,7 @@ export default function AdminActions() {
     // Action: Activate Module
     const handleActivateModule = async (moduleId: string) => {
         if (!selectedCompany) {
-            toast({ title: "Error", description: "Please select a company", variant: "destructive" });
+            toast({ title: "Fehler", description: "Bitte wählen Sie ein Unternehmen aus", variant: "destructive" });
             return;
         }
         setLoadingAction(true);
@@ -279,9 +279,9 @@ export default function AdminActions() {
                 company: company?.name,
             });
 
-            toast({ title: "Success", description: "Module activated successfully" });
+            toast({ title: "Erfolgreich", description: "Modul erfolgreich aktiviert" });
         } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Fehler", description: error.message, variant: "destructive" });
         } finally {
             setLoadingAction(false);
         }
@@ -290,7 +290,7 @@ export default function AdminActions() {
     // Action: Reset User Password
     const handleResetUser = async () => {
         if (!selectedUser) {
-            toast({ title: "Error", description: "Please select a user", variant: "destructive" });
+            toast({ title: "Fehler", description: "Bitte wählen Sie einen Benutzer aus", variant: "destructive" });
             return;
         }
         setLoadingAction(true);
@@ -303,12 +303,12 @@ export default function AdminActions() {
             });
 
             toast({
-                title: "Password Reset Initiated",
-                description: `Password reset email sent to ${selectedUserData?.email}`,
+                title: "Passwort zurückgesetzt",
+                description: `Passwort-Reset-E-Mail wurde gesendet an ${selectedUserData?.email}`,
             });
             fetchRecentActions();
         } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Fehler", description: error.message, variant: "destructive" });
         } finally {
             setLoadingAction(false);
         }
@@ -317,7 +317,7 @@ export default function AdminActions() {
     // Action: Send System Message
     const handleSendSystemMessage = async () => {
         if (!systemMessage.trim()) {
-            toast({ title: "Error", description: "Please enter a message", variant: "destructive" });
+            toast({ title: "Fehler", description: "Bitte geben Sie eine Nachricht ein", variant: "destructive" });
             return;
         }
         setLoadingAction(true);
@@ -338,11 +338,11 @@ export default function AdminActions() {
                 message: systemMessage,
             });
 
-            toast({ title: "Success", description: "System message sent to all users" });
+            toast({ title: "Erfolgreich", description: "Systemnachricht an alle Benutzer gesendet" });
             setSystemMessage("");
             fetchRecentActions();
         } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Fehler", description: error.message, variant: "destructive" });
         } finally {
             setLoadingAction(false);
         }
@@ -351,7 +351,7 @@ export default function AdminActions() {
     // Action: Correct Invoice
     const handleCorrectInvoice = async () => {
         if (!selectedCompany || !invoiceCorrection.invoiceNumber || !invoiceCorrection.amount || !invoiceCorrection.reason) {
-            toast({ title: "Error", description: "Please fill all fields", variant: "destructive" });
+            toast({ title: "Fehler", description: "Bitte alle Felder ausfüllen", variant: "destructive" });
             return;
         }
         setLoadingAction(true);
@@ -363,11 +363,11 @@ export default function AdminActions() {
                 reason: invoiceCorrection.reason,
             });
 
-            toast({ title: "Success", description: "Invoice correction logged" });
+            toast({ title: "Erfolgreich", description: "Rechnungskorrektur protokolliert" });
             setInvoiceCorrection({ invoiceNumber: "", amount: "", reason: "" });
             fetchRecentActions(); // Refresh recent actions
         } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: "destructive" });
+            toast({ title: "Fehler", description: error.message, variant: "destructive" });
         } finally {
             setLoadingAction(false);
         }
@@ -399,9 +399,9 @@ export default function AdminActions() {
     return (
         <div className="p-8">
             <div className="mb-8">
-                <h2 className="text-3xl font-bold mb-2">Admin Quick Actions</h2>
+                <h2 className="text-3xl font-bold mb-2">Admin-Schnellaktionen</h2>
                 <p className="text-muted-foreground">
-                    Quick intervention tools for customer support - no developer needed
+                    Schnelle Interventionswerkzeuge für den Kundensupport – kein Entwickler erforderlich
                 </p>
             </div>
 
@@ -413,10 +413,10 @@ export default function AdminActions() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Lock className="h-5 w-5 text-red-500" />
-                            Lock / Unlock Company
+                            Unternehmen sperren / entsperren
                         </CardTitle>
                         <CardDescription>
-                            Temporarily suspend or reactivate company access
+                            Unternehmenszugang vorübergehend sperren oder reaktivieren
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -424,7 +424,7 @@ export default function AdminActions() {
                             <div className="relative">
                                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search company..."
+                                    placeholder="Unternehmen suchen..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="pl-10"
@@ -438,7 +438,7 @@ export default function AdminActions() {
                                     checked={showBlockedOnly}
                                     onChange={(e) => setShowBlockedOnly(e.target.checked)}
                                 />
-                                <Label htmlFor="showBlocked" className="text-sm">Show Blocked Only</Label>
+                                <Label htmlFor="showBlocked" className="text-sm">Nur gesperrte anzeigen</Label>
                             </div>
                         </div>
                         <div className="max-h-60 overflow-y-auto space-y-2">
@@ -449,7 +449,7 @@ export default function AdminActions() {
                                             <Building2 className="h-4 w-4 text-muted-foreground" />
                                             <span className="text-sm font-medium">{company.name}</span>
                                             <Badge variant={company.is_blocked ? "destructive" : "outline"}>
-                                                {company.is_blocked ? "Blocked" : "Active"}
+                                                {company.is_blocked ? "Gesperrt" : "Aktiv"}
                                             </Badge>
                                         </div>
                                         <Button
@@ -459,15 +459,15 @@ export default function AdminActions() {
                                             disabled={loadingAction}
                                         >
                                             {company.is_blocked ? (
-                                                <><Unlock className="h-3 w-3 mr-1" /> Unlock</>
+                                                <><Unlock className="h-3 w-3 mr-1" /> Entsperren</>
                                             ) : (
-                                                <><Lock className="h-3 w-3 mr-1" /> Lock</>
+                                                <><Lock className="h-3 w-3 mr-1" /> Sperren</>
                                             )}
                                         </Button>
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-sm text-center text-muted-foreground py-4">No companies found</p>
+                                <p className="text-sm text-center text-muted-foreground py-4">Keine Unternehmen gefunden</p>
                             )}
                         </div>
                     </CardContent>
@@ -480,18 +480,18 @@ export default function AdminActions() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Calendar className="h-5 w-5 text-blue-500" />
-                            Extend Trial Period
+                            Testzeitraum verlängern
                         </CardTitle>
                         <CardDescription>
-                            Give customers extra time to evaluate the platform
+                            Kunden zusätzliche Zeit zur Bewertung der Plattform geben
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label>Select Company</Label>
+                            <Label>Unternehmen auswählen</Label>
                             <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Choose company..." />
+                                    <SelectValue placeholder="Unternehmen wählen..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {companies.map((c) => (
@@ -501,22 +501,22 @@ export default function AdminActions() {
                             </Select>
                         </div>
                         <div>
-                            <Label>Extend by (days)</Label>
+                            <Label>Verlängerung (Tage)</Label>
                             <Select value={extendTrialDays} onValueChange={setExtendTrialDays}>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="7">7 days</SelectItem>
-                                    <SelectItem value="14">14 days</SelectItem>
-                                    <SelectItem value="30">30 days</SelectItem>
-                                    <SelectItem value="60">60 days</SelectItem>
+                                    <SelectItem value="7">7 Tage</SelectItem>
+                                    <SelectItem value="14">14 Tage</SelectItem>
+                                    <SelectItem value="30">30 Tage</SelectItem>
+                                    <SelectItem value="60">60 Tage</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <Button onClick={handleExtendTrial} disabled={loadingAction || !selectedCompany} className="w-full">
                             <Calendar className="h-4 w-4 mr-2" />
-                            Extend Trial
+                            Testphase verlängern
                         </Button>
                     </CardContent>
                 </Card>
@@ -526,18 +526,18 @@ export default function AdminActions() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Package className="h-5 w-5 text-purple-500" />
-                            Activate Module
+                            Modul aktivieren
                         </CardTitle>
                         <CardDescription>
-                            Manually enable add-on modules for a company
+                            Add-on-Module manuell für ein Unternehmen aktivieren
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label>Select Company</Label>
+                            <Label>Unternehmen auswählen</Label>
                             <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Choose company..." />
+                                    <SelectValue placeholder="Unternehmen wählen..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {companies.map((c) => (
@@ -561,7 +561,7 @@ export default function AdminActions() {
                                 ))
                             ) : (
                                 <>
-                                    <Button variant="outline" size="sm" disabled>No modules found</Button>
+                                    <Button variant="outline" size="sm" disabled>Keine Module gefunden</Button>
                                 </>
                             )}
                         </div>
@@ -573,18 +573,18 @@ export default function AdminActions() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Receipt className="h-5 w-5 text-green-500" />
-                            Correct Invoice
+                            Rechnung korrigieren
                         </CardTitle>
                         <CardDescription>
-                            Log invoice corrections and adjustments
+                            Rechnungskorrekturen und -anpassungen protokollieren
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label>Company</Label>
+                            <Label>Unternehmen</Label>
                             <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Choose company..." />
+                                    <SelectValue placeholder="Unternehmen wählen..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {companies.map((c) => (
@@ -594,13 +594,13 @@ export default function AdminActions() {
                             </Select>
                         </div>
                         <div>
-                            <Label>Invoice Number</Label>
+                            <Label>Rechnungsnummer</Label>
                             <Select
                                 value={invoiceCorrection.invoiceNumber}
                                 onValueChange={(value) => setInvoiceCorrection({ ...invoiceCorrection, invoiceNumber: value })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select invoice..." />
+                                    <SelectValue placeholder="Rechnung auswählen..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {invoices
@@ -611,13 +611,13 @@ export default function AdminActions() {
                                             </SelectItem>
                                         ))}
                                     {invoices.filter(inv => !selectedCompany || inv.company_id === selectedCompany).length === 0 && (
-                                        <SelectItem value="none" disabled>No invoices found</SelectItem>
+                                        <SelectItem value="none" disabled>Keine Rechnungen gefunden</SelectItem>
                                     )}
                                 </SelectContent>
                             </Select>
                         </div>
                         <div>
-                            <Label>Correction Amount (€)</Label>
+                            <Label>Korrekturbetrag (€)</Label>
                             <Input
                                 type="number"
                                 placeholder="0.00"
@@ -626,16 +626,16 @@ export default function AdminActions() {
                             />
                         </div>
                         <div>
-                            <Label>Reason</Label>
+                            <Label>Grund</Label>
                             <Input
-                                placeholder="Reason for correction"
+                                placeholder="Grund für die Korrektur"
                                 value={invoiceCorrection.reason}
                                 onChange={(e) => setInvoiceCorrection({ ...invoiceCorrection, reason: e.target.value })}
                             />
                         </div>
                         <Button onClick={handleCorrectInvoice} disabled={loadingAction} className="w-full">
                             <Receipt className="h-4 w-4 mr-2" />
-                            Log Correction
+                            Korrektur protokollieren
                         </Button>
                     </CardContent>
                 </Card>
@@ -645,18 +645,18 @@ export default function AdminActions() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <UserCog className="h-5 w-5 text-amber-500" />
-                            Reset User
+                            Benutzer zurücksetzen
                         </CardTitle>
                         <CardDescription>
-                            Send password reset or unlock user accounts
+                            Passwort zurücksetzen oder Benutzerkonten entsperren
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label>Select User</Label>
+                            <Label>Benutzer auswählen</Label>
                             <Select value={selectedUser} onValueChange={setSelectedUser}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Choose user..." />
+                                    <SelectValue placeholder="Benutzer wählen..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {users.slice(0, 20).map((u) => (
@@ -670,7 +670,7 @@ export default function AdminActions() {
                         <div className="flex gap-2">
                             <Button onClick={handleResetUser} disabled={loadingAction || !selectedUser} className="flex-1">
                                 <UserCog className="h-4 w-4 mr-2" />
-                                Reset Password
+                                Passwort zurücksetzen
                             </Button>
                         </div>
                     </CardContent>
@@ -681,17 +681,17 @@ export default function AdminActions() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <MessageSquarePlus className="h-5 w-5 text-indigo-500" />
-                            Push System Message
+                            Systemnachricht senden
                         </CardTitle>
                         <CardDescription>
-                            Broadcast announcements to all users
+                            Ankündigungen an alle Benutzer senden
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <Label>Message</Label>
+                            <Label>Nachricht</Label>
                             <Textarea
-                                placeholder="Enter your system announcement..."
+                                placeholder="Systemankündigung eingeben..."
                                 value={systemMessage}
                                 onChange={(e) => setSystemMessage(e.target.value)}
                                 rows={3}
@@ -699,7 +699,7 @@ export default function AdminActions() {
                         </div>
                         <Button onClick={handleSendSystemMessage} disabled={loadingAction || !systemMessage.trim()} className="w-full">
                             <MessageSquarePlus className="h-4 w-4 mr-2" />
-                            Send to All Users
+                            An alle Benutzer senden
                         </Button>
                     </CardContent>
                 </Card>
@@ -710,9 +710,9 @@ export default function AdminActions() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Zap className="h-5 w-5 text-yellow-500" />
-                        Recent Admin Actions
+                        Letzte Admin-Aktionen
                     </CardTitle>
-                    <CardDescription>Your recent quick actions for audit trail</CardDescription>
+                    <CardDescription>Ihre letzten Schnellaktionen für den Prüfpfad</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {recentActions.length > 0 ? (
@@ -750,7 +750,7 @@ export default function AdminActions() {
                                             </div>
                                             <div className="flex items-center gap-2 text-muted-foreground text-xs">
                                                 <UserCog className="h-3 w-3" />
-                                                <span>By: {action.actor_email || 'System'}</span>
+                                                <span>Von: {action.actor_email || 'System'}</span>
                                                 <span>•</span>
                                                 <span>{new Date(action.created_at).toLocaleString()}</span>
                                             </div>
@@ -759,22 +759,22 @@ export default function AdminActions() {
                                         {action.details && (
                                             <div className="text-xs text-muted-foreground mt-2 grid grid-cols-2 gap-x-4 gap-y-1 bg-background/50 p-2 rounded border">
                                                 {action.details.reason && (
-                                                    <span>Reason: <span className="font-medium text-foreground">{action.details.reason}</span></span>
+                                                    <span>Grund: <span className="font-medium text-foreground">{action.details.reason}</span></span>
                                                 )}
                                                 {action.details.invoice_number && (
-                                                    <span>Invoice: <span className="font-medium text-foreground">{action.details.invoice_number}</span></span>
+                                                    <span>Rechnung: <span className="font-medium text-foreground">{action.details.invoice_number}</span></span>
                                                 )}
                                                 {action.details.amount && (
-                                                    <span>Amount: <span className="font-medium text-foreground">€{action.details.amount}</span></span>
+                                                    <span>Betrag: <span className="font-medium text-foreground">€{action.details.amount}</span></span>
                                                 )}
                                                 {action.details.new_blocked_status !== undefined && (
-                                                    <span>Status: <span className="font-medium text-foreground">{action.details.new_blocked_status ? 'Blocked' : 'Unblocked'}</span></span>
+                                                    <span>Status: <span className="font-medium text-foreground">{action.details.new_blocked_status ? 'Gesperrt' : 'Entsperrt'}</span></span>
                                                 )}
                                                 {action.details.days_extended && (
-                                                    <span>Extended: <span className="font-medium text-foreground">+{action.details.days_extended} days</span></span>
+                                                    <span>Verlängert: <span className="font-medium text-foreground">+{action.details.days_extended} Tage</span></span>
                                                 )}
                                                 {action.details.message && (
-                                                    <span className="col-span-2">Message: <span className="font-medium text-foreground">{action.details.message}</span></span>
+                                                    <span className="col-span-2">Nachricht: <span className="font-medium text-foreground">{action.details.message}</span></span>
                                                 )}
                                             </div>
                                         )}
@@ -786,8 +786,8 @@ export default function AdminActions() {
                         <div className="flex items-center justify-center py-8 text-muted-foreground">
                             <div className="text-center">
                                 <AlertTriangle className="h-10 w-10 mx-auto mb-2 text-yellow-500" />
-                                <p>No recent actions</p>
-                                <p className="text-sm">Actions will appear here after execution</p>
+                                <p>Keine letzten Aktionen</p>
+                                <p className="text-sm">Aktionen werden nach der Ausführung hier angezeigt</p>
                             </div>
                         </div>
                     )}

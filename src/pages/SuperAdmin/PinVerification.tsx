@@ -58,8 +58,8 @@ export default function SuperAdminPinVerification() {
   const verifyPin = async () => {
     if (locked) {
       toast({
-        title: "Account Locked",
-        description: `Too many failed attempts. Please wait ${LOCK_DURATION} seconds.`,
+        title: "Konto gesperrt",
+        description: `Zu viele fehlgeschlagene Versuche. Bitte warten Sie ${LOCK_DURATION} Sekunden.`,
         variant: "destructive",
       });
       return;
@@ -67,8 +67,8 @@ export default function SuperAdminPinVerification() {
 
     if (!pin || pin.length < 4) {
       toast({
-        title: "Invalid PIN",
-        description: "Please enter a valid PIN",
+        title: "Ungültiger PIN",
+        description: "Bitte geben Sie einen gültigen PIN ein",
         variant: "destructive",
       });
       return;
@@ -92,8 +92,8 @@ export default function SuperAdminPinVerification() {
         sessionStorage.setItem("superAdminPinVerified", "true");
         
         toast({
-          title: "Access Granted",
-          description: "Welcome to Super Admin Panel",
+          title: "Zugang gewährt",
+          description: "Willkommen im Super-Admin-Panel",
         });
 
         navigate("/super-admin/dashboard", { replace: true });
@@ -106,14 +106,14 @@ export default function SuperAdminPinVerification() {
         if (newAttempts >= MAX_ATTEMPTS) {
           setLocked(true);
           toast({
-            title: "Account Locked",
-            description: `Too many failed attempts. Locked for ${LOCK_DURATION} seconds.`,
+            title: "Konto gesperrt",
+            description: `Zu viele fehlgeschlagene Versuche. Gesperrt für ${LOCK_DURATION} Sekunden.`,
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Incorrect PIN",
-            description: `${MAX_ATTEMPTS - newAttempts} attempts remaining`,
+            title: "Falscher PIN",
+            description: `${MAX_ATTEMPTS - newAttempts} Versuche verbleibend`,
             variant: "destructive",
           });
         }
@@ -121,8 +121,8 @@ export default function SuperAdminPinVerification() {
     } catch (error) {
       console.error("PIN verification failed:", error);
       toast({
-        title: "Verification Failed",
-        description: "An error occurred. Please try again.",
+        title: "Verifikation fehlgeschlagen",
+        description: "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       });
     } finally {
@@ -177,9 +177,9 @@ export default function SuperAdminPinVerification() {
             <Shield className="w-8 h-8 text-white" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">Super Admin Access</CardTitle>
+            <CardTitle className="text-2xl font-bold">Super-Admin-Zugang</CardTitle>
             <CardDescription className="mt-2">
-              Enter your security PIN to access the platform administration panel
+              Geben Sie Ihren Sicherheits-PIN ein, um das Plattform-Administrationspanel aufzurufen
             </CardDescription>
           </div>
         </CardHeader>
@@ -192,10 +192,10 @@ export default function SuperAdminPinVerification() {
               </div>
               <div>
                 <p className="text-lg font-medium text-red-600 dark:text-red-400">
-                  Account Temporarily Locked
+                  Konto vorübergehend gesperrt
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Too many failed attempts. Please wait {LOCK_DURATION} seconds.
+                  Zu viele fehlgeschlagene Versuche. Bitte warten Sie {LOCK_DURATION} Sekunden.
                 </p>
               </div>
             </div>
@@ -220,7 +220,7 @@ export default function SuperAdminPinVerification() {
                 </div>
                 {attempts > 0 && (
                   <p className="text-sm text-amber-600 dark:text-amber-400 text-center">
-                    {MAX_ATTEMPTS - attempts} attempts remaining
+                    {MAX_ATTEMPTS - attempts} Versuche verbleibend
                   </p>
                 )}
               </div>
@@ -234,10 +234,10 @@ export default function SuperAdminPinVerification() {
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    Verifying...
+                    Wird verifiziert...
                   </span>
                 ) : (
-                  "Verify & Access"
+                  "Verifizieren & Zugang"
                 )}
               </Button>
             </>
@@ -298,12 +298,12 @@ export default function SuperAdminPinVerification() {
               className="w-full text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
               data-testid="superadmin-logout"
             >
-              Cancel and Sign Out
+              Abbrechen & Abmelden
             </Button>
           </div>
 
           <p className="text-xs text-center text-gray-400">
-            This is a secured area. All access attempts are logged.
+            Dies ist ein gesicherter Bereich. Alle Zugriffsversuche werden protokolliert.
           </p>
         </CardContent>
       </Card>

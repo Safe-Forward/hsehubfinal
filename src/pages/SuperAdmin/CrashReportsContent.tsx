@@ -144,9 +144,9 @@ export default function CrashReportsContent() {
     const getSeverityBadge = (severity: string) => {
         switch (severity) {
             case "critical":
-                return <Badge variant="destructive" className="text-xs">Critical</Badge>;
+                return <Badge variant="destructive" className="text-xs">Kritisch</Badge>;
             case "warning":
-                return <Badge variant="secondary" className="text-xs text-amber-700 bg-amber-100 dark:bg-amber-950 dark:text-amber-300">Warning</Badge>;
+                return <Badge variant="secondary" className="text-xs text-amber-700 bg-amber-100 dark:bg-amber-950 dark:text-amber-300">Warnung</Badge>;
             default:
                 return <Badge variant="outline" className="text-xs">Info</Badge>;
         }
@@ -198,7 +198,7 @@ export default function CrashReportsContent() {
         });
 
         doc.save(`crash-reports-${format(new Date(), "yyyy-MM-dd")}.pdf`);
-        toast({ title: "PDF Exported", description: `${filtered.length} crash reports exported` });
+        toast({ title: "PDF exportiert", description: `${filtered.length} Absturzberichte exportiert` });
     };
 
     return (
@@ -207,10 +207,10 @@ export default function CrashReportsContent() {
             <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                    <p className="font-medium text-amber-800 dark:text-amber-200 text-sm">Crash Report Tracking</p>
+                    <p className="font-medium text-amber-800 dark:text-amber-200 text-sm">Absturzberichts-Verfolgung</p>
                     <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
-                        Application errors and crashes are recorded as <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">error</code> events in the audit log.
-                        To log a crash, call <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">logAction({`{ action: "error", ... }`})</code> from any component error boundary.
+                        Anwendungsfehler und Abstürze werden als <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">error</code>-Ereignisse im Prüfprotokoll aufgezeichnet.
+                        Um einen Absturz zu protokollieren, rufen Sie <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">logAction({`{ action: "error", ... }`})</code> aus einer Komponenten-Fehlergrenze auf.
                     </p>
                 </div>
             </div>
@@ -219,34 +219,34 @@ export default function CrashReportsContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Errors</CardTitle>
+                        <CardTitle className="text-sm font-medium">Fehler gesamt</CardTitle>
                         <Bug className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-600">{stats.total}</div>
-                        <p className="text-xs text-muted-foreground">All time</p>
+                        <p className="text-xs text-muted-foreground">Gesamt</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Today</CardTitle>
+                        <CardTitle className="text-sm font-medium">Heute</CardTitle>
                         <AlertCircle className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-orange-600">{stats.today}</div>
-                        <p className="text-xs text-muted-foreground">Last 24 hours</p>
+                        <p className="text-xs text-muted-foreground">Letzte 24 Stunden</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">This Week</CardTitle>
+                        <CardTitle className="text-sm font-medium">Diese Woche</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-amber-600">{stats.thisWeek}</div>
-                        <p className="text-xs text-muted-foreground">Last 7 days</p>
+                        <p className="text-xs text-muted-foreground">Letzte 7 Tage</p>
                     </CardContent>
                 </Card>
             </div>
@@ -256,7 +256,7 @@ export default function CrashReportsContent() {
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search errors..."
+                        placeholder="Fehler suchen..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9"
@@ -267,9 +267,9 @@ export default function CrashReportsContent() {
                         <SelectValue placeholder="Severity" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Severity</SelectItem>
-                        <SelectItem value="critical">Critical</SelectItem>
-                        <SelectItem value="warning">Warning</SelectItem>
+                        <SelectItem value="all">Alle Schweregrade</SelectItem>
+                        <SelectItem value="critical">Kritisch</SelectItem>
+                        <SelectItem value="warning">Warnung</SelectItem>
                         <SelectItem value="info">Info</SelectItem>
                     </SelectContent>
                 </Select>
@@ -278,19 +278,19 @@ export default function CrashReportsContent() {
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="7days">Last 7 days</SelectItem>
-                        <SelectItem value="30days">Last 30 days</SelectItem>
-                        <SelectItem value="90days">Last 90 days</SelectItem>
-                        <SelectItem value="all_time">All Time</SelectItem>
+                        <SelectItem value="7days">Letzte 7 Tage</SelectItem>
+                        <SelectItem value="30days">Letzte 30 Tage</SelectItem>
+                        <SelectItem value="90days">Letzte 90 Tage</SelectItem>
+                        <SelectItem value="all_time">Gesamter Zeitraum</SelectItem>
                     </SelectContent>
                 </Select>
                 <Button onClick={fetchReports} variant="outline" size="sm" disabled={loading}>
                     <RefreshCcw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                    Refresh
+                    Aktualisieren
                 </Button>
                 <Button onClick={handleExportPDF} variant="outline" size="sm">
                     <FileText className="w-4 h-4 mr-2" />
-                    Export PDF
+                    PDF exportieren
                 </Button>
             </div>
 
@@ -302,7 +302,7 @@ export default function CrashReportsContent() {
                         Crash Reports ({filtered.length})
                     </CardTitle>
                     <CardDescription>
-                        Application errors and exceptions logged to the audit system
+                        Im Prüfsystem protokollierte Anwendungsfehler und Ausnahmen
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -310,12 +310,12 @@ export default function CrashReportsContent() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-36">Timestamp</TableHead>
-                                    <TableHead>Actor</TableHead>
-                                    <TableHead>Severity</TableHead>
-                                    <TableHead>Error Type</TableHead>
-                                    <TableHead>Message</TableHead>
-                                    <TableHead>Company</TableHead>
+                                    <TableHead className="w-36">Zeitstempel</TableHead>
+                                    <TableHead>Akteur</TableHead>
+                                    <TableHead>Schweregrad</TableHead>
+                                    <TableHead>Fehlertyp</TableHead>
+                                    <TableHead>Meldung</TableHead>
+                                    <TableHead>Unternehmen</TableHead>
                                     <TableHead className="w-16 text-center">Details</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -334,8 +334,8 @@ export default function CrashReportsContent() {
                                     <TableRow>
                                         <TableCell colSpan={7} className="text-center py-16 text-muted-foreground">
                                             <CheckCircle className="w-10 h-10 mx-auto mb-2 text-emerald-400" />
-                                            <p className="font-medium">No errors found</p>
-                                            <p className="text-xs mt-1">The system is running smoothly for the selected period</p>
+                                            <p className="font-medium">Keine Fehler gefunden</p>
+                                            <p className="text-xs mt-1">Das System läuft reibungslos für den gewählten Zeitraum</p>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -398,7 +398,7 @@ export default function CrashReportsContent() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Bug className="w-4 h-4 text-red-500" />
-                            Crash Report Detail
+                            Absturzbericht-Details
                         </DialogTitle>
                         <DialogDescription>
                             {selectedReport && new Date(selectedReport.created_at).toLocaleString()}
@@ -408,20 +408,20 @@ export default function CrashReportsContent() {
                         <div className="space-y-4">
                             <div className="grid grid-cols-3 gap-3 text-sm">
                                 <div>
-                                    <p className="text-xs text-muted-foreground">Actor</p>
+                                    <p className="text-xs text-muted-foreground">Akteur</p>
                                     <p className="font-medium">{selectedReport.actor_email}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">Company</p>
+                                    <p className="text-xs text-muted-foreground">Unternehmen</p>
                                     <p className="font-medium">{selectedReport.companies?.name || "—"}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">IP Address</p>
+                                    <p className="text-xs text-muted-foreground">IP-Adresse</p>
                                     <p className="font-mono text-sm">{selectedReport.ip_address || "—"}</p>
                                 </div>
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground mb-1.5">Full Error Details</p>
+                                <p className="text-xs text-muted-foreground mb-1.5">Vollständige Fehlerdetails</p>
                                 <pre className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-md p-3 text-xs overflow-auto max-h-64 font-mono text-red-800 dark:text-red-200 whitespace-pre-wrap break-all">
                                     {JSON.stringify(selectedReport.details || {}, null, 2)}
                                 </pre>

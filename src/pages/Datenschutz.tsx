@@ -17,10 +17,9 @@ import PublicLayout from "@/components/PublicLayout";
 //   🔲 Facebook Pixel
 //   🔲 Hubspot
 //
-// TODO: Ersetze alle [PLATZHALTER] mit deinen echten Unternehmensdaten
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LAST_UPDATED = "Juni 2026";
+const LAST_UPDATED = "Juli 2026";
 
 const TOC_SECTIONS = [
   { id: "verantwortlicher", number: "1", title: "Verantwortlicher" },
@@ -317,7 +316,7 @@ const Datenschutz = () => {
                   country="USA / Irland"
                   privacyUrl="https://policies.google.com/privacy"
                   safeguard="EU-Standardvertragsklauseln; Data Processing Amendment abgeschlossen"
-                  note="Measurement-ID: [G-XXXXXXXXXX]. Datenaufbewahrung: 14 Monate. Opt-out: https://tools.google.com/dlpage/gaoptout"
+                  note="Measurement-ID: (noch nicht aktiv). Datenaufbewahrung: 14 Monate. Opt-out: https://tools.google.com/dlpage/gaoptout"
                 />
                 <SubHeading>9.2 Facebook Pixel (Meta)</SubHeading>
                 <p>Mit Ihrer Einwilligung verwenden wir den Facebook Pixel. Der Pixel ermöglicht Remarketing auf Facebook und Instagram sowie die Messung der Wirksamkeit unserer Anzeigen.</p>
@@ -327,7 +326,7 @@ const Datenschutz = () => {
                   country="Irland / USA"
                   privacyUrl="https://www.facebook.com/privacy/policy/"
                   safeguard="EU-Standardvertragsklauseln"
-                  note="Pixel-ID: [XXXXXXXXXXXXXXXXXX]. Widerspruch: https://www.facebook.com/ads/preferences/"
+                  note="Pixel-ID: (noch nicht aktiv). Widerspruch: https://www.facebook.com/ads/preferences/"
                 />
                 <SubHeading>9.3 HubSpot</SubHeading>
                 <p>Mit Ihrer Einwilligung setzen wir HubSpot ein, eine CRM- und Marketing-Plattform. HubSpot erfasst das Verhalten von Website-Besuchern (aufgerufene Seiten, Verweildauer, Formularausfüllungen) und ermöglicht die Analyse von Marketing-Kampagnen sowie die Pflege von Kundenbeziehungen.</p>
@@ -337,7 +336,7 @@ const Datenschutz = () => {
                   country="USA"
                   privacyUrl="https://legal.hubspot.com/de/privacy-policy"
                   safeguard="EU-Standardvertragsklauseln (SCC); HubSpot EU-Infrastruktur verfügbar"
-                  note="Portal-ID: [XXXXXXXX]. Opt-out: https://legal.hubspot.com/de/privacy-policy"
+                  note="Portal-ID: (noch nicht aktiv). Opt-out: https://legal.hubspot.com/de/privacy-policy"
                 />
                 <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
                   <strong>Hinweis:</strong> Alle drei Tools werden nur nach Ihrer aktiven Einwilligung über unser Cookie-Banner aktiviert. Ohne Einwilligung werden keine Daten an Google, Meta oder HubSpot übermittelt.

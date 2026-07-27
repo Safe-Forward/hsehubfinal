@@ -325,14 +325,14 @@ export default function Support() {
         <div className="p-8">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h2 className="text-3xl font-bold mb-2">Support & Customer Feedback</h2>
+                    <h2 className="text-3xl font-bold mb-2">Support & Kundenfeedback</h2>
                     <p className="text-muted-foreground">
-                        Manage support tickets, feature requests, and bug reports
+                        Support-Tickets, Funktionsanfragen und Fehlerberichte verwalten
                     </p>
                 </div>
                 <Button variant="outline" onClick={() => { fetchTickets(); fetchStats(); }}>
                     <RefreshCcw className="h-4 w-4 mr-2" />
-                    Refresh
+                    Aktualisieren
                 </Button>
             </div>
 

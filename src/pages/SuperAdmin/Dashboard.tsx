@@ -402,25 +402,25 @@ export default function SuperAdminDashboard() {
     <div className="p-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Super Admin Dashboard</h2>
+          <h2 className="text-3xl font-bold mb-2">Super-Admin-Dashboard</h2>
           <p className="text-muted-foreground">
-            Manage companies, subscriptions, add-ons, and system-wide settings
+            Unternehmen, Abonnements, Add-ons und systemweite Einstellungen verwalten
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={dateRange} onValueChange={setDateRange}>
             <SelectTrigger className="w-48 bg-white dark:bg-card">
               <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Select timeline" />
+              <SelectValue placeholder="Zeitraum wählen" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all-time">All time</SelectItem>
-              <SelectItem value="last-7-days">Last 7 days</SelectItem>
-              <SelectItem value="last-30-days">Last 30 days</SelectItem>
-              <SelectItem value="last-90-days">Last 90 days</SelectItem>
-              <SelectItem value="this-month">This month</SelectItem>
-              <SelectItem value="last-month">Last month</SelectItem>
-              <SelectItem value="this-year">This year</SelectItem>
+              <SelectItem value="all-time">Gesamt</SelectItem>
+              <SelectItem value="last-7-days">Letzte 7 Tage</SelectItem>
+              <SelectItem value="last-30-days">Letzte 30 Tage</SelectItem>
+              <SelectItem value="last-90-days">Letzte 90 Tage</SelectItem>
+              <SelectItem value="this-month">Dieser Monat</SelectItem>
+              <SelectItem value="last-month">Letzter Monat</SelectItem>
+              <SelectItem value="this-year">Dieses Jahr</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -465,7 +465,7 @@ export default function SuperAdminDashboard() {
         <Card className="border-0 shadow-sm bg-white dark:bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Total Companies
+              Unternehmen gesamt
             </CardTitle>
             <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
               <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -476,7 +476,7 @@ export default function SuperAdminDashboard() {
               {stats.totalCompanies}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              {stats.activeCompanies} active, {stats.trialCompanies} trial
+              {stats.activeCompanies} aktiv, {stats.trialCompanies} Test
             </p>
           </CardContent>
         </Card>
@@ -484,7 +484,7 @@ export default function SuperAdminDashboard() {
         <Card className="border-0 shadow-sm bg-white dark:bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Estimated Monthly Revenue
+              Geschätzter Monatsumsatz
             </CardTitle>
             <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
               <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -495,8 +495,8 @@ export default function SuperAdminDashboard() {
               €{(stats.totalRevenue + stats.addonRevenue).toLocaleString()}
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs text-muted-foreground">Subscriptions: €{stats.totalRevenue}</span>
-              <span className="text-xs text-green-600">+€{stats.addonRevenue} add-ons</span>
+              <span className="text-xs text-muted-foreground">Abonnements: €{stats.totalRevenue}</span>
+              <span className="text-xs text-green-600">+€{stats.addonRevenue} Add-ons</span>
             </div>
           </CardContent>
         </Card>
@@ -504,7 +504,7 @@ export default function SuperAdminDashboard() {
         <Card className="border-0 shadow-sm bg-white dark:bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Total Users
+              Benutzer gesamt
             </CardTitle>
             <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
               <Users className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
@@ -515,7 +515,7 @@ export default function SuperAdminDashboard() {
               {stats.totalUsers}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Across all companies
+              Über alle Unternehmen
             </p>
           </CardContent>
         </Card>
@@ -523,7 +523,7 @@ export default function SuperAdminDashboard() {
         <Card className="border-0 shadow-sm bg-white dark:bg-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Active Add-ons
+              Aktive Add-ons
             </CardTitle>
             <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
               <Puzzle className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -534,7 +534,7 @@ export default function SuperAdminDashboard() {
               {stats.totalAddons}
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Sold to companies
+              An Unternehmen verkauft
             </p>
           </CardContent>
         </Card>
@@ -547,9 +547,9 @@ export default function SuperAdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              System Status
+              Systemstatus
             </CardTitle>
-            <CardDescription>Current system health overview</CardDescription>
+            <CardDescription>Aktuelle Systemzustandsübersicht</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -558,11 +558,11 @@ export default function SuperAdminDashboard() {
                   <Building2 className="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">Database</p>
+                  <p className="font-medium text-sm">Datenbank</p>
                   <p className="text-xs text-muted-foreground">Supabase PostgreSQL</p>
                 </div>
               </div>
-              <Badge variant="default" className="bg-green-600">Operational</Badge>
+              <Badge variant="default" className="bg-green-600">Betriebsbereit</Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="flex items-center gap-3">
@@ -570,11 +570,11 @@ export default function SuperAdminDashboard() {
                   <BarChart3 className="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">API Services</p>
-                  <p className="text-xs text-muted-foreground">Response time: 45ms</p>
+                  <p className="font-medium text-sm">API-Dienste</p>
+                  <p className="text-xs text-muted-foreground">Antwortzeit: 45ms</p>
                 </div>
               </div>
-              <Badge variant="default" className="bg-green-600">Healthy</Badge>
+              <Badge variant="default" className="bg-green-600">Gesund</Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="flex items-center gap-3">
@@ -582,11 +582,11 @@ export default function SuperAdminDashboard() {
                   <Users className="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-sm">Authentication</p>
+                  <p className="font-medium text-sm">Authentifizierung</p>
                   <p className="text-xs text-muted-foreground">Supabase Auth</p>
                 </div>
               </div>
-              <Badge variant="default" className="bg-green-600">Active</Badge>
+              <Badge variant="default" className="bg-green-600">Aktiv</Badge>
             </div>
           </CardContent>
         </Card>
@@ -596,9 +596,9 @@ export default function SuperAdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-orange-500" />
-              Critical Alerts
+              Kritische Warnungen
             </CardTitle>
-            <CardDescription>Issues requiring immediate attention</CardDescription>
+            <CardDescription>Probleme, die sofortige Aufmerksamkeit erfordern</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -606,7 +606,7 @@ export default function SuperAdminDashboard() {
               <div>
                 <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-orange-500" />
-                  Trials Expiring Soon
+                  Bald ablaufende Tests
                 </h4>
                 {expiringTrials.length === 0 ? (
                   <p className="text-center py-4 text-muted-foreground text-sm">
@@ -646,8 +646,8 @@ export default function SuperAdminDashboard() {
         {/* Tier Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>Subscription Tier Distribution</CardTitle>
-            <CardDescription>Breakdown of companies by plan</CardDescription>
+            <CardTitle>Abonnement-Stufenverteilung</CardTitle>
+            <CardDescription>Unternehmen nach Paket aufgeschlüsselt</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64">
@@ -666,7 +666,7 @@ export default function SuperAdminDashboard() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value, name) => [`${value} companies`, name]} />
+                  <Tooltip formatter={(value, name) => [`${value} Unternehmen`, name]} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -688,7 +688,7 @@ export default function SuperAdminDashboard() {
                 to="/super-admin/companies"
                 className="text-sm text-primary hover:underline"
               >
-                View All →
+                Alle anzeigen →
               </Link>
             </div>
           </CardHeader>
@@ -696,7 +696,7 @@ export default function SuperAdminDashboard() {
             <div className="space-y-4">
               {recentCompanies.length === 0 ? (
                 <p className="text-center py-8 text-muted-foreground">
-                  No companies registered yet
+                  Noch keine Unternehmen registriert
                 </p>
               ) : (
                 recentCompanies.map((company) => {
@@ -749,7 +749,7 @@ export default function SuperAdminDashboard() {
                               : "destructive"
                         }
                       >
-                        {company.subscription_status}
+                        {company.subscription_status === "active" ? "Aktiv" : company.subscription_status === "trial" ? "Test" : company.subscription_status === "cancelled" ? "Gekündigt" : "Inaktiv"}
                       </Badge>
                     </div>
                   </div>

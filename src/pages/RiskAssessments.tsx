@@ -533,7 +533,7 @@ export default function RiskAssessments() {
         risk.hazard_category || "-",
         risk.risk_level?.toUpperCase() || "-",
         risk.status || "-",
-        risk.assessment_date || "-"
+        risk.assessment_date ? new Date(risk.assessment_date).toLocaleDateString("de-DE") : "-"
       ]);
 
       // Generate table
@@ -547,7 +547,7 @@ export default function RiskAssessments() {
       });
 
       // Save the PDF
-      doc.save("Risk_Assessments.pdf");
+      doc.save("risikobewertungen.pdf");
 
       toast({
         title: "Erfolg",
@@ -2017,7 +2017,7 @@ export default function RiskAssessments() {
               </div>
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>

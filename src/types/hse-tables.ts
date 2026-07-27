@@ -411,16 +411,16 @@ export const investigationStatusLabels: Record<InvestigationStatus, string> = {
 };
 
 export const documentCategoryLabels: Record<DocumentCategory, string> = {
-  policy: 'Policy',
-  procedure: 'Procedure',
-  risk_assessment: 'Risk Assessment',
-  training: 'Training',
-  incident_report: 'Incident Report',
-  audit_report: 'Audit Report',
-  certificate: 'Certificate',
-  permit: 'Permit',
-  inspection: 'Inspection',
-  other: 'Other',
+  policy: 'Richtlinie',
+  procedure: 'Verfahrensanweisung',
+  risk_assessment: 'Gefährdungsbeurteilung',
+  training: 'Schulung',
+  incident_report: 'Vorfallbericht',
+  audit_report: 'Auditbericht',
+  certificate: 'Zertifikat',
+  permit: 'Genehmigung',
+  inspection: 'Inspektion',
+  other: 'Sonstiges',
 };
 
 // ============================================

@@ -131,7 +131,7 @@ export default function AuditLogs() {
         } catch (error: any) {
             console.error("Error fetching audit logs:", error);
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -192,7 +192,7 @@ export default function AuditLogs() {
 
     const handleExport = () => {
         const csv = [
-            ["Date", "Actor", "Action", "Target Type", "Target Name", "IP Address", "Company"],
+            ["Datum", "Akteur", "Aktion", "Zieltyp", "Zielname", "IP-Adresse", "Unternehmen"],
             ...filteredLogs.map((log) => [
                 new Date(log.created_at).toLocaleString(),
                 log.actor_email,
@@ -214,8 +214,8 @@ export default function AuditLogs() {
         a.click();
 
         toast({
-            title: "Success",
-            description: "Audit logs exported successfully",
+            title: "Erfolgreich",
+            description: "Prüfprotokolle erfolgreich exportiert",
         });
     };
 
@@ -262,9 +262,9 @@ export default function AuditLogs() {
     return (
         <div className="p-8">
             <div className="mb-8">
-                <h2 className="text-3xl font-bold mb-2">Audit Logs</h2>
+                <h2 className="text-3xl font-bold mb-2">Prüfprotokolle</h2>
                 <p className="text-muted-foreground">
-                    Complete audit trail of all platform activities and administrative actions
+                    Vollständige Prüfspur aller Plattformaktivitäten und administrativen Aktionen
                 </p>
             </div>
 
@@ -272,38 +272,38 @@ export default function AuditLogs() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Logs</CardTitle>
+                        <CardTitle className="text-sm font-medium">Protokolle gesamt</CardTitle>
                         <FileText className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalLogs}</div>
-                        <p className="text-xs text-muted-foreground">All time</p>
+                        <p className="text-xs text-muted-foreground">Gesamt</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Today's Activity</CardTitle>
+                        <CardTitle className="text-sm font-medium">Heutige Aktivität</CardTitle>
                         <Activity className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-blue-600">
                             {stats.todayLogs}
                         </div>
-                        <p className="text-xs text-muted-foreground">Last 24 hours</p>
+                        <p className="text-xs text-muted-foreground">Letzte 24 Stunden</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Critical Actions</CardTitle>
+                        <CardTitle className="text-sm font-medium">Kritische Aktionen</CardTitle>
                         <Shield className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-600">
                             {stats.criticalActions}
                         </div>
-                        <p className="text-xs text-muted-foreground">Requires attention</p>
+                        <p className="text-xs text-muted-foreground">Erfordert Aufmerksamkeit</p>
                     </CardContent>
                 </Card>
             </div>
@@ -315,7 +315,7 @@ export default function AuditLogs() {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                             <Input
-                                placeholder="Search logs..."
+                                placeholder="Protokolle suchen..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-10"
@@ -328,10 +328,10 @@ export default function AuditLogs() {
                     <CardContent className="pt-6">
                         <Select value={actionFilter} onValueChange={setActionFilter}>
                             <SelectTrigger>
-                                <SelectValue placeholder="All Actions" />
+                                <SelectValue placeholder="Alle Aktionen" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Actions</SelectItem>
+                                <SelectItem value="all">Alle Aktionen</SelectItem>
                                 {actionOptions.map((action) => (
                                     <SelectItem key={action} value={action}>
                                         {action}
@@ -346,10 +346,10 @@ export default function AuditLogs() {
                     <CardContent className="pt-6">
                         <Select value={targetFilter} onValueChange={setTargetFilter}>
                             <SelectTrigger>
-                                <SelectValue placeholder="All Targets" />
+                                <SelectValue placeholder="Alle Ziele" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Targets</SelectItem>
+                                <SelectItem value="all">Alle Ziele</SelectItem>
                                 {targetOptions.map((target) => (
                                     <SelectItem key={target} value={target}>
                                         {target}
@@ -364,10 +364,10 @@ export default function AuditLogs() {
                     <CardContent className="pt-6">
                         <Select value={companyFilter} onValueChange={setCompanyFilter}>
                             <SelectTrigger>
-                                <SelectValue placeholder="All Companies" />
+                                <SelectValue placeholder="Alle Unternehmen" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Companies</SelectItem>
+                                <SelectItem value="all">Alle Unternehmen</SelectItem>
                                 {companies.map((company) => (
                                     <SelectItem key={company.id} value={company.id}>
                                         {company.name}
@@ -385,9 +385,9 @@ export default function AuditLogs() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="7days">Last 7 days</SelectItem>
-                                <SelectItem value="30days">Last 30 days</SelectItem>
-                                <SelectItem value="90days">Last 90 days</SelectItem>
+                                <SelectItem value="7days">Letzte 7 Tage</SelectItem>
+                                <SelectItem value="30days">Letzte 30 Tage</SelectItem>
+                                <SelectItem value="90days">Letzte 90 Tage</SelectItem>
                             </SelectContent>
                         </Select>
                     </CardContent>
@@ -396,7 +396,7 @@ export default function AuditLogs() {
                 <Card>
                     <CardContent className="pt-6">
                         <Input
-                            placeholder="Filter by actor email"
+                            placeholder="Nach Akteur-E-Mail filtern"
                             value={actorFilter}
                             onChange={(e) => setActorFilter(e.target.value)}
                         />
@@ -408,20 +408,20 @@ export default function AuditLogs() {
             <div className="flex gap-2 mb-6">
                 <Button onClick={fetchLogs} variant="outline">
                     <RefreshCcw className="w-4 h-4 mr-2" />
-                    Refresh
+                    Aktualisieren
                 </Button>
                 <Button onClick={handleExport} variant="outline">
                     <Download className="w-4 h-4 mr-2" />
-                    Export CSV
+                    CSV exportieren
                 </Button>
             </div>
 
             {/* Logs Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Audit Trail ({filteredLogs.length} entries)</CardTitle>
+                    <CardTitle>Prüfspur ({filteredLogs.length} Einträge)</CardTitle>
                     <CardDescription>
-                        Complete history of administrative actions and system events
+                        Vollständige Geschichte administrativer Aktionen und Systemereignisse
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -429,12 +429,12 @@ export default function AuditLogs() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Timestamp</TableHead>
-                                    <TableHead>Actor</TableHead>
-                                    <TableHead>Action</TableHead>
-                                    <TableHead>Target</TableHead>
-                                    <TableHead>Company</TableHead>
-                                    <TableHead>IP Address</TableHead>
+                                    <TableHead>Zeitstempel</TableHead>
+                                    <TableHead>Akteur</TableHead>
+                                    <TableHead>Aktion</TableHead>
+                                    <TableHead>Ziel</TableHead>
+                                    <TableHead>Unternehmen</TableHead>
+                                    <TableHead>IP-Adresse</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -444,7 +444,7 @@ export default function AuditLogs() {
                                             colSpan={6}
                                             className="text-center py-8 text-muted-foreground"
                                         >
-                                            No audit logs found
+                                            Keine Prüfprotokolle gefunden
                                         </TableCell>
                                     </TableRow>
                                 ) : (

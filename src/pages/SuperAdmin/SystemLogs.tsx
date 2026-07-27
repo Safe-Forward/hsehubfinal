@@ -30,9 +30,9 @@ export default function SystemLogs() {
     return (
         <div className="p-8">
             <div className="mb-6">
-                <h2 className="text-3xl font-bold mb-2">System &amp; Logs</h2>
+                <h2 className="text-3xl font-bold mb-2">System &amp; Protokolle</h2>
                 <p className="text-muted-foreground">
-                    Monitor system health, platform activity, and crash reports
+                    Systemzustand, Plattformaktivität und Absturzberichte überwachen
                 </p>
             </div>
 
@@ -40,15 +40,15 @@ export default function SystemLogs() {
                 <TabsList className="grid w-full max-w-lg grid-cols-3">
                     <TabsTrigger value="health" className="flex items-center gap-2">
                         <Activity className="h-4 w-4" />
-                        System Health
+                        Systemzustand
                     </TabsTrigger>
                     <TabsTrigger value="logs" className="flex items-center gap-2">
                         <FileCheck className="h-4 w-4" />
-                        Audit Logs
+                        Prüfprotokolle
                     </TabsTrigger>
                     <TabsTrigger value="crashes" className="flex items-center gap-2">
                         <Bug className="h-4 w-4" />
-                        Crash Reports
+                        Absturzberichte
                     </TabsTrigger>
                 </TabsList>
 

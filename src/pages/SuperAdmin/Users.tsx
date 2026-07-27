@@ -167,7 +167,7 @@ export default function GlobalUsers() {
                     full_name: profile?.full_name || "N/A",
                     role: ur.role,
                     company_id: ur.company_id,
-                    company_name: company?.name || "Unknown",
+                    company_name: company?.name || "Unbekannt",
                     last_login_at: ur.last_login_at,
                     failed_login_count: ur.failed_login_count || 0,
                     created_at: ur.created_at,
@@ -177,7 +177,7 @@ export default function GlobalUsers() {
             setUsers(transformedUsers);
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -261,8 +261,8 @@ export default function GlobalUsers() {
             });
 
             toast({
-                title: "User Deleted",
-                description: `${userToDelete.full_name} has been removed from ${userToDelete.company_name}`,
+                title: "Benutzer gelöscht",
+                description: `${userToDelete.full_name} wurde aus ${userToDelete.company_name} entfernt`,
             });
 
             setDeleteDialogOpen(false);
@@ -271,7 +271,7 @@ export default function GlobalUsers() {
             fetchStats();
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -291,9 +291,9 @@ export default function GlobalUsers() {
     return (
         <div className="p-8">
             <div className="mb-8">
-                <h2 className="text-3xl font-bold mb-2">Global User Management</h2>
+                <h2 className="text-3xl font-bold mb-2">Globale Benutzerverwaltung</h2>
                 <p className="text-muted-foreground">
-                    View and manage all users across all companies
+                    Alle Benutzer über alle Unternehmen anzeigen und verwalten
                 </p>
             </div>
 
@@ -301,51 +301,51 @@ export default function GlobalUsers() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                        <CardTitle className="text-sm font-medium">Benutzer gesamt</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats.totalUsers}</div>
-                        <p className="text-xs text-muted-foreground">Across all companies</p>
+                        <p className="text-xs text-muted-foreground">Über alle Unternehmen</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                        <CardTitle className="text-sm font-medium">Aktive Benutzer</CardTitle>
                         <UserCheck className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-600">
                             {stats.activeUsers}
                         </div>
-                        <p className="text-xs text-muted-foreground">Have logged in</p>
+                        <p className="text-xs text-muted-foreground">Haben sich angemeldet</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Blocked Users</CardTitle>
+                        <CardTitle className="text-sm font-medium">Gesperrte Benutzer</CardTitle>
                         <UserX className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-600">
                             {stats.blockedUsers}
                         </div>
-                        <p className="text-xs text-muted-foreground">Currently blocked</p>
+                        <p className="text-xs text-muted-foreground">Derzeit gesperrt</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Failed Logins</CardTitle>
+                        <CardTitle className="text-sm font-medium">Fehlgeschlagene Logins</CardTitle>
                         <ShieldAlert className="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-orange-600">
                             {stats.failedLogins}
                         </div>
-                        <p className="text-xs text-muted-foreground">Total attempts</p>
+                        <p className="text-xs text-muted-foreground">Versuche gesamt</p>
                     </CardContent>
                 </Card>
             </div>
@@ -357,7 +357,7 @@ export default function GlobalUsers() {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                             <Input
-                                placeholder="Search by name, email, or company..."
+                                placeholder="Nach Name, E-Mail oder Unternehmen suchen..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-10"
@@ -370,14 +370,14 @@ export default function GlobalUsers() {
                     <CardContent className="pt-6">
                         <Select value={roleFilter} onValueChange={setRoleFilter}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Filter by role" />
+                                <SelectValue placeholder="Nach Rolle filtern" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">All Roles</SelectItem>
-                                <SelectItem value="company_admin">Company Admin</SelectItem>
+                                <SelectItem value="all">Alle Rollen</SelectItem>
+                                <SelectItem value="company_admin">Unternehmensadmin</SelectItem>
                                 <SelectItem value="manager">Manager</SelectItem>
-                                <SelectItem value="user">User</SelectItem>
-                                <SelectItem value="viewer">Viewer</SelectItem>
+                                <SelectItem value="user">Benutzer</SelectItem>
+                                <SelectItem value="viewer">Betrachter</SelectItem>
                             </SelectContent>
                         </Select>
                     </CardContent>
@@ -387,9 +387,9 @@ export default function GlobalUsers() {
             {/* Users Table */}
             <Card>
                 <CardHeader>
-                    <CardTitle>All Users ({filteredUsers.length})</CardTitle>
+                    <CardTitle>Alle Benutzer ({filteredUsers.length})</CardTitle>
                     <CardDescription>
-                        Cross-company user directory with security insights
+                        Unternehmensübergreifendes Benutzerverzeichnis mit Sicherheitseinblicken
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -397,13 +397,13 @@ export default function GlobalUsers() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>User</TableHead>
-                                    <TableHead>Company</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Last Login</TableHead>
-                                    <TableHead>Failed Logins</TableHead>
-                                    <TableHead>Created</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
+                                    <TableHead>Benutzer</TableHead>
+                                    <TableHead>Unternehmen</TableHead>
+                                    <TableHead>Rolle</TableHead>
+                                    <TableHead>Letzter Login</TableHead>
+                                    <TableHead>Login-Fehler</TableHead>
+                                    <TableHead>Erstellt</TableHead>
+                                    <TableHead className="text-right">Aktionen</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -413,7 +413,7 @@ export default function GlobalUsers() {
                                             colSpan={7}
                                             className="text-center py-8 text-muted-foreground"
                                         >
-                                            No users found
+                                            Keine Benutzer gefunden
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -448,7 +448,7 @@ export default function GlobalUsers() {
                                                         </p>
                                                     </div>
                                                 ) : (
-                                                    <Badge variant="secondary">Never</Badge>
+                                                    <Badge variant="secondary">Nie</Badge>
                                                 )}
                                             </TableCell>
                                             <TableCell>
@@ -466,7 +466,7 @@ export default function GlobalUsers() {
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-1">
                                                     <Link to={`/super-admin/companies/${user.company_id}`}>
-                                                        <Button variant="ghost" size="icon" title="View Company">
+                                                        <Button variant="ghost" size="icon" title="Unternehmen anzeigen">
                                                             <Eye className="w-4 h-4" />
                                                         </Button>
                                                     </Link>
@@ -474,7 +474,7 @@ export default function GlobalUsers() {
                                                         variant="ghost"
                                                         size="icon"
                                                         className="text-destructive hover:text-destructive"
-                                                        title="Delete User"
+                                                        title="Benutzer löschen"
                                                         onClick={() => {
                                                             setUserToDelete(user);
                                                             setDeleteDialogOpen(true);
@@ -497,17 +497,17 @@ export default function GlobalUsers() {
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete User</DialogTitle>
+                        <DialogTitle>Benutzer löschen</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete this user? This will revoke their access to the company.
+                            Möchten Sie diesen Benutzer wirklich löschen? Dadurch wird der Zugang zum Unternehmen entzogen.
                         </DialogDescription>
                     </DialogHeader>
                     {userToDelete && (
                         <div className="py-4 space-y-2">
                             <p><strong>Name:</strong> {userToDelete.full_name}</p>
-                            <p><strong>Email:</strong> {userToDelete.email}</p>
-                            <p><strong>Company:</strong> {userToDelete.company_name}</p>
-                            <p><strong>Role:</strong> {userToDelete.role}</p>
+                            <p><strong>E-Mail:</strong> {userToDelete.email}</p>
+                            <p><strong>Unternehmen:</strong> {userToDelete.company_name}</p>
+                            <p><strong>Rolle:</strong> {userToDelete.role}</p>
                         </div>
                     )}
                     <DialogFooter>
@@ -518,14 +518,14 @@ export default function GlobalUsers() {
                                 setUserToDelete(null);
                             }}
                         >
-                            Cancel
+                            Abbrechen
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={handleDeleteUser}
                             disabled={deleting}
                         >
-                            {deleting ? "Deleting..." : "Delete User"}
+                            {deleting ? "Wird gelöscht..." : "Benutzer löschen"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

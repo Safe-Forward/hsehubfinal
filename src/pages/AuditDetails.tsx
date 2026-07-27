@@ -805,7 +805,7 @@ export default function AuditDetails() {
                 <CardTitle>{audit.title}</CardTitle>
                 <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
                   <span>📋 {audit.iso_code}</span>
-                  <span>📅 {audit.scheduled_date}</span>
+                  <span>📅 {audit.scheduled_date ? new Date(audit.scheduled_date).toLocaleDateString("de-DE") : "—"}</span>
                   <span>
                     👤 {audit.team_members 
                       ? `${audit.team_members.first_name} ${audit.team_members.last_name}`

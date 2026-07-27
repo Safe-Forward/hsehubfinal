@@ -85,7 +85,7 @@ export default function SuperAdminCompanies() {
       setCompanies(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message,
         variant: "destructive",
       });
@@ -110,14 +110,14 @@ export default function SuperAdminCompanies() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Company updated successfully",
+        title: "Erfolgreich",
+        description: "Unternehmen erfolgreich aktualisiert",
       });
       setEditingCompany(null);
       fetchCompanies();
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Fehler",
         description: error.message,
         variant: "destructive",
       });
@@ -160,9 +160,9 @@ export default function SuperAdminCompanies() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold mb-2">Company Management</h2>
+        <h2 className="text-3xl font-bold mb-2">Unternehmensverwaltung</h2>
         <p className="text-muted-foreground">
-          View and manage all registered companies and their subscriptions
+          Alle registrierten Unternehmen und ihre Abonnements anzeigen und verwalten
         </p>
       </div>
 
@@ -173,7 +173,7 @@ export default function SuperAdminCompanies() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
-                placeholder="Search companies by name or email..."
+                placeholder="Unternehmen nach Name oder E-Mail suchen..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -185,7 +185,7 @@ export default function SuperAdminCompanies() {
           <CardContent className="pt-6">
             <div className="text-center">
               <p className="text-3xl font-bold">{companies.length}</p>
-              <p className="text-sm text-muted-foreground">Total Companies</p>
+              <p className="text-sm text-muted-foreground">Unternehmen gesamt</p>
             </div>
           </CardContent>
         </Card>
@@ -194,9 +194,9 @@ export default function SuperAdminCompanies() {
       {/* Companies Table */}
       <Card>
         <CardHeader>
-          <CardTitle>All Companies</CardTitle>
+          <CardTitle>Alle Unternehmen</CardTitle>
           <CardDescription>
-            Manage subscriptions, limits, and company details
+            Abonnements, Limits und Unternehmensdetails verwalten
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -204,12 +204,12 @@ export default function SuperAdminCompanies() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Subscription</TableHead>
+                  <TableHead>Unternehmen</TableHead>
+                  <TableHead>Abonnement</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Max Employees</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Max. Mitarbeiter</TableHead>
+                  <TableHead>Erstellt</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -219,7 +219,7 @@ export default function SuperAdminCompanies() {
                       colSpan={6}
                       className="text-center py-8 text-muted-foreground"
                     >
-                      No companies found
+                      Keine Unternehmen gefunden
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -245,7 +245,7 @@ export default function SuperAdminCompanies() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadge(company.subscription_status)}>
-                          {company.subscription_status}
+                          {company.subscription_status === "active" ? "Aktiv" : company.subscription_status === "trial" ? "Test" : company.subscription_status === "cancelled" ? "Gekündigt" : "Inaktiv"}
                         </Badge>
                       </TableCell>
                       <TableCell>{company.max_employees}</TableCell>
@@ -287,28 +287,28 @@ export default function SuperAdminCompanies() {
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Company Details</DialogTitle>
+            <DialogTitle>Unternehmensdetails</DialogTitle>
             <DialogDescription>
-              Complete information for {selectedCompany?.name}
+              Vollständige Informationen zu {selectedCompany?.name}
             </DialogDescription>
           </DialogHeader>
           {selectedCompany && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-muted-foreground">Company Name</Label>
+                <Label className="text-muted-foreground">Unternehmensname</Label>
                 <p className="font-medium">{selectedCompany.name}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Email</Label>
+                <Label className="text-muted-foreground">E-Mail</Label>
                 <p className="font-medium">{selectedCompany.email}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Phone</Label>
+                <Label className="text-muted-foreground">Telefon</Label>
                 <p className="font-medium">{selectedCompany.phone || "N/A"}</p>
               </div>
               <div>
                 <Label className="text-muted-foreground">
-                  Subscription Tier
+                  Abonnement-Stufe
                 </Label>
                 <p className="font-medium capitalize">
                   {selectedCompany.subscription_tier}
@@ -317,21 +317,21 @@ export default function SuperAdminCompanies() {
               <div>
                 <Label className="text-muted-foreground">Status</Label>
                 <p className="font-medium capitalize">
-                  {selectedCompany.subscription_status}
+                  {selectedCompany.subscription_status === "active" ? "Aktiv" : selectedCompany.subscription_status === "trial" ? "Test" : selectedCompany.subscription_status === "cancelled" ? "Gekündigt" : "Inaktiv"}
                 </p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Max Employees</Label>
+                <Label className="text-muted-foreground">Max. Mitarbeiter</Label>
                 <p className="font-medium">{selectedCompany.max_employees}</p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Created</Label>
+                <Label className="text-muted-foreground">Erstellt</Label>
                 <p className="font-medium">
                   {new Date(selectedCompany.created_at).toLocaleDateString()}
                 </p>
               </div>
               <div>
-                <Label className="text-muted-foreground">Company ID</Label>
+                <Label className="text-muted-foreground">Unternehmens-ID</Label>
                 <p className="font-mono text-xs">{selectedCompany.id}</p>
               </div>
             </div>
@@ -346,15 +346,15 @@ export default function SuperAdminCompanies() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Company</DialogTitle>
+            <DialogTitle>Unternehmen bearbeiten</DialogTitle>
             <DialogDescription>
-              Update subscription settings for {editingCompany?.name}
+              Abonnementeinstellungen für {editingCompany?.name} aktualisieren
             </DialogDescription>
           </DialogHeader>
           {editingCompany && (
             <div className="space-y-4">
               <div>
-                <Label>Subscription Tier</Label>
+                <Label>Abonnement-Stufe</Label>
                 <Select
                   value={editingCompany.subscription_tier}
                   onValueChange={(value: any) =>
@@ -376,7 +376,7 @@ export default function SuperAdminCompanies() {
               </div>
 
               <div>
-                <Label>Subscription Status</Label>
+                <Label>Abonnementstatus</Label>
                 <Select
                   value={editingCompany.subscription_status}
                   onValueChange={(value: any) =>
@@ -390,16 +390,16 @@ export default function SuperAdminCompanies() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="trial">Trial</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="trial">Test</SelectItem>
+                    <SelectItem value="active">Aktiv</SelectItem>
+                    <SelectItem value="inactive">Inaktiv</SelectItem>
+                    <SelectItem value="cancelled">Gekündigt</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label>Max Employees</Label>
+                <Label>Max. Mitarbeiter</Label>
                 <Input
                   type="number"
                   value={editingCompany.max_employees}
@@ -417,9 +417,9 @@ export default function SuperAdminCompanies() {
                   variant="outline"
                   onClick={() => setEditingCompany(null)}
                 >
-                  Cancel
+                  Abbrechen
                 </Button>
-                <Button onClick={handleUpdateCompany}>Save Changes</Button>
+                <Button onClick={handleUpdateCompany}>Änderungen speichern</Button>
               </div>
             </div>
           )}

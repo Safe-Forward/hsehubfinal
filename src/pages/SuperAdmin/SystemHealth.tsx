@@ -130,18 +130,18 @@ export default function SystemHealth() {
         <div className="p-8 space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold mb-2">System Health & Performance</h2>
+                    <h2 className="text-3xl font-bold mb-2">Systemzustand &amp; Leistung</h2>
                     <p className="text-muted-foreground">
-                        Real-time monitoring of platform infrastructure
+                        Echtzeitüberwachung der Plattforminfrastruktur
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <Badge variant="outline" className="h-8">
-                        Live Polling (5s)
+                        Live-Abfrage (5s)
                     </Badge>
                     <Button variant="outline" size="sm" onClick={() => { fetchRealTimeMetrics(); fetchSystemAlerts(); }}>
                         <RotateCcw className="h-4 w-4 mr-2" />
-                        Refresh
+                        Aktualisieren
                     </Button>
                 </div>
             </div>
@@ -152,26 +152,26 @@ export default function SystemHealth() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg flex items-center gap-2">
                             <Server className="h-5 w-5 text-blue-500" />
-                            System Status
+                            Systemstatus
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Server State</span>
+                                <span className="text-sm text-muted-foreground">Serverstatus</span>
                                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex gap-1 items-center px-3 py-1">
                                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                                    Operational
+                                    Betriebsbereit
                                 </Badge>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <span className="text-xs text-muted-foreground block mb-1">Active Conn.</span>
+                                    <span className="text-xs text-muted-foreground block mb-1">Aktive Verbind.</span>
                                     <span className="font-mono font-bold text-2xl">{systemMetrics?.active_connections || "-"}</span>
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                    <span className="text-xs text-muted-foreground block mb-1">Cache Hit</span>
+                                    <span className="text-xs text-muted-foreground block mb-1">Cache-Treffer</span>
                                     <span className={`font-mono font-bold text-2xl ${Number(systemMetrics?.cache_hit_ratio) > 90 ? 'text-green-600' : 'text-amber-600'}`}>
                                         {systemMetrics?.cache_hit_ratio ? `${systemMetrics.cache_hit_ratio}%` : "-"}
                                     </span>
@@ -180,7 +180,7 @@ export default function SystemHealth() {
 
                             <div className="space-y-2">
                                 <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>Database Size</span>
+                                    <span>Datenbankgröße</span>
                                     <span>{formatBytes(systemMetrics?.db_size_bytes || 0)}</span>
                                 </div>
                                 <Progress value={45} className="h-2" />
@@ -195,7 +195,7 @@ export default function SystemHealth() {
                         <div className="flex justify-between items-center">
                             <CardTitle className="text-lg flex items-center gap-2">
                                 <Activity className="h-5 w-5 text-purple-500" />
-                                Live Performance Metrics
+                                Live-Leistungsmetriken
                             </CardTitle>
                         </div>
                     </CardHeader>
@@ -216,7 +216,7 @@ export default function SystemHealth() {
                                         contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', fontSize: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}
                                         labelStyle={{ color: '#64748b' }}
                                     />
-                                    <Area type="monotone" dataKey="connections" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorConn)" name="Active Conn" />
+                                    <Area type="monotone" dataKey="connections" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorConn)" name="Aktive Verbind." />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
@@ -228,7 +228,7 @@ export default function SystemHealth() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-lg flex items-center gap-2">
                             <AlertTriangle className="h-5 w-5 text-amber-500" />
-                            Active System Alerts
+                            Aktive Systemwarnungen
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -261,8 +261,8 @@ export default function SystemHealth() {
                         ) : (
                             <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground bg-slate-50 rounded-lg dashed border-2 border-slate-200">
                                 <CheckCircle className="h-10 w-10 text-green-500 mb-3" />
-                                <p className="font-medium text-slate-900">All systems operational</p>
-                                <p className="text-sm">No active alerts detected</p>
+                                <p className="font-medium text-slate-900">Alle Systeme betriebsbereit</p>
+                                <p className="text-sm">Keine aktiven Warnungen erkannt</p>
                             </div>
                         )}
                     </CardContent>

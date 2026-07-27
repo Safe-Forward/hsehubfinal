@@ -175,12 +175,12 @@ export default function SecurityContent() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-xl font-semibold">Security & Compliance</h3>
-                    <p className="text-sm text-muted-foreground">Full control over critical events and GDPR compliance</p>
+                    <h3 className="text-xl font-semibold">Sicherheit & Compliance</h3>
+                    <p className="text-sm text-muted-foreground">Vollständige Kontrolle über kritische Ereignisse und DSGVO-Compliance</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={fetchSecurityData}>
                     <RefreshCcw className="h-4 w-4 mr-2" />
-                    Refresh
+                    Aktualisieren
                 </Button>
             </div>
 
@@ -188,7 +188,7 @@ export default function SecurityContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Login Anomalies</CardTitle>
+                        <CardTitle className="text-sm font-medium">Anmeldeanomalien</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
@@ -199,56 +199,56 @@ export default function SecurityContent() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Failed Attempts</CardTitle>
+                        <CardTitle className="text-sm font-medium">Fehlgeschlagene Versuche</CardTitle>
                         <UserX className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-600">{securityStats.failedAttempts}</div>
-                        <p className="text-xs text-muted-foreground">Last 24 hours</p>
+                        <p className="text-xs text-muted-foreground">Letzte 24 Stunden</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Rights Changes</CardTitle>
+                        <CardTitle className="text-sm font-medium">Rechteänderungen</CardTitle>
                         <UserCog className="h-4 w-4 text-purple-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{securityStats.rightsChanges}</div>
-                        <p className="text-xs text-muted-foreground">Role modifications</p>
+                        <p className="text-xs text-muted-foreground">Rollenänderungen</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Data Exports</CardTitle>
+                        <CardTitle className="text-sm font-medium">Datenexporte</CardTitle>
                         <Download className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{securityStats.dataExports}</div>
-                        <p className="text-xs text-muted-foreground">Export requests</p>
+                        <p className="text-xs text-muted-foreground">Exportanfragen</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Admin Actions</CardTitle>
+                        <CardTitle className="text-sm font-medium">Admin-Aktionen</CardTitle>
                         <Shield className="h-4 w-4 text-slate-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{securityStats.adminActions}</div>
-                        <p className="text-xs text-muted-foreground">Critical actions</p>
+                        <p className="text-xs text-muted-foreground">Kritische Aktionen</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">GDPR Events</CardTitle>
+                        <CardTitle className="text-sm font-medium">DSGVO-Ereignisse</CardTitle>
                         <FileWarning className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-600">{securityStats.gdprEvents}</div>
-                        <p className="text-xs text-muted-foreground">Compliance requests</p>
+                        <p className="text-xs text-muted-foreground">Compliance-Anfragen</p>
                     </CardContent>
                 </Card>
             </div>
@@ -258,21 +258,21 @@ export default function SecurityContent() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <UserX className="h-5 w-5 text-red-500" />
-                        Failed Login Attempts
+                        Fehlgeschlagene Anmeldeversuche
                     </CardTitle>
                     <CardDescription>
-                        Track multiple failed authentication attempts for anomaly detection
+                        Mehrfache fehlgeschlagene Anmeldeversuche zur Anomalieerkennung verfolgen
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Attempts</TableHead>
-                                <TableHead>Last Attempt</TableHead>
+                                <TableHead>E-Mail</TableHead>
+                                <TableHead>Versuche</TableHead>
+                                <TableHead>Letzter Versuch</TableHead>
                                 <TableHead>Status</TableHead>
-                                <TableHead>Action</TableHead>
+                                <TableHead>Aktion</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -280,7 +280,7 @@ export default function SecurityContent() {
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                                         <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                                        No suspicious login activity detected
+                                        Keine verdächtige Anmeldeaktivität erkannt
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -289,7 +289,7 @@ export default function SecurityContent() {
                                         <TableCell className="font-medium">{login.email}</TableCell>
                                         <TableCell>
                                             <Badge variant={login.attempts >= 5 ? "destructive" : "secondary"}>
-                                                {login.attempts} attempts
+                                                {login.attempts} Versuche
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">
@@ -318,21 +318,21 @@ export default function SecurityContent() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5 text-slate-600" />
-                        Admin Actions & Security Events
+                        Admin-Aktionen & Sicherheitsereignisse
                     </CardTitle>
                     <CardDescription>
-                        Critical administrative actions requiring audit trail
+                        Kritische administrative Aktionen, die eine Prüfspur erfordern
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Event</TableHead>
-                                <TableHead>Actor</TableHead>
-                                <TableHead>Target</TableHead>
-                                <TableHead>Severity</TableHead>
-                                <TableHead>Timestamp</TableHead>
+                                <TableHead>Ereignis</TableHead>
+                                <TableHead>Akteur</TableHead>
+                                <TableHead>Ziel</TableHead>
+                                <TableHead>Schweregrad</TableHead>
+                                <TableHead>Zeitstempel</TableHead>
                                 <TableHead>IP</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -340,7 +340,7 @@ export default function SecurityContent() {
                             {securityEvents.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                        No admin actions recorded
+                                        Keine Admin-Aktionen aufgezeichnet
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -378,10 +378,10 @@ export default function SecurityContent() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <FileWarning className="h-5 w-5 text-green-600" />
-                        GDPR Compliance Events
+                        DSGVO-Compliance-Ereignisse
                     </CardTitle>
                     <CardDescription>
-                        Track data deletion requests, exports, and consent changes
+                        Datenlöschanfragen, Exporte und Zustimmungsänderungen verfolgen
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -390,37 +390,37 @@ export default function SecurityContent() {
                             <div className="flex items-center gap-3">
                                 <CheckCircle className="h-5 w-5 text-green-600" />
                                 <div>
-                                    <p className="font-medium">No Pending GDPR Requests</p>
-                                    <p className="text-sm text-muted-foreground">All data subject requests have been processed</p>
+                                    <p className="font-medium">Keine ausstehenden DSGVO-Anfragen</p>
+                                    <p className="text-sm text-muted-foreground">Alle Betroffenenanfragen wurden bearbeitet</p>
                                 </div>
                             </div>
-                            <Badge variant="outline" className="bg-green-100">Compliant</Badge>
+                            <Badge variant="outline" className="bg-green-100">Konform</Badge>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                             <div className="p-4 bg-slate-50 rounded-lg border">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Download className="h-4 w-4 text-blue-500" />
-                                    <span className="font-medium">Data Exports</span>
+                                    <span className="font-medium">Datenexporte</span>
                                 </div>
                                 <p className="text-2xl font-bold">0</p>
-                                <p className="text-xs text-muted-foreground">Pending requests</p>
+                                <p className="text-xs text-muted-foreground">Ausstehende Anfragen</p>
                             </div>
                             <div className="p-4 bg-slate-50 rounded-lg border">
                                 <div className="flex items-center gap-2 mb-2">
                                     <XCircle className="h-4 w-4 text-red-500" />
-                                    <span className="font-medium">Data Deletions</span>
+                                    <span className="font-medium">Datenlöschungen</span>
                                 </div>
                                 <p className="text-2xl font-bold">0</p>
-                                <p className="text-xs text-muted-foreground">Right to erasure</p>
+                                <p className="text-xs text-muted-foreground">Recht auf Löschung</p>
                             </div>
                             <div className="p-4 bg-slate-50 rounded-lg border">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Key className="h-4 w-4 text-purple-500" />
-                                    <span className="font-medium">Consent Changes</span>
+                                    <span className="font-medium">Zustimmungsänderungen</span>
                                 </div>
                                 <p className="text-2xl font-bold">0</p>
-                                <p className="text-xs text-muted-foreground">This month</p>
+                                <p className="text-xs text-muted-foreground">Diesen Monat</p>
                             </div>
                         </div>
                     </div>

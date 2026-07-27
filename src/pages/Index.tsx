@@ -260,7 +260,7 @@ const Index = () => {
                   <Card className="p-4 border-2 border-blue-100 hover:border-blue-300 transition-colors">
                     <AlertTriangle className="h-8 w-8 text-amber-500 mb-2" />
                     <div className="text-2xl font-bold text-gray-900">98%</div>
-                    <div className="text-xs text-gray-600">Risk Mitigation</div>
+                    <div className="text-xs text-gray-600">Risikominderung</div>
                   </Card>
                   <Card className="p-4 border-2 border-green-100 hover:border-green-300 transition-colors">
                     <CheckCircle className="h-8 w-8 text-green-500 mb-2" />
@@ -270,12 +270,12 @@ const Index = () => {
                   <Card className="p-4 border-2 border-blue-100 hover:border-blue-300 transition-colors">
                     <Clock className="h-8 w-8 text-blue-500 mb-2" />
                     <div className="text-2xl font-bold text-gray-900">60%</div>
-                    <div className="text-xs text-gray-600">Time Saved</div>
+                    <div className="text-xs text-gray-600">Zeitersparnis</div>
                   </Card>
                   <Card className="p-4 border-2 border-green-100 hover:border-green-300 transition-colors">
                     <TrendingUp className="h-8 w-8 text-green-500 mb-2" />
                     <div className="text-2xl font-bold text-gray-900">45%</div>
-                    <div className="text-xs text-gray-600">Incident ↓</div>
+                    <div className="text-xs text-gray-600">Vorfälle ↓</div>
                   </Card>
                 </div>
               </div>

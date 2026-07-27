@@ -628,6 +628,10 @@ const translations = {
     "audits.notesPlaceholder": "Notizen zu diesem Prüfpunkt...",
     "audits.pdfExport": "PDF Export",
     "audits.descriptionPlaceholder": "Beschreibung des Audits...",
+    "audits.checklistTitle": "Audit-Checkliste",
+    "audits.criteria": "Kriterium",
+    "audits.implemented": "Umgesetzt",
+    "audits.satisfied": "Erfüllt",
 
     // Common Actions
     "common.create": "Erstellen",
@@ -2143,6 +2147,10 @@ const translations = {
     "audits.notesPlaceholder": "Notizen zu diesem Prüfpunkt...",
     "audits.pdfExport": "PDF Export",
     "audits.descriptionPlaceholder": "Beschreibung des Audits...",
+    "audits.checklistTitle": "Audit-Checkliste",
+    "audits.criteria": "Kriterium",
+    "audits.implemented": "Umgesetzt",
+    "audits.satisfied": "Erfüllt",
 
     // Common Actions
     "common.create": "Erstellen",

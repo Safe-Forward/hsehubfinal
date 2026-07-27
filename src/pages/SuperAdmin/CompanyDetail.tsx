@@ -68,39 +68,39 @@ const formatLogDescription = (log: any) => {
 
     switch (action) {
         case "create_employee":
-            return details.employee_number ? `Employee #${details.employee_number}` : "New employee";
+            return details.employee_number ? `Mitarbeiter #${details.employee_number}` : "Neuer Mitarbeiter";
         case "update_employee":
-            return "Profile updated";
+            return "Profil aktualisiert";
         case "delete_user":
-            return "Account deleted";
+            return "Konto gelöscht";
         case "login":
-            return details.ip || "User login";
+            return details.ip || "Benutzeranmeldung";
         case "create_incident":
-            return details.severity ? `Severity: ${details.severity}` : "Incident reported";
+            return details.severity ? `Schwere: ${details.severity}` : "Vorfall gemeldet";
         case "update_incident":
-            return details.status ? `Status: ${details.status}` : "Incident updated";
+            return details.status ? `Status: ${details.status}` : "Vorfall aktualisiert";
         case "delete_incident":
-            return "Incident removed";
+            return "Vorfall entfernt";
         case "assign_task":
-            return details.assigned_to ? `Assigned to ${details.assigned_to}` : "Task created";
+            return details.assigned_to ? `Zugewiesen an ${details.assigned_to}` : "Aufgabe erstellt";
         case "complete_task":
-            return "Task completed";
+            return "Aufgabe abgeschlossen";
         case "reopen_task":
-            return "Task reopened";
+            return "Aufgabe wieder geöffnet";
         case "create_audit":
-            return details.iso_code || "Audit created";
+            return details.iso_code || "Prüfung erstellt";
         case "delete_audit":
-            return "Audit removed";
+            return "Prüfung entfernt";
         case "update_custom_reports":
-            return `${details.count || 0} report${details.count !== 1 ? 's' : ''} configured`;
+            return `${details.count || 0} Bericht${details.count !== 1 ? 'e' : ''} konfiguriert`;
         case "block_company":
-            return `Blocked: ${details.reason || "No reason specified"}`;
+            return `Gesperrt: ${details.reason || "Kein Grund angegeben"}`;
         case "unblock_company":
-            return "Company access restored";
+            return "Unternehmenszugang wiederhergestellt";
         case "invoice_correction":
             return `${details.amount} (${details.reason})`;
         case "assign_addon":
-            return `Module: ${details.addon_name || "Unknown"}`;
+            return `Modul: ${details.addon_name || "Unbekannt"}`;
         default:
             const humanAction = action.replace(/_/g, " ");
             return humanAction.charAt(0).toUpperCase() + humanAction.slice(1);
@@ -237,7 +237,7 @@ export default function CompanyDetail() {
             ]);
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -421,8 +421,8 @@ export default function CompanyDetail() {
     const handleAssignAddon = async () => {
         if (!assignForm.addon_id) {
             toast({
-                title: "Error",
-                description: "Please select an add-on",
+                title: "Fehler",
+                description: "Bitte wählen Sie ein Add-on aus",
                 variant: "destructive",
             });
             return;
@@ -470,13 +470,13 @@ export default function CompanyDetail() {
                 p_company_id: id,
             });
 
-            toast({ title: "Success", description: assignForm.is_free ? "Free add-on assigned to company" : "Add-on assigned to company" });
+            toast({ title: "Erfolgreich", description: assignForm.is_free ? "Kostenloses Add-on dem Unternehmen zugewiesen" : "Add-on dem Unternehmen zugewiesen" });
             setIsAssignDialogOpen(false);
             setAssignForm({ addon_id: "", billing_cycle: "monthly", quantity: 1, auto_renew: true, is_free: false });
             fetchAddons(); // Refresh the list
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -485,7 +485,7 @@ export default function CompanyDetail() {
 
     const getUserActivityStatus = () => {
         if (users.length === 0) {
-            return { label: "inactive", color: "red", dotClass: "bg-red-500" };
+            return { label: "inaktiv", color: "red", dotClass: "bg-red-500" };
         }
 
         const activeUsers = users.filter(u => u.last_login_at);
@@ -497,21 +497,21 @@ export default function CompanyDetail() {
             : null;
 
         if (daysUntilExpiry !== null && daysUntilExpiry <= 7 && daysUntilExpiry > 0) {
-            return { label: "about to expire", color: "yellow", dotClass: "bg-yellow-500" };
+            return { label: "läuft bald ab", color: "yellow", dotClass: "bg-yellow-500" };
         }
 
         if (activeRatio < 0.3) {
-            return { label: "inactive", color: "red", dotClass: "bg-red-500" };
+            return { label: "inaktiv", color: "red", dotClass: "bg-red-500" };
         }
 
-        return { label: "active & healthy", color: "green", dotClass: "bg-green-500" };
+        return { label: "aktiv & gesund", color: "green", dotClass: "bg-green-500" };
     };
 
     const handleBlockCompany = async () => {
         if (!blockReason.trim()) {
             toast({
-                title: "Error",
-                description: "Please provide a reason for blocking",
+                title: "Fehler",
+                description: "Bitte geben Sie einen Sperrgrund an",
                 variant: "destructive",
             });
             return;
@@ -541,8 +541,8 @@ export default function CompanyDetail() {
             });
 
             toast({
-                title: "Success",
-                description: "Company blocked successfully",
+                title: "Erfolgreich",
+                description: "Unternehmen gesperrt",
             });
 
             setBlockDialogOpen(false);
@@ -550,7 +550,7 @@ export default function CompanyDetail() {
             fetchCompanyData();
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -581,14 +581,14 @@ export default function CompanyDetail() {
             });
 
             toast({
-                title: "Success",
-                description: "Company unblocked successfully",
+                title: "Erfolgreich",
+                description: "Unternehmen entsperrt",
             });
 
             fetchCompanyData();
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -599,8 +599,8 @@ export default function CompanyDetail() {
         const days = parseInt(trialExtensionDays);
         if (isNaN(days) || days <= 0) {
             toast({
-                title: "Error",
-                description: "Please enter a valid number of days",
+                title: "Fehler",
+                description: "Bitte geben Sie eine gültige Anzahl von Tagen ein",
                 variant: "destructive",
             });
             return;
@@ -639,8 +639,8 @@ export default function CompanyDetail() {
             });
 
             toast({
-                title: "Success",
-                description: `Trial extended by ${days} days`,
+                title: "Erfolgreich",
+                description: `Testphase um ${days} Tage verlängert`,
             });
 
             setExtendTrialDialogOpen(false);
@@ -648,7 +648,7 @@ export default function CompanyDetail() {
             fetchCompanyData();
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -660,8 +660,8 @@ export default function CompanyDetail() {
 
         if (!newPassword || newPassword.length < 8) {
             toast({
-                title: "Error",
-                description: "Password must be at least 8 characters",
+                title: "Fehler",
+                description: "Das Passwort muss mindestens 8 Zeichen lang sein",
                 variant: "destructive",
             });
             return;
@@ -690,8 +690,8 @@ export default function CompanyDetail() {
             });
 
             toast({
-                title: "Success",
-                description: `Password reset for ${selectedUserForReset.email}`,
+                title: "Erfolgreich",
+                description: `Passwort zurückgesetzt für ${selectedUserForReset.email}`,
             });
 
             setResetPasswordDialogOpen(false);
@@ -699,7 +699,7 @@ export default function CompanyDetail() {
             setNewPassword("");
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -728,8 +728,8 @@ export default function CompanyDetail() {
             });
 
             toast({
-                title: "Success",
-                description: `User ${userToDelete.email} deleted successfully`,
+                title: "Erfolgreich",
+                description: `Benutzer ${userToDelete.email} erfolgreich gelöscht`,
             });
 
             setDeleteUserDialogOpen(false);
@@ -737,7 +737,7 @@ export default function CompanyDetail() {
             fetchUsers(); // Refresh list
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -747,8 +747,8 @@ export default function CompanyDetail() {
     const handleInvoiceCorrection = async () => {
         if (!correctionReason.trim() || !correctionAmount.trim()) {
             toast({
-                title: "Error",
-                description: "Please provide both reason and amount",
+                title: "Fehler",
+                description: "Bitte Grund und Betrag angeben",
                 variant: "destructive",
             });
             return;
@@ -757,8 +757,8 @@ export default function CompanyDetail() {
         const amount = parseFloat(correctionAmount);
         if (isNaN(amount)) {
             toast({
-                title: "Error",
-                description: "Please enter a valid amount",
+                title: "Fehler",
+                description: "Bitte geben Sie einen gültigen Betrag ein",
                 variant: "destructive",
             });
             return;
@@ -783,8 +783,8 @@ export default function CompanyDetail() {
             });
 
             toast({
-                title: "Success",
-                description: "Invoice correction logged successfully",
+                title: "Erfolgreich",
+                description: "Rechnungskorrektur erfolgreich protokolliert",
             });
 
             setInvoiceCorrectionDialogOpen(false);
@@ -794,7 +794,7 @@ export default function CompanyDetail() {
             fetchAuditLogs(); // Refresh audit logs
         } catch (error: any) {
             toast({
-                title: "Error",
+                title: "Fehler",
                 description: error.message,
                 variant: "destructive",
             });
@@ -813,7 +813,7 @@ export default function CompanyDetail() {
     if (!company) {
         return (
             <div className="p-8">
-                <p>Company not found</p>
+                <p>Unternehmen nicht gefunden</p>
             </div>
         );
     }
@@ -825,7 +825,7 @@ export default function CompanyDetail() {
                 <Link to="/super-admin/companies">
                     <Button variant="ghost" className="mb-4">
                         <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Companies
+                        Zurück zu Unternehmen
                     </Button>
                 </Link>
 
@@ -847,13 +847,13 @@ export default function CompanyDetail() {
                                                 : "destructive"
                                     }
                                 >
-                                    {company.subscription_status}
+                                    {company.subscription_status === "active" ? "Aktiv" : company.subscription_status === "trial" ? "Test" : company.subscription_status === "cancelled" ? "Gekündigt" : "Inaktiv"}
                                 </Badge>
                                 <Badge variant="outline">{company.subscription_tier}</Badge>
                                 {company.is_blocked && (
                                     <Badge variant="destructive">
                                         <Ban className="w-3 h-3 mr-1" />
-                                        Blocked
+                                        Gesperrt
                                     </Badge>
                                 )}
                             </div>
@@ -866,13 +866,13 @@ export default function CompanyDetail() {
                             variant="outline"
                         >
                             <Clock className="w-4 h-4 mr-2" />
-                            Extend Trial
+                            Testphase verlängern
                         </Button>
 
                         {company.is_blocked ? (
                             <Button onClick={handleUnblockCompany} variant="default">
                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                Unblock Company
+                                Entsperren
                             </Button>
                         ) : (
                             <Button
@@ -880,7 +880,7 @@ export default function CompanyDetail() {
                                 variant="destructive"
                             >
                                 <Ban className="w-4 h-4 mr-2" />
-                                Block Company
+                                Sperren
                             </Button>
                         )}
                     </div>
@@ -890,11 +890,11 @@ export default function CompanyDetail() {
             {/* Tabs */}
             <Tabs defaultValue="overview" className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="users">Users ({users.length})</TabsTrigger>
-                    <TabsTrigger value="billing">Billing</TabsTrigger>
-                    <TabsTrigger value="modules">Modules</TabsTrigger>
-                    <TabsTrigger value="activity">Activity</TabsTrigger>
+                    <TabsTrigger value="overview">Übersicht</TabsTrigger>
+                    <TabsTrigger value="users">Benutzer ({users.length})</TabsTrigger>
+                    <TabsTrigger value="billing">Abrechnung</TabsTrigger>
+                    <TabsTrigger value="modules">Module</TabsTrigger>
+                    <TabsTrigger value="activity">Aktivität</TabsTrigger>
                 </TabsList>
 
                 {/* Overview Tab */}
@@ -910,62 +910,62 @@ export default function CompanyDetail() {
                             <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-2">
                                     <CreditCard className="h-5 w-5" />
-                                    Subscription Details
+                                    Abonnementdetails
                                 </CardTitle>
                                 <Badge
                                     variant={company.subscription_status === "active" ? "default" : company.subscription_status === "trial" ? "secondary" : "destructive"}
                                     className="text-sm px-3 py-1"
                                 >
-                                    {company.subscription_status.toUpperCase()}
+                                    {(company.subscription_status === "active" ? "Aktiv" : company.subscription_status === "trial" ? "Test" : company.subscription_status === "cancelled" ? "Gekündigt" : "Inaktiv").toUpperCase()}
                                 </Badge>
                             </div>
                         </CardHeader>
                         <CardContent>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
-                                    <Label className="text-muted-foreground text-sm">Plan Tier</Label>
+                                    <Label className="text-muted-foreground text-sm">Plan-Stufe</Label>
                                     <p className="text-xl font-bold capitalize">{company.subscription_tier}</p>
                                 </div>
                                 <div>
-                                    <Label className="text-muted-foreground text-sm">Subscription & Trial</Label>
+                                    <Label className="text-muted-foreground text-sm">Abonnement & Test</Label>
                                     {company.subscription_status === "trial" ? (
                                         <>
                                             <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
-                                                Trial - Ends {company.trial_ends_at
-                                                    ? new Date(company.trial_ends_at).toLocaleDateString()
-                                                    : "Not set"}
+                                                Test – endet {company.trial_ends_at
+                                                    ? new Date(company.trial_ends_at).toLocaleDateString("de-DE")
+                                                    : "Nicht gesetzt"}
                                             </p>
                                             {company.trial_ends_at && (
                                                 <p className="text-sm text-orange-600 dark:text-orange-400">
-                                                    {Math.max(0, Math.ceil((new Date(company.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days remaining
+                                                    {Math.max(0, Math.ceil((new Date(company.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} Tage verbleibend
                                                 </p>
                                             )}
                                         </>
                                     ) : company.subscription_status === "cancelled" ? (
                                         <>
-                                            <p className="text-xl font-bold text-red-600 dark:text-red-400">Canceled</p>
+                                            <p className="text-xl font-bold text-red-600 dark:text-red-400">Gekündigt</p>
                                             <p className="text-sm text-red-600 dark:text-red-400">
-                                                Access ends on {company.trial_ends_at ? new Date(company.trial_ends_at).toLocaleDateString() : "N/A"}
+                                                Zugang endet am {company.trial_ends_at ? new Date(company.trial_ends_at).toLocaleDateString("de-DE") : "N/A"}
                                             </p>
                                         </>
                                     ) : (
                                         <>
                                             <p className="text-xl font-bold capitalize text-green-600 dark:text-green-400">
-                                                {company.subscription_status}
+                                                {company.subscription_status === "active" ? "Aktiv" : company.subscription_status === "inactive" ? "Inaktiv" : company.subscription_status}
                                             </p>
                                             <p className="text-sm text-green-600 dark:text-green-400">
-                                                {company.subscription_tier} subscription active
+                                                {company.subscription_tier} Abonnement aktiv
                                             </p>
                                         </>
                                     )}
                                 </div>
                                 <div>
-                                    <Label className="text-muted-foreground text-sm">Max Users</Label>
+                                    <Label className="text-muted-foreground text-sm">Max. Benutzer</Label>
                                     <p className="text-xl font-bold">
                                         {users.length} / {company.max_employees}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {company.max_employees - users.length} slots available
+                                        {company.max_employees - users.length} Plätze verfügbar
                                     </p>
                                 </div>
                             </div>
@@ -975,33 +975,33 @@ export default function CompanyDetail() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                                <CardTitle className="text-sm font-medium">Benutzer gesamt</CardTitle>
                                 <Users className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">{users.length}</div>
                                 <p className="text-xs text-muted-foreground">
-                                    Max: {company.max_employees}
+                                    Max.: {company.max_employees}
                                 </p>
                             </CardContent>
                         </Card>
 
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Active Add-ons</CardTitle>
+                                <CardTitle className="text-sm font-medium">Aktive Add-ons</CardTitle>
                                 <Puzzle className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
                                     {addons.filter((a) => a.status === "active").length}
                                 </div>
-                                <p className="text-xs text-muted-foreground">Total: {addons.length}</p>
+                                <p className="text-xs text-muted-foreground">Gesamt: {addons.length}</p>
                             </CardContent>
                         </Card>
 
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">User Activity</CardTitle>
+                                <CardTitle className="text-sm font-medium">Benutzeraktivität</CardTitle>
                                 <Activity className="h-4 w-4 text-muted-foreground" />
                             </CardHeader>
                             <CardContent>
@@ -1012,7 +1012,7 @@ export default function CompanyDetail() {
                                     </div>
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-2">
-                                    {users.filter(u => u.last_login_at).length} of {users.length} users active
+                                    {users.filter(u => u.last_login_at).length} von {users.length} Benutzer aktiv
                                 </p>
                             </CardContent>
                         </Card>
@@ -1020,39 +1020,39 @@ export default function CompanyDetail() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Company Information</CardTitle>
+                            <CardTitle>Unternehmensinformationen</CardTitle>
                         </CardHeader>
                         <CardContent className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label className="text-muted-foreground">Company ID</Label>
+                                <Label className="text-muted-foreground">Unternehmens-ID</Label>
                                 <p className="font-mono text-sm">{company.id}</p>
                             </div>
                             <div>
-                                <Label className="text-muted-foreground">Phone</Label>
+                                <Label className="text-muted-foreground">Telefon</Label>
                                 <p>{company.phone || "N/A"}</p>
                             </div>
                             <div>
-                                <Label className="text-muted-foreground">Subscription Tier</Label>
+                                <Label className="text-muted-foreground">Abonnement-Stufe</Label>
                                 <p className="capitalize">{company.subscription_tier}</p>
                             </div>
                             <div>
-                                <Label className="text-muted-foreground">Subscription Status</Label>
-                                <p className="capitalize">{company.subscription_status}</p>
+                                <Label className="text-muted-foreground">Abonnementstatus</Label>
+                                <p className="capitalize">{company.subscription_status === "active" ? "Aktiv" : company.subscription_status === "trial" ? "Test" : company.subscription_status === "cancelled" ? "Gekündigt" : "Inaktiv"}</p>
                             </div>
                             {company.trial_ends_at && (
                                 <div>
-                                    <Label className="text-muted-foreground">Trial Ends</Label>
+                                    <Label className="text-muted-foreground">Test endet</Label>
                                     <p>{new Date(company.trial_ends_at).toLocaleDateString()}</p>
                                 </div>
                             )}
                             {company.is_blocked && (
                                 <>
                                     <div className="col-span-2">
-                                        <Label className="text-muted-foreground">Blocked Reason</Label>
+                                        <Label className="text-muted-foreground">Sperrgrund</Label>
                                         <p className="text-destructive">{company.blocked_reason}</p>
                                     </div>
                                     <div>
-                                        <Label className="text-muted-foreground">Blocked At</Label>
+                                        <Label className="text-muted-foreground">Gesperrt am</Label>
                                         <p>{new Date(company.blocked_at!).toLocaleString()}</p>
                                     </div>
                                 </>
@@ -1065,19 +1065,19 @@ export default function CompanyDetail() {
                 <TabsContent value="users">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Company Users</CardTitle>
-                            <CardDescription>All users registered under this company</CardDescription>
+                            <CardTitle>Unternehmensbenutzer</CardTitle>
+                            <CardDescription>Alle unter diesem Unternehmen registrierten Benutzer</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>Last Login</TableHead>
-                                        <TableHead>Failed Logins</TableHead>
-                                        <TableHead>Created</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableHead>Benutzer</TableHead>
+                                        <TableHead>Rolle</TableHead>
+                                        <TableHead>Letzter Login</TableHead>
+                                        <TableHead>Login-Fehler</TableHead>
+                                        <TableHead>Erstellt</TableHead>
+                                        <TableHead className="text-right">Aktionen</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -1095,7 +1095,7 @@ export default function CompanyDetail() {
                                             <TableCell>
                                                 {user.last_login_at
                                                     ? new Date(user.last_login_at).toLocaleString()
-                                                    : "Never"}
+                                                    : "Nie"}
                                             </TableCell>
                                             <TableCell>
                                                 {user.failed_login_count > 0 && (
@@ -1116,7 +1116,7 @@ export default function CompanyDetail() {
                                                         }}
                                                     >
                                                         <Key className="w-4 h-4 mr-2" />
-                                                        Reset
+                                                        Zurücksetzen
                                                     </Button>
                                                     <Button
                                                         variant="ghost"
@@ -1128,7 +1128,7 @@ export default function CompanyDetail() {
                                                         }}
                                                     >
                                                         <Trash2 className="w-4 h-4 mr-2" />
-                                                        Delete
+                                                        Löschen
                                                     </Button>
                                                 </div>
                                             </TableCell>
@@ -1145,23 +1145,23 @@ export default function CompanyDetail() {
                     {/* Invoices Section - NEW */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Invoices</CardTitle>
-                            <CardDescription>View and manage company invoices</CardDescription>
+                            <CardTitle>Rechnungen</CardTitle>
+                            <CardDescription>Unternehmensrechnungen anzeigen und verwalten</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {invoices.length === 0 ? (
                                 <p className="text-center py-8 text-muted-foreground">
-                                    No invoices found
+                                    Keine Rechnungen gefunden
                                 </p>
                             ) : (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Invoice #</TableHead>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Total</TableHead>
+                                            <TableHead>Rechnung #</TableHead>
+                                            <TableHead>Datum</TableHead>
+                                            <TableHead>Gesamt</TableHead>
                                             <TableHead>Status</TableHead>
-                                            <TableHead className="text-right">Actions</TableHead>
+                                            <TableHead className="text-right">Aktionen</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1186,7 +1186,7 @@ export default function CompanyDetail() {
                                                         }}
                                                     >
                                                         <FileEdit className="w-4 h-4 mr-2" />
-                                                        Correct
+                                                        Korrigieren
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -1199,23 +1199,23 @@ export default function CompanyDetail() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Subscription History</CardTitle>
-                            <CardDescription>Changes to subscription plan and status</CardDescription>
+                            <CardTitle>Abonnementverlauf</CardTitle>
+                            <CardDescription>Änderungen am Abonnementplan und -status</CardDescription>
                         </CardHeader>
                         <CardContent>
                             {subscriptionHistory.length === 0 ? (
                                 <p className="text-center py-8 text-muted-foreground">
-                                    No subscription history yet
+                                    Noch kein Abonnementverlauf
                                 </p>
                             ) : (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Action</TableHead>
-                                            <TableHead>From</TableHead>
-                                            <TableHead>To</TableHead>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Notes</TableHead>
+                                            <TableHead>Aktion</TableHead>
+                                            <TableHead>Von</TableHead>
+                                            <TableHead>Nach</TableHead>
+                                            <TableHead>Datum</TableHead>
+                                            <TableHead>Notizen</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1253,32 +1253,32 @@ export default function CompanyDetail() {
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
                                         <FileEdit className="h-5 w-5" />
-                                        Invoice Corrections
+                                        Rechnungskorrekturen
                                     </CardTitle>
-                                    <CardDescription>Manage invoice adjustments and corrections</CardDescription>
+                                    <CardDescription>Rechnungsanpassungen und -korrekturen verwalten</CardDescription>
                                 </div>
                                 <Button
                                     onClick={() => setInvoiceCorrectionDialogOpen(true)}
                                     variant="outline"
                                 >
                                     <FileEdit className="w-4 h-4 mr-2" />
-                                    General Adjustment
+                                    Allgemeine Anpassung
                                 </Button>
                             </div>
                         </CardHeader>
                         <CardContent>
                             {auditLogs.filter(log => log.action_type === "invoice_correction").length === 0 ? (
                                 <p className="text-center py-8 text-muted-foreground">
-                                    No invoice corrections recorded yet
+                                    Noch keine Rechnungskorrekturen erfasst
                                 </p>
                             ) : (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Date</TableHead>
-                                            <TableHead>Reason</TableHead>
-                                            <TableHead>Amount</TableHead>
-                                            <TableHead>Corrected By</TableHead>
+                                            <TableHead>Datum</TableHead>
+                                            <TableHead>Grund</TableHead>
+                                            <TableHead>Betrag</TableHead>
+                                            <TableHead>Korrigiert von</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1309,9 +1309,9 @@ export default function CompanyDetail() {
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
                                         <Puzzle className="h-5 w-5" />
-                                        Active Modules & Add-ons
+                                        Aktive Module &amp; Add-ons
                                     </CardTitle>
-                                    <CardDescription>Modules and add-ons enabled for this company</CardDescription>
+                                    <CardDescription>Für dieses Unternehmen aktivierte Module und Add-ons</CardDescription>
                                 </div>
                                 <Button onClick={() => setIsAssignDialogOpen(true)}>
                                     <ShoppingCart className="w-4 h-4 mr-2" />
@@ -1323,13 +1323,13 @@ export default function CompanyDetail() {
                             {addons.length === 0 ? (
                                 <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
                                     <Puzzle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                                    <h3 className="text-lg font-medium mb-2">No Modules Added</h3>
+                                    <h3 className="text-lg font-medium mb-2">Keine Module hinzugefügt</h3>
                                     <p className="text-muted-foreground mb-4">
-                                        This company has no add-ons or modules enabled yet.
+                                        Dieses Unternehmen hat noch keine Add-ons oder Module aktiviert.
                                     </p>
                                     <Button onClick={() => setIsAssignDialogOpen(true)}>
                                         <ShoppingCart className="w-4 h-4 mr-2" />
-                                        Assign Add-on to Company
+                                        Add-on dem Unternehmen zuweisen
                                     </Button>
                                 </div>
                             ) : (
@@ -1337,9 +1337,9 @@ export default function CompanyDetail() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>Add-on Name</TableHead>
-                                            <TableHead>Price</TableHead>
+                                            <TableHead>Preis</TableHead>
                                             <TableHead>Status</TableHead>
-                                            <TableHead>Activated</TableHead>
+                                            <TableHead>Aktiviert</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1372,30 +1372,30 @@ export default function CompanyDetail() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Activity className="h-5 w-5" />
-                                Company Activity Logs
+                                Unternehmensaktivitätsprotokolle
                             </CardTitle>
                             <CardDescription>
-                                All actions and events recorded for this company's users and system
+                                Alle aufgezeichneten Aktionen und Ereignisse der Benutzer und des Systems dieses Unternehmens
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             {auditLogs.length === 0 ? (
                                 <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
                                     <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                                    <h3 className="text-lg font-medium mb-2">No Activity Yet</h3>
+                                    <h3 className="text-lg font-medium mb-2">Noch keine Aktivität</h3>
                                     <p className="text-muted-foreground">
-                                        Activity logs will appear here when users perform actions in the system.
+                                        Aktivitätsprotokolle erscheinen hier, wenn Benutzer Aktionen im System ausführen.
                                     </p>
                                 </div>
                             ) : (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Action</TableHead>
-                                            <TableHead>Actor</TableHead>
-                                            <TableHead>Target</TableHead>
+                                            <TableHead>Aktion</TableHead>
+                                            <TableHead>Akteur</TableHead>
+                                            <TableHead>Ziel</TableHead>
                                             <TableHead>Details</TableHead>
-                                            <TableHead>Date</TableHead>
+                                            <TableHead>Datum</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1442,29 +1442,28 @@ export default function CompanyDetail() {
             <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Block Company</DialogTitle>
+                        <DialogTitle>Unternehmen sperren</DialogTitle>
                         <DialogDescription>
-                            This will prevent the company from accessing the platform. Please provide a
-                            reason.
+                            Dadurch wird der Zugriff des Unternehmens auf die Plattform verhindert. Bitte geben Sie einen Grund an.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
-                            <Label>Reason for blocking</Label>
+                            <Label>Sperrgrund</Label>
                             <Textarea
                                 value={blockReason}
                                 onChange={(e) => setBlockReason(e.target.value)}
-                                placeholder="e.g., Payment overdue, Terms violation, etc."
+                                placeholder="z.B. Zahlung überfällig, AGB-Verstoß, usw."
                                 rows={4}
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setBlockDialogOpen(false)}>
-                            Cancel
+                            Abbrechen
                         </Button>
                         <Button variant="destructive" onClick={handleBlockCompany}>
-                            Block Company
+                            Unternehmen sperren
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1474,14 +1473,14 @@ export default function CompanyDetail() {
             <Dialog open={extendTrialDialogOpen} onOpenChange={setExtendTrialDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Extend Trial Period</DialogTitle>
+                        <DialogTitle>Testphase verlängern</DialogTitle>
                         <DialogDescription>
-                            Extend the trial period for this company. Enter the number of days to add.
+                            Testphase für dieses Unternehmen verlängern. Geben Sie die Anzahl der Tage ein.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
-                            <Label>Number of days to extend</Label>
+                            <Label>Anzahl der Verlängerungstage</Label>
                             <Input
                                 type="number"
                                 value={trialExtensionDays}
@@ -1491,17 +1490,17 @@ export default function CompanyDetail() {
                             />
                             {company?.trial_ends_at && (
                                 <p className="text-sm text-muted-foreground mt-2">
-                                    Current trial ends: {new Date(company.trial_ends_at).toLocaleDateString()}
+                                    Aktuelles Testende: {new Date(company.trial_ends_at).toLocaleDateString("de-DE")}
                                 </p>
                             )}
                         </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setExtendTrialDialogOpen(false)}>
-                            Cancel
+                            Abbrechen
                         </Button>
                         <Button onClick={handleExtendTrial}>
-                            Extend Trial
+                            Testphase verlängern
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1511,23 +1510,23 @@ export default function CompanyDetail() {
             <Dialog open={resetPasswordDialogOpen} onOpenChange={setResetPasswordDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Reset User Password</DialogTitle>
+                        <DialogTitle>Benutzerpasswort zurücksetzen</DialogTitle>
                         <DialogDescription>
-                            Reset the password for {selectedUserForReset?.full_name} ({selectedUserForReset?.email})
+                            Passwort für {selectedUserForReset?.full_name} ({selectedUserForReset?.email}) zurücksetzen
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
-                            <Label>New Password</Label>
+                            <Label>Neues Passwort</Label>
                             <Input
                                 type="password"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                placeholder="Enter new password (min 8 characters)"
+                                placeholder="Neues Passwort eingeben (min. 8 Zeichen)"
                                 minLength={8}
                             />
                             <p className="text-sm text-muted-foreground mt-2">
-                                Minimum 8 characters required
+                                Mindestens 8 Zeichen erforderlich
                             </p>
                         </div>
                     </div>
@@ -1540,10 +1539,10 @@ export default function CompanyDetail() {
                                 setNewPassword("");
                             }}
                         >
-                            Cancel
+                            Abbrechen
                         </Button>
                         <Button onClick={handleResetPassword} variant="destructive">
-                            Reset Password
+                            Passwort zurücksetzen
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1553,14 +1552,14 @@ export default function CompanyDetail() {
             <Dialog open={invoiceCorrectionDialogOpen} onOpenChange={setInvoiceCorrectionDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Invoice Correction</DialogTitle>
+                        <DialogTitle>Rechnungskorrektur</DialogTitle>
                         <DialogDescription>
-                            Log an invoice correction for {company?.name}. This will create an audit trail.
+                            Rechnungskorrektur für {company?.name} protokollieren. Es wird ein Prüfpfad erstellt.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div>
-                            <Label>Correction Amount (€)</Label>
+                            <Label>Korrekturbetrag (€)</Label>
                             <Input
                                 type="number"
                                 step="0.01"
@@ -1570,11 +1569,11 @@ export default function CompanyDetail() {
                             />
                         </div>
                         <div>
-                            <Label>Reason for Correction</Label>
+                            <Label>Korrekturgrund</Label>
                             <Textarea
                                 value={correctionReason}
                                 onChange={(e) => setCorrectionReason(e.target.value)}
-                                placeholder="e.g., Billing error, Discount applied, Credit issued"
+                                placeholder="z.B. Abrechnungsfehler, Rabatt gewährt, Gutschrift erteilt"
                                 rows={4}
                             />
                         </div>
@@ -1588,10 +1587,10 @@ export default function CompanyDetail() {
                                 setCorrectionAmount("");
                             }}
                         >
-                            Cancel
+                            Abbrechen
                         </Button>
                         <Button onClick={handleInvoiceCorrection}>
-                            Submit Correction
+                            Korrektur einreichen
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1601,15 +1600,15 @@ export default function CompanyDetail() {
             <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Assign Add-on to Company</DialogTitle>
+                        <DialogTitle>Add-on dem Unternehmen zuweisen</DialogTitle>
                         <DialogDescription>
-                            Assign an add-on module to {company?.name}
+                            Ein Add-on-Modul {company?.name} zuweisen
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
-                            <Label>Company</Label>
+                            <Label>Unternehmen</Label>
                             <Input value={company?.name || ""} disabled className="bg-muted" />
                         </div>
 
@@ -1620,7 +1619,7 @@ export default function CompanyDetail() {
                                 onValueChange={(value) => setAssignForm({ ...assignForm, addon_id: value })}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select an add-on..." />
+                                    <SelectValue placeholder="Add-on auswählen..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {availableAddons.map((addon) => (
@@ -1632,14 +1631,14 @@ export default function CompanyDetail() {
                             </Select>
                             {availableAddons.length === 0 && (
                                 <p className="text-xs text-muted-foreground">
-                                    No add-ons available. Create add-ons in the Add-ons Management section first.
+                                    Keine Add-ons verfügbar. Erstellen Sie Add-ons zuerst im Bereich Add-on-Verwaltung.
                                 </p>
                             )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Billing Cycle</Label>
+                                <Label>Abrechnungszeitraum</Label>
                                 <Select
                                     value={assignForm.billing_cycle}
                                     onValueChange={(value) => setAssignForm({ ...assignForm, billing_cycle: value })}
@@ -1648,13 +1647,13 @@ export default function CompanyDetail() {
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="monthly">Monthly</SelectItem>
-                                        <SelectItem value="yearly">Yearly</SelectItem>
+                                        <SelectItem value="monthly">Monatlich</SelectItem>
+                                        <SelectItem value="yearly">Jährlich</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Quantity</Label>
+                                <Label>Menge</Label>
                                 <Input
                                     type="number"
                                     min="1"
@@ -1669,7 +1668,7 @@ export default function CompanyDetail() {
                                 checked={assignForm.auto_renew}
                                 onCheckedChange={(checked) => setAssignForm({ ...assignForm, auto_renew: checked })}
                             />
-                            <Label>Auto-renew subscription</Label>
+                            <Label>Abonnement automatisch verlängern</Label>
                         </div>
 
                         <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-950 rounded-md border border-green-200 dark:border-green-800">
@@ -1678,8 +1677,8 @@ export default function CompanyDetail() {
                                 onCheckedChange={(checked) => setAssignForm({ ...assignForm, is_free: checked })}
                             />
                             <div>
-                                <Label className="text-green-700 dark:text-green-300">Assign as free add-on</Label>
-                                <p className="text-xs text-green-600 dark:text-green-400">No billing will be applied for this add-on</p>
+                                <Label className="text-green-700 dark:text-green-300">Als kostenloses Add-on zuweisen</Label>
+                                <p className="text-xs text-green-600 dark:text-green-400">Für dieses Add-on erfolgt keine Abrechnung</p>
                             </div>
                         </div>
                     </div>
@@ -1692,10 +1691,10 @@ export default function CompanyDetail() {
                                 setAssignForm({ addon_id: "", billing_cycle: "monthly", quantity: 1, auto_renew: true, is_free: false });
                             }}
                         >
-                            Cancel
+                            Abbrechen
                         </Button>
                         <Button onClick={handleAssignAddon} disabled={!assignForm.addon_id}>
-                            Assign Add-on
+                            Add-on zuweisen
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -1705,9 +1704,9 @@ export default function CompanyDetail() {
             <Dialog open={deleteUserDialogOpen} onOpenChange={setDeleteUserDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Delete User</DialogTitle>
+                        <DialogTitle>Benutzer löschen</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete {userToDelete?.full_name} ({userToDelete?.email})? This action cannot be undone.
+                            Möchten Sie {userToDelete?.full_name} ({userToDelete?.email}) wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
@@ -1718,13 +1717,13 @@ export default function CompanyDetail() {
                                 setUserToDelete(null);
                             }}
                         >
-                            Cancel
+                            Abbrechen
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={handleDeleteUser}
                         >
-                            Delete User
+                            Benutzer löschen
                         </Button>
                     </DialogFooter>
                 </DialogContent>

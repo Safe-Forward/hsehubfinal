@@ -116,7 +116,6 @@ export default function Documents() {
           .select(
             `
             *,
-            uploader:uploaded_by(email, user_metadata),
             department:departments(name)
           `
           )

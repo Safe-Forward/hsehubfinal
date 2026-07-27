@@ -275,7 +275,8 @@ export default function MainLayout({ children }: Props) {
       >
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <Link to={userRole === "super_admin" ? "/super-admin/dashboard" : "/dashboard"} className="flex items-center gap-2">
-            <img src="/logo-full.svg" alt="Safe-Forward" className="h-8 relative z-10" />
+            <img src="/logo-full.svg" alt="Safe-Forward" className="h-8 relative z-10 dark:hidden" />
+            <img src="/logo-full-dark.svg" alt="Safe-Forward" className="h-8 relative z-10 hidden dark:block" />
           </Link>
           <Button
             variant="ghost"
@@ -467,7 +468,7 @@ export default function MainLayout({ children }: Props) {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
           <div className="px-4 md:px-6 py-4 flex items-center justify-between">
             <Button
