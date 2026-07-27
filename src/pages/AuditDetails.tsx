@@ -495,12 +495,27 @@ export default function AuditDetails() {
       const doc = new jsPDF();
       const today = new Date().toISOString().split("T")[0];
 
-      doc.setFontSize(16);
-      doc.text(audit.title || "Audit", 14, 18);
+      // --- Company header ---
+      doc.setFontSize(14);
+      doc.setTextColor(34, 197, 94);
+      doc.setFont("helvetica", "bold");
+      doc.text("Safe-Forward", 14, 14);
+      doc.setTextColor(0);
       doc.setFontSize(10);
-      doc.text(`ISO: ${audit.iso_code || "-"}`, 14, 25);
-      doc.text(`Geplant: ${audit.scheduled_date ? new Date(audit.scheduled_date).toLocaleDateString("de-DE") : "-"}`, 70, 25);
-      doc.text(`Fortschritt: ${audit.progress_percentage || 0}%`, 145, 25);
+      doc.setFont("helvetica", "normal");
+      doc.text("HSEHub — Auditbericht", 14, 21);
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, 23, 196, 23);
+
+      // --- Audit meta info (shifted down) ---
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(audit.title || "Audit", 14, 32);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`ISO: ${audit.iso_code || "-"}`, 14, 39);
+      doc.text(`Geplant: ${audit.scheduled_date ? new Date(audit.scheduled_date).toLocaleDateString("de-DE") : "-"}`, 70, 39);
+      doc.text(`Fortschritt: ${audit.progress_percentage || 0}%`, 145, 39);
 
       const rows = checklistItems.map((item) => {
         const sectionNumber = item.iso_criteria_sections?.section_number || "";
@@ -525,7 +540,7 @@ export default function AuditDetails() {
       });
 
       autoTable(doc, {
-        startY: 32,
+        startY: 46,
         head: [["Kriterium", "Umgesetzt", "Erfüllt", "Notizen"]],
         body: rows,
         styles: { fontSize: 8, cellPadding: 2 },
@@ -535,6 +550,15 @@ export default function AuditDetails() {
           1: { cellWidth: 16, halign: "center" },
           2: { cellWidth: 16, halign: "center" },
           3: { cellWidth: 50 },
+        },
+        didDrawPage: (data) => {
+          const pageCount = doc.internal.getNumberOfPages();
+          doc.setFontSize(8);
+          doc.setTextColor(150);
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          doc.text(`Seite ${data.pageNumber} von ${pageCount}`, pageWidth - 14, pageHeight - 8, { align: "right" });
+          doc.setTextColor(0);
         },
       });
 

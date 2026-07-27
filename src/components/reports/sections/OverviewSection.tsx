@@ -557,6 +557,12 @@ export function OverviewSection({
               <CardDescription>{t("reports.overview.incidentTrendsDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1 pb-4 pt-0">
+              {chartData.length === 0 || chartData.every((d) => !d.incidents) ? (
+                <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-3">
+                  <BarChart3 className="w-10 h-10 opacity-30" />
+                  <p className="text-sm">Noch keine Daten vorhanden</p>
+                </div>
+              ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -579,6 +585,7 @@ export function OverviewSection({
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </div>}
