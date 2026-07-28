@@ -2914,8 +2914,11 @@ p_sender_name: senderName,
                     .eq("id", id);
                   if (error) throw error;
 
-                  // Sync positions when department changes
+                  // Sync positions, supervisor and trainings when department changes
+                  const syncResults: string[] = [];
                   if (field === "department_id" && id) {
+
+                    // ── Positions ──────────────────────────────────────────
                     if (prevDeptId) {
                       const { data: oldPos } = await supabase
                         .from("company_positions")
@@ -2946,14 +2949,72 @@ p_sender_name: senderName,
                             })),
                             { onConflict: "employee_id,position_id" }
                           );
+                        syncResults.push(`${newPos.length} Stelle(n) übernommen`);
                       }
+                    }
+
+                    // ── Supervisor from department_managers ────────────────
+                    if (val && companyId) {
+                      const { data: deptMgr } = await (supabase as any)
+                        .from("department_managers")
+                        .select("manager_employee_id, manager_user_id")
+                        .eq("department_id", val)
+                        .eq("company_id", companyId)
+                        .eq("manager_type", "disciplinary")
+                        .maybeSingle();
+
+                      if (deptMgr?.manager_employee_id) {
+                        // Update employee_managers (RLS visibility)
+                        await (supabase as any)
+                          .from("employee_managers")
+                          .upsert(
+                            {
+                              employee_id: id,
+                              manager_employee_id: deptMgr.manager_employee_id,
+                              manager_type: "disciplinary",
+                              company_id: companyId,
+                            },
+                            { onConflict: "employee_id,company_id,manager_type" }
+                          );
+
+                        // Update team_members.line_manager_id (profile display)
+                        if (deptMgr.manager_user_id) {
+                          const { data: empSelf } = await supabase
+                            .from("employees")
+                            .select("user_id")
+                            .eq("id", id)
+                            .single();
+                          const { data: mgrTm } = await supabase
+                            .from("team_members")
+                            .select("id")
+                            .eq("user_id", deptMgr.manager_user_id)
+                            .eq("company_id", companyId)
+                            .maybeSingle();
+                          if (empSelf?.user_id && mgrTm?.id) {
+                            await supabase
+                              .from("team_members")
+                              .update({ line_manager_id: mgrTm.id })
+                              .eq("user_id", empSelf.user_id)
+                              .eq("company_id", companyId);
+                          }
+                        }
+                        syncResults.push("Vorgesetzter aktualisiert");
+                      }
+                    }
+
+                    if (syncResults.length > 0) {
+                      toast.success(`Abteilung geändert – ${syncResults.join(", ")}.`);
                     }
                   }
 
                   if (field === "department_id") {
                     setCoreTrainingsRefreshKey((k) => k + 1);
                   }
-                  toast.success("Erfolgreich aktualisiert.");
+                  if (field !== "department_id") {
+                    toast.success("Erfolgreich aktualisiert.");
+                  } else if (syncResults.length === 0) {
+                    toast.success("Abteilung aktualisiert.");
+                  }
                   setEditMode({ ...editMode, [field]: false });
                   fetchEmployeeData();
                 } catch (e) {

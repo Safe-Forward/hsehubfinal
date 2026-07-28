@@ -166,6 +166,65 @@ export function CoreTrainingsTab({
   }, [employeeId, companyId, refreshKey]);
 
   // -------------------------------------------------------------------------
+  // Shared: build rows from a typeId→mandatory map and set state
+  // -------------------------------------------------------------------------
+
+  async function buildRowsFromTypeMap(typeMap: Map<string, boolean>) {
+    const trainingTypeIds = Array.from(typeMap.keys());
+    if (trainingTypeIds.length === 0) { setRows([]); return; }
+
+    const { data: typesData } = await supabase
+      .from("training_types")
+      .select("id, name, validity_months")
+      .in("id", trainingTypeIds)
+      .order("name");
+
+    const trainingTypes: TrainingType[] = ((typesData as any[]) || []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      validityMonths: t.validity_months ?? 12,
+      isMandatory: typeMap.get(t.id) ?? true,
+    }));
+
+    const { data: recordsData } = await supabase
+      .from("training_records")
+      .select("id, training_type_id, status, completion_date, expiry_date")
+      .eq("employee_id", employeeId)
+      .eq("company_id", companyId);
+
+    const recordsByTypeId: Record<string, TrainingRecord> = {};
+    ((recordsData as TrainingRecord[]) || []).forEach((r) => {
+      const prev = recordsByTypeId[r.training_type_id];
+      if (!prev || (r.completion_date && (!prev.completion_date || r.completion_date > prev.completion_date))) {
+        recordsByTypeId[r.training_type_id] = r;
+      }
+    });
+
+    const combined: TrainingRow[] = trainingTypes.map((tt) => ({
+      trainingType: tt,
+      record: recordsByTypeId[tt.id] ?? null,
+    }));
+
+    const reqTypeIdSet = new Set(trainingTypeIds);
+    const manualTypeIds = Object.keys(recordsByTypeId).filter((id) => !reqTypeIdSet.has(id));
+    if (manualTypeIds.length > 0) {
+      const { data: manualTypesData } = await supabase
+        .from("training_types")
+        .select("id, name, validity_months")
+        .in("id", manualTypeIds)
+        .order("name");
+      ((manualTypesData as any[]) || []).forEach((t) => {
+        combined.push({
+          trainingType: { id: t.id, name: t.name, validityMonths: t.validity_months ?? 12, isMandatory: false },
+          record: recordsByTypeId[t.id] ?? null,
+        });
+      });
+    }
+
+    setRows(combined);
+  }
+
+  // -------------------------------------------------------------------------
   // Data fetching — driven by position_training_requirements
   // -------------------------------------------------------------------------
 
@@ -216,8 +275,21 @@ export function CoreTrainingsTab({
         }
 
         if (positionIds.length === 0) {
-          setNoPosition(true);
-          setRows([]);
+          // Fallback: check department_training_requirements directly
+          const { data: dtrData } = await (supabase as any)
+            .from("department_training_requirements")
+            .select("training_type_id, is_mandatory")
+            .eq("department_id", deptId || "")
+            .eq("company_id", companyId);
+
+          if (dtrData && dtrData.length > 0) {
+            await buildRowsFromTypeMap(
+              new Map((dtrData as any[]).map((r) => [r.training_type_id, r.is_mandatory ?? true]))
+            );
+          } else {
+            setNoPosition(true);
+            setRows([]);
+          }
           return;
         }
       }
@@ -240,74 +312,7 @@ export function CoreTrainingsTab({
         typeMap.set(r.training_type_id, prev || r.is_mandatory);
       });
 
-      const trainingTypeIds = Array.from(typeMap.keys());
-
-      // 3. Training type details
-      const { data: typesData } = await supabase
-        .from("training_types")
-        .select("id, name, validity_months")
-        .in("id", trainingTypeIds)
-        .order("name");
-
-      const trainingTypes: TrainingType[] = ((typesData as any[]) || []).map((t) => ({
-        id: t.id,
-        name: t.name,
-        validityMonths: t.validity_months ?? 12,
-        isMandatory: typeMap.get(t.id) ?? true,
-      }));
-
-      // 4. ALL training records for this employee (position-based + manually added)
-      const { data: recordsData } = await supabase
-        .from("training_records")
-        .select("id, training_type_id, status, completion_date, expiry_date")
-        .eq("employee_id", employeeId)
-        .eq("company_id", companyId);
-
-      // Keep the most recent completed record per training type
-      const recordsByTypeId: Record<string, TrainingRecord> = {};
-      ((recordsData as TrainingRecord[]) || []).forEach((r) => {
-        const prev = recordsByTypeId[r.training_type_id];
-        if (
-          !prev ||
-          (r.completion_date && (!prev.completion_date || r.completion_date > prev.completion_date))
-        ) {
-          recordsByTypeId[r.training_type_id] = r;
-        }
-      });
-
-      // 5. Build rows from position requirements
-      const combined: TrainingRow[] = trainingTypes.map((tt) => ({
-        trainingType: tt,
-        record: recordsByTypeId[tt.id] ?? null,
-      }));
-
-      // 6. Add manually entered records that are NOT part of position requirements
-      const positionTypeIdSet = new Set(trainingTypeIds);
-      const manualTypeIds = Object.keys(recordsByTypeId).filter(
-        (id) => !positionTypeIdSet.has(id)
-      );
-
-      if (manualTypeIds.length > 0) {
-        const { data: manualTypesData } = await supabase
-          .from("training_types")
-          .select("id, name, validity_months")
-          .in("id", manualTypeIds)
-          .order("name");
-
-        ((manualTypesData as any[]) || []).forEach((t) => {
-          combined.push({
-            trainingType: {
-              id: t.id,
-              name: t.name,
-              validityMonths: t.validity_months ?? 12,
-              isMandatory: false,
-            },
-            record: recordsByTypeId[t.id] ?? null,
-          });
-        });
-      }
-
-      setRows(combined);
+      await buildRowsFromTypeMap(typeMap);
     } catch (err: any) {
       console.warn("Kernschulungen konnten nicht geladen werden:", err.message);
     } finally {
