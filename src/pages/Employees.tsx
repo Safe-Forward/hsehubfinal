@@ -177,8 +177,6 @@ export default function Employees() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [companyId, loading, user, navigate, permissionsLoading]);
 
-  useRealtimeRefetch(["employees"], companyId, fetchEmployees);
-
   const fetchDepartments = async () => {
     if (!companyId) return;
     const { data, error } = await supabase
@@ -250,6 +248,9 @@ export default function Employees() {
     setEmployees(allRows);
     setLoadingEmployees(false);
   };
+
+  // Nach fetchEmployees definiert, damit kein TDZ-Fehler beim Übergeben als Argument
+  useRealtimeRefetch(["employees"], companyId, fetchEmployees);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -91,8 +91,6 @@ export default function Audits() {
     }
   }, [user, loading, navigate, companyId]);
 
-  useRealtimeRefetch(["audits"], companyId, fetchData);
-
   const fetchData = async () => {
     if (!companyId) return;
 
@@ -166,6 +164,8 @@ export default function Audits() {
       setLoadingData(false);
     }
   };
+
+  useRealtimeRefetch(["audits"], companyId, fetchData);
 
   const createAudit = async () => {
     if (!companyId) return;
