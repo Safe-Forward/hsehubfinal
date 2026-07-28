@@ -54,7 +54,7 @@ export default function MainLayout({ children }: Props) {
   const { canAccessFeature } = useSubscriptionLimits();
   const location = useLocation();
   const navigate = useNavigate();
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);

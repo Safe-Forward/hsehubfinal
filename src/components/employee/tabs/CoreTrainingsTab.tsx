@@ -155,6 +155,11 @@ export function CoreTrainingsTab({
   const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
   const [preselectedTypeId, setPreselectedTypeId] = useState<string | null>(null);
 
+  const [positionPickerOpen, setPositionPickerOpen] = useState(false);
+  const [availablePositions, setAvailablePositions] = useState<{ id: string; name: string }[]>([]);
+  const [loadingPositions, setLoadingPositions] = useState(false);
+  const [assigningPosition, setAssigningPosition] = useState(false);
+
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -307,6 +312,42 @@ export function CoreTrainingsTab({
       console.warn("Kernschulungen konnten nicht geladen werden:", err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Position picker
+  // -------------------------------------------------------------------------
+
+  async function openPositionPicker() {
+    setPositionPickerOpen(true);
+    setLoadingPositions(true);
+    try {
+      const { data } = await supabase
+        .from("company_positions")
+        .select("id, name")
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .order("name");
+      setAvailablePositions((data as any[]) || []);
+    } finally {
+      setLoadingPositions(false);
+    }
+  }
+
+  async function assignPosition(positionId: string) {
+    setAssigningPosition(true);
+    try {
+      await supabase.from("employee_positions").upsert(
+        { employee_id: employeeId, position_id: positionId, is_primary: false },
+        { onConflict: "employee_id,position_id" }
+      );
+      setPositionPickerOpen(false);
+      await fetchData();
+    } catch (err: any) {
+      toast.error("Fehler beim Zuweisen der Stelle: " + err.message);
+    } finally {
+      setAssigningPosition(false);
     }
   }
 
@@ -516,9 +557,19 @@ export function CoreTrainingsTab({
             <div className="text-center py-10 text-muted-foreground">
               <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-40" />
               <p className="font-medium">Keine Stelle zugewiesen</p>
-              <p className="text-sm mt-1">
-                Weisen Sie dem Mitarbeiter eine Stelle zu, damit die Kernschulungen automatisch erscheinen.
+              <p className="text-sm mt-1 mb-4">
+                Weisen Sie eine Stelle zu, damit die Kernschulungen automatisch erscheinen.
+                <br />
+                <span className="text-xs opacity-70">
+                  Tipp: In <em>Einstellungen → Stellen & Schulungen</em> können Stellen einer Abteilung zugeordnet werden.
+                </span>
               </p>
+              {canEdit && (
+                <Button size="sm" onClick={openPositionPicker}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Stelle manuell zuweisen
+                </Button>
+              )}
             </div>
           ) : rows.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
@@ -711,6 +762,46 @@ export function CoreTrainingsTab({
                 </>
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Position picker dialog */}
+      <Dialog open={positionPickerOpen} onOpenChange={setPositionPickerOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Stelle zuweisen</DialogTitle>
+            <DialogDescription>
+              Wählen Sie eine Stelle aus. Die zugehörigen Kernschulungen werden automatisch übernommen.
+            </DialogDescription>
+          </DialogHeader>
+          {loadingPositions ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              Lade Stellen...
+            </div>
+          ) : availablePositions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              Keine aktiven Stellen gefunden. Bitte zuerst unter <em>Einstellungen → Stellen & Schulungen</em> Stellen anlegen.
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {availablePositions.map((pos) => (
+                <Button
+                  key={pos.id}
+                  variant="outline"
+                  className="w-full justify-start text-left"
+                  disabled={assigningPosition}
+                  onClick={() => assignPosition(pos.id)}
+                >
+                  {assigningPosition ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  {pos.name}
+                </Button>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPositionPickerOpen(false)}>Abbrechen</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
