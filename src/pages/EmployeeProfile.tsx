@@ -2904,6 +2904,7 @@ p_sender_name: senderName,
               }))}
               value={formData[field as keyof EmployeeData] as string}
               onValueChange={async (val) => {
+                const prevDeptId = field === "department_id" ? formData.department_id : null;
                 setFormData({ ...formData, [field]: val });
                 try {
                   const { error } = await (supabase as any)
@@ -2911,6 +2912,43 @@ p_sender_name: senderName,
                     .update({ [field]: val })
                     .eq("id", id);
                   if (error) throw error;
+
+                  // Sync positions when department changes
+                  if (field === "department_id" && id) {
+                    if (prevDeptId) {
+                      const { data: oldPos } = await supabase
+                        .from("company_positions")
+                        .select("id")
+                        .eq("department_id", prevDeptId);
+                      if (oldPos && oldPos.length > 0) {
+                        await supabase
+                          .from("employee_positions")
+                          .delete()
+                          .eq("employee_id", id)
+                          .in("position_id", oldPos.map((p: any) => p.id));
+                      }
+                    }
+                    if (val) {
+                      const { data: newPos } = await supabase
+                        .from("company_positions")
+                        .select("id")
+                        .eq("department_id", val)
+                        .eq("is_active", true);
+                      if (newPos && newPos.length > 0) {
+                        await supabase
+                          .from("employee_positions")
+                          .upsert(
+                            newPos.map((p: any) => ({
+                              employee_id: id,
+                              position_id: p.id,
+                              is_primary: false,
+                            })),
+                            { onConflict: "employee_id,position_id" }
+                          );
+                      }
+                    }
+                  }
+
                   toast.success("Erfolgreich aktualisiert.");
                   setEditMode({ ...editMode, [field]: false });
                   fetchEmployeeData();

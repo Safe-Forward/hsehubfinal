@@ -47,6 +47,13 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Position {
   id: string;
@@ -54,7 +61,13 @@ interface Position {
   name: string;
   description: string | null;
   is_active: boolean;
+  department_id: string | null;
   created_at: string;
+}
+
+interface Department {
+  id: string;
+  name: string;
 }
 
 interface TrainingType {
@@ -77,7 +90,7 @@ interface Props {
   companyId: string;
 }
 
-const emptyPositionForm = { name: "", description: "" };
+const emptyPositionForm = { name: "", description: "", department_id: "" };
 
 const POSITION_CATALOG = [
   // ── Produktion & Technik ──────────────────────────────────────────────────
@@ -298,6 +311,7 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
   const [positions, setPositions] = useState<Position[]>([]);
   const [trainingTypes, setTrainingTypes] = useState<TrainingType[]>([]);
   const [requirements, setRequirements] = useState<Record<string, PositionRequirement[]>>({});
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedPositions, setExpandedPositions] = useState<Set<string>>(new Set());
 
@@ -312,6 +326,13 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
   const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);
   const [selectedTrainings, setSelectedTrainings] = useState<Set<string>>(new Set());
   const [savingTrainings, setSavingTrainings] = useState(false);
+
+  // Inline new training creation within assignment dialog
+  const emptyNewTraining = { name: "", duration_hours: "", validity_months: "" };
+  const [showNewTrainingForm, setShowNewTrainingForm] = useState(false);
+  const [newTrainingForm, setNewTrainingForm] = useState(emptyNewTraining);
+  const [creatingTraining, setCreatingTraining] = useState(false);
+  const [trainingSearch, setTrainingSearch] = useState("");
 
   // Delete
   const [deletePositionId, setDeletePositionId] = useState<string | null>(null);
@@ -329,14 +350,23 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
 
   async function fetchAll() {
     setLoading(true);
-    await Promise.all([fetchPositions(), fetchTrainingTypes()]);
+    await Promise.all([fetchPositions(), fetchTrainingTypes(), fetchDepartments()]);
     setLoading(false);
+  }
+
+  async function fetchDepartments() {
+    const { data } = await supabase
+      .from("departments")
+      .select("id, name")
+      .eq("company_id", companyId)
+      .order("name");
+    setDepartments(data || []);
   }
 
   async function fetchPositions() {
     const { data, error } = await supabase
       .from("company_positions")
-      .select("*")
+      .select("id, company_id, name, description, is_active, department_id, created_at")
       .eq("company_id", companyId)
       .order("name");
     if (error) {
@@ -400,7 +430,7 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
 
   function openEditPosition(p: Position) {
     setEditingPositionId(p.id);
-    setPositionForm({ name: p.name, description: p.description || "" });
+    setPositionForm({ name: p.name, description: p.description || "", department_id: p.department_id || "" });
     setPositionDialogOpen(true);
   }
 
@@ -414,6 +444,7 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
       company_id: companyId,
       name: positionForm.name.trim(),
       description: positionForm.description.trim() || null,
+      department_id: positionForm.department_id || null,
     };
     let error;
     if (editingPositionId) {
@@ -473,7 +504,39 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
     setSelectedPositionId(positionId);
     const existing = (requirements[positionId] || []).map((r) => r.training_type_id);
     setSelectedTrainings(new Set(existing));
+    setShowNewTrainingForm(false);
+    setNewTrainingForm(emptyNewTraining);
+    setTrainingSearch("");
     setTrainingDialogOpen(true);
+  }
+
+  async function handleCreateNewTraining() {
+    if (!newTrainingForm.name.trim()) {
+      toast({ title: "Name ist erforderlich", variant: "destructive" });
+      return;
+    }
+    setCreatingTraining(true);
+    const { data, error } = await supabase
+      .from("training_types")
+      .insert([{
+        company_id: companyId,
+        name: newTrainingForm.name.trim(),
+        description: null,
+        duration_hours: newTrainingForm.duration_hours ? Number(newTrainingForm.duration_hours) : null,
+        validity_months: newTrainingForm.validity_months ? Number(newTrainingForm.validity_months) : null,
+      }])
+      .select("id, name, description, duration_hours, validity_months")
+      .single();
+    if (error) {
+      toast({ title: "Fehler beim Erstellen", description: error.message, variant: "destructive" });
+    } else {
+      setTrainingTypes((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedTrainings((prev) => new Set([...prev, data.id]));
+      setNewTrainingForm(emptyNewTraining);
+      setShowNewTrainingForm(false);
+      toast({ title: `Schulung "${data.name}" erstellt und ausgewählt` });
+    }
+    setCreatingTraining(false);
   }
 
   function toggleTraining(trainingId: string) {
@@ -688,6 +751,11 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
                             <Badge variant="outline" className="text-xs">
                               {reqs.length} Schulung{reqs.length !== 1 ? "en" : ""}
                             </Badge>
+                            {position.department_id && (
+                              <Badge variant="secondary" className="text-xs">
+                                {departments.find((d) => d.id === position.department_id)?.name || ""}
+                              </Badge>
+                            )}
                           </div>
                           {position.description && (
                             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
@@ -929,8 +997,28 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
                 placeholder="Kurze Beschreibung der Stelle (optional)"
                 value={positionForm.description}
                 onChange={(e) => setPositionForm((f) => ({ ...f, description: e.target.value }))}
-                rows={3}
+                rows={2}
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Abteilung (optional)</Label>
+              <Select
+                value={positionForm.department_id || "none"}
+                onValueChange={(v) => setPositionForm((f) => ({ ...f, department_id: v === "none" ? "" : v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Abteilung zuweisen..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Keine Abteilung</SelectItem>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Mitarbeiter dieser Abteilung erhalten diese Stelle automatisch zugewiesen.
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -946,63 +1034,141 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
 
       {/* Training Assignment Dialog */}
       <Dialog open={trainingDialogOpen} onOpenChange={setTrainingDialogOpen}>
-        <DialogContent className="sm:max-w-md flex flex-col max-h-[85vh]">
+        <DialogContent className="sm:max-w-lg flex flex-col max-h-[90vh]">
           <DialogHeader className="shrink-0">
             <DialogTitle>Schulungen zuordnen</DialogTitle>
             <DialogDescription>
-              Wähle die Pflicht-Schulungen für diese Stelle aus.
+              Wähle bestehende Schulungen aus oder erstelle neue.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto py-2 min-h-0">
+
+          {/* Search + create button */}
+          <div className="shrink-0 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Schulung suchen..."
+                value={trainingSearch}
+                onChange={(e) => setTrainingSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 gap-1"
+              onClick={() => setShowNewTrainingForm((v) => !v)}
+            >
+              <Plus className="h-4 w-4" />
+              Neue Schulung
+            </Button>
+          </div>
+
+          {/* Inline new training form */}
+          {showNewTrainingForm && (
+            <div className="shrink-0 rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <p className="text-xs font-semibold text-primary">Neue Schulung erstellen</p>
+              <Input
+                placeholder="Name der Schulung *"
+                value={newTrainingForm.name}
+                onChange={(e) => setNewTrainingForm((f) => ({ ...f, name: e.target.value }))}
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Dauer (Std.)"
+                  type="number"
+                  min={0}
+                  value={newTrainingForm.duration_hours}
+                  onChange={(e) => setNewTrainingForm((f) => ({ ...f, duration_hours: e.target.value }))}
+                />
+                <Input
+                  placeholder="Gültigkeit (Monate)"
+                  type="number"
+                  min={0}
+                  value={newTrainingForm.validity_months}
+                  onChange={(e) => setNewTrainingForm((f) => ({ ...f, validity_months: e.target.value }))}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleCreateNewTraining}
+                  disabled={creatingTraining || !newTrainingForm.name.trim()}
+                  className="gap-1"
+                >
+                  {creatingTraining ? "Erstellen..." : "Erstellen & auswählen"}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setShowNewTrainingForm(false); setNewTrainingForm(emptyNewTraining); }}>
+                  Abbrechen
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto min-h-0">
             {trainingTypes.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">
-                Keine Schulungstypen vorhanden. Erstelle zuerst Schulungstypen im Schulungskatalog.
-              </p>
+              <div className="text-center py-8 text-muted-foreground">
+                <BookOpen className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Noch keine Schulungen vorhanden.</p>
+                <p className="text-xs mt-1">Klicke auf &ldquo;Neue Schulung&rdquo;, um eine zu erstellen.</p>
+              </div>
             ) : (
-              <div className="space-y-2 pr-2">
-                {trainingTypes.map((tt) => {
-                  const checked = selectedTrainings.has(tt.id);
-                  return (
-                    <div
-                      key={tt.id}
-                      className={`flex items-start gap-3 rounded-md border px-3 py-2.5 cursor-pointer transition-colors ${
-                        checked ? "bg-primary/5 border-primary/30" : "hover:bg-muted/50"
-                      }`}
-                      onClick={() => toggleTraining(tt.id)}
-                    >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={() => toggleTraining(tt.id)}
-                        className="mt-0.5"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium">{tt.name}</span>
-                          {checked && (
-                            <CheckCircle className="h-3.5 w-3.5 text-primary" />
+              <div className="space-y-1.5 pr-1 py-1">
+                {trainingTypes
+                  .filter((tt) =>
+                    !trainingSearch || tt.name.toLowerCase().includes(trainingSearch.toLowerCase())
+                  )
+                  .map((tt) => {
+                    const checked = selectedTrainings.has(tt.id);
+                    return (
+                      <div
+                        key={tt.id}
+                        className={`flex items-start gap-3 rounded-md border px-3 py-2.5 cursor-pointer transition-colors ${
+                          checked ? "bg-primary/5 border-primary/30" : "hover:bg-muted/50"
+                        }`}
+                        onClick={() => toggleTraining(tt.id)}
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={() => toggleTraining(tt.id)}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium">{tt.name}</span>
+                            {checked && (
+                              <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                            )}
+                          </div>
+                          {tt.description && (
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                              {tt.description}
+                            </p>
                           )}
-                        </div>
-                        {tt.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                            {tt.description}
-                          </p>
-                        )}
-                        <div className="flex gap-3 mt-1">
-                          {tt.duration_hours && (
-                            <span className="text-xs text-muted-foreground">
-                              {tt.duration_hours} Std.
-                            </span>
-                          )}
-                          {tt.validity_months && (
-                            <span className="text-xs text-muted-foreground">
-                              Gültigkeit: {tt.validity_months} Monate
-                            </span>
-                          )}
+                          <div className="flex gap-3 mt-1">
+                            {tt.duration_hours && (
+                              <span className="text-xs text-muted-foreground">
+                                {tt.duration_hours} Std.
+                              </span>
+                            )}
+                            {tt.validity_months && (
+                              <span className="text-xs text-muted-foreground">
+                                Gültigkeit: {tt.validity_months} Monate
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                {trainingSearch && trainingTypes.filter((tt) =>
+                  tt.name.toLowerCase().includes(trainingSearch.toLowerCase())
+                ).length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    Keine Schulung gefunden. Erstelle eine neue mit dem Button oben.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -1012,7 +1178,7 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
             </Button>
             <Button
               onClick={handleSaveTrainings}
-              disabled={savingTrainings || trainingTypes.length === 0}
+              disabled={savingTrainings}
             >
               {savingTrainings ? "Speichern..." : `${selectedTrainings.size} Schulung${selectedTrainings.size !== 1 ? "en" : ""} zuordnen`}
             </Button>

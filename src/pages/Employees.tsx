@@ -298,6 +298,25 @@ export default function Employees() {
         return;
       }
 
+      // Auto-assign positions from the selected department
+      if (formData.department_id && (data as any)?.id) {
+        const { data: deptPositions } = await supabase
+          .from("company_positions")
+          .select("id")
+          .eq("department_id", formData.department_id)
+          .eq("is_active", true);
+        if (deptPositions && deptPositions.length > 0) {
+          await supabase.from("employee_positions").upsert(
+            deptPositions.map((p: any) => ({
+              employee_id: (data as any).id,
+              position_id: p.id,
+              is_primary: false,
+            })),
+            { onConflict: "employee_id,position_id" }
+          );
+        }
+      }
+
       // Create audit log
       logAction({
         action: "create_employee",

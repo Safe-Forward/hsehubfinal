@@ -519,10 +519,10 @@ export default function MainLayout({ children }: Props) {
                   >
                     <div className="flex items-center">
                       <Globe className="w-4 h-4 mr-2" />
-                      Sprache
+                      {t("nav.language")}
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {language === "en" ? "EN" : "DE"}
+                    <span className="text-xs font-medium text-primary">
+                      {language === "en" ? "→ DE" : "→ EN"}
                     </span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

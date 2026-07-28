@@ -32,6 +32,17 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="theme-color" content="#161B33" />
 
+    <!-- Dark mode sync: must run before React to prevent white flash -->
+    <script>
+      (function() {
+        try {
+          if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch(e) {}
+      })();
+    </script>
+
     <!-- ── Schema.org: SoftwareApplication ── -->
     <script type="application/ld+json">
     {

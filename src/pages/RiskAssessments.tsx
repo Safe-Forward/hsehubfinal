@@ -2332,81 +2332,241 @@ export default function RiskAssessments() {
                     });
 
                     try {
-                      // Find the dialog content element
-                      const dialogElement = document.querySelector('[role="dialog"]') as HTMLElement;
+                      const risk = selectedRisk;
+                      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+                      const pw = doc.internal.pageSize.getWidth();
+                      const ph = doc.internal.pageSize.getHeight();
+                      const margin = 14;
+                      let y = 12;
 
-                      if (!dialogElement) {
-                        throw new Error("Dialog not found");
+                      const addFooter = () => {
+                        const pages = doc.internal.getNumberOfPages();
+                        for (let i = 1; i <= pages; i++) {
+                          doc.setPage(i);
+                          doc.setFontSize(8);
+                          doc.setTextColor(150);
+                          doc.text(`Gefährdungsbeurteilung — Safe Forward HSEHub`, margin, ph - 8);
+                          doc.text(`Seite ${i} von ${pages}`, pw - margin, ph - 8, { align: "right" });
+                        }
+                      };
+
+                      const checkPage = (needed: number) => {
+                        if (y + needed > ph - 18) {
+                          doc.addPage();
+                          y = 14;
+                        }
+                      };
+
+                      // ── Header ────────────────────────────────────────────
+                      doc.setFontSize(12);
+                      doc.setTextColor(34, 197, 94);
+                      doc.setFont("helvetica", "bold");
+                      doc.text("Safe-Forward", margin, y);
+                      doc.setTextColor(100);
+                      doc.setFontSize(8);
+                      doc.setFont("helvetica", "normal");
+                      doc.text("HSEHub — Arbeitssicherheitsmanagement", margin, y + 6);
+                      doc.setDrawColor(220, 220, 220);
+                      doc.line(margin, y + 9, pw - margin, y + 9);
+                      y += 16;
+
+                      // ── Document title ────────────────────────────────────
+                      doc.setFontSize(20);
+                      doc.setFont("helvetica", "bold");
+                      doc.setTextColor(0);
+                      doc.text("Gefährdungsbeurteilung", margin, y);
+                      y += 8;
+                      doc.setFontSize(10);
+                      doc.setFont("helvetica", "normal");
+                      doc.setTextColor(80);
+                      doc.text(`Erstellt am: ${new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" })}`, margin, y);
+                      y += 10;
+
+                      // ── Meta info table ───────────────────────────────────
+                      const riskLevelLabel = (score: number) => {
+                        const lvl = getRiskLevel(score);
+                        return ({ critical: "Kritisch", high: "Hoch", medium: "Mittel", low: "Niedrig" } as Record<string,string>)[lvl] ?? lvl;
+                      };
+                      const statusLabel = (s: string) =>
+                        s === "open" ? "Offen" : s === "in_progress" ? "In Bearbeitung" : s === "completed" ? "Abgeschlossen" : s || "—";
+
+                      autoTable(doc, {
+                        startY: y,
+                        body: [
+                          ["Titel", risk.title || "—", "Status", statusLabel(risk.status || "")],
+                          ["Bewertungsdatum", risk.assessment_date ? new Date(risk.assessment_date).toLocaleDateString("de-DE") : "—", "Gefährdungskategorie", risk.hazard_category || "—"],
+                          ["Abteilung", risk.departments?.name || "—", "Standort", risk.locations?.name || "—"],
+                          ["Exponierte Gruppe", risk.exposure_groups?.name || "—", "Risikostufe", risk.risk_level ? riskLevelLabel(risk.risk_score_before || 0) : "—"],
+                        ],
+                        columnStyles: {
+                          0: { fontStyle: "bold", cellWidth: 42, fillColor: [245, 247, 250] },
+                          1: { cellWidth: 54 },
+                          2: { fontStyle: "bold", cellWidth: 42, fillColor: [245, 247, 250] },
+                          3: { cellWidth: 44 },
+                        },
+                        styles: { fontSize: 9, cellPadding: 3 },
+                        theme: "plain",
+                      });
+                      y = (doc as any).lastAutoTable.finalY + 8;
+
+                      // ── Description ───────────────────────────────────────
+                      if (risk.description) {
+                        checkPage(20);
+                        doc.setFontSize(10);
+                        doc.setFont("helvetica", "bold");
+                        doc.setTextColor(0);
+                        doc.text("Beschreibung der Gefährdung", margin, y);
+                        y += 5;
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(9);
+                        doc.setTextColor(60);
+                        const lines = doc.splitTextToSize(risk.description, pw - margin * 2) as string[];
+                        checkPage(lines.length * 4.5 + 4);
+                        doc.text(lines, margin, y);
+                        y += lines.length * 4.5 + 6;
                       }
 
-                      // Store original styles
-                      const originalOverflow = dialogElement.style.overflow;
-                      const originalMaxHeight = dialogElement.style.maxHeight;
-                      const originalMaxWidth = dialogElement.style.maxWidth;
+                      // ── Schutzmaßnahmen text ──────────────────────────────
+                      if (risk.mitigation_measures) {
+                        checkPage(20);
+                        doc.setFontSize(10);
+                        doc.setFont("helvetica", "bold");
+                        doc.setTextColor(0);
+                        doc.text("Allgemeine Schutzmaßnahmen", margin, y);
+                        y += 5;
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(9);
+                        doc.setTextColor(60);
+                        const lines = doc.splitTextToSize(risk.mitigation_measures, pw - margin * 2) as string[];
+                        checkPage(lines.length * 4.5 + 4);
+                        doc.text(lines, margin, y);
+                        y += lines.length * 4.5 + 6;
+                      }
 
-                      // Temporarily remove overflow restrictions
-                      dialogElement.style.overflow = 'visible';
-                      dialogElement.style.maxHeight = 'none';
-                      dialogElement.style.maxWidth = 'none';
-
-                      // Wait a bit for layout to settle
-                      await new Promise(resolve => setTimeout(resolve, 100));
-
-                      // Capture the dialog as canvas
-                      const { default: html2canvas } = await import("html2canvas");
-                      const canvas = await html2canvas(dialogElement, {
-                        scale: 2,
-                        useCORS: true,
-                        logging: true,
-                        backgroundColor: '#ffffff',
-                        width: dialogElement.scrollWidth,
-                        height: dialogElement.scrollHeight,
+                      // ── Risk evaluation table ─────────────────────────────
+                      checkPage(40);
+                      doc.setFontSize(10);
+                      doc.setFont("helvetica", "bold");
+                      doc.setTextColor(0);
+                      doc.text("Risikobewertung (PRIMA-Methode)", margin, y);
+                      y += 4;
+                      autoTable(doc, {
+                        startY: y,
+                        head: [["", "Eintrittswahrscheinlichkeit (P)", "Schadensausmaß (S)", "Risikopunktzahl (P×S)", "Risikostufe"]],
+                        body: [
+                          [
+                            "Vor Maßnahmen",
+                            risk.probability_before ?? "—",
+                            risk.extent_damage_before ?? "—",
+                            risk.risk_score_before ?? ((risk.probability_before ?? 0) * (risk.extent_damage_before ?? 0)) || "—",
+                            risk.risk_score_before ? riskLevelLabel(risk.risk_score_before) : "—",
+                          ],
+                          [
+                            "Nach Maßnahmen",
+                            risk.probability_after ?? "—",
+                            risk.extent_damage_after ?? "—",
+                            risk.risk_score_after ?? ((risk.probability_after ?? 0) * (risk.extent_damage_after ?? 0)) || "—",
+                            risk.risk_score_after ? riskLevelLabel(risk.risk_score_after) : "—",
+                          ],
+                        ],
+                        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 8 },
+                        columnStyles: {
+                          0: { fontStyle: "bold", fillColor: [245, 247, 250] },
+                        },
+                        styles: { fontSize: 9, cellPadding: 3 },
+                        theme: "grid",
                       });
+                      y = (doc as any).lastAutoTable.finalY + 8;
 
-                      // Restore original styles
-                      dialogElement.style.overflow = originalOverflow;
-                      dialogElement.style.maxHeight = originalMaxHeight;
-                      dialogElement.style.maxWidth = originalMaxWidth;
+                      // ── Measures table ────────────────────────────────────
+                      if (risk.measures && risk.measures.length > 0) {
+                        checkPage(30);
+                        doc.setFontSize(10);
+                        doc.setFont("helvetica", "bold");
+                        doc.setTextColor(0);
+                        doc.text(`Maßnahmen (${risk.measures.length})`, margin, y);
+                        y += 4;
+                        const measuresRows = risk.measures.map((m: any, idx: number) => [
+                          idx + 1,
+                          m.measure_building_block || "—",
+                          m.responsible_person_name || "—",
+                          m.due_date ? new Date(m.due_date).toLocaleDateString("de-DE") : "—",
+                          m.progress_status === "completed" || m.progress_status === "done"
+                            ? "Erledigt"
+                            : m.progress_status === "in_progress"
+                            ? "In Bearbeitung"
+                            : "Offen",
+                        ]);
+                        autoTable(doc, {
+                          startY: y,
+                          head: [["#", "Maßnahme", "Verantwortlich", "Fällig bis", "Status"]],
+                          body: measuresRows,
+                          headStyles: { fillColor: [41, 128, 185], textColor: 255, fontSize: 8 },
+                          columnStyles: {
+                            0: { cellWidth: 8 },
+                            1: { cellWidth: 72 },
+                            2: { cellWidth: 36 },
+                            3: { cellWidth: 24 },
+                            4: { cellWidth: 28 },
+                          },
+                          styles: { fontSize: 8.5, cellPadding: 2.5 },
+                          alternateRowStyles: { fillColor: [248, 249, 251] },
+                          didDrawCell: (data) => {
+                            if (data.column.index === 4 && data.section === "body") {
+                              const val = String(data.cell.raw);
+                              if (val === "Erledigt") {
+                                doc.setTextColor(22, 163, 74);
+                              } else if (val === "In Bearbeitung") {
+                                doc.setTextColor(37, 99, 235);
+                              }
+                            }
+                          },
+                        });
+                        y = (doc as any).lastAutoTable.finalY + 8;
+                      }
 
-                      // Create PDF
-                      const imgData = canvas.toDataURL('image/png');
-                      const pdf = new jsPDF({
-                        orientation: 'landscape',
-                        unit: 'mm',
-                        format: 'a4',
-                      });
+                      // ── Notes ─────────────────────────────────────────────
+                      if (risk.notes) {
+                        checkPage(20);
+                        doc.setFontSize(10);
+                        doc.setFont("helvetica", "bold");
+                        doc.setTextColor(0);
+                        doc.text("Anmerkungen", margin, y);
+                        y += 5;
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(9);
+                        doc.setTextColor(60);
+                        const lines = doc.splitTextToSize(risk.notes, pw - margin * 2) as string[];
+                        doc.text(lines, margin, y);
+                        y += lines.length * 4.5 + 6;
+                      }
 
-                      // Calculate dimensions to fit image in PDF
-                      const pdfWidth = pdf.internal.pageSize.getWidth();
-                      const pdfHeight = pdf.internal.pageSize.getHeight();
-                      const imgWidth = canvas.width;
-                      const imgHeight = canvas.height;
-                      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-                      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-                      const imgY = 10;
+                      // ── Signature block ───────────────────────────────────
+                      checkPage(35);
+                      y += 6;
+                      doc.setFontSize(9);
+                      doc.setTextColor(0);
+                      doc.setFont("helvetica", "normal");
+                      doc.line(margin, y, margin + 60, y);
+                      doc.line(pw - margin - 60, y, pw - margin, y);
+                      y += 4;
+                      doc.setTextColor(100);
+                      doc.text("Datum / Unterschrift Ersteller", margin, y);
+                      doc.text("Datum / Unterschrift Vorgesetzter", pw - margin - 60, y);
 
-                      pdf.addImage(
-                        imgData,
-                        'PNG',
-                        imgX,
-                        imgY,
-                        imgWidth * ratio,
-                        imgHeight * ratio
-                      );
+                      addFooter();
 
-                      // Open PDF in new tab for preview
-                      const pdfBlob = pdf.output('blob');
-                      const pdfUrl = URL.createObjectURL(pdfBlob);
-                      window.open(pdfUrl, '_blank');
+                      const safeTitle = (risk.title || "gefaehrdungsbeurteilung").replace(/[^a-zA-Z0-9äöüÄÖÜß\-_ ]/g, "").replace(/\s+/g, "_");
+                      doc.save(`GBU_${safeTitle}.pdf`);
 
                       toast({
-                        title: "Erfolg",
-                        description: "PDF erfolgreich erstellt",
+                        title: language === "de" ? "PDF erstellt" : "PDF created",
+                        description: language === "de" ? "Gefährdungsbeurteilung wurde erfolgreich exportiert." : "Risk assessment document exported successfully.",
                       });
                     } catch {
                       toast({
-                        title: "Fehler",
-                        description: "PDF konnte nicht erstellt werden",
+                        title: language === "de" ? "Fehler" : "Error",
+                        description: language === "de" ? "PDF konnte nicht erstellt werden" : "PDF could not be created",
                         variant: "destructive",
                       });
                     }
