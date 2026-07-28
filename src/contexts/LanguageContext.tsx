@@ -1,11 +1,28 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-type Language = "de" | "en";
+export type Language = "de" | "en" | "tr" | "pl" | "fr" | "es" | "ru" | "ar" | "ro" | "uk";
+
+export const SUPPORTED_LANGUAGES: { code: Language; label: string; flag: string }[] = [
+  { code: "de", label: "Deutsch", flag: "🇩🇪" },
+  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "tr", label: "Türkçe", flag: "🇹🇷" },
+  { code: "pl", label: "Polski", flag: "🇵🇱" },
+  { code: "fr", label: "Français", flag: "🇫🇷" },
+  { code: "es", label: "Español", flag: "🇪🇸" },
+  { code: "ru", label: "Русский", flag: "🇷🇺" },
+  { code: "ar", label: "العربية", flag: "🇸🇦" },
+  { code: "ro", label: "Română", flag: "🇷🇴" },
+  { code: "uk", label: "Українська", flag: "🇺🇦" },
+];
+
+const CACHE_VERSION = "2";
+const AUTO_LANGS = ["tr", "pl", "fr", "es", "ru", "ar", "ro", "uk"];
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  translating: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -3066,28 +3083,106 @@ const translations = {
   },
 };
 
+function getCacheKey(lang: Language) {
+  return `sf_trans_${lang}_v${CACHE_VERSION}`;
+}
+
+async function fetchTranslations(
+  values: string[],
+  targetLang: string
+): Promise<string[]> {
+  const BATCH = 80;
+  const results: string[] = [];
+  for (let i = 0; i < values.length; i += BATCH) {
+    const batch = values.slice(i, i + BATCH);
+    const q = batch.join("\n");
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(q)}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    // data[0] is array of [translatedText, originalText]
+    // When batching with \n, each line is a separate element
+    const joined = (data[0] as any[]).map((item: any[]) => item[0] as string).join("");
+    const lines = joined.split("\n");
+    results.push(...lines);
+  }
+  return results;
+}
+
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem("language");
-    return (saved as Language) || "de";
+    const lang = saved as Language;
+    return SUPPORTED_LANGUAGES.find((l) => l.code === lang) ? lang : "de";
   });
+
+  // Cache for auto-translated languages: lang → { key: translatedValue }
+  const [autoCache, setAutoCache] = useState<Record<string, string>>(() => {
+    if (AUTO_LANGS.includes(language)) {
+      try {
+        const stored = localStorage.getItem(getCacheKey(language));
+        return stored ? JSON.parse(stored) : {};
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  });
+  const [translating, setTranslating] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("language", language);
+    if (!AUTO_LANGS.includes(language)) {
+      setAutoCache({});
+      return;
+    }
+    // Load from localStorage cache first
+    try {
+      const stored = localStorage.getItem(getCacheKey(language));
+      if (stored) {
+        setAutoCache(JSON.parse(stored));
+        return;
+      }
+    } catch { /* ignore */ }
+
+    // Fetch all EN values and translate
+    const enEntries = Object.entries(translations.en);
+    const keys = enEntries.map(([k]) => k);
+    const values = enEntries.map(([, v]) => v);
+
+    setTranslating(true);
+    fetchTranslations(values, language)
+      .then((translated) => {
+        const cache: Record<string, string> = {};
+        keys.forEach((k, i) => {
+          cache[k] = translated[i] ?? values[i];
+        });
+        localStorage.setItem(getCacheKey(language), JSON.stringify(cache));
+        setAutoCache(cache);
+      })
+      .catch(() => {
+        // If translation fails, fall back to EN silently
+      })
+      .finally(() => setTranslating(false));
   }, [language]);
 
-  const setLanguage = (lang: Language) => {
+  const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
-  };
+  }, []);
 
-  const t = (key: string): string => {
-    return translations[language][key] || key;
-  };
+  const t = useCallback(
+    (key: string): string => {
+      if (language === "de") return translations.de[key] || key;
+      if (language === "en") return translations.en[key] || key;
+      // Auto-translated language: check cache, fall back to EN
+      return autoCache[key] || translations.en[key] || key;
+    },
+    [language, autoCache]
+  );
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translating }}>
       {children}
     </LanguageContext.Provider>
   );

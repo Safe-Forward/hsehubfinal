@@ -183,6 +183,7 @@ export default function EmployeeProfile() {
   const [editMode, setEditMode] = useState<{ [key: string]: boolean }>({});
   const [formData, setFormData] = useState<Partial<EmployeeData>>({});
   const [loading, setLoading] = useState(true);
+  const [coreTrainingsRefreshKey, setCoreTrainingsRefreshKey] = useState(0);
 
   // Derived state for first/last name from full_name
   const [firstName, setFirstName] = useState("");
@@ -2949,6 +2950,9 @@ p_sender_name: senderName,
                     }
                   }
 
+                  if (field === "department_id") {
+                    setCoreTrainingsRefreshKey((k) => k + 1);
+                  }
                   toast.success("Erfolgreich aktualisiert.");
                   setEditMode({ ...editMode, [field]: false });
                   fetchEmployeeData();
@@ -5819,6 +5823,7 @@ p_sender_name: senderName,
                 companyId={companyId}
                 canEdit={hasPermission("trainings") || hasDetailedPermission("trainings", "write")}
                 canUploadDocuments={hasPermission("documents")}
+                refreshKey={coreTrainingsRefreshKey}
               />
             )}
           </TabsContent>

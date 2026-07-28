@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect, useCallback, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Shield,
   Users,
@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useLanguage, SUPPORTED_LANGUAGES } from "@/contexts/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useSubscriptionLimits } from "@/hooks/useSubscriptionLimits";
 import NotificationBell from "@/components/NotificationBell";
@@ -53,6 +53,7 @@ export default function MainLayout({ children }: Props) {
   const { hasPermission, loading: permissionsLoading, roleName, permissions } = usePermissions();
   const { canAccessFeature } = useSubscriptionLimits();
   const location = useLocation();
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
@@ -515,14 +516,15 @@ export default function MainLayout({ children }: Props) {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer justify-between"
-                    onClick={() => setLanguage(language === "en" ? "de" : "en")}
+                    onClick={() => navigate("/profile?tab=preferences")}
                   >
                     <div className="flex items-center">
                       <Globe className="w-4 h-4 mr-2" />
                       {t("nav.language")}
                     </div>
                     <span className="text-xs font-medium text-primary">
-                      {language === "en" ? "→ DE" : "→ EN"}
+                      {SUPPORTED_LANGUAGES.find((l) => l.code === language)?.flag ?? "🌐"}{" "}
+                      {language.toUpperCase()}
                     </span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

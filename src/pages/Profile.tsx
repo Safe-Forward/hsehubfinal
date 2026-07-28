@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
-import { useNavigate } from "react-router-dom";
+import { useLanguage, SUPPORTED_LANGUAGES } from "@/contexts/LanguageContext";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,8 +33,10 @@ type NotifPref = { in_app_enabled: boolean; email_enabled: boolean };
 
 export default function Profile() {
   const { user, loading, userRole, companyId } = useAuth();
-  const { t, language, setLanguage } = useLanguage();
+  const { t, language, setLanguage, translating } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "general";
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -323,7 +325,7 @@ export default function Profile() {
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-4xl">
-        <Tabs defaultValue="general" className="space-y-6">
+        <Tabs defaultValue={defaultTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="general">{t("profile.general")}</TabsTrigger>
             <TabsTrigger value="security">{t("profile.security")}</TabsTrigger>
@@ -497,14 +499,23 @@ export default function Profile() {
                       id="language"
                       value={language}
                       onChange={(e) =>
-                        setLanguage(e.target.value as "de" | "en")
+                        setLanguage(e.target.value as any)
                       }
                       className="w-full pl-10 h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
-                      <option value="de">{t("profile.german")}</option>
-                      <option value="en">{t("profile.english")}</option>
+                      {SUPPORTED_LANGUAGES.map((l) => (
+                        <option key={l.code} value={l.code}>
+                          {l.flag} {l.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
+                  {translating && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                      <span className="animate-spin inline-block">⟳</span>
+                      Übersetzung wird geladen...
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

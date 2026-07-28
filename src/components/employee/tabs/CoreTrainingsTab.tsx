@@ -57,6 +57,7 @@ interface Props {
   companyId: string;
   canEdit: boolean;
   canUploadDocuments?: boolean;
+  refreshKey?: number;
 }
 
 interface TrainingType {
@@ -141,6 +142,7 @@ export function CoreTrainingsTab({
   employeeId,
   companyId,
   canEdit,
+  refreshKey = 0,
 }: Props) {
   const [rows, setRows] = useState<TrainingRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,7 +158,7 @@ export function CoreTrainingsTab({
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employeeId, companyId]);
+  }, [employeeId, companyId, refreshKey]);
 
   // -------------------------------------------------------------------------
   // Data fetching — driven by position_training_requirements
@@ -172,12 +174,47 @@ export function CoreTrainingsTab({
         .select("position_id")
         .eq("employee_id", employeeId);
 
-      const positionIds = ((empPositions as any[]) || []).map((p) => p.position_id);
+      const positionIds: string[] = ((empPositions as any[]) || []).map((p) => p.position_id);
 
       if (positionIds.length === 0) {
-        setNoPosition(true);
-        setRows([]);
-        return;
+        // Try to auto-assign positions from the employee's department
+        const { data: empData } = await supabase
+          .from("employees")
+          .select("department_id")
+          .eq("id", employeeId)
+          .single();
+
+        const deptId = (empData as any)?.department_id;
+        if (deptId) {
+          const { data: deptPositions } = await supabase
+            .from("company_positions")
+            .select("id")
+            .eq("department_id", deptId)
+            .eq("is_active", true);
+
+          if (deptPositions && deptPositions.length > 0) {
+            await supabase.from("employee_positions").upsert(
+              deptPositions.map((p: any) => ({
+                employee_id: employeeId,
+                position_id: p.id,
+                is_primary: false,
+              })),
+              { onConflict: "employee_id,position_id" }
+            );
+            // Re-fetch with the newly assigned positions
+            const { data: newEmpPos } = await supabase
+              .from("employee_positions")
+              .select("position_id")
+              .eq("employee_id", employeeId);
+            positionIds.push(...((newEmpPos as any[]) || []).map((p) => p.position_id));
+          }
+        }
+
+        if (positionIds.length === 0) {
+          setNoPosition(true);
+          setRows([]);
+          return;
+        }
       }
 
       // 2. Training requirements for those positions
