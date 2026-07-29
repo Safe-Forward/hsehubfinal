@@ -313,6 +313,8 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
   const [requirements, setRequirements] = useState<Record<string, PositionRequirement[]>>({});
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deptTrainingReqs, setDeptTrainingReqs] = useState<Record<string, string[]>>({});
+  const [deptTrainingSearch, setDeptTrainingSearch] = useState<Record<string, string>>({});
   const [expandedPositions, setExpandedPositions] = useState<Set<string>>(new Set());
 
   // Position dialog
@@ -350,8 +352,50 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
 
   async function fetchAll() {
     setLoading(true);
-    await Promise.all([fetchPositions(), fetchTrainingTypes(), fetchDepartments()]);
+    await Promise.all([fetchPositions(), fetchTrainingTypes(), fetchDepartments(), fetchDeptTrainingReqs()]);
     setLoading(false);
+  }
+
+  async function fetchDeptTrainingReqs() {
+    const { data } = await (supabase as any)
+      .from("department_training_requirements")
+      .select("department_id, training_type_id")
+      .eq("company_id", companyId);
+    const map: Record<string, string[]> = {};
+    (data || []).forEach((r: any) => {
+      if (!map[r.department_id]) map[r.department_id] = [];
+      map[r.department_id].push(r.training_type_id);
+    });
+    setDeptTrainingReqs(map);
+  }
+
+  async function toggleDeptTraining(deptId: string, trainingTypeId: string) {
+    const current = deptTrainingReqs[deptId] || [];
+    const isSet = current.includes(trainingTypeId);
+    try {
+      if (isSet) {
+        await (supabase as any)
+          .from("department_training_requirements")
+          .delete()
+          .eq("department_id", deptId)
+          .eq("training_type_id", trainingTypeId)
+          .eq("company_id", companyId);
+        setDeptTrainingReqs((prev) => ({
+          ...prev,
+          [deptId]: (prev[deptId] || []).filter((id) => id !== trainingTypeId),
+        }));
+      } else {
+        await (supabase as any)
+          .from("department_training_requirements")
+          .insert({ department_id: deptId, training_type_id: trainingTypeId, company_id: companyId, is_mandatory: true });
+        setDeptTrainingReqs((prev) => ({
+          ...prev,
+          [deptId]: [...(prev[deptId] || []), trainingTypeId],
+        }));
+      }
+    } catch (err: any) {
+      toast({ title: "Fehler", description: err.message, variant: "destructive" });
+    }
   }
 
   async function fetchDepartments() {
@@ -1185,6 +1229,82 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Department Training Requirements */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5" />
+            Kernschulungen pro Abteilung
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            Welche Schulungen sind für alle Mitarbeiter einer Abteilung Pflicht? Wird automatisch übernommen, wenn die Abteilung eines Mitarbeiters geändert wird.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {departments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Keine Abteilungen vorhanden. Zuerst unter Konfiguration Abteilungen anlegen.</p>
+          ) : trainingTypes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Keine Schulungstypen vorhanden. Zuerst oben Schulungstypen anlegen.</p>
+          ) : (
+            <div className="space-y-3">
+              {departments.map((dept) => {
+                const assigned = deptTrainingReqs[dept.id] || [];
+                const q = (deptTrainingSearch[dept.id] || "").toLowerCase();
+                const available = trainingTypes.filter(
+                  (tt) => !assigned.includes(tt.id) && (!q || tt.name.toLowerCase().includes(q))
+                );
+                return (
+                  <div key={dept.id} className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2">{dept.name}</h4>
+                    {assigned.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {assigned.map((ttId) => {
+                          const tt = trainingTypes.find((t) => t.id === ttId);
+                          if (!tt) return null;
+                          return (
+                            <span
+                              key={ttId}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200"
+                            >
+                              {tt.name}
+                              <button onClick={() => toggleDeptTraining(dept.id, ttId)} className="hover:opacity-70">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <input
+                        className="h-7 px-2 text-xs border rounded bg-background w-40"
+                        placeholder="Schulung suchen..."
+                        value={deptTrainingSearch[dept.id] || ""}
+                        onChange={(e) =>
+                          setDeptTrainingSearch((prev) => ({ ...prev, [dept.id]: e.target.value }))
+                        }
+                      />
+                      {available.slice(0, 6).map((tt) => (
+                        <Button
+                          key={tt.id}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => toggleDeptTraining(dept.id, tt.id)}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          {tt.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Delete Position Confirmation */}
       <AlertDialog

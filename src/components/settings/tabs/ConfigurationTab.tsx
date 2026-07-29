@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuditLog } from "@/hooks/useAuditLog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Pencil, Trash2, MapPin, GitBranch, Loader2, GraduationCap, X } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, GitBranch, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -92,9 +92,6 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
   const [deptManagersFunctional, setDeptManagersFunctional] = useState<Record<string, string>>({});
   const [deptManagerSearch, setDeptManagerSearch] = useState<Record<string, string>>({});
   const [approvalWorkflows, setApprovalWorkflows] = useState<any[]>([]);
-  const [trainingTypes, setTrainingTypes] = useState<any[]>([]);
-  const [deptTrainingReqs, setDeptTrainingReqs] = useState<Record<string, string[]>>({});
-  const [deptTrainingSearch, setDeptTrainingSearch] = useState<Record<string, string>>({});
 
   // Dialog state for generic CRUD
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -178,25 +175,6 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
       }));
       setApprovalWorkflows(formatted);
 
-      // Load training types
-      const { data: ttData } = await supabase
-        .from("training_types")
-        .select("id, name")
-        .eq("company_id", companyId)
-        .order("name");
-      setTrainingTypes(ttData || []);
-
-      // Load department training requirements
-      const { data: dtrData } = await supabase
-        .from("department_training_requirements")
-        .select("department_id, training_type_id")
-        .eq("company_id", companyId);
-      const dtrMap: Record<string, string[]> = {};
-      (dtrData || []).forEach((r: any) => {
-        if (!dtrMap[r.department_id]) dtrMap[r.department_id] = [];
-        dtrMap[r.department_id].push(r.training_type_id);
-      });
-      setDeptTrainingReqs(dtrMap);
     } catch (err: any) {
       toast({ title: "Ladefehler", description: err.message, variant: "destructive" });
     } finally {
@@ -350,36 +328,6 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
         .eq("company_id", companyId);
       if (error) throw error;
       fetchAllData();
-    } catch (err: any) {
-      toast({ title: "Fehler", description: err.message, variant: "destructive" });
-    }
-  };
-
-  const toggleDeptTraining = async (deptId: string, trainingTypeId: string) => {
-    if (!companyId) return;
-    const current = deptTrainingReqs[deptId] || [];
-    const isAlreadySet = current.includes(trainingTypeId);
-    try {
-      if (isAlreadySet) {
-        await (supabase as any)
-          .from("department_training_requirements")
-          .delete()
-          .eq("department_id", deptId)
-          .eq("training_type_id", trainingTypeId)
-          .eq("company_id", companyId);
-        setDeptTrainingReqs((prev) => ({
-          ...prev,
-          [deptId]: (prev[deptId] || []).filter((id) => id !== trainingTypeId),
-        }));
-      } else {
-        await (supabase as any)
-          .from("department_training_requirements")
-          .insert({ department_id: deptId, training_type_id: trainingTypeId, company_id: companyId, is_mandatory: true });
-        setDeptTrainingReqs((prev) => ({
-          ...prev,
-          [deptId]: [...(prev[deptId] || []), trainingTypeId],
-        }));
-      }
     } catch (err: any) {
       toast({ title: "Fehler", description: err.message, variant: "destructive" });
     }
@@ -641,88 +589,6 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
               </Table>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Department Training Requirements */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5" />
-            Kernschulungen pro Abteilung
-          </CardTitle>
-          <CardDescription>
-            Welche Schulungen sind für Mitarbeiter einer Abteilung Pflicht? Wird automatisch übernommen wenn die Abteilung geändert wird.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {departments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Keine Abteilungen vorhanden. Zuerst Abteilungen anlegen.</p>
-          ) : trainingTypes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Keine Schulungstypen vorhanden. Zuerst Schulungstypen anlegen.</p>
-          ) : (
-            <div className="space-y-4">
-              {departments.map((dept) => {
-                const assigned = deptTrainingReqs[dept.id] || [];
-                const q = (deptTrainingSearch[dept.id] || "").toLowerCase();
-                const filtered = trainingTypes.filter(
-                  (tt) => !q || tt.name.toLowerCase().includes(q)
-                );
-                return (
-                  <div key={dept.id} className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-2">{dept.name}</h4>
-                    {assigned.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {assigned.map((ttId) => {
-                          const tt = trainingTypes.find((t) => t.id === ttId);
-                          if (!tt) return null;
-                          return (
-                            <span
-                              key={ttId}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200"
-                            >
-                              {tt.name}
-                              <button
-                                onClick={() => toggleDeptTraining(dept.id, ttId)}
-                                className="hover:text-blue-500"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="flex gap-2 items-center">
-                      <input
-                        className="h-7 px-2 text-xs border rounded bg-background flex-1 max-w-xs"
-                        placeholder="Schulung suchen..."
-                        value={deptTrainingSearch[dept.id] || ""}
-                        onChange={(e) =>
-                          setDeptTrainingSearch((prev) => ({ ...prev, [dept.id]: e.target.value }))
-                        }
-                      />
-                      {filtered
-                        .filter((tt) => !assigned.includes(tt.id))
-                        .slice(0, 8)
-                        .map((tt) => (
-                          <Button
-                            key={tt.id}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs h-7"
-                            onClick={() => toggleDeptTraining(dept.id, tt.id)}
-                          >
-                            <Plus className="w-3 h-3 mr-1" />
-                            {tt.name}
-                          </Button>
-                        ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </CardContent>
       </Card>
 
