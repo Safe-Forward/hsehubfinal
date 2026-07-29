@@ -2,9 +2,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// German-SafeForward — eu-central-1 (Frankfurt) — Produktiv-Projekt
-const SUPABASE_URL = "https://mzqypusyxvyuiesuhjcw.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16cXlwdXN5eHZ5dWllc3VoamN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNDQ0MTcsImV4cCI6MjA5NzYyMDQxN30.BLnaiuAJ4pZoEPnAUzKOPXBi6_TGaDKTgc57UO-uWvM";
+// German-SafeForward — eu-central-1 (Frankfurt) — UAT-Projekt
+const SUPABASE_URL = "https://cbjdtpukzvcunpblxlfy.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiamR0cHVrenZjdW5wYmx4bGZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzMjMwNDYsImV4cCI6MjEwMDg5OTA0Nn0.loV3YSzTa1it16lPOGzvFpSV1ylNoe-HloDQfZDuokk";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
