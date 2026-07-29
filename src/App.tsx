@@ -80,6 +80,10 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#16a34a', color: '#fff', textAlign: 'center', fontSize: '13px', fontWeight: 600, letterSpacing: '0.05em', padding: '6px 0', userSelect: 'none' }}>
+          UAT – Testumgebung
+        </div>
+        <div style={{ paddingTop: '33px' }}>
         <CookieConsentProvider>
           <CookieConsentBanner />
           <LanguageProvider>
@@ -483,6 +487,7 @@ const App = () => (
           </AuthProvider>
           </LanguageProvider>
         </CookieConsentProvider>
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
