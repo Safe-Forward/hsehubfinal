@@ -144,8 +144,9 @@ export default function Dashboard() {
   // Overdue measures older than 30 days (for critical warnings)
   const [oldOverdueMeasures, setOldOverdueMeasures] = useState(0);
 
-  // Loading state for KPI tiles
+  // Loading state for KPI tiles — only true on first load, not on background refreshes
   const [statsLoading, setStatsLoading] = useState(true);
+  const statsLoadedOnce = useRef(false);
 
   useEffect(() => {
     try {
@@ -329,7 +330,7 @@ export default function Dashboard() {
 
   const fetchStats = async () => {
     if (!companyId) return;
-    setStatsLoading(true);
+    if (!statsLoadedOnce.current) setStatsLoading(true);
 
     try {
       const [employeesRes, risksRes, auditsRes, tasksRes, auditProgressRes] =
@@ -442,6 +443,7 @@ export default function Dashboard() {
         totalMeasures: measuresStats.open,
         overdueCheckups,
       });
+      statsLoadedOnce.current = true;
     } catch {
       // Stats konnten nicht geladen werden — Werte bleiben bei 0
     } finally {
