@@ -838,10 +838,11 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
 
                     {isExpanded && (
                       <CardContent className="pt-0 pb-4 px-4 border-t">
+                        {/* Position-specific trainings */}
                         <div className="mt-3 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                              Zugeordnete Schulungen
+                              Stellen-Schulungen
                             </span>
                             <Button
                               variant="outline"
@@ -896,6 +897,75 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
                             </div>
                           )}
                         </div>
+
+                        {/* Dept-level core trainings — only shown when position has a dept */}
+                        {position.department_id && (() => {
+                          const deptName = departments.find((d) => d.id === position.department_id)?.name || "";
+                          const assigned = deptTrainingReqs[position.department_id] || [];
+                          const q = (deptTrainingSearch[position.department_id] || "").toLowerCase();
+                          const available = trainingTypes.filter(
+                            (tt) => !assigned.includes(tt.id) && (!q || tt.name.toLowerCase().includes(q))
+                          );
+                          return (
+                            <div className="mt-4 pt-3 border-t border-dashed">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                  Kernschulungen Abteilung „{deptName}"
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mb-2">
+                                Pflicht für alle Mitarbeiter dieser Abteilung, unabhängig von der Stelle.
+                              </p>
+                              {assigned.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                  {assigned.map((ttId) => {
+                                    const tt = trainingTypes.find((t) => t.id === ttId);
+                                    if (!tt) return null;
+                                    return (
+                                      <span
+                                        key={ttId}
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200"
+                                      >
+                                        {tt.name}
+                                        <button
+                                          onClick={() => toggleDeptTraining(position.department_id!, ttId)}
+                                          className="hover:opacity-70"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              <div className="flex flex-wrap gap-2 items-center">
+                                <input
+                                  className="h-7 px-2 text-xs border rounded bg-background w-40"
+                                  placeholder="Schulung suchen..."
+                                  value={deptTrainingSearch[position.department_id] || ""}
+                                  onChange={(e) =>
+                                    setDeptTrainingSearch((prev) => ({
+                                      ...prev,
+                                      [position.department_id!]: e.target.value,
+                                    }))
+                                  }
+                                />
+                                {available.slice(0, 5).map((tt) => (
+                                  <Button
+                                    key={tt.id}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-xs h-7"
+                                    onClick={() => toggleDeptTraining(position.department_id!, tt.id)}
+                                  >
+                                    <Plus className="w-3 h-3 mr-1" />
+                                    {tt.name}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </CardContent>
                     )}
                   </Card>
@@ -1229,82 +1299,6 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Department Training Requirements */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5" />
-            Kernschulungen pro Abteilung
-          </CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            Welche Schulungen sind für alle Mitarbeiter einer Abteilung Pflicht? Wird automatisch übernommen, wenn die Abteilung eines Mitarbeiters geändert wird.
-          </p>
-        </CardHeader>
-        <CardContent>
-          {departments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Keine Abteilungen vorhanden. Zuerst unter Konfiguration Abteilungen anlegen.</p>
-          ) : trainingTypes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Keine Schulungstypen vorhanden. Zuerst oben Schulungstypen anlegen.</p>
-          ) : (
-            <div className="space-y-3">
-              {departments.map((dept) => {
-                const assigned = deptTrainingReqs[dept.id] || [];
-                const q = (deptTrainingSearch[dept.id] || "").toLowerCase();
-                const available = trainingTypes.filter(
-                  (tt) => !assigned.includes(tt.id) && (!q || tt.name.toLowerCase().includes(q))
-                );
-                return (
-                  <div key={dept.id} className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-2">{dept.name}</h4>
-                    {assigned.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {assigned.map((ttId) => {
-                          const tt = trainingTypes.find((t) => t.id === ttId);
-                          if (!tt) return null;
-                          return (
-                            <span
-                              key={ttId}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200"
-                            >
-                              {tt.name}
-                              <button onClick={() => toggleDeptTraining(dept.id, ttId)} className="hover:opacity-70">
-                                <X className="w-3 h-3" />
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <input
-                        className="h-7 px-2 text-xs border rounded bg-background w-40"
-                        placeholder="Schulung suchen..."
-                        value={deptTrainingSearch[dept.id] || ""}
-                        onChange={(e) =>
-                          setDeptTrainingSearch((prev) => ({ ...prev, [dept.id]: e.target.value }))
-                        }
-                      />
-                      {available.slice(0, 6).map((tt) => (
-                        <Button
-                          key={tt.id}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs h-7"
-                          onClick={() => toggleDeptTraining(dept.id, tt.id)}
-                        >
-                          <Plus className="w-3 h-3 mr-1" />
-                          {tt.name}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Delete Position Confirmation */}
       <AlertDialog

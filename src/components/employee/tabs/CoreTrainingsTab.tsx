@@ -225,92 +225,84 @@ export function CoreTrainingsTab({
   }
 
   // -------------------------------------------------------------------------
-  // Data fetching — driven by position_training_requirements
+  // Data fetching — merges position requirements + department requirements
   // -------------------------------------------------------------------------
 
   async function fetchData() {
     setLoading(true);
     setNoPosition(false);
     try {
-      // 1. Employee's assigned positions
+      const typeMap = new Map<string, boolean>();
+
+      // ── 1. Employee's current department ─────────────────────────────────
+      const { data: empData } = await supabase
+        .from("employees")
+        .select("department_id")
+        .eq("id", employeeId)
+        .single();
+      const deptId: string | null = (empData as any)?.department_id ?? null;
+
+      // ── 2. Position-based requirements ───────────────────────────────────
       const { data: empPositions } = await supabase
         .from("employee_positions")
         .select("position_id")
         .eq("employee_id", employeeId);
 
-      const positionIds: string[] = ((empPositions as any[]) || []).map((p) => p.position_id);
+      let positionIds: string[] = ((empPositions as any[]) || []).map((p) => p.position_id);
 
-      if (positionIds.length === 0) {
-        // Try to auto-assign positions from the employee's department
-        const { data: empData } = await supabase
-          .from("employees")
-          .select("department_id")
-          .eq("id", employeeId)
-          .single();
+      // If no positions yet but dept has positions linked to it: auto-assign them
+      if (positionIds.length === 0 && deptId) {
+        const { data: deptPositions } = await supabase
+          .from("company_positions")
+          .select("id")
+          .eq("department_id", deptId)
+          .eq("is_active", true);
 
-        const deptId = (empData as any)?.department_id;
-        if (deptId) {
-          const { data: deptPositions } = await supabase
-            .from("company_positions")
-            .select("id")
-            .eq("department_id", deptId)
-            .eq("is_active", true);
-
-          if (deptPositions && deptPositions.length > 0) {
-            await supabase.from("employee_positions").upsert(
-              deptPositions.map((p: any) => ({
-                employee_id: employeeId,
-                position_id: p.id,
-                is_primary: false,
-              })),
-              { onConflict: "employee_id,position_id" }
-            );
-            // Re-fetch with the newly assigned positions
-            const { data: newEmpPos } = await supabase
-              .from("employee_positions")
-              .select("position_id")
-              .eq("employee_id", employeeId);
-            positionIds.push(...((newEmpPos as any[]) || []).map((p) => p.position_id));
-          }
-        }
-
-        if (positionIds.length === 0) {
-          // Fallback: check department_training_requirements directly
-          const { data: dtrData } = await (supabase as any)
-            .from("department_training_requirements")
-            .select("training_type_id, is_mandatory")
-            .eq("department_id", deptId || "")
-            .eq("company_id", companyId);
-
-          if (dtrData && dtrData.length > 0) {
-            await buildRowsFromTypeMap(
-              new Map((dtrData as any[]).map((r) => [r.training_type_id, r.is_mandatory ?? true]))
-            );
-          } else {
-            setNoPosition(true);
-            setRows([]);
-          }
-          return;
+        if (deptPositions && deptPositions.length > 0) {
+          await supabase.from("employee_positions").upsert(
+            deptPositions.map((p: any) => ({
+              employee_id: employeeId,
+              position_id: p.id,
+              is_primary: false,
+            })),
+            { onConflict: "employee_id,position_id" }
+          );
+          positionIds = deptPositions.map((p: any) => p.id);
         }
       }
 
-      // 2. Training requirements for those positions
-      const { data: reqData } = await supabase
-        .from("position_training_requirements")
-        .select("training_type_id, is_mandatory")
-        .in("position_id", positionIds);
+      if (positionIds.length > 0) {
+        const { data: reqData } = await supabase
+          .from("position_training_requirements")
+          .select("training_type_id, is_mandatory")
+          .in("position_id", positionIds);
 
-      if (!reqData || reqData.length === 0) {
+        ((reqData as any[]) || []).forEach((r) => {
+          const prev = typeMap.get(r.training_type_id) ?? false;
+          typeMap.set(r.training_type_id, prev || r.is_mandatory);
+        });
+      }
+
+      // ── 3. Department-level requirements (always merged in) ───────────────
+      if (deptId) {
+        const { data: dtrData } = await (supabase as any)
+          .from("department_training_requirements")
+          .select("training_type_id, is_mandatory")
+          .eq("department_id", deptId)
+          .eq("company_id", companyId);
+
+        ((dtrData as any[]) || []).forEach((r: any) => {
+          const prev = typeMap.get(r.training_type_id) ?? false;
+          typeMap.set(r.training_type_id, prev || (r.is_mandatory ?? true));
+        });
+      }
+
+      // ── 4. Build rows or show empty state ────────────────────────────────
+      if (typeMap.size === 0) {
+        setNoPosition(positionIds.length === 0 && !deptId);
         setRows([]);
         return;
       }
-
-      // Deduplicate: if same training_type in multiple positions, mandatory wins
-      const typeMap = new Map<string, boolean>();
-      ((reqData as any[]) || []).forEach((r) => {
-        const prev = typeMap.get(r.training_type_id) ?? false;
-        typeMap.set(r.training_type_id, prev || r.is_mandatory);
-      });
 
       await buildRowsFromTypeMap(typeMap);
     } catch (err: any) {
