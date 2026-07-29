@@ -10,10 +10,22 @@ import {
   Building2,
   Search,
   Sparkles,
+  Trash2,
+  Settings2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -118,6 +130,14 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
   const [globalCreateDeptId, setGlobalCreateDeptId] = useState("");
   const [globalCreateForm, setGlobalCreateForm] = useState({ name: "", duration_hours: "", validity_months: "" });
   const [globalCreating, setGlobalCreating] = useState(false);
+
+  // Dept filter
+  const [deptSearch, setDeptSearch] = useState("");
+
+  // Manage / delete training types
+  const [manageOpen, setManageOpen] = useState(false);
+  const [manageSearch, setManageSearch] = useState("");
+  const [deletingTypeId, setDeletingTypeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (companyId) fetchAll();
@@ -294,6 +314,22 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
     }
   }
 
+  async function deleteTrainingType(id: string) {
+    const { error } = await supabase.from("training_types").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Fehler beim Löschen", description: error.message, variant: "destructive" });
+    } else {
+      setTrainingTypes((prev) => prev.filter((tt) => tt.id !== id));
+      setDeptReqs((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((k) => { next[k] = next[k].filter((tid) => tid !== id); });
+        return next;
+      });
+      toast({ title: "Schulungstyp gelöscht" });
+    }
+    setDeletingTypeId(null);
+  }
+
   const addDept = departments.find((d) => d.id === addDeptId);
   const catalogForAddDept = addDept ? getCatalogForDept(addDept.name) : [];
   const assignedInAddDept = deptReqs[addDeptId || ""] || [];
@@ -315,30 +351,61 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
       (!searchQ || tt.name.toLowerCase().includes(searchQ))
   );
 
+  const filteredDepts = departments.filter(
+    (d) => !deptSearch || d.name.toLowerCase().includes(deptSearch.toLowerCase())
+  );
+  const managedTypes = trainingTypes.filter(
+    (tt) => !manageSearch || tt.name.toLowerCase().includes(manageSearch.toLowerCase())
+  );
+  const deletingType = trainingTypes.find((tt) => tt.id === deletingTypeId);
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold">Kernschulungen nach Abteilung</h3>
           <p className="text-sm text-muted-foreground">
             Definiere welche Schulungen für alle Mitarbeiter einer Abteilung Pflicht sind
           </p>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1"
-          onClick={() => {
-            setGlobalCreateForm({ name: "", duration_hours: "", validity_months: "" });
-            setGlobalCreateDeptId("");
-            setGlobalCreateOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          Schulungstyp erstellen
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1"
+            onClick={() => { setManageSearch(""); setManageOpen(true); }}
+          >
+            <Settings2 className="h-4 w-4" />
+            Schulungen verwalten
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1"
+            onClick={() => {
+              setGlobalCreateForm({ name: "", duration_hours: "", validity_months: "" });
+              setGlobalCreateDeptId("");
+              setGlobalCreateOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Schulungstyp erstellen
+          </Button>
+        </div>
       </div>
+
+      {/* Dept search filter */}
+      {departments.length > 3 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            className="w-full h-9 pl-9 pr-3 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="Abteilung suchen..."
+            value={deptSearch}
+            onChange={(e) => setDeptSearch(e.target.value)}
+          />
+        </div>
+      )}
 
       {loading ? (
         <div className="text-sm text-muted-foreground py-8 text-center">Lade Daten...</div>
@@ -352,7 +419,12 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
         </Card>
       ) : (
         <div className="space-y-3">
-          {departments.map((dept) => {
+          {filteredDepts.length === 0 && deptSearch && (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Keine Abteilung gefunden für „{deptSearch}".
+            </p>
+          )}
+          {filteredDepts.map((dept) => {
             const isExpanded = expandedDepts.has(dept.id);
             const assignedIds = deptReqs[dept.id] || [];
             const assignedTypes = assignedIds
@@ -430,6 +502,91 @@ export function PositionTrainingCatalogTab({ companyId }: Props) {
           })}
         </div>
       )}
+
+      {/* ── Manage Training Types Dialog ────────────────────────────────── */}
+      <Dialog open={manageOpen} onOpenChange={setManageOpen}>
+        <DialogContent className="sm:max-w-lg flex flex-col max-h-[80vh]">
+          <DialogHeader className="shrink-0">
+            <DialogTitle>Schulungstypen verwalten</DialogTitle>
+            <DialogDescription>
+              Alle Schulungstypen des Unternehmens — lösche nicht mehr benötigte.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              className="w-full h-9 pl-9 pr-3 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Schulung suchen..."
+              value={manageSearch}
+              onChange={(e) => setManageSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-1 min-h-0 pr-1">
+            {managedTypes.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                {manageSearch ? "Keine Treffer." : "Keine Schulungstypen vorhanden."}
+              </p>
+            ) : (
+              managedTypes.map((tt) => {
+                const usedInDepts = Object.entries(deptReqs)
+                  .filter(([, ids]) => ids.includes(tt.id))
+                  .map(([deptId]) => departments.find((d) => d.id === deptId)?.name)
+                  .filter(Boolean);
+                return (
+                  <div key={tt.id} className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-md border hover:bg-muted/30 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{tt.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {tt.duration_hours && (
+                          <span className="text-xs text-muted-foreground">{tt.duration_hours}h</span>
+                        )}
+                        {tt.validity_months && (
+                          <span className="text-xs text-muted-foreground">{tt.validity_months} Mon.</span>
+                        )}
+                        {usedInDepts.length > 0 && (
+                          <span className="text-xs text-primary">
+                            → {usedInDepts.join(", ")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeletingTypeId(tt.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Confirm ──────────────────────────────────────────────── */}
+      <AlertDialog open={!!deletingTypeId} onOpenChange={(open) => { if (!open) setDeletingTypeId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Schulungstyp löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              „{deletingType?.name}" wird dauerhaft gelöscht und aus allen Abteilungen entfernt.
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingTypeId && deleteTrainingType(deletingTypeId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── Add Training Dialog ─────────────────────────────────────────── */}
       <Dialog open={!!addDeptId} onOpenChange={(open) => { if (!open) setAddDeptId(null); }}>
