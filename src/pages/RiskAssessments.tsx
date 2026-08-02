@@ -544,13 +544,13 @@ export default function RiskAssessments() {
       titel: "Absturzgefahr Lagerbereich",
       beschreibung: "Mitarbeiter können vom Regal abstürzen",
       abteilung: "Lager",
-      risikostufe: "high",
+      risikostufe: "Hoch",
       wahrscheinlichkeit: 3,
       schwere: 4,
       bewertungsdatum: "2026-01-15",
       ueberpruefungsdatum: "2027-01-15",
       gefaehrdungsart: "Mechanische Gefährdung",
-      status: "active",
+      status: "Aktiv",
     }];
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -582,7 +582,12 @@ export default function RiskAssessments() {
 
       const { data: depts } = await supabase.from("departments").select("id, name").eq("company_id", companyId);
       const deptMap = new Map((depts || []).map((d: any) => [d.name.toLowerCase().trim(), d.id]));
-      const validLevels = ["low", "medium", "high", "critical"];
+      const riskLevelMap: Record<string, string> = {
+        "niedrig": "low", "gering": "low", "low": "low",
+        "mittel": "medium", "medium": "medium",
+        "hoch": "high", "high": "high",
+        "kritisch": "critical", "critical": "critical",
+      };
 
       let importedCount = 0;
       let skippedCount = 0;
@@ -592,12 +597,13 @@ export default function RiskAssessments() {
         const row = jsonData[i] as Record<string, unknown>;
         const rowNum = i + 2;
         const titel = getCellValue(row, ["titel", "title", "name"]);
-        const risikostufe = getCellValue(row, ["risikostufe", "risk_level", "risikolevel"]);
+        const risikostufeRaw = getCellValue(row, ["risikostufe", "risk_level", "risikolevel"]);
+        const risikostufe = risikostufeRaw ? riskLevelMap[risikostufeRaw.toLowerCase().trim()] : undefined;
         const bewertungsdatum = getCellValue(row, ["bewertungsdatum", "assessment_date", "datum"]);
 
         const problems: string[] = [];
         if (!titel) problems.push("titel fehlt");
-        if (!risikostufe || !validLevels.includes(risikostufe.toLowerCase())) problems.push("risikostufe ungültig (low/medium/high/critical)");
+        if (!risikostufe) problems.push(`risikostufe ungültig (${risikostufeRaw || "fehlt"}) – erlaubt: Niedrig, Mittel, Hoch, Kritisch`);
         if (!bewertungsdatum) problems.push("bewertungsdatum fehlt");
         if (problems.length > 0) { skippedRows.push(`Zeile ${rowNum}: ${problems.join(", ")}`); skippedCount++; continue; }
 
@@ -619,7 +625,7 @@ export default function RiskAssessments() {
           title: titel!.trim(),
           description: getCellValue(row, ["beschreibung", "description"]) || null,
           department_id: deptId,
-          risk_level: risikostufe!.toLowerCase() as any,
+          risk_level: risikostufe as any,
           likelihood,
           severity,
           risk_score: likelihood && severity ? likelihood * severity : null,
@@ -2170,7 +2176,10 @@ export default function RiskAssessments() {
                 </DialogHeader>
                 <div className="text-sm space-y-2">
                   <p>Unterstützte Formate: <strong>.xlsx, .xls, .csv</strong></p>
-                  <p>Pflichtfelder: <strong>titel, risikostufe</strong> (low/medium/high/critical), <strong>bewertungsdatum</strong></p>
+                  <p>Pflichtfelder: <strong>titel, risikostufe, bewertungsdatum</strong></p>
+                  <div className="rounded-lg bg-muted p-3">
+                    <p><strong>risikostufe:</strong> Niedrig · Mittel · Hoch · Kritisch</p>
+                  </div>
                   <p>Optionale Felder: <strong>beschreibung, abteilung, wahrscheinlichkeit</strong> (1–5), <strong>schwere</strong> (1–5), <strong>ueberpruefungsdatum, gefaehrdungsart, status</strong></p>
                   <p>
                     <a href="#" className="text-primary underline underline-offset-4" onClick={(e) => { e.preventDefault(); handleDownloadRiskTemplate(); }}>
