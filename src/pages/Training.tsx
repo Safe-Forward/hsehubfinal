@@ -750,22 +750,26 @@ export default function Training() {
     return null;
   };
 
+  const lessonTypeMap: Record<string, string> = {
+    "video": "video_audio", "video/audio": "video_audio", "audio": "video_audio",
+    "pdf": "pdf",
+    "text": "text",
+    "iframe": "iframe", "webseite": "iframe", "link": "iframe",
+    "unterkapitel": "subchapter", "kapitel": "subchapter", "subchapter": "subchapter",
+  };
+
   const handleDownloadTrainingTemplate = async () => {
     const XLSX = await import("xlsx");
     const templateRows = [
-      {
-        mitarbeiter_name: "Max Mustermann",
-        schulungstyp: "Arbeitssicherheit Grundlagen",
-        status: "completed",
-        zuweisungsdatum: "2026-01-10",
-        abschlussdatum: "2026-01-15",
-        ablaufdatum: "2027-01-15",
-      },
+      { kurs_name: "Arbeitssicherheit Grundlagen", kurs_beschreibung: "Grundlagen der sicheren Arbeit", pflichtschulung: "Ja", kernschulung: "Nein", erneuerung_monate: 12, lektion_name: "Einführung", lektion_typ: "Text", lektion_url: "" },
+      { kurs_name: "Arbeitssicherheit Grundlagen", kurs_beschreibung: "", pflichtschulung: "", kernschulung: "", erneuerung_monate: "", lektion_name: "Sicherheitsregeln", lektion_typ: "PDF", lektion_url: "https://beispiel.de/regeln.pdf" },
+      { kurs_name: "Arbeitssicherheit Grundlagen", kurs_beschreibung: "", pflichtschulung: "", kernschulung: "", erneuerung_monate: "", lektion_name: "Abschlusstest", lektion_typ: "Text", lektion_url: "" },
+      { kurs_name: "Brandschutz", kurs_beschreibung: "Brandschutz im Betrieb", pflichtschulung: "Ja", kernschulung: "Ja", erneuerung_monate: 24, lektion_name: "Brandursachen", lektion_typ: "Video", lektion_url: "https://beispiel.de/brand.mp4" },
     ];
     const worksheet = XLSX.utils.json_to_sheet(templateRows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "SchulungenImportVorlage");
-    XLSX.writeFile(workbook, `training_import_template_${new Date().toISOString().split("T")[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "KurseImportVorlage");
+    XLSX.writeFile(workbook, `kurse_import_vorlage_${new Date().toISOString().split("T")[0]}.xlsx`);
     toast({ title: "Vorlage heruntergeladen" });
   };
 
@@ -792,96 +796,112 @@ export default function Training() {
         return;
       }
 
-      let importedCount = 0;
-      let skippedCount = 0;
+      // Load existing courses to avoid duplicates
+      const { data: existingCourses } = await supabase.from("courses").select("id, name").eq("company_id", companyId);
+      const existingCourseMap = new Map((existingCourses || []).map((c: any) => [c.name.toLowerCase().trim(), c.id]));
+
+      // Group rows by kurs_name, preserving order
+      const courseGroups = new Map<string, { rows: Record<string, unknown>[]; rowNums: number[] }>();
       const rowErrors: string[] = [];
-      const importedRows: string[] = [];
-
-      // Preload all employees and training types for company
-      const { data: empData } = await supabase.from("employees").select("id, full_name, employee_number").eq("company_id", companyId).eq("is_active", true);
-      const { data: ttData } = await supabase.from("training_types").select("id, name").eq("company_id", companyId);
-      const empMap = new Map((empData || []).map((e: any) => [e.full_name?.toLowerCase().trim(), e.id]));
-      const empNumberMap = new Map((empData || []).filter((e: any) => e.employee_number).map((e: any) => [String(e.employee_number).toLowerCase().trim(), e.id]));
-      const ttMap = new Map((ttData || []).map((t: any) => [t.name?.toLowerCase().trim(), t.id]));
-
-      const validStatuses = ["assigned", "in_progress", "completed", "expired"];
+      let skippedCount = 0;
 
       for (let i = 0; i < jsonData.length; i++) {
         const row = jsonData[i] as Record<string, unknown>;
         const rowNum = i + 2;
-
-        const empName = getCellValue(row, ["mitarbeiter_name", "mitarbeiter", "employee", "employee_name", "name", "full_name"]);
-        const empNumber = getCellValue(row, ["mitarbeiter_nummer", "employee_number", "emp_number", "personalnummer"]);
-        const schulungstyp = getCellValue(row, ["schulungstyp", "training_type", "training", "schulung", "kurs", "course"]);
-        const statusRaw = getCellValue(row, ["status"]) || "assigned";
-        const zuweisungsdatum = getCellValue(row, ["zuweisungsdatum", "assigned_date", "zuweisung"]);
-        const abschlussdatum = getCellValue(row, ["abschlussdatum", "completion_date", "abschluss"]);
-        const ablaufdatum = getCellValue(row, ["ablaufdatum", "expiry_date", "ablauf"]);
-
-        const problems: string[] = [];
-        if (!empName && !empNumber) problems.push("mitarbeiter_name fehlt");
-        if (!schulungstyp) problems.push("schulungstyp fehlt");
-        if (!zuweisungsdatum) problems.push("zuweisungsdatum fehlt");
-        if (problems.length > 0) {
-          rowErrors.push(`Zeile ${rowNum}: ${problems.join(", ")}`);
+        const kursName = getCellValue(row, ["kurs_name", "kursname", "name", "kurs", "course_name", "course"]);
+        if (!kursName) {
+          rowErrors.push(`Zeile ${rowNum}: kurs_name fehlt`);
           skippedCount++;
           continue;
         }
-
-        // Resolve employee
-        let employeeId: string | undefined;
-        if (empNumber) employeeId = empNumberMap.get(String(empNumber).toLowerCase().trim());
-        if (!employeeId && empName) employeeId = empMap.get(String(empName).toLowerCase().trim());
-        if (!employeeId) {
-          rowErrors.push(`Zeile ${rowNum}: Mitarbeiter "${empName || empNumber}" nicht gefunden`);
-          skippedCount++;
-          continue;
-        }
-
-        // Resolve or create training type
-        let ttId = ttMap.get(String(schulungstyp).toLowerCase().trim());
-        if (!ttId) {
-          const { data: newTt, error: ttErr } = await supabase.from("training_types").insert({ company_id: companyId, name: String(schulungstyp).trim() }).select("id").single();
-          if (ttErr || !newTt) {
-            rowErrors.push(`Zeile ${rowNum}: Schulungstyp konnte nicht erstellt werden`);
-            skippedCount++;
-            continue;
-          }
-          ttId = newTt.id;
-          ttMap.set(String(schulungstyp).toLowerCase().trim(), ttId);
-        }
-
-        const status = validStatuses.includes(statusRaw?.toLowerCase() || "") ? statusRaw!.toLowerCase() : "assigned";
-        const assignedDate = convertImportedDate(zuweisungsdatum, XLSX) || new Date().toISOString().split("T")[0];
-        const completionDate = abschlussdatum ? convertImportedDate(abschlussdatum, XLSX) : null;
-        const expiryDate = ablaufdatum ? convertImportedDate(ablaufdatum, XLSX) : null;
-
-        const { error } = await supabase.from("training_records").insert({
-          company_id: companyId,
-          employee_id: employeeId,
-          training_type_id: ttId,
-          status,
-          assigned_date: assignedDate,
-          completion_date: completionDate,
-          expiry_date: expiryDate,
-        });
-
-        if (error) {
-          rowErrors.push(`Zeile ${rowNum}: ${error.message}`);
-          skippedCount++;
-        } else {
-          importedCount++;
-          importedRows.push(`Zeile ${rowNum}: ${empName || empNumber} – ${schulungstyp}`);
-        }
+        const key = kursName.toLowerCase().trim();
+        if (!courseGroups.has(key)) courseGroups.set(key, { rows: [], rowNums: [] });
+        courseGroups.get(key)!.rows.push(row);
+        courseGroups.get(key)!.rowNums.push(rowNum);
       }
 
-      setImportErrors(rowErrors);
-      setLastImportReport({ fileName: file.name, totalRows: jsonData.length, importedCount, skippedCount, importedRows, skippedRows: rowErrors });
+      let importedCourses = 0;
+      let importedLessons = 0;
+      const importedRows: string[] = [];
 
-      if (importedCount > 0) {
-        toast({ title: "Import abgeschlossen", description: `${importedCount} Datensätze importiert${skippedCount > 0 ? `, ${skippedCount} übersprungen` : ""}` });
+      for (const [key, { rows, rowNums }] of courseGroups) {
+        const firstRow = rows[0];
+        const kursName = getCellValue(firstRow, ["kurs_name", "kursname", "name", "kurs", "course_name", "course"])!;
+        const beschreibung = getCellValue(firstRow, ["kurs_beschreibung", "beschreibung", "description"]);
+        const pflichtRaw = getCellValue(firstRow, ["pflichtschulung", "pflicht", "is_mandatory", "mandatory"]);
+        const kernRaw = getCellValue(firstRow, ["kernschulung", "kern", "is_core_training", "core"]);
+        const erneuerungRaw = getCellValue(firstRow, ["erneuerung_monate", "erneuerung", "renewal_months", "renewal"]);
+        const isMandatory = ["ja", "yes", "true", "1"].includes((pflichtRaw || "").toLowerCase());
+        const isCore = ["ja", "yes", "true", "1"].includes((kernRaw || "").toLowerCase());
+        const renewalMonths = erneuerungRaw ? parseInt(String(erneuerungRaw), 10) || null : null;
+
+        // Create course if not exists
+        let courseId = existingCourseMap.get(key);
+        if (!courseId) {
+          const { data: newCourse, error: courseErr } = await supabase.from("courses").insert({
+            company_id: companyId,
+            name: kursName.trim(),
+            description: beschreibung || null,
+            is_mandatory: isMandatory,
+            is_core_training: isCore,
+            renewal_months: renewalMonths,
+          }).select("id").single();
+          if (courseErr || !newCourse) {
+            rowErrors.push(`Kurs "${kursName}": Konnte nicht erstellt werden – ${courseErr?.message || "Unbekannter Fehler"}`);
+            skippedCount += rows.length;
+            continue;
+          }
+          courseId = newCourse.id;
+          existingCourseMap.set(key, courseId);
+          importedCourses++;
+        }
+
+        // Create lessons
+        const { data: existingLessons } = await supabase.from("course_lessons").select("order_index").eq("course_id", courseId).order("order_index", { ascending: false }).limit(1);
+        let orderOffset = existingLessons?.length ? (existingLessons[0].order_index + 1) : 0;
+
+        for (let li = 0; li < rows.length; li++) {
+          const row = rows[li];
+          const rowNum = rowNums[li];
+          const lektionName = getCellValue(row, ["lektion_name", "lektion", "lesson_name", "lesson"]);
+          if (!lektionName) continue; // Kurs-Zeile ohne Lektion → überspringen (nur Kursinfos)
+
+          const lektionTypRaw = (getCellValue(row, ["lektion_typ", "typ", "lesson_type", "type"]) || "text").toLowerCase().trim();
+          const lektionUrl = getCellValue(row, ["lektion_url", "url", "content_url", "link"]);
+          const lessonType = lessonTypeMap[lektionTypRaw] || "text";
+
+          const { error: lessonErr } = await supabase.from("course_lessons").insert({
+            course_id: courseId,
+            name: lektionName.trim(),
+            type: lessonType,
+            content_url: lektionUrl || null,
+            order_index: orderOffset + li,
+            status: "published",
+          });
+          if (lessonErr) {
+            rowErrors.push(`Zeile ${rowNum}: Lektion "${lektionName}" – ${lessonErr.message}`);
+            skippedCount++;
+          } else {
+            importedLessons++;
+          }
+        }
+
+        importedRows.push(`Kurs "${kursName}": ${rows.filter(r => getCellValue(r, ["lektion_name", "lektion", "lesson_name", "lesson"])).length} Lektionen`);
+      }
+
+      const totalImported = importedCourses + importedLessons;
+      setImportErrors(rowErrors);
+      setLastImportReport({ fileName: file.name, totalRows: jsonData.length, importedCount: totalImported, skippedCount, importedRows, skippedRows: rowErrors });
+
+      if (importedCourses > 0 || importedLessons > 0) {
+        toast({ title: "Import abgeschlossen", description: `${importedCourses} Kurs${importedCourses !== 1 ? "e" : ""} und ${importedLessons} Lektionen importiert` });
+        // Refresh courses list
+        if (isAdmin && companyId) {
+          const { data } = await supabase.from("courses").select("*").eq("company_id", companyId).order("created_at", { ascending: false });
+          if (data) setCourses(data);
+        }
       } else {
-        toast({ title: "Keine Datensätze importiert", description: `${skippedCount} Zeilen übersprungen`, variant: "destructive" });
+        toast({ title: "Keine Kurse importiert", description: `${skippedCount} Zeilen übersprungen`, variant: "destructive" });
       }
     } catch {
       toast({ title: "Importfehler", description: "Die Datei konnte nicht verarbeitet werden", variant: "destructive" });
@@ -1365,14 +1385,19 @@ export default function Training() {
             <Dialog open={isImportGuideDialogOpen} onOpenChange={setIsImportGuideDialogOpen}>
               <DialogContent className="max-w-xl">
                 <DialogHeader>
-                  <DialogTitle>Schulungen importieren</DialogTitle>
-                  <DialogDescription>Importieren Sie Schulungsnachweise aus einer Excel- oder CSV-Datei.</DialogDescription>
+                  <DialogTitle>Kurse importieren</DialogTitle>
+                  <DialogDescription>Importieren Sie Kurse mit Lektionen aus einer Excel- oder CSV-Datei.</DialogDescription>
                 </DialogHeader>
                 <div className="text-sm space-y-2">
                   <p>Unterstützte Formate: <strong>.xlsx, .xls, .csv</strong></p>
-                  <p>Pflichtfelder: <strong>mitarbeiter_name, schulungstyp, zuweisungsdatum</strong></p>
-                  <p>Optionale Felder: <strong>status</strong> (assigned/in_progress/completed/expired), <strong>abschlussdatum, ablaufdatum</strong></p>
-                  <p>Nicht vorhandene Schulungstypen werden automatisch angelegt.</p>
+                  <p>Pflichtfeld: <strong>kurs_name</strong> — jede Zeile gehört zu einem Kurs.</p>
+                  <p>Kurs-Felder (nur in erster Zeile pro Kurs nötig): <strong>kurs_beschreibung, pflichtschulung, kernschulung, erneuerung_monate</strong></p>
+                  <p>Lektions-Felder: <strong>lektion_name, lektion_typ, lektion_url</strong></p>
+                  <div className="rounded-lg bg-muted p-3 space-y-1">
+                    <p><strong>lektion_typ:</strong> Video · PDF · Text · iFrame · Unterkapitel</p>
+                    <p><strong>pflichtschulung / kernschulung:</strong> Ja oder Nein</p>
+                  </div>
+                  <p>Mehrere Zeilen mit gleichem <strong>kurs_name</strong> werden als Lektionen eines Kurses zusammengefasst. Bereits vorhandene Kurse werden nicht doppelt angelegt.</p>
                   <p>
                     <a href="#" className="text-primary underline underline-offset-4" onClick={(e) => { e.preventDefault(); handleDownloadTrainingTemplate(); }}>
                       Excel-Vorlage herunterladen
