@@ -265,6 +265,13 @@ export default function RiskAssessments() {
 
   const [uploadedDocuments, setUploadedDocuments] = useState<string[]>([]);
 
+  // Import states
+  const [isImporting, setIsImporting] = useState(false);
+  const [lastImportReport, setLastImportReport] = useState<{
+    fileName: string; totalRows: number; importedCount: number; skippedCount: number; skippedRows: string[];
+  } | null>(null);
+  const [isImportGuideDialogOpen, setIsImportGuideDialogOpen] = useState(false);
+
   // Calculated risk scores
   const riskScoreBefore =
     formData.probability_before * formData.extent_damage_before;
@@ -497,6 +504,149 @@ export default function RiskAssessments() {
 
   // Echtzeit-Sync: Risikobewertungen + GBU-Maßnahmen
   useRealtimeRefetch(["risk_assessments", "risk_assessment_measures"], companyId, () => fetchData(false));
+
+  // Import helpers
+  const normalizeHeader = (v: string) => v.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+  const getCellValue = (row: Record<string, unknown>, aliases: string[]) => {
+    const norm = aliases.map(normalizeHeader);
+    for (const key of Object.keys(row)) {
+      if (norm.includes(normalizeHeader(key))) {
+        const val = row[key];
+        if (val === undefined || val === null) return null;
+        const t = String(val).trim();
+        return t.length > 0 ? t : null;
+      }
+    }
+    return null;
+  };
+  const convertImportedDate = (raw: unknown, xlsx: any): string | null => {
+    if (!raw) return null;
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      const p = xlsx.SSF.parse_date_code(raw);
+      if (!p) return null;
+      return `${String(p.y).padStart(4,"0")}-${String(p.m).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`;
+    }
+    const text = String(raw).trim();
+    if (!text) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+    const dot = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (dot) return `${dot[3]}-${dot[2].padStart(2,"0")}-${dot[1].padStart(2,"0")}`;
+    const slash = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (slash) return `${slash[3]}-${slash[2].padStart(2,"0")}-${slash[1].padStart(2,"0")}`;
+    const d = new Date(text);
+    if (!Number.isNaN(d.getTime())) return d.toISOString().split("T")[0];
+    return null;
+  };
+
+  const handleDownloadRiskTemplate = async () => {
+    const XLSX = await import("xlsx");
+    const rows = [{
+      titel: "Absturzgefahr Lagerbereich",
+      beschreibung: "Mitarbeiter können vom Regal abstürzen",
+      abteilung: "Lager",
+      risikostufe: "high",
+      wahrscheinlichkeit: 3,
+      schwere: 4,
+      bewertungsdatum: "2026-01-15",
+      ueberpruefungsdatum: "2027-01-15",
+      gefaehrdungsart: "Mechanische Gefährdung",
+      status: "active",
+    }];
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "RisikobewertungVorlage");
+    XLSX.writeFile(wb, `risk_assessment_template_${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast({ title: "Vorlage heruntergeladen" });
+  };
+
+  const handleRiskImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !companyId) return;
+    if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+      toast({ title: "Ungültiges Format", description: "Bitte .xlsx, .xls oder .csv hochladen", variant: "destructive" });
+      event.target.value = "";
+      return;
+    }
+    setIsImporting(true);
+    setLastImportReport(null);
+    try {
+      const XLSX = await import("xlsx");
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: false });
+      if (jsonData.length === 0) {
+        toast({ title: "Keine Daten", variant: "destructive" });
+        return;
+      }
+
+      const { data: depts } = await supabase.from("departments").select("id, name").eq("company_id", companyId);
+      const deptMap = new Map((depts || []).map((d: any) => [d.name.toLowerCase().trim(), d.id]));
+      const validLevels = ["low", "medium", "high", "critical"];
+
+      let importedCount = 0;
+      let skippedCount = 0;
+      const skippedRows: string[] = [];
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i] as Record<string, unknown>;
+        const rowNum = i + 2;
+        const titel = getCellValue(row, ["titel", "title", "name"]);
+        const risikostufe = getCellValue(row, ["risikostufe", "risk_level", "risikolevel"]);
+        const bewertungsdatum = getCellValue(row, ["bewertungsdatum", "assessment_date", "datum"]);
+
+        const problems: string[] = [];
+        if (!titel) problems.push("titel fehlt");
+        if (!risikostufe || !validLevels.includes(risikostufe.toLowerCase())) problems.push("risikostufe ungültig (low/medium/high/critical)");
+        if (!bewertungsdatum) problems.push("bewertungsdatum fehlt");
+        if (problems.length > 0) { skippedRows.push(`Zeile ${rowNum}: ${problems.join(", ")}`); skippedCount++; continue; }
+
+        const abteilungName = getCellValue(row, ["abteilung", "department", "dept"]);
+        let deptId: string | null = null;
+        if (abteilungName) {
+          deptId = deptMap.get(abteilungName.toLowerCase().trim()) || null;
+          if (!deptId) {
+            const { data: newDept } = await supabase.from("departments").insert({ name: abteilungName.trim(), company_id: companyId }).select("id").single();
+            if (newDept) { deptId = newDept.id; deptMap.set(abteilungName.toLowerCase().trim(), deptId); }
+          }
+        }
+
+        const likelihood = parseInt(getCellValue(row, ["wahrscheinlichkeit", "likelihood"]) || "0") || null;
+        const severity = parseInt(getCellValue(row, ["schwere", "severity"]) || "0") || null;
+
+        const { error } = await supabase.from("risk_assessments").insert({
+          company_id: companyId,
+          title: titel!.trim(),
+          description: getCellValue(row, ["beschreibung", "description"]) || null,
+          department_id: deptId,
+          risk_level: risikostufe!.toLowerCase() as any,
+          likelihood,
+          severity,
+          risk_score: likelihood && severity ? likelihood * severity : null,
+          assessment_date: convertImportedDate(bewertungsdatum, XLSX)!,
+          review_date: convertImportedDate(getCellValue(row, ["ueberpruefungsdatum", "review_date", "überprüfungsdatum"]), XLSX) || null,
+          hazard_category: getCellValue(row, ["gefaehrdungsart", "hazard_category", "gefährdungsart"]) || null,
+          status: getCellValue(row, ["status"]) || "active",
+        });
+
+        if (error) { skippedRows.push(`Zeile ${rowNum}: ${error.message}`); skippedCount++; }
+        else importedCount++;
+      }
+
+      setLastImportReport({ fileName: file.name, totalRows: jsonData.length, importedCount, skippedCount, skippedRows });
+      if (importedCount > 0) {
+        toast({ title: "Import abgeschlossen", description: `${importedCount} Risikobewertungen importiert${skippedCount > 0 ? `, ${skippedCount} übersprungen` : ""}` });
+        fetchData(false);
+      } else {
+        toast({ title: "Keine Datensätze importiert", description: `${skippedCount} Zeilen übersprungen`, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Importfehler", description: "Datei konnte nicht verarbeitet werden", variant: "destructive" });
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
 
   const handleExportPDF = () => {
     try {
@@ -1061,6 +1211,15 @@ export default function RiskAssessments() {
                   <FileDown className="w-4 h-4 mr-2" />
                   {language === "de" ? "PDF Export" : "Export PDF"}
                 </Button>
+                {canManageRisk && (
+                  <>
+                    <input type="file" id="import-risks" accept=".xlsx,.xls,.csv" onChange={handleRiskImport} className="hidden" disabled={isImporting} />
+                    <Button type="button" variant="outline" className="whitespace-nowrap gap-2" onClick={() => setIsImportGuideDialogOpen(true)} disabled={isImporting}>
+                      <Upload className="w-4 h-4" />
+                      {isImporting ? "Importiert..." : (language === "de" ? "Importieren" : "Import")}
+                    </Button>
+                  </>
+                )}
                 <Dialog open={isDialogOpen && canManageRisk} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingRiskId(null); resetForm(); } }}>
                   {canManageRisk && (
                   <DialogTrigger asChild>
@@ -2001,6 +2160,42 @@ export default function RiskAssessments() {
                 </Dialog>
               </div>
             </div>
+
+            {/* Import Guide Dialog */}
+            <Dialog open={isImportGuideDialogOpen} onOpenChange={setIsImportGuideDialogOpen}>
+              <DialogContent className="max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>Risikobewertungen importieren</DialogTitle>
+                  <DialogDescription>Importieren Sie Risikobewertungen aus einer Excel- oder CSV-Datei.</DialogDescription>
+                </DialogHeader>
+                <div className="text-sm space-y-2">
+                  <p>Unterstützte Formate: <strong>.xlsx, .xls, .csv</strong></p>
+                  <p>Pflichtfelder: <strong>titel, risikostufe</strong> (low/medium/high/critical), <strong>bewertungsdatum</strong></p>
+                  <p>Optionale Felder: <strong>beschreibung, abteilung, wahrscheinlichkeit</strong> (1–5), <strong>schwere</strong> (1–5), <strong>ueberpruefungsdatum, gefaehrdungsart, status</strong></p>
+                  <p>
+                    <a href="#" className="text-primary underline underline-offset-4" onClick={(e) => { e.preventDefault(); handleDownloadRiskTemplate(); }}>
+                      Excel-Vorlage herunterladen
+                    </a>
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsImportGuideDialogOpen(false)}>Abbrechen</Button>
+                  <Button type="button" onClick={() => { setIsImportGuideDialogOpen(false); document.getElementById("import-risks")?.click(); }}>Datei auswählen</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {lastImportReport && (
+              <div className="mb-4 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-sm space-y-2">
+                <p className="font-medium">{lastImportReport.fileName}: {lastImportReport.importedCount} von {lastImportReport.totalRows} importiert, {lastImportReport.skippedCount} übersprungen</p>
+                {lastImportReport.skippedRows.length > 0 && (
+                  <div className="max-h-32 overflow-auto space-y-1">
+                    {lastImportReport.skippedRows.map((r, i) => <p key={i} className="text-muted-foreground">{r}</p>)}
+                  </div>
+                )}
+              </div>
+            )}
+
           </CardHeader>
           <CardContent>
             <div className="mb-6 space-y-3">

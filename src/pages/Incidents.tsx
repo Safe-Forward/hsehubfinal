@@ -20,6 +20,7 @@ import {
   Calendar as CalendarIcon,
   ArrowUp,
   ArrowDown,
+  Upload,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -51,6 +52,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -248,6 +250,14 @@ export default function Incidents() {
   // Für Abteilungs-Scoping bei "Korrekturmaßnahme erstellen": disziplinarische
   // Abteilungsleiter dürfen das auch ohne firmenweite measures-Berechtigung.
   const [departmentManagers, setDepartmentManagers] = useState<any[]>([]);
+
+  // Import states
+  const [isImporting, setIsImporting] = useState(false);
+  const [lastImportReport, setLastImportReport] = useState<{
+    fileName: string; totalRows: number; importedCount: number; skippedCount: number; skippedRows: string[];
+  } | null>(null);
+  const [isImportGuideDialogOpen, setIsImportGuideDialogOpen] = useState(false);
+
   const fetchDepartmentManagers = async () => {
     if (!companyId) return;
     const { data } = await (supabase as any)
@@ -290,6 +300,156 @@ export default function Incidents() {
       setDepartments(data || []);
     } catch (error: any) {
       // Abteilungsliste konnte nicht geladen werden
+    }
+  };
+
+  // Import helpers
+  const normalizeHeader = (v: string) => v.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+  const getCellValue = (row: Record<string, unknown>, aliases: string[]) => {
+    const norm = aliases.map(normalizeHeader);
+    for (const key of Object.keys(row)) {
+      if (norm.includes(normalizeHeader(key))) {
+        const val = row[key];
+        if (val === undefined || val === null) return null;
+        const t = String(val).trim();
+        return t.length > 0 ? t : null;
+      }
+    }
+    return null;
+  };
+  const convertImportedDate = (raw: unknown, xlsx: any): string | null => {
+    if (!raw) return null;
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      const p = xlsx.SSF.parse_date_code(raw);
+      if (!p) return null;
+      return `${String(p.y).padStart(4,"0")}-${String(p.m).padStart(2,"0")}-${String(p.d).padStart(2,"0")}`;
+    }
+    const text = String(raw).trim();
+    if (!text) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+    const dot = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (dot) return `${dot[3]}-${dot[2].padStart(2,"0")}-${dot[1].padStart(2,"0")}`;
+    const slash = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (slash) return `${slash[3]}-${slash[2].padStart(2,"0")}-${slash[1].padStart(2,"0")}`;
+    const d = new Date(text);
+    if (!Number.isNaN(d.getTime())) return d.toISOString().split("T")[0];
+    return null;
+  };
+
+  const handleDownloadIncidentTemplate = async () => {
+    const XLSX = await import("xlsx");
+    const rows = [{
+      titel: "Stolpersturz Lagerbereich",
+      vorfallsart: "injury",
+      schweregrad: "minor",
+      vorfalldatum: "2026-01-15",
+      ort: "Lager Halle A",
+      abteilung: "Produktion",
+      beschreibung: "Mitarbeiter ist über Kabel gestolpert",
+      betroffener_mitarbeiter: "Max Mustermann",
+    }];
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "VorfaelleImportVorlage");
+    XLSX.writeFile(wb, `incidents_import_template_${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast({ title: "Vorlage heruntergeladen" });
+  };
+
+  const handleIncidentImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !companyId) return;
+    if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+      toast({ title: "Ungültiges Format", description: "Bitte .xlsx, .xls oder .csv hochladen", variant: "destructive" });
+      event.target.value = "";
+      return;
+    }
+    setIsImporting(true);
+    setLastImportReport(null);
+    try {
+      const XLSX = await import("xlsx");
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "", raw: false });
+      if (jsonData.length === 0) {
+        toast({ title: "Keine Daten", variant: "destructive" });
+        return;
+      }
+
+      const { data: depts } = await supabase.from("departments").select("id, name").eq("company_id", companyId);
+      const { data: emps } = await supabase.from("employees").select("id, full_name").eq("company_id", companyId).eq("is_active", true);
+      const deptMap = new Map((depts || []).map((d: any) => [d.name.toLowerCase().trim(), d.id]));
+      const empMap = new Map((emps || []).map((e: any) => [e.full_name?.toLowerCase().trim(), e.id]));
+
+      const validTypes = ["injury", "near_miss", "property_damage", "environmental", "other"];
+      const validSeverities = ["minor", "moderate", "serious", "critical", "fatal"];
+
+      let importedCount = 0;
+      let skippedCount = 0;
+      const skippedRows: string[] = [];
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i] as Record<string, unknown>;
+        const rowNum = i + 2;
+        const titel = getCellValue(row, ["titel", "title", "name"]);
+        const vorfallsart = getCellValue(row, ["vorfallsart", "incident_type", "typ", "type"]);
+        const schweregrad = getCellValue(row, ["schweregrad", "severity", "schwere"]);
+        const vorfalldatum = getCellValue(row, ["vorfalldatum", "incident_date", "datum", "date"]);
+
+        const problems: string[] = [];
+        if (!titel) problems.push("titel fehlt");
+        if (!vorfallsart || !validTypes.includes(vorfallsart.toLowerCase())) problems.push("vorfallsart ungültig (injury/near_miss/property_damage/environmental/other)");
+        if (!schweregrad || !validSeverities.includes(schweregrad.toLowerCase())) problems.push("schweregrad ungültig (minor/moderate/serious/critical/fatal)");
+        if (!vorfalldatum) problems.push("vorfalldatum fehlt");
+        if (problems.length > 0) { skippedRows.push(`Zeile ${rowNum}: ${problems.join(", ")}`); skippedCount++; continue; }
+
+        const dateStr = convertImportedDate(vorfalldatum, XLSX);
+        if (!dateStr) { skippedRows.push(`Zeile ${rowNum}: ungültiges vorfalldatum`); skippedCount++; continue; }
+
+        const abteilungName = getCellValue(row, ["abteilung", "department", "dept"]);
+        let deptId: string | null = null;
+        if (abteilungName) {
+          deptId = deptMap.get(abteilungName.toLowerCase().trim()) || null;
+          if (!deptId) {
+            const { data: newDept } = await supabase.from("departments").insert({ name: abteilungName.trim(), company_id: companyId }).select("id").single();
+            if (newDept) { deptId = newDept.id; deptMap.set(abteilungName.toLowerCase().trim(), deptId); }
+          }
+        }
+
+        const empName = getCellValue(row, ["betroffener_mitarbeiter", "affected_employee", "mitarbeiter", "employee"]);
+        const affectedEmployeeId = empName ? (empMap.get(empName.toLowerCase().trim()) || null) : null;
+
+        const { error } = await (supabase as any).from("incidents").insert({
+          company_id: companyId,
+          title: titel!.trim(),
+          description: getCellValue(row, ["beschreibung", "description"]) || null,
+          incident_type: vorfallsart!.toLowerCase(),
+          severity: schweregrad!.toLowerCase(),
+          incident_date: new Date(dateStr).toISOString(),
+          location: getCellValue(row, ["ort", "location"]) || null,
+          department_id: deptId,
+          affected_employee_id: affectedEmployeeId,
+          investigation_status: "open",
+          attachments: [],
+          photos: [],
+        });
+
+        if (error) { skippedRows.push(`Zeile ${rowNum}: ${error.message}`); skippedCount++; }
+        else importedCount++;
+      }
+
+      setLastImportReport({ fileName: file.name, totalRows: jsonData.length, importedCount, skippedCount, skippedRows });
+      if (importedCount > 0) {
+        toast({ title: "Import abgeschlossen", description: `${importedCount} Vorfälle importiert${skippedCount > 0 ? `, ${skippedCount} übersprungen` : ""}` });
+        fetchIncidents();
+      } else {
+        toast({ title: "Keine Datensätze importiert", description: `${skippedCount} Zeilen übersprungen`, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Importfehler", description: "Datei konnte nicht verarbeitet werden", variant: "destructive" });
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
     }
   };
 
@@ -823,7 +983,51 @@ export default function Incidents() {
             </div>
           </div>
         </div>
+        {canManageIncidents && (
+          <div className="flex items-center gap-2">
+            <input type="file" id="import-incidents" accept=".xlsx,.xls,.csv" onChange={handleIncidentImport} className="hidden" disabled={isImporting} />
+            <Button type="button" variant="outline" className="gap-2 whitespace-nowrap" onClick={() => setIsImportGuideDialogOpen(true)} disabled={isImporting}>
+              <Upload className="w-4 h-4" />
+              {isImporting ? "Importiert..." : t("incidents.import") || "Importieren"}
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Import Guide Dialog */}
+      <Dialog open={isImportGuideDialogOpen} onOpenChange={setIsImportGuideDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Vorfälle importieren</DialogTitle>
+            <DialogDescription>Importieren Sie Vorfälle aus einer Excel- oder CSV-Datei.</DialogDescription>
+          </DialogHeader>
+          <div className="text-sm space-y-2">
+            <p>Unterstützte Formate: <strong>.xlsx, .xls, .csv</strong></p>
+            <p>Pflichtfelder: <strong>titel, vorfallsart</strong> (injury/near_miss/property_damage/environmental/other), <strong>schweregrad</strong> (minor/moderate/serious/critical/fatal), <strong>vorfalldatum</strong></p>
+            <p>Optionale Felder: <strong>ort, abteilung, beschreibung, betroffener_mitarbeiter</strong></p>
+            <p>
+              <a href="#" className="text-primary underline underline-offset-4" onClick={(e) => { e.preventDefault(); handleDownloadIncidentTemplate(); }}>
+                Excel-Vorlage herunterladen
+              </a>
+            </p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsImportGuideDialogOpen(false)}>Abbrechen</Button>
+            <Button type="button" onClick={() => { setIsImportGuideDialogOpen(false); document.getElementById("import-incidents")?.click(); }}>Datei auswählen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {lastImportReport && (
+        <div className="mb-4 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-sm space-y-2">
+          <p className="font-medium">{lastImportReport.fileName}: {lastImportReport.importedCount} von {lastImportReport.totalRows} importiert, {lastImportReport.skippedCount} übersprungen</p>
+          {lastImportReport.skippedRows.length > 0 && (
+            <div className="max-h-32 overflow-auto space-y-1">
+              {lastImportReport.skippedRows.map((r, i) => <p key={i} className="text-muted-foreground">{r}</p>)}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
