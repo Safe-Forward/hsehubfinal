@@ -340,8 +340,8 @@ export default function Incidents() {
     const XLSX = await import("xlsx");
     const rows = [{
       titel: "Stolpersturz Lagerbereich",
-      vorfallsart: "injury",
-      schweregrad: "minor",
+      vorfallsart: "Verletzung",
+      schweregrad: "Geringfügig",
       vorfalldatum: "2026-01-15",
       ort: "Lager Halle A",
       abteilung: "Produktion",
@@ -381,8 +381,21 @@ export default function Incidents() {
       const deptMap = new Map((depts || []).map((d: any) => [d.name.toLowerCase().trim(), d.id]));
       const empMap = new Map((emps || []).map((e: any) => [e.full_name?.toLowerCase().trim(), e.id]));
 
-      const validTypes = ["injury", "near_miss", "property_damage", "environmental", "other"];
-      const validSeverities = ["minor", "moderate", "serious", "critical", "fatal"];
+      // Maps German labels → English DB enum values
+      const typeMap: Record<string, string> = {
+        "verletzung": "injury", "injury": "injury",
+        "beinahe-unfall": "near_miss", "beinahe unfall": "near_miss", "near_miss": "near_miss", "near miss": "near_miss",
+        "sachschaden": "property_damage", "property_damage": "property_damage", "property damage": "property_damage",
+        "umweltvorfall": "environmental", "umwelt": "environmental", "environmental": "environmental",
+        "sonstiges": "other", "sonstige": "other", "other": "other",
+      };
+      const severityMap: Record<string, string> = {
+        "geringfügig": "minor", "gering": "minor", "minor": "minor",
+        "mäßig": "moderate", "massig": "moderate", "moderate": "moderate",
+        "schwerwiegend": "serious", "schwer": "serious", "serious": "serious",
+        "kritisch": "critical", "critical": "critical",
+        "tödlich": "fatal", "todlich": "fatal", "fatal": "fatal",
+      };
 
       let importedCount = 0;
       let skippedCount = 0;
@@ -392,14 +405,17 @@ export default function Incidents() {
         const row = jsonData[i] as Record<string, unknown>;
         const rowNum = i + 2;
         const titel = getCellValue(row, ["titel", "title", "name"]);
-        const vorfallsart = getCellValue(row, ["vorfallsart", "incident_type", "typ", "type"]);
-        const schweregrad = getCellValue(row, ["schweregrad", "severity", "schwere"]);
+        const vorfallsartRaw = getCellValue(row, ["vorfallsart", "incident_type", "typ", "type"]);
+        const schweregradRaw = getCellValue(row, ["schweregrad", "severity", "schwere"]);
         const vorfalldatum = getCellValue(row, ["vorfalldatum", "incident_date", "datum", "date"]);
+
+        const vorfallsart = vorfallsartRaw ? typeMap[vorfallsartRaw.toLowerCase().trim()] : undefined;
+        const schweregrad = schweregradRaw ? severityMap[schweregradRaw.toLowerCase().trim()] : undefined;
 
         const problems: string[] = [];
         if (!titel) problems.push("titel fehlt");
-        if (!vorfallsart || !validTypes.includes(vorfallsart.toLowerCase())) problems.push("vorfallsart ungültig (injury/near_miss/property_damage/environmental/other)");
-        if (!schweregrad || !validSeverities.includes(schweregrad.toLowerCase())) problems.push("schweregrad ungültig (minor/moderate/serious/critical/fatal)");
+        if (!vorfallsart) problems.push(`vorfallsart ungültig (${vorfallsartRaw || "fehlt"}) – erlaubt: Verletzung, Beinahe-Unfall, Sachschaden, Umweltvorfall, Sonstiges`);
+        if (!schweregrad) problems.push(`schweregrad ungültig (${schweregradRaw || "fehlt"}) – erlaubt: Geringfügig, Mäßig, Schwerwiegend, Kritisch, Tödlich`);
         if (!vorfalldatum) problems.push("vorfalldatum fehlt");
         if (problems.length > 0) { skippedRows.push(`Zeile ${rowNum}: ${problems.join(", ")}`); skippedCount++; continue; }
 
@@ -423,8 +439,8 @@ export default function Incidents() {
           company_id: companyId,
           title: titel!.trim(),
           description: getCellValue(row, ["beschreibung", "description"]) || null,
-          incident_type: vorfallsart!.toLowerCase(),
-          severity: schweregrad!.toLowerCase(),
+          incident_type: vorfallsart,
+          severity: schweregrad,
           incident_date: new Date(dateStr).toISOString(),
           location: getCellValue(row, ["ort", "location"]) || null,
           department_id: deptId,
@@ -988,7 +1004,7 @@ export default function Incidents() {
             <input type="file" id="import-incidents" accept=".xlsx,.xls,.csv" onChange={handleIncidentImport} className="hidden" disabled={isImporting} />
             <Button type="button" variant="outline" className="gap-2 whitespace-nowrap" onClick={() => setIsImportGuideDialogOpen(true)} disabled={isImporting}>
               <Upload className="w-4 h-4" />
-              {isImporting ? "Importiert..." : t("incidents.import") || "Importieren"}
+              {isImporting ? "Importiert..." : "Importieren"}
             </Button>
           </div>
         )}
@@ -1003,7 +1019,11 @@ export default function Incidents() {
           </DialogHeader>
           <div className="text-sm space-y-2">
             <p>Unterstützte Formate: <strong>.xlsx, .xls, .csv</strong></p>
-            <p>Pflichtfelder: <strong>titel, vorfallsart</strong> (injury/near_miss/property_damage/environmental/other), <strong>schweregrad</strong> (minor/moderate/serious/critical/fatal), <strong>vorfalldatum</strong></p>
+            <p>Pflichtfelder: <strong>titel, vorfallsart, schweregrad, vorfalldatum</strong></p>
+            <div className="rounded-lg bg-muted p-3 space-y-1.5">
+              <p><strong>vorfallsart:</strong> Verletzung · Beinahe-Unfall · Sachschaden · Umweltvorfall · Sonstiges</p>
+              <p><strong>schweregrad:</strong> Geringfügig · Mäßig · Schwerwiegend · Kritisch · Tödlich</p>
+            </div>
             <p>Optionale Felder: <strong>ort, abteilung, beschreibung, betroffener_mitarbeiter</strong></p>
             <p>
               <a href="#" className="text-primary underline underline-offset-4" onClick={(e) => { e.preventDefault(); handleDownloadIncidentTemplate(); }}>
