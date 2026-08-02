@@ -628,7 +628,6 @@ export default function RiskAssessments() {
           risk_level: risikostufe as any,
           likelihood,
           severity,
-          risk_score: likelihood && severity ? likelihood * severity : null,
           assessment_date: convertImportedDate(bewertungsdatum, XLSX)!,
           review_date: convertImportedDate(getCellValue(row, ["ueberpruefungsdatum", "review_date", "überprüfungsdatum"]), XLSX) || null,
           hazard_category: getCellValue(row, ["gefaehrdungsart", "hazard_category", "gefährdungsart"]) || null,
