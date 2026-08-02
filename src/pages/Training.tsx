@@ -20,6 +20,7 @@ import {
   SortAsc,
   SortDesc,
   ShieldCheck,
+  Upload,
 } from "lucide-react";
 import { useRealtimeRefetch } from "@/hooks/useRealtimeRefetch";
 import { Switch } from "@/components/ui/switch";
@@ -48,6 +49,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -162,6 +164,19 @@ export default function Training() {
   const [progressSortDir, setProgressSortDir] = useState<"asc" | "desc">("asc");
   const [loadingProgress, setLoadingProgress] = useState(false);
   const [updatingParticipation, setUpdatingParticipation] = useState<string | null>(null);
+
+  // Import states
+  const [isImporting, setIsImporting] = useState(false);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [lastImportReport, setLastImportReport] = useState<{
+    fileName: string;
+    totalRows: number;
+    importedCount: number;
+    skippedCount: number;
+    importedRows: string[];
+    skippedRows: string[];
+  } | null>(null);
+  const [isImportGuideDialogOpen, setIsImportGuideDialogOpen] = useState(false);
 
   const courseForm = useForm<CourseFormData>({
     resolver: zodResolver(courseSchema),
@@ -699,6 +714,183 @@ export default function Training() {
     silentRefetch
   );
 
+  // Import helpers
+  const normalizeHeader = (value: string) =>
+    value.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+
+  const getCellValue = (row: Record<string, unknown>, aliases: string[]) => {
+    const normalizedAliases = aliases.map(normalizeHeader);
+    for (const key of Object.keys(row)) {
+      if (normalizedAliases.includes(normalizeHeader(key))) {
+        const value = row[key];
+        if (value === undefined || value === null) return null;
+        const text = String(value).trim();
+        return text.length > 0 ? text : null;
+      }
+    }
+    return null;
+  };
+
+  const convertImportedDate = (raw: unknown, xlsx: any): string | null => {
+    if (!raw) return null;
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      const parsed = xlsx.SSF.parse_date_code(raw);
+      if (!parsed) return null;
+      return `${String(parsed.y).padStart(4, "0")}-${String(parsed.m).padStart(2, "0")}-${String(parsed.d).padStart(2, "0")}`;
+    }
+    const text = String(raw).trim();
+    if (!text) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+    const dotFormat = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (dotFormat) return `${dotFormat[3]}-${dotFormat[2].padStart(2, "0")}-${dotFormat[1].padStart(2, "0")}`;
+    const slashFormat = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (slashFormat) return `${slashFormat[3]}-${slashFormat[2].padStart(2, "0")}-${slashFormat[1].padStart(2, "0")}`;
+    const asDate = new Date(text);
+    if (!Number.isNaN(asDate.getTime())) return asDate.toISOString().split("T")[0];
+    return null;
+  };
+
+  const handleDownloadTrainingTemplate = async () => {
+    const XLSX = await import("xlsx");
+    const templateRows = [
+      {
+        mitarbeiter_name: "Max Mustermann",
+        schulungstyp: "Arbeitssicherheit Grundlagen",
+        status: "completed",
+        zuweisungsdatum: "2026-01-10",
+        abschlussdatum: "2026-01-15",
+        ablaufdatum: "2027-01-15",
+      },
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(templateRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "SchulungenImportVorlage");
+    XLSX.writeFile(workbook, `training_import_template_${new Date().toISOString().split("T")[0]}.xlsx`);
+    toast({ title: "Vorlage heruntergeladen" });
+  };
+
+  const handleTrainingImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !companyId) return;
+    if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+      toast({ title: "Ungültiges Format", description: "Bitte eine .xlsx, .xls oder .csv Datei hochladen", variant: "destructive" });
+      event.target.value = "";
+      return;
+    }
+    setIsImporting(true);
+    setImportErrors([]);
+    setLastImportReport(null);
+    try {
+      const XLSX = await import("xlsx");
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet, { defval: "", raw: false });
+
+      if (jsonData.length === 0) {
+        toast({ title: "Keine Daten", description: "Die Datei enthält keine Daten", variant: "destructive" });
+        return;
+      }
+
+      let importedCount = 0;
+      let skippedCount = 0;
+      const rowErrors: string[] = [];
+      const importedRows: string[] = [];
+
+      // Preload all employees and training types for company
+      const { data: empData } = await supabase.from("employees").select("id, full_name, employee_number").eq("company_id", companyId).eq("is_active", true);
+      const { data: ttData } = await supabase.from("training_types").select("id, name").eq("company_id", companyId);
+      const empMap = new Map((empData || []).map((e: any) => [e.full_name?.toLowerCase().trim(), e.id]));
+      const empNumberMap = new Map((empData || []).filter((e: any) => e.employee_number).map((e: any) => [String(e.employee_number).toLowerCase().trim(), e.id]));
+      const ttMap = new Map((ttData || []).map((t: any) => [t.name?.toLowerCase().trim(), t.id]));
+
+      const validStatuses = ["assigned", "in_progress", "completed", "expired"];
+
+      for (let i = 0; i < jsonData.length; i++) {
+        const row = jsonData[i] as Record<string, unknown>;
+        const rowNum = i + 2;
+
+        const empName = getCellValue(row, ["mitarbeiter_name", "mitarbeiter", "employee", "employee_name", "name", "full_name"]);
+        const empNumber = getCellValue(row, ["mitarbeiter_nummer", "employee_number", "emp_number", "personalnummer"]);
+        const schulungstyp = getCellValue(row, ["schulungstyp", "training_type", "training", "schulung", "kurs", "course"]);
+        const statusRaw = getCellValue(row, ["status"]) || "assigned";
+        const zuweisungsdatum = getCellValue(row, ["zuweisungsdatum", "assigned_date", "zuweisung"]);
+        const abschlussdatum = getCellValue(row, ["abschlussdatum", "completion_date", "abschluss"]);
+        const ablaufdatum = getCellValue(row, ["ablaufdatum", "expiry_date", "ablauf"]);
+
+        const problems: string[] = [];
+        if (!empName && !empNumber) problems.push("mitarbeiter_name fehlt");
+        if (!schulungstyp) problems.push("schulungstyp fehlt");
+        if (!zuweisungsdatum) problems.push("zuweisungsdatum fehlt");
+        if (problems.length > 0) {
+          rowErrors.push(`Zeile ${rowNum}: ${problems.join(", ")}`);
+          skippedCount++;
+          continue;
+        }
+
+        // Resolve employee
+        let employeeId: string | undefined;
+        if (empNumber) employeeId = empNumberMap.get(String(empNumber).toLowerCase().trim());
+        if (!employeeId && empName) employeeId = empMap.get(String(empName).toLowerCase().trim());
+        if (!employeeId) {
+          rowErrors.push(`Zeile ${rowNum}: Mitarbeiter "${empName || empNumber}" nicht gefunden`);
+          skippedCount++;
+          continue;
+        }
+
+        // Resolve or create training type
+        let ttId = ttMap.get(String(schulungstyp).toLowerCase().trim());
+        if (!ttId) {
+          const { data: newTt, error: ttErr } = await supabase.from("training_types").insert({ company_id: companyId, name: String(schulungstyp).trim() }).select("id").single();
+          if (ttErr || !newTt) {
+            rowErrors.push(`Zeile ${rowNum}: Schulungstyp konnte nicht erstellt werden`);
+            skippedCount++;
+            continue;
+          }
+          ttId = newTt.id;
+          ttMap.set(String(schulungstyp).toLowerCase().trim(), ttId);
+        }
+
+        const status = validStatuses.includes(statusRaw?.toLowerCase() || "") ? statusRaw!.toLowerCase() : "assigned";
+        const assignedDate = convertImportedDate(zuweisungsdatum, XLSX) || new Date().toISOString().split("T")[0];
+        const completionDate = abschlussdatum ? convertImportedDate(abschlussdatum, XLSX) : null;
+        const expiryDate = ablaufdatum ? convertImportedDate(ablaufdatum, XLSX) : null;
+
+        const { error } = await supabase.from("training_records").insert({
+          company_id: companyId,
+          employee_id: employeeId,
+          training_type_id: ttId,
+          status,
+          assigned_date: assignedDate,
+          completion_date: completionDate,
+          expiry_date: expiryDate,
+        });
+
+        if (error) {
+          rowErrors.push(`Zeile ${rowNum}: ${error.message}`);
+          skippedCount++;
+        } else {
+          importedCount++;
+          importedRows.push(`Zeile ${rowNum}: ${empName || empNumber} – ${schulungstyp}`);
+        }
+      }
+
+      setImportErrors(rowErrors);
+      setLastImportReport({ fileName: file.name, totalRows: jsonData.length, importedCount, skippedCount, importedRows, skippedRows: rowErrors });
+
+      if (importedCount > 0) {
+        toast({ title: "Import abgeschlossen", description: `${importedCount} Datensätze importiert${skippedCount > 0 ? `, ${skippedCount} übersprungen` : ""}` });
+      } else {
+        toast({ title: "Keine Datensätze importiert", description: `${skippedCount} Zeilen übersprungen`, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Importfehler", description: "Die Datei konnte nicht verarbeitet werden", variant: "destructive" });
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
+
   const filteredCourses = courses.filter((c) => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const employeeIds = new Set(employees.map((e) => e.id));
@@ -1101,6 +1293,12 @@ export default function Training() {
                 <CardDescription>{isAdmin ? "Klicken Sie auf einen Kurs um Lektionen zu verwalten" : "Klicken Sie auf einen Kurs um ihn zu starten"}</CardDescription>
               </div>
               {isAdmin && (
+                <div className="flex items-center gap-2">
+                  <input type="file" id="import-training" accept=".xlsx,.xls,.csv" onChange={handleTrainingImport} className="hidden" disabled={isImporting} />
+                  <Button type="button" variant="outline" onClick={() => setIsImportGuideDialogOpen(true)} disabled={isImporting} className="gap-2">
+                    <Upload className="w-4 h-4" />
+                    {isImporting ? "Importiert..." : "Importieren"}
+                  </Button>
                 <Dialog open={isCourseDialogOpen} onOpenChange={setIsCourseDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800" data-testid="btn-add-course"><Plus className="w-4 h-4 mr-2" />Neuen Kurs erstellen</Button>
@@ -1159,8 +1357,47 @@ export default function Training() {
                     </Form>
                   </DialogContent>
                 </Dialog>
+                </div>
               )}
             </div>
+
+            {/* Import Guide Dialog */}
+            <Dialog open={isImportGuideDialogOpen} onOpenChange={setIsImportGuideDialogOpen}>
+              <DialogContent className="max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>Schulungen importieren</DialogTitle>
+                  <DialogDescription>Importieren Sie Schulungsnachweise aus einer Excel- oder CSV-Datei.</DialogDescription>
+                </DialogHeader>
+                <div className="text-sm space-y-2">
+                  <p>Unterstützte Formate: <strong>.xlsx, .xls, .csv</strong></p>
+                  <p>Pflichtfelder: <strong>mitarbeiter_name, schulungstyp, zuweisungsdatum</strong></p>
+                  <p>Optionale Felder: <strong>status</strong> (assigned/in_progress/completed/expired), <strong>abschlussdatum, ablaufdatum</strong></p>
+                  <p>Nicht vorhandene Schulungstypen werden automatisch angelegt.</p>
+                  <p>
+                    <a href="#" className="text-primary underline underline-offset-4" onClick={(e) => { e.preventDefault(); handleDownloadTrainingTemplate(); }}>
+                      Excel-Vorlage herunterladen
+                    </a>
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsImportGuideDialogOpen(false)}>Abbrechen</Button>
+                  <Button type="button" onClick={() => { setIsImportGuideDialogOpen(false); document.getElementById("import-training")?.click(); }}>Datei auswählen</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Import Report */}
+            {lastImportReport && (
+              <div className="mb-4 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/20 text-sm space-y-2">
+                <p className="font-medium">{lastImportReport.fileName}: {lastImportReport.importedCount} von {lastImportReport.totalRows} importiert, {lastImportReport.skippedCount} übersprungen</p>
+                {lastImportReport.skippedRows.length > 0 && (
+                  <div className="max-h-32 overflow-auto space-y-1">
+                    {lastImportReport.skippedRows.map((r, i) => <p key={i} className="text-muted-foreground">{r}</p>)}
+                  </div>
+                )}
+              </div>
+            )}
+
           </CardHeader>
           <CardContent>
             <div className="mb-6">
