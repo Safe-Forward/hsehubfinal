@@ -81,6 +81,7 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
 
   const [riskCategories, setRiskCategories] = useState<any[]>([]);
   const [measureBuildingBlocks, setMeasureBuildingBlocks] = useState<any[]>([]);
+  const [exposureGroups, setExposureGroups] = useState<any[]>([]);
 
   // Generic CRUD state
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -101,12 +102,14 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
 
   const fetchAllData = async () => {
     if (!companyId) return;
-    const [risk, measures] = await Promise.all([
+    const [risk, measures, exposure] = await Promise.all([
       supabase.from("risk_categories").select("*").eq("company_id", companyId),
       supabase.from("measure_building_blocks").select("*").eq("company_id", companyId),
+      supabase.from("exposure_groups").select("*").eq("company_id", companyId),
     ]);
     setRiskCategories(risk.data || []);
     setMeasureBuildingBlocks(measures.data || []);
+    setExposureGroups(exposure.data || []);
   };
 
   const handleDialogClose = () => {
@@ -416,6 +419,114 @@ export function CatalogsTab({ onNavigateToTab }: Props) {
                                   toast({ title: "Gespeichert", description: "Maßnahmen-Baustein gelöscht" });
                                   fetchAllData();
                                 }
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Exposure Groups */}
+      <Card id="settings-exposure-groups">
+        <CardHeader>
+          <CardTitle>{t("settings.exposureGroups")}</CardTitle>
+          <CardDescription>Expositionsgruppen verwalten – werden systemweit in Dropdown-Menüs verwendet</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Name der Expositionsgruppe eingeben..."
+                onKeyDown={async (e) => {
+                  if (e.key === "Enter") {
+                    const input = e.currentTarget;
+                    const value = input.value.trim();
+                    if (value && companyId) {
+                      const { error } = await supabase
+                        .from("exposure_groups")
+                        .insert([{ name: value, company_id: companyId }]);
+                      if (error) {
+                        toast({ title: "Fehler", description: error.message, variant: "destructive" });
+                      } else {
+                        toast({ title: "Gespeichert", description: "Expositionsgruppe hinzugefügt" });
+                        input.value = "";
+                        fetchAllData();
+                      }
+                    }
+                  }
+                }}
+              />
+              <Button
+                onClick={async (e) => {
+                  const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                  const value = input?.value.trim();
+                  if (value && companyId) {
+                    const { error } = await supabase
+                      .from("exposure_groups")
+                      .insert([{ name: value, company_id: companyId }]);
+                    if (error) {
+                      toast({ title: "Fehler", description: error.message, variant: "destructive" });
+                    } else {
+                      toast({ title: "Gespeichert", description: "Expositionsgruppe hinzugefügt" });
+                      if (input) input.value = "";
+                      fetchAllData();
+                    }
+                  }
+                }}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Hinzufügen
+              </Button>
+            </div>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Beschreibung</TableHead>
+                    <TableHead className="text-right">Aktionen</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {exposureGroups.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                        Keine Expositionsgruppen gefunden. Füge oben deine erste Gruppe hinzu.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    exposureGroups.map((group) => (
+                      <TableRow key={group.id}>
+                        <TableCell className="font-medium">{group.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{group.description || "-"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setCurrentTableName("exposure_groups");
+                                handleEdit(group);
+                              }}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setCurrentTableName("exposure_groups");
+                                setDeleteItem({ ...group, tableName: "exposure_groups" });
                               }}
                             >
                               <Trash2 className="w-4 h-4 text-destructive" />

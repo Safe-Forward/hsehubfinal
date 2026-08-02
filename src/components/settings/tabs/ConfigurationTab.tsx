@@ -84,7 +84,6 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
   const [loadingData, setLoadingData] = useState(false);
   const [locations, setLocations] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
-  const [exposureGroups, setExposureGroups] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [orgType, setOrgType] = useState<"linie" | "matrix">("linie");
@@ -115,16 +114,14 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
     if (!companyId) return;
     setLoadingData(true);
     try {
-      const [locs, depts, exposure, emps] = await Promise.all([
+      const [locs, depts, emps] = await Promise.all([
         supabase.from("locations").select("*").eq("company_id", companyId),
         supabase.from("departments").select("*").eq("company_id", companyId),
-        supabase.from("exposure_groups").select("*").eq("company_id", companyId),
         supabase.from("employees").select("id, full_name, user_id").eq("company_id", companyId).order("full_name"),
       ]);
 
       setLocations(locs.data || []);
       setDepartments(depts.data || []);
-      setExposureGroups(exposure.data || []);
       setEmployees(emps.data || []);
 
       // Load org type (Linie vs. Matrix) — bestimmt ob ein zweiter, fachlicher Leiter pro Abteilung möglich ist
@@ -699,94 +696,6 @@ export function ConfigurationTab({ onNavigateToTab }: Props) {
                 {t("settings.noApprovalWorkflows")}
               </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Exposure Groups */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("settings.exposureGroups")}</CardTitle>
-          <CardDescription>Expositionsgruppen verwalten – werden systemweit in Dropdown-Menüs verwendet</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Name der Expositionsgruppe eingeben..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const input = e.currentTarget;
-                    const value = input.value.trim();
-                    quickAdd("exposure_groups", value, "create_exposure_group", "exposure_group").then(() => { input.value = ""; });
-                  }
-                }}
-              />
-              <Button
-                onClick={(e) => {
-                  const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                  const value = input?.value.trim();
-                  if (value) {
-                    quickAdd("exposure_groups", value, "create_exposure_group", "exposure_group").then(() => { if (input) input.value = ""; });
-                  }
-                }}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Hinzufügen
-              </Button>
-            </div>
-
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Beschreibung</TableHead>
-                    <TableHead className="text-right">Aktionen</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {exposureGroups.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                        Keine Expositionsgruppen gefunden. Füge oben deine erste Gruppe hinzu.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    exposureGroups.map((group) => (
-                      <TableRow key={group.id}>
-                        <TableCell className="font-medium">{group.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{group.description || "-"}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setCurrentTableName("exposure_groups");
-                                handleEdit(group);
-                              }}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setCurrentTableName("exposure_groups");
-                                setDeleteItem({ ...group, tableName: "exposure_groups" });
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
           </div>
         </CardContent>
       </Card>
